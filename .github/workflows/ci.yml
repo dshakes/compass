@@ -38,6 +38,9 @@ jobs:
             .github/workflows/*.yml sdlc/workflows/*.yml sdlc/selfhosted/*.yml \
             sdlc/routines/*.yml sdlc/fleet/*.yml
 
+      - name: Guardrail bypass corpus (protect-paths policy eval)
+        run: bash scripts/test-protect-paths.sh
+
       - name: compass CLI tests (route · spend · impact · notify · listen parser)
         run: bash scripts/test-cli.sh
 
