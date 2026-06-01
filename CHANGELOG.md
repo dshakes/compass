@@ -5,6 +5,49 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-06-01
+
+### Added — hardening + frontier layer (competitive-audit recommendations R1–R14)
+
+- **Eval-gated guardrail** (`claude/hooks/lib/policy.sh`, R1/R2/R10) — the guardrail is now a
+  pure, sourceable policy (`danger_reason` / `secret_file_reason`); `protect-paths.sh` just
+  adapts the PreToolUse contract to it. Closes every bypass the audit found: split/long `rm`
+  flags, quoted `$HOME`, `find … -delete`, system dirs, `curl|sh` no-space/`zsh`/`sudo`/
+  process-sub/eval, `git push origin +main`, `git -c … push --force`, wider secret-file +
+  protected-branch sets. Still footgun-prevention, not a security boundary.
+- **Guardrail bypass corpus** (`scripts/test-protect-paths.sh`, R1) — 85-case must-block /
+  must-allow labeled corpus, gated in CI; found and fixed 3 real bugs while being written.
+- **GitHub Actions audit** (`scripts/check-actions.sh`, R3/R4) — gates mirror-drift
+  (`.github/workflows/sdlc-*` vs `sdlc/workflows/` templates), least-privilege `permissions:`,
+  SHA-pinning, and run-block `${{ github.event.* }}` script injection. Wired into CI + doctor.
+- **`compass bench`** (`scripts/compass-bench.sh` + `scripts/guardrail-corpus.tsv`, R8) —
+  reproducible scorecard: guardrail precision/recall (100/100 over 61 cases) + router accuracy
+  (96.9%), deterministic and CI-gated on floors. `--sdlc <fixtures>` for a model-driven fix-rate
+  harness (not CI-gated).
+- **Persistent cross-repo memory** (`claude/hooks/session-memory.sh` +
+  `claude/hooks/record-learning.sh`, R5) — opt-in SessionStart inject + Stop/SubagentStop
+  record over the redacted, trust-tiered `compass-memory` store (ADR-0001). Off by default
+  (no `COMPASS_MEMORY_TRUST` → silent no-op). `store.py` gains a local record/search CLI.
+- **`compass dashboard`** (`scripts/compass-dashboard.sh`, R6) — zero-infra control surface:
+  impact + spend + live fleet PR state (via `gh`) in one panel; `--json` / `--html`; graceful
+  no-op without `gh`.
+- **Parallel SDLC + test-impact QA + diff-size review routing + spec-kit interop**
+  (`sdlc/orchestrate.sh`, R7/R9/R13) — `SDLC_PARALLEL=1`, `SDLC_TEST_IMPACT=1`, ≤25-line diffs
+  review on haiku, and auto-discovery of `.specify/specs/*/spec.md` / `spec.md`. Default path
+  byte-for-byte preserved.
+- **Cost-aware router** (`compass route --score`, R11) — confidence 0–99 +
+  `COMPASS_ROUTE_BUDGET_BIAS=low` to downgrade only weakly-held sonnet defaults to haiku; the
+  deterministic keyword tier stays the hard floor so the CI accuracy eval is unchanged.
+- **Fleet brain** (`compass policy-synth` + `sdlc/routines/policy-synth.yml`, R12) — clusters
+  recurring review findings into PROPOSED CLAUDE.md rules; edits nothing (human accepts). The
+  routine files an issue weekly, never a PR or merge.
+- **Provenance** (`compass sbom`, R14) — dependency SBOM + native vuln audit
+  (npm/govulncheck/cargo-audit/pip-audit, `syft` if present); `orchestrate.sh` `SDLC_SIGN=1`
+  signs Builder commits, `SDLC_SBOM=1` attaches a Provenance section to the PR, `SDLC_SBOM_GATE=1`
+  drafts the PR on a known vuln.
+- **Docs** — `docs/15-competitive-audit.md` (audit vs the 2026 field + prioritized path) and
+  `docs/16-hardening-and-frontier.md` (the built layer) with `assets/hardening-frontier.svg`.
+
 ### Added — autonomous fleet + mobile mission-control
 
 - **`test-architect` subagent** (`claude/agents/test-architect.md`) — safety gate for the
