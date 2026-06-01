@@ -146,6 +146,16 @@ printf "export const meta = { name: 'mismatch', description: 'x' }\nawait agent(
 if bash "$ROOT/scripts/check-workflows.sh" "$WF" >/dev/null 2>&1; then no "name!=filename should FAIL"; else ok "name/filename mismatch rejected"; fi
 rm -rf "$WF"
 
+echo "sbom — ecosystem detection + graceful degrade:"
+SF="$(mktemp -d)"
+( cd "$SF" && printf '{"dependencies":{"left-pad":"^1.0.0"}}' > package.json && bash "$ROOT/scripts/compass-sbom.sh" --no-audit --json ) > "$SF/out.json" 2>/dev/null
+has "detects node ecosystem"   "$(cat "$SF/out.json")" '"ecosystem":"node"'
+has "counts dependencies"      "$(cat "$SF/out.json")" '"dependencies":1'
+NOECO="$( ( cd "$SF" && rm -f package.json && bash "$ROOT/scripts/compass-sbom.sh" --no-audit --json ) 2>/dev/null )"
+has "no ecosystem → graceful"  "$NOECO" '"ecosystem":"none"'
+if ( cd "$SF" && bash "$ROOT/scripts/compass-sbom.sh" --no-audit >/dev/null 2>&1 ); then ok "sbom exits 0 with nothing to scan"; else no "sbom should exit 0 when no ecosystem"; fi
+rm -rf "$SF"
+
 echo "policy-synth — fleet brain proposes rules from recurring findings (never applies):"
 PS="$(printf 'Blocking: missing error handling\nunchecked error in writer\nshould add a test for the failure path\nno test for this branch\n' | "$COMPASS" policy-synth --min 2 - 2>/dev/null)"
 has "proposes a rule above threshold" "$PS" "Consider adding to CLAUDE.md"
