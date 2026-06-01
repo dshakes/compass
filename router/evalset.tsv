@@ -1,0 +1,86 @@
+# router eval set — labeled ground truth for bench.sh.
+# Format: <split><TAB><expected-tier><TAB><task>     ('#' lines and blanks ignored)
+#
+# split:  base        — the original curated cases (rules were authored against these)
+#         holdout     — fair, naturally-phrased cases NOT used to tune rules (generalization)
+#         adversarial — keyword-free paraphrases + misleading-keyword cases (probes the limits)
+# tier = the CHEAPEST tier that does the job WELL (the "minimum-adequate" label the
+#        cost-at-iso-quality harness treats as ground truth for quality).
+#
+# Honest expectation: base+holdout high; adversarial markedly lower — that gap IS the
+# generalization signal a self-graded accuracy number hides.
+
+# ── base · haiku ──
+base	haiku	fix a typo in the README
+base	haiku	rename the variable userId to accountId across the file
+base	haiku	reformat this file with the project formatter
+base	haiku	remove trailing whitespace from the changed files
+base	haiku	add a docstring to the parse() function
+base	haiku	correct a comment that no longer matches the code
+base	haiku	update the copyright year in the license header
+base	haiku	bump the eslint version in package.json
+base	haiku	fix the lint warnings in utils.go
+base	haiku	add a one-liner log statement to trace the request id
+# ── base · sonnet ──
+base	sonnet	add a --dry-run flag to the CLI
+base	sonnet	add a new GET endpoint that returns user preferences
+base	sonnet	add a rate limiter with tests
+base	sonnet	cache the results of the expensive lookup in memory
+base	sonnet	convert the callback API to async/await
+base	sonnet	document the configuration options in the README
+base	sonnet	extract the validation logic into its own function
+base	sonnet	fix the bug where empty input returns a 500
+base	sonnet	implement pagination on the list endpoint
+base	sonnet	refactor the parser module to reduce duplication
+base	sonnet	wire up structured logging in the worker
+base	sonnet	write unit tests for the retry helper
+# ── base · opus ──
+base	opus	architect the sharding strategy for the write-heavy table
+base	opus	debug the intermittent race condition in the scheduler
+base	opus	design the backward-compatible schema change for the proto contract
+base	opus	design the cross-service protocol for the new event bus
+base	opus	fix the authz bypass where a user can read another tenant's data
+base	opus	plan a database migration with zero downtime and tenant isolation
+base	opus	redesign the auth trust model for multi-tenant isolation
+base	opus	resolve the deadlock between the cache and the connection pool
+base	opus	review the encryption scheme for the secrets store
+base	opus	threat-model the new public API surface
+
+# ── holdout · haiku (fair rephrasings) ──
+holdout	haiku	fix a typo in the error message
+holdout	haiku	rename the function getUser to fetchUser
+holdout	haiku	bump the go module version in go.mod
+holdout	haiku	add a license header comment to the new files
+holdout	haiku	reformat the yaml with the formatter
+# ── holdout · sonnet ──
+holdout	sonnet	add retry with backoff to the http client
+holdout	sonnet	implement a CSV export for the reports page
+holdout	sonnet	refactor the config loader to support env overrides
+holdout	sonnet	write integration tests for the checkout flow
+holdout	sonnet	add a feature flag for the new dashboard
+# ── holdout · opus ──
+holdout	opus	harden the authn flow against session fixation
+holdout	opus	audit the crypto used for token signing
+holdout	opus	fix the cross-tenant data leak in the query builder
+holdout	opus	plan the zero-downtime migration of the users table
+holdout	opus	resolve the race condition in the connection pool
+
+# ── adversarial · haiku (trivial, no keyword) ──
+adversarial	haiku	tidy up the indentation in this file
+adversarial	haiku	delete the unused import
+adversarial	haiku	shorten this overly long error string
+adversarial	haiku	fix a typo in the changelog
+# ── adversarial · sonnet (real feature work, but carries a misleading cheap-keyword) ──
+adversarial	sonnet	build a comment-extraction tool for the docs site
+adversarial	sonnet	add a formatter plugin to the build pipeline
+adversarial	sonnet	rename-refactor the module and update all call sites with tests
+adversarial	sonnet	write a linter rule for our internal style guide
+# ── adversarial · opus (high-stakes, described in plain words — no opus keyword) ──
+adversarial	opus	make sure one customer can never see another customer's invoices
+adversarial	opus	prevent users from reading records they don't own
+adversarial	opus	the login lets anyone in with a crafted cookie — fix it
+adversarial	opus	pick a locking strategy so two workers don't corrupt the shared counter
+adversarial	opus	design the schema so we can move tenants between regions without downtime
+# ── adversarial · sanity (should still hit the keywords) ──
+adversarial	opus	redesign the auth model for the new tenant boundary
+adversarial	haiku	fix a typo

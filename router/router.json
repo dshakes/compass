@@ -1,0 +1,15 @@
+{
+  "_about": "Language-agnostic spec for a deterministic cost-tier router. THIS FILE is the reusable asset: any app (Go/Rust/TS/Python/bash) loads it and implements the same ~15-line matcher — lowercase the task, walk rules in order, first regex (ERE, case-insensitive) that matches wins, else `default`. See README.md. route.sh is the reference implementation; bench.sh scores any implementation against evalset.tsv.",
+  "version": "1.0.0",
+  "tiers": {
+    "haiku":  { "rank": 1, "cost": 1,  "model": "claude-haiku-4-5",  "use": "mechanical / low-reasoning: typos, renames, formatting, comments, version bumps, one-liners" },
+    "sonnet": { "rank": 2, "cost": 4,  "model": "claude-sonnet-4-6", "use": "default: features, fixes, tests, refactors, docs" },
+    "opus":   { "rank": 3, "cost": 20, "model": "claude-opus-4-8",   "use": "high-stakes reasoning: architecture, security/auth/crypto, concurrency, migrations, multi-tenancy, protocol/threat design" }
+  },
+  "_cost_note": "cost is a RELATIVE weight (~output $/Mtok ratio: haiku 1 : sonnet 4 : opus 20 ≈ real Anthropic ratios). Edit to your actual prices; bench.sh reports cost-at-iso-quality from these.",
+  "default": "sonnet",
+  "rules": [
+    { "tier": "opus",  "pattern": "architect|security|\\bauth\\b|authn|authz|crypto|encrypt|migration|concurren|race condition|deadlock|tenant|isolation|protocol|threat|redesign|sharding|trust model", "reason": "high-stakes reasoning keyword" },
+    { "tier": "haiku", "pattern": "typo|rename|reformat|format this|formatter|\\blint\\b|comment|docstring|copyright|trailing whitespace|one.liner|\\bbump\\b|version in|log statement", "reason": "mechanical / trivial keyword" }
+  ]
+}
