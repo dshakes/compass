@@ -106,8 +106,30 @@ quality-vs-cost curve — needs tokens and is non-deterministic. To add it, writ
 that emits the same `split<TAB>expected<TAB>got` TSV from real model runs/judgments; the same
 cost math applies and the same floors gate it (just off the CI path).
 
-## Roadmap (where the leverage grows)
-- A confidence score + **escalate-only-the-ambiguous-middle** to an LLM classifier (hybrid:
-  heuristic for the obvious ~80%, a smart call for the rest) — keeps determinism where it's
-  cheap, buys generalization where it pays.
-- Per-host cost weights (edit `router.json`) so the savings number reflects *your* prices.
+## Knobs (v1.1)
+
+The full pipeline is: **decide(tier) → confidence → length-rules → bias → escalation → clamps → domain.**
+With no flags it reproduces v1.0 exactly (`strategy: first-match`, `bias: balanced`, escalation off,
+clamps no-op). Each knob has a spec default and a CLI/env override.
+
+| Knob | Flag / env | What it does |
+|------|-----------|--------------|
+| **matching strategy** | `--strategy first-match\|max-hits\|weighted` | how a tier is chosen. `first-match` = ordered, first rule wins. `max-hits` = most *keyword* hits wins. `weighted` = Σ(hits × rule.weight). |
+| **rule veto** | rule field `unless` (ERE) | a rule is skipped when its `unless` also matches — kills false positives (e.g. opus `auth` *unless* `typo`). |
+| **length rules** | spec `length_rules: [{min_words, at_least}]` | raise the floor for long tasks (a 60-word "comment …" isn't trivial). |
+| **bias** | `--bias cheap\|balanced\|quality` · `COMPASS_ROUTE_BIAS` | on **low-confidence** picks only: `cheap` downgrades a tier, `quality` upgrades — the cost↔quality dial. Confident picks are untouched. |
+| **escalation (cascade)** | `--escalate-below N` · `--fallback "CMD"` | if confidence < N: run `CMD` (task on stdin → prints a tier) and use it; with no fallback, bump one tier. The hybrid: heuristic for the confident majority, a smart call for the ambiguous middle. |
+| **clamps** | `--floor TIER` · `--ceiling TIER` · `--allow t1,t2` | hard bounds applied last. `ceiling` = cost cap (never opus); `floor` = quality SLA (never haiku); `allow` = explicit allowlist. |
+| **pricing/model profiles** | `--profile NAME` (spec `profiles`) | per-tier cost/model override so `bench.sh` reflects *your* prices and each app maps tiers to its own models. |
+| **domain axis** | `--domain` (spec `domains`) | also emit a specialist (ui/api/infra/docs/core) — a second, orthogonal classification. |
+| **local overlay** | `--local FILE` (auto: `router.local.json`) | per-app/per-repo rules + scalar overrides without forking the base spec (local rules take priority). |
+| **telemetry** | `--log FILE` | append `ts⇥tier⇥confidence⇥task` per call — feed real misroutes back into the evalset. |
+| **output** | `--json` · `--score` · `--explain` | structured `{tier,confidence,model,cost,reason[,domain]}` · `tier⇥confidence` · reason on stderr. |
+
+Measure any knob's tradeoff: `bench.sh --route-args "--bias cheap --ceiling sonnet"` reports the
+cost-at-iso-quality under that setting. (Bias/escalation only move *low-confidence* picks, so they
+barely shift the curated evalset — their effect shows on real ambiguous traffic.)
+
+## Roadmap
+- A trained/LLM classifier as the `--fallback` for the ambiguous middle (the escalation hook is ready).
+- Auto-grow the evalset from `--log` telemetry (ties into `compass policy-synth`).

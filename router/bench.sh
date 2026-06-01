@@ -27,10 +27,12 @@ QUAL_FLOOR="${ROUTER_QUALITY_FLOOR:-95}"   # quality-retained floor on base+hold
 ADV_FLOOR="${ROUTER_ADV_FLOOR:-25}"        # adversarial = generalization PROBE, not a quality
                                            # gate; this floor is a regression TRIPWIRE only.
                                            # Don't raise it by overfitting rules to the probe.
+ROUTE_ARGS=""   # forwarded to route.sh, e.g. --route-args "--bias cheap --ceiling sonnet"
 while [ $# -gt 0 ]; do
   case "$1" in
     --spec) SPEC="${2:?}"; shift ;;
     --set)  SET="${2:?}"; shift ;;
+    --route-args) ROUTE_ARGS="${2:-}"; shift ;;
     -h|--help) sed -n '2,6p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "bench: unknown arg '$1'" >&2; exit 2 ;;
   esac
@@ -46,7 +48,8 @@ RES="$(mktemp)"; trap 'rm -f "$RES"' EXIT
 while IFS=$'\t' read -r split expected task; do
   case "$split" in '#'*|'') continue ;; esac
   [ -n "${task:-}" ] || continue
-  got="$(bash "$HERE/route.sh" --spec "$SPEC" "$task" 2>/dev/null || echo '?')"
+  # shellcheck disable=SC2086  # ROUTE_ARGS is intentionally word-split
+  got="$(bash "$HERE/route.sh" --spec "$SPEC" $ROUTE_ARGS "$task" 2>/dev/null || echo '?')"
   printf '%s\t%s\t%s\n' "$split" "$expected" "$got" >> "$RES"
 done < "$SET"
 
