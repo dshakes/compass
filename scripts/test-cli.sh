@@ -29,6 +29,15 @@ EX="$("$COMPASS" route --explain 'redesign the auth trust model' 2>&1)"; EXRC=$?
 eq  "--explain exit 0"        "$EXRC" 0
 has "--explain prints reason" "$EX" 'route: opus (matched opus keyword)'
 
+echo "route --score — cost-aware tier + confidence (deterministic floor preserved):"
+has "opus high-stakes stays opus + high confidence" "$("$COMPASS" route --score 'redesign the auth trust model')" "opus	9"
+has "haiku trivial + confidence"                    "$("$COMPASS" route --score 'fix typo')" "haiku	"
+has "sonnet feature default"                        "$("$COMPASS" route --score 'add a rate limiter with tests')" "sonnet	70"
+# budget bias only downgrades a WEAK sonnet pick to haiku — never opus.
+eq  "vague short → low-confidence sonnet"            "$("$COMPASS" route --score 'update it' | cut -f1)" sonnet
+eq  "budget-bias=low downgrades weak sonnet→haiku"   "$(COMPASS_ROUTE_BUDGET_BIAS=low "$COMPASS" route --score 'update it' | cut -f1)" haiku
+eq  "budget-bias=low NEVER downgrades opus"          "$(COMPASS_ROUTE_BUDGET_BIAS=low "$COMPASS" route --score 'redesign the auth trust model' | cut -f1)" opus
+
 echo "route — eval harness (scores the router vs the labeled set):"
 if "$ROOT/scripts/compass-route.sh" --eval >/dev/null 2>&1; then ok "eval meets accuracy floor"; else no "eval below accuracy floor"; fi
 # a deliberately tiny set passes; a floor of 101 must fail (proves the gate bites)

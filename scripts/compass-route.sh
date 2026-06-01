@@ -41,6 +41,35 @@ route_one() {
   fi
 }
 
+# route_score "<task>" -> sets MODEL, REASON, and CONFIDENCE (0–100). Cost-aware tier
+# on top of route_one: the deterministic keyword decision is the FLOOR (high-stakes work
+# is never downgraded), and a weighted signal count yields a confidence. When the caller
+# expresses a budget preference (COMPASS_ROUTE_BUDGET_BIAS=low) and a *sonnet default* is
+# only weakly held, it downgrades to haiku to save spend — opus is never touched.
+# Experimental, opt-in; the default `compass route` stays the proven keyword picker.
+route_score() {
+  route_one "$1"                                   # floor: sets MODEL/REASON
+  local lc; lc="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
+  local words; words="$(printf '%s' "$1" | wc -w | tr -d ' ')"
+  local opus_hits haiku_hits
+  # `|| true`: grep exits 1 on no-match, which under `set -e -o pipefail` would abort.
+  opus_hits="$( { printf '%s' "$lc" | grep -oE "$OPUS_PAT" | wc -l | tr -d ' '; } || true )"
+  haiku_hits="$( { printf '%s' "$lc" | grep -oE "$HAIKU_PAT" | wc -l | tr -d ' '; } || true )"
+  : "${opus_hits:=0}" "${haiku_hits:=0}"
+  # Clamp with arithmetic (ternary) — a bare `[ … ] && x=…` returns 1 when false and
+  # would abort under `set -e`. Confidence rises with corroborating keyword hits.
+  case "$MODEL" in
+    opus)   CONFIDENCE=$(( 60 + opus_hits * 15 )) ;;
+    haiku)  CONFIDENCE=$(( 60 + haiku_hits * 15 ))
+            if [ "${words:-0}" -le 5 ]; then CONFIDENCE=$(( CONFIDENCE + 10 )); fi ;;
+    sonnet) if [ "${words:-0}" -le 4 ]; then CONFIDENCE=45; else CONFIDENCE=70; fi
+            if [ "${COMPASS_ROUTE_BUDGET_BIAS:-}" = low ] && [ "$CONFIDENCE" -lt 55 ]; then
+              MODEL="haiku"; REASON="$REASON; weak sonnet signal + budget-bias=low → haiku"
+            fi ;;
+  esac
+  CONFIDENCE=$(( CONFIDENCE > 99 ? 99 : CONFIDENCE ))
+}
+
 # ── --eval: score the router against the labeled ground truth ─────────────────
 run_eval() {
   local set="${1:-$HERE/route-evalset.tsv}"
@@ -79,14 +108,16 @@ run_eval() {
 }
 
 # ── arg parsing ───────────────────────────────────────────────────────────────
-EXPLAIN=0; TASK=""; EVAL=0; EVALSET=""
+EXPLAIN=0; TASK=""; EVAL=0; EVALSET=""; SCORE=0
 for a in "$@"; do
   case "$a" in
     --explain) EXPLAIN=1 ;;
     --eval)    EVAL=1 ;;
+    --score)   SCORE=1 ;;
     --help|-h)
-      printf 'usage: compass-route.sh [--explain] "<task>"  |  compass-route.sh --eval [set.tsv]\n'
-      printf 'Prints: haiku | sonnet | opus\n'; exit 0 ;;
+      printf 'usage: compass-route.sh [--explain|--score] "<task>"  |  compass-route.sh --eval [set.tsv]\n'
+      printf 'Prints: haiku | sonnet | opus   (--score appends a TAB confidence 0–100)\n'
+      printf 'Env: COMPASS_ROUTE_BUDGET_BIAS=low downgrades weak sonnet picks to haiku.\n'; exit 0 ;;
     -*) printf 'unknown option: %s\n' "$a" >&2; exit 2 ;;
     *)  if [ "$EVAL" = 1 ]; then EVALSET="$a"; else TASK="$a"; fi ;;
   esac
@@ -95,11 +126,17 @@ done
 if [ "$EVAL" = 1 ]; then run_eval "$EVALSET"; exit $?; fi
 
 if [ -z "$TASK" ]; then
-  printf 'usage: compass-route.sh [--explain] "<task description>"\n' >&2
+  printf 'usage: compass-route.sh [--explain|--score] "<task description>"\n' >&2
   exit 2
 fi
 
 # Call in the current shell so MODEL/REASON propagate (see route_one's note).
-route_one "$TASK"
-[ "$EXPLAIN" = 1 ] && printf 'route: %s (%s)\n' "$MODEL" "$REASON" >&2
-printf '%s\n' "$MODEL"
+if [ "$SCORE" = 1 ]; then
+  CONFIDENCE=0; route_score "$TASK"
+  [ "$EXPLAIN" = 1 ] && printf 'route: %s (%s) confidence=%s%%\n' "$MODEL" "$REASON" "$CONFIDENCE" >&2
+  printf '%s\t%s\n' "$MODEL" "$CONFIDENCE"
+else
+  route_one "$TASK"
+  [ "$EXPLAIN" = 1 ] && printf 'route: %s (%s)\n' "$MODEL" "$REASON" >&2
+  printf '%s\n' "$MODEL"
+fi
