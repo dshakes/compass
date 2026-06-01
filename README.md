@@ -85,13 +85,13 @@ Everything above is on after a single install. Here's what's in the box, each li
 - ✅ **Guardrails that stay out of your way.** 4 hooks block disasters, format edits, and orient the agent — silently. [→](#guardrails-and-automation)
 - ✅ **It onboards you and proves its value.** `compass onboard` gets you productive in a new repo in minutes; `compass impact` shows what it saved. [→](#the-compass-cli)
 - ✅ **Cheaper by design, measurably.** Model routing is now scored against an eval set and gated in CI. [→](#cost-model)
-- ✅ **Trust you can measure.** The guardrail is data-driven and **eval-gated** — `compass bench` reports its precision/recall (100/100 on an 85-case bypass corpus) and the router's accuracy, in CI. [→](docs/16-world-class.md)
-- ✅ **It remembers, sees, and improves.** Opt-in persistent **memory** carries learnings across sessions and repos; `compass dashboard` shows impact + spend + live fleet PRs in one panel; the **fleet brain** proposes new rules from recurring findings (you accept them). [→](docs/16-world-class.md)
+- ✅ **Trust you can measure.** The guardrail is data-driven and **eval-gated** — `compass bench` reports its precision/recall (100/100 on an 85-case bypass corpus) and the router's accuracy, in CI. [→](docs/16-hardening-and-frontier.md)
+- ✅ **It remembers, sees, and improves.** Opt-in persistent **memory** carries learnings across sessions and repos; `compass dashboard` shows impact + spend + live fleet PRs in one panel; the **fleet brain** proposes new rules from recurring findings (you accept them). [→](docs/16-hardening-and-frontier.md)
 
 <p align="center">
-  <img src="assets/world-class.svg" alt="The world-class layer: a HARDENED CORE (eval-gated guardrail, 85-case bypass corpus, compass bench at 100% precision/recall, actions audit), a FRONTIER of opt-in capabilities (persistent memory, parallel SDLC, fleet brain, cost-aware router, spec-kit interop, SBOM + signed commits), and a zero-infra CONTROL SURFACE (compass dashboard) — all flowing into an unmoved human merge gate." width="900">
+  <img src="assets/hardening-frontier.svg" alt="The hardening + frontier layer: a HARDENED CORE (eval-gated guardrail, 85-case bypass corpus, compass bench at 100% precision/recall, actions audit), a FRONTIER of opt-in capabilities (persistent memory, parallel SDLC, fleet brain, cost-aware router, spec-kit interop, SBOM + signed commits), and a zero-infra CONTROL SURFACE (compass dashboard) — all flowing into an unmoved human merge gate." width="900">
 </p>
-<p align="center"><sub>The hardening + frontier layer — measurable trust, self-improving config, cheaper & visible, human merge gate unmoved. <a href="docs/16-world-class.md">Full breakdown →</a></sub></p>
+<p align="center"><sub>The hardening + frontier layer — measurable trust, self-improving config, cheaper & visible, human merge gate unmoved. <a href="docs/16-hardening-and-frontier.md">Full breakdown →</a></sub></p>
 
 <div align="right"><a href="#contents">↑ top</a></div>
 
@@ -429,7 +429,7 @@ Hooks are the part that runs *for* you on every action — the difference betwee
 
 | Hook | Fires | What it does for you |
 |---|---|---|
-| **`protect-paths`** | before a command runs | **Blocks** secret writes, `rm -rf /` `~` `$HOME`, fork bombs, `curl \| sh`, and force-push / hard-reset to `main` — while letting real subpaths like `./build` through. The policy is [data-driven and **eval-gated**](docs/16-world-class.md): an 85-case bypass corpus + a `compass bench` precision/recall floor run in CI, so split-flag, quoted-`$HOME`, `find -delete`, `+refspec`-force and `curl\|zsh` variants don't slip through |
+| **`protect-paths`** | before a command runs | **Blocks** secret writes, `rm -rf /` `~` `$HOME`, fork bombs, `curl \| sh`, and force-push / hard-reset to `main` — while letting real subpaths like `./build` through. The policy is [data-driven and **eval-gated**](docs/16-hardening-and-frontier.md): an 85-case bypass corpus + a `compass bench` precision/recall floor run in CI, so split-flag, quoted-`$HOME`, `find -delete`, `+refspec`-force and `curl\|zsh` variants don't slip through |
 | **`format-on-edit`** | after every edit | Formats the file with its canonical formatter (gofmt, rustfmt, prettier/biome, ruff, shfmt, terraform, buf) — clean diffs, zero effort |
 | **`inject-context`** | at session start | Hands the agent the branch, dirty state, and recent commits up front, so it starts oriented |
 | **`notify`** | on finish / waiting | A desktop ping when a turn completes or needs your input (macOS / Linux) |
@@ -545,7 +545,7 @@ compass is built to be **trusted before it's run** — and honest about its limi
 | [13 · Dynamic workflows](docs/13-workflows.md) | parallel, adversarially-verified subagent orchestration |
 | [14 · Fleet](docs/14-fleet.md) | autonomous agent fleet + mobile mission-control (iMessage/WhatsApp · Telegram · GitHub Mobile) |
 | [15 · Competitive audit](docs/15-competitive-audit.md) | how compass compares to the 2026 field + the prioritized path to world-class |
-| [16 · World-class](docs/16-world-class.md) | the hardening + frontier layer: eval-gated guardrail, memory, parallel SDLC, fleet brain, dashboard, bench, SBOM |
+| [16 · Hardening + frontier](docs/16-hardening-and-frontier.md) | the hardening + frontier layer: eval-gated guardrail, memory, parallel SDLC, fleet brain, dashboard, bench, SBOM |
 | [ADRs](docs/adr/) | load-bearing decisions (cross-repo memory; autonomous-loop trust boundary) |
 
 <div align="center"><br><sub>MIT · built to be shared · contributions welcome</sub></div>

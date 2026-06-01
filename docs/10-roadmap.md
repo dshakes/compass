@@ -28,7 +28,7 @@ human merge/deploy gate is untouched). Per-item status:
 | + | **Reproducible benchmark** (precision/recall, CI-gated) | ✅ shipped | `compass bench` · `scripts/guardrail-corpus.tsv` |
 | + | **Dashboard** (impact + spend + live fleet PRs) | ✅ shipped | `compass dashboard` |
 | + | **SBOM + signed commits** (provenance) | ✅ shipped (opt-in) | `compass sbom` · `orchestrate.sh` `SDLC_SIGN=` `SDLC_SBOM=` |
-| + | **spec-kit interop** | ✅ shipped | `orchestrate.sh` spec auto-discovery → [16](16-world-class.md) |
+| + | **spec-kit interop** | ✅ shipped | `orchestrate.sh` spec auto-discovery → [16](16-hardening-and-frontier.md) |
 
 The detail below is the design rationale + how to enable each. Each was validated like the
 rest of the pipeline (lint, shellcheck, selftest, CI). Cross-repo memory stays ADR-gated.

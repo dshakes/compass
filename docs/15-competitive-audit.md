@@ -185,7 +185,7 @@ Across every category the same handful of gaps recur. In priority order:
 
 > **Status: R1–R14 are now implemented** — production-grade, opt-in where they add
 > spend/risk, each safety-critical piece CI-gated, human merge gate untouched. See
-> [docs/16 · World-class](16-world-class.md) for the built result. The list below is
+> [docs/16 · Hardening + frontier](16-hardening-and-frontier.md) for the built result. The list below is
 > kept as the original rationale; ✅ marks what shipped.
 
 Grouped by horizon. Each maps to a real, shipped harness primitive (compass's

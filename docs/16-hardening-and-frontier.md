@@ -1,4 +1,4 @@
-# World-class: the hardening + frontier layer
+# The hardening + frontier layer
 
 This is the implementation of the [competitive audit](15-competitive-audit.md)'s
 recommendations (R1–R14): every gap the audit found against the 2026 field, built
@@ -11,10 +11,10 @@ changes the product's spine — readable config, reversible install, you always 
 > are opt-in and labeled experimental in the same honest spirit as the rest of the repo.
 
 <p align="center">
-  <img src="../assets/world-class.svg" alt="The world-class layer in three bands flowing to an unmoved human merge gate. HARDENED CORE (stable, CI-gated): policy.sh data-driven guardrail · 85-case bypass corpus · compass bench (100% precision/recall, router 96.9%) · actions audit (drift, least-privilege, SHA-pinning, injection). FRONTIER (opt-in): persistent memory · parallel SDLC + test-impact + diff-size routing · fleet brain (recurring findings to proposed rules) · cost-aware router · spec-kit interop · SBOM + signed commits. CONTROL SURFACE: compass dashboard (impact, spend, live fleet PRs) · --html/--json. Everything flows to the HUMAN MERGE GATE — unmoved by design; you always merge and deploy." width="900">
+  <img src="../assets/hardening-frontier.svg" alt="The hardening + frontier layer in three bands flowing to an unmoved human merge gate. HARDENED CORE (stable, CI-gated): policy.sh data-driven guardrail · 85-case bypass corpus · compass bench (100% precision/recall, router 96.9%) · actions audit (drift, least-privilege, SHA-pinning, injection). FRONTIER (opt-in): persistent memory · parallel SDLC + test-impact + diff-size routing · fleet brain (recurring findings to proposed rules) · cost-aware router · spec-kit interop · SBOM + signed commits. CONTROL SURFACE: compass dashboard (impact, spend, live fleet PRs) · --html/--json. Everything flows to the HUMAN MERGE GATE — unmoved by design; you always merge and deploy." width="900">
 </p>
 
-<p align="center"><sub>↑ the world-class layer. Below, the same layer as a text diagram:</sub></p>
+<p align="center"><sub>↑ the hardening + frontier layer. Below, the same layer as a text diagram:</sub></p>
 
 ```mermaid
 flowchart TB

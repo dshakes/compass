@@ -26,7 +26,7 @@
     <g><path d="M0,-11 A11,11 0 1 1 -9.5,5.5" fill="none" stroke="#58a6ff" stroke-width="3" stroke-linecap="round"/>
        <polygon points="-12,1.8 -6.4,8.2 -14.6,10" fill="#58a6ff"/>
        <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="4s" repeatCount="indefinite"/></g>
-    <text x="34" y="-1" font-size="24" font-weight="800" fill="#f0f6fc">The world-class layer</text>
+    <text x="34" y="-1" font-size="24" font-weight="800" fill="#f0f6fc">The hardening + frontier layer</text>
     <text x="35" y="20" font-size="13.5" fill="#8b949e">measurable trust · self-improving config · cheaper, faster, visible — and <tspan fill="#3fb950" font-weight="700">you still merge</tspan></text>
   </g>
 
