@@ -13,7 +13,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  id-token: write        # claude-code-action fetches an OIDC token
+  id-token: write # claude-code-action fetches an OIDC token
 
 concurrency:
   group: sdlc-review-${{ github.event.pull_request.number }}
@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   review:
-    name: review           # stable check name — referenced by branch-protection required checks
+    name: review # stable check name — referenced by branch-protection required checks
     # Same-repo PRs only: secrets (and the loop) aren't available to forks; forks get a
     # read-only review on a best-effort basis but never the write-capable fix loop.
     if: github.event.pull_request.head.repo.full_name == github.repository
@@ -37,8 +37,8 @@ jobs:
         id: apptoken
         if: ${{ vars.SDLC_APP_ID != '' }}
         # A missing/invalid private key must not fail the job — fall through to
-        # SDLC_BOT_TOKEN / github.token (the loop degrades to manual). Makes the
-        # documented fallback real instead of erroring before it is reached.
+        # github.token (the loop degrades to manual). Makes the documented
+        # fallback real instead of erroring before it is reached.
         continue-on-error: true
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
@@ -48,7 +48,9 @@ jobs:
           # comments/labels. Downscope so that even if the org App grants
           # contents:write (needed by the fix/implement builders), an untrusted
           # PR can never drive a write-capable token through the read-only reviewer.
+          # issues:write is required by claude-code-action to post the PR comment.
           permission-contents: read
+          permission-issues: write
           permission-pull-requests: write
       - name: Claude review
         id: review
@@ -58,9 +60,12 @@ jobs:
           # To use a pay-per-use API key instead, replace the line below with:
           #   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # The App token (or SDLC_BOT_TOKEN) makes the label we set below trigger sdlc-fix.yml.
-          # Without either, the default token is used and the loop degrades to manual (see docs/09).
-          github_token: ${{ steps.apptoken.outputs.token || secrets.SDLC_BOT_TOKEN || github.token }}
+          # The App token makes the label we set below trigger sdlc-fix.yml.
+          # The reviewer deliberately does NOT fall back to SDLC_BOT_TOKEN (a broad,
+          # contents-write PAT) — that would defeat the least-privilege App token when
+          # the App is misconfigured. Degrade to the default github.token instead; the
+          # loop then runs in manual mode (see docs/09).
+          github_token: ${{ steps.apptoken.outputs.token || github.token }}
           prompt: |
             You are **Reviewer** (agent:review) in an autonomous SDLC pipeline.
             Review ONLY the changes in this pull request for correctness, security,
