@@ -55,6 +55,9 @@ usage: compass <command> [args]
                            from your phone DM via Telegram (free) or an iMessage/WhatsApp bridge
                            (long-running daemon; needs gh + a configured transport).
   doctor                   Validate the compass install (make doctor).
+  release [vX.Y.Z|--dry-run]
+                           Finish a release: push the tag, pin the Homebrew sha, publish the
+                           GitHub Release (notes from CHANGELOG). Idempotent; needs gh.
   help                     This message.
 
 Ledgers + config live in \${COMPASS_HOME:-~/.compass}. Everything is opt-in.
@@ -78,6 +81,7 @@ case "$cmd" in
   notify)   run notify "$@" ;;
   listen)   command -v node >/dev/null || { echo "compass listen: node required" >&2; exit 1; }; exec node "$SCRIPTS/compass-listen.mjs" "$@" ;;
   doctor)   exec make -C "$ROOT" doctor ;;
+  release)  exec "$SCRIPTS/release.sh" "$@" ;;
   -h|--help|help) usage ;;
   *) echo "compass: unknown command '$cmd'" >&2; echo; usage; exit 2 ;;
 esac
