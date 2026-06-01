@@ -146,6 +146,15 @@ printf "export const meta = { name: 'mismatch', description: 'x' }\nawait agent(
 if bash "$ROOT/scripts/check-workflows.sh" "$WF" >/dev/null 2>&1; then no "name!=filename should FAIL"; else ok "name/filename mismatch rejected"; fi
 rm -rf "$WF"
 
+echo "bench — reproducible scorecard meets its floors:"
+BJ="$("$COMPASS" bench --json 2>/dev/null)"
+has "guardrail precision 100"  "$BJ" '"precision":100'
+has "guardrail recall 100"     "$BJ" '"recall":100'
+has "router accuracy reported" "$BJ" '"router":{"accuracy":'
+if "$COMPASS" bench >/dev/null 2>&1; then ok "bench passes its gate (exit 0)"; else no "bench should pass its floors"; fi
+# prove the gate bites: an impossible recall floor must fail.
+if COMPASS_BENCH_RECALL_FLOOR=101 "$COMPASS" bench --guardrail >/dev/null 2>&1; then no "recall floor=101 should fail"; else ok "bench floor actually gates"; fi
+
 echo "check-actions — drift + injection gates bite:"
 if bash "$ROOT/scripts/check-actions.sh" >/dev/null 2>&1; then ok "repo workflows pass the actions audit"; else no "repo workflows should pass the actions audit"; fi
 AF="$(mktemp -d)"

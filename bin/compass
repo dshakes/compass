@@ -40,6 +40,9 @@ usage: compass <command> [args]
                            Local scheduled agents (cron + claude -p): dep-refresh,
                            flaky-triage, doc-freshness, pr-babysit.
   route   "<task>"         Print the cheapest-correct model tier (experimental).
+  bench   [--guardrail|--router|--json]
+                           Reproducible scorecard: guardrail precision/recall + router
+                           accuracy (deterministic, CI-gated). --sdlc <dir> for fix-rate.
   notify  "<message>"      DM your phone: Slack·Discord·Telegram·iMessage/WhatsApp
                            (set COMPASS_NOTIFY_URL/_TOKEN; --dry-run to preview).
   listen                   Run the command listener: act on /status /approve /hold /build
@@ -63,6 +66,7 @@ case "$cmd" in
   spend)    run spend "$@" ;;
   schedule) run schedule "$@" ;;
   route)    run route "$@" ;;
+  bench)    run bench "$@" ;;
   notify)   run notify "$@" ;;
   listen)   command -v node >/dev/null || { echo "compass listen: node required" >&2; exit 1; }; exec node "$SCRIPTS/compass-listen.mjs" "$@" ;;
   doctor)   exec make -C "$ROOT" doctor ;;

@@ -56,6 +56,9 @@ jobs:
       - name: Router eval (accuracy floor gates autoroute)
         run: bash scripts/compass-route.sh --eval
 
+      - name: Benchmark scorecard (guardrail precision/recall + router accuracy, gated)
+        run: bash scripts/compass-bench.sh
+
       - name: SDLC loop self-test (round cap + verdict parsing)
         run: bash sdlc/selftest.sh
 
