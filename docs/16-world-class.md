@@ -10,6 +10,12 @@ changes the product's spine — readable config, reversible install, you always 
 > CI-gated. Memory, the fleet brain, parallel orchestration, and the cost-aware router
 > are opt-in and labeled experimental in the same honest spirit as the rest of the repo.
 
+<p align="center">
+  <img src="../assets/world-class.svg" alt="The world-class layer in three bands flowing to an unmoved human merge gate. HARDENED CORE (stable, CI-gated): policy.sh data-driven guardrail · 85-case bypass corpus · compass bench (100% precision/recall, router 96.9%) · actions audit (drift, least-privilege, SHA-pinning, injection). FRONTIER (opt-in): persistent memory · parallel SDLC + test-impact + diff-size routing · fleet brain (recurring findings to proposed rules) · cost-aware router · spec-kit interop · SBOM + signed commits. CONTROL SURFACE: compass dashboard (impact, spend, live fleet PRs) · --html/--json. Everything flows to the HUMAN MERGE GATE — unmoved by design; you always merge and deploy." width="900">
+</p>
+
+<p align="center"><sub>↑ the world-class layer. Below, the same layer as a text diagram:</sub></p>
+
 ```mermaid
 flowchart TB
   subgraph HARDEN["🛡️ Hardened core — stable, CI-gated"]

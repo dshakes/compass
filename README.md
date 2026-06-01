@@ -88,6 +88,11 @@ Everything above is on after a single install. Here's what's in the box, each li
 - ✅ **Trust you can measure.** The guardrail is data-driven and **eval-gated** — `compass bench` reports its precision/recall (100/100 on an 85-case bypass corpus) and the router's accuracy, in CI. [→](docs/16-world-class.md)
 - ✅ **It remembers, sees, and improves.** Opt-in persistent **memory** carries learnings across sessions and repos; `compass dashboard` shows impact + spend + live fleet PRs in one panel; the **fleet brain** proposes new rules from recurring findings (you accept them). [→](docs/16-world-class.md)
 
+<p align="center">
+  <img src="assets/world-class.svg" alt="The world-class layer: a HARDENED CORE (eval-gated guardrail, 85-case bypass corpus, compass bench at 100% precision/recall, actions audit), a FRONTIER of opt-in capabilities (persistent memory, parallel SDLC, fleet brain, cost-aware router, spec-kit interop, SBOM + signed commits), and a zero-infra CONTROL SURFACE (compass dashboard) — all flowing into an unmoved human merge gate." width="900">
+</p>
+<p align="center"><sub>The hardening + frontier layer — measurable trust, self-improving config, cheaper & visible, human merge gate unmoved. <a href="docs/16-world-class.md">Full breakdown →</a></sub></p>
+
 <div align="right"><a href="#contents">↑ top</a></div>
 
 ---
