@@ -22,7 +22,7 @@ jobs:
         run: make doctor
 
       - name: shellcheck (errors fail the build)
-        run: shellcheck -S error claude/hooks/*.sh claude/hooks/lib/*.sh claude/statusline.sh scripts/*.sh bin/compass install.sh quickstart.sh claude/skills/*/*.sh sdlc/*.sh
+        run: shellcheck -S error claude/hooks/*.sh claude/hooks/lib/*.sh claude/statusline.sh scripts/*.sh bin/compass install.sh quickstart.sh claude/skills/*/*.sh sdlc/*.sh router/*.sh
 
       - name: shellcheck (style — informational)
         run: shellcheck -S style claude/hooks/*.sh scripts/*.sh install.sh || true
@@ -46,6 +46,9 @@ jobs:
 
       - name: MCP supply-chain audit (version pins + manifest integrity)
         run: bash scripts/check-mcp.sh
+
+      - name: Router module (accuracy + cost-at-iso-quality, gated)
+        run: bash router/test.sh
 
       - name: compass CLI tests (route · spend · impact · notify · listen parser)
         run: bash scripts/test-cli.sh
