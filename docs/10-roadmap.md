@@ -11,7 +11,7 @@ human merge/deploy gate is untouched). Per-item status:
 | 3 | Agent-team review | ✅ shipped (experimental) | `/team-review` |
 | 4 | Goal-oriented convergence | ✅ shipped (opt-in) | `orchestrate.sh` `SDLC_CONVERGE=1` |
 | 5 | Forked-subagent triage | ✅ shipped (opt-in) | `debugger` + `CLAUDE_CODE_FORK_SUBAGENT=1` |
-| 6 | Cross-repo memory | 🔵 ADR + reference scaffold (not enabled) | `docs/adr/0001` · `mcp/compass-memory/` |
+| 6 | Cross-repo memory | ✅ shipped (opt-in hooks, local v1) | `session-memory.sh` · `record-learning.sh` · `mcp/compass-memory/` · ADR-0001 |
 | 7 | WIP checkpointing | ✅ shipped (opt-in hook) | `claude/hooks/checkpoint-wip.sh` |
 | 8 | Hooks-as-policy | ✅ shipped (opt-in hooks) | `route-intent.sh` + `require-tests.sh` (test-diff gate) |
 | + | **Dynamic workflows** (parallel, adversarially-verified subagents) | ✅ shipped (research preview) | `claude/workflows/` → `/compass-review` `/compass-audit` `/compass-plan` · [docs](13-workflows.md) |
@@ -20,6 +20,15 @@ human merge/deploy gate is untouched). Per-item status:
 | + | Spec/intent-driven mode | ✅ shipped | `/spec` + `orchestrate.sh` `SDLC_SPEC=` |
 | + | Browser agent | ✅ shipped (opt-in MCP) | `mcp/servers.json` → `browser` |
 | + | Human-gated auto-merge | ✅ shipped (opt-in) | `setup.sh --protect` → `gh pr merge --auto` |
+| + | **Eval-gated guardrail** (data-driven policy + bypass corpus) | ✅ shipped | `claude/hooks/lib/policy.sh` · `scripts/test-protect-paths.sh` · `compass bench` |
+| + | **Actions audit** (drift · least-priv · pinning · injection) | ✅ shipped | `scripts/check-actions.sh` (CI + doctor) |
+| + | **Parallel orchestrator** + test-impact + diff-size routing | ✅ shipped (opt-in) | `orchestrate.sh` `SDLC_PARALLEL=` `SDLC_TEST_IMPACT=` |
+| + | **Cost-aware router** (confidence + budget bias) | ✅ shipped (opt-in) | `compass route --score` · `COMPASS_ROUTE_BUDGET_BIAS` |
+| + | **Fleet brain** (recurring findings → proposed rules) | ✅ shipped (opt-in) | `compass policy-synth` · `sdlc/routines/policy-synth.yml` |
+| + | **Reproducible benchmark** (precision/recall, CI-gated) | ✅ shipped | `compass bench` · `scripts/guardrail-corpus.tsv` |
+| + | **Dashboard** (impact + spend + live fleet PRs) | ✅ shipped | `compass dashboard` |
+| + | **SBOM + signed commits** (provenance) | ✅ shipped (opt-in) | `compass sbom` · `orchestrate.sh` `SDLC_SIGN=` `SDLC_SBOM=` |
+| + | **spec-kit interop** | ✅ shipped | `orchestrate.sh` spec auto-discovery → [16](16-world-class.md) |
 
 The detail below is the design rationale + how to enable each. Each was validated like the
 rest of the pipeline (lint, shellcheck, selftest, CI). Cross-repo memory stays ADR-gated.

@@ -183,74 +183,79 @@ Across every category the same handful of gaps recur. In priority order:
 
 ## 5. Recommendations — the path to world-class & futuristic
 
+> **Status: R1–R14 are now implemented** — production-grade, opt-in where they add
+> spend/risk, each safety-critical piece CI-gated, human merge gate untouched. See
+> [docs/16 · World-class](16-world-class.md) for the built result. The list below is
+> kept as the original rationale; ✅ marks what shipped.
+
 Grouped by horizon. Each maps to a real, shipped harness primitive (compass's
 own rule), is opt-in, and leaves the human merge gate untouched.
 
 ### Now — hardening (close the trust gaps; low effort, high credibility)
 
-- **R1 · Guardrail bypass-corpus test.** Add a table-driven test
+- ✅ **R1 · Guardrail bypass-corpus test.** Add a table-driven test
   (`scripts/test-protect-paths.sh`) with ~40 must-block / ~20 must-allow command
   strings, wired into CI. Highest ROI item in the repo — it protects the file
   everyone trusts most.
-- **R2 · Close the cheap guardrail gaps.** Add `find … -delete`, the
+- ✅ **R2 · Close the cheap guardrail gaps.** Add `find … -delete`, the
   `git push origin +ref:main` force form, `rm -rf` of common system dirs
   (`/usr /etc /var /bin /lib /boot`), and redirect-truncation (`> file`) of
   tracked files. Keep it honest — these are footgun coverage, not a sandbox.
-- **R3 · De-dup the workflow trees.** One templated source for
+- ✅ **R3 · De-dup the workflow trees.** One templated source for
   `sdlc/workflows` vs `sdlc/selfhosted` + a CI diff gate, mirroring the existing
   plugin-sync check. Removes silent drift.
-- **R4 · Pin GitHub Actions + least-privilege audit.** Verify every workflow has
+- ✅ **R4 · Pin GitHub Actions + least-privilege audit.** Verify every workflow has
   a minimal top-level `permissions:` block and no untrusted
   `${{ github.event.* }}` interpolated into `run:` (script-injection class). CI
   already runs actionlint; add the permissions assertion.
 
 ### Next — close the field's lead (medium effort, high differentiation)
 
-- **R5 · Turn on persistent context (the big one).** Promote
+- ✅ **R5 · Turn on persistent context (the big one).** Promote
   `compass-memory` from ADR-scaffold to an opt-in default: a `SessionStart`
   hook injects top-relevant prior learnings; `Stop`/`SubagentStop` records
   durable ones; redaction + per-repo trust tiers already designed. Then feed the
   **review workflow** repo context too — even a lightweight `ctags`/embeddings
   index of touched-symbols' call sites closes most of the Greptile/Qodo gap
   without a hosted service.
-- **R6 · `compass dashboard` (zero-infra TUI).** A read-only terminal panel
+- ✅ **R6 · `compass dashboard` (zero-infra TUI).** A read-only terminal panel
   (or a single static HTML it writes to `~/.compass/`) that renders fleet PR
   state, spend, footguns-blocked, and converge-loop status from the existing
   ledgers + `gh`. Gives the "I can see it" surface without becoming a service.
-- **R7 · Parallel orchestrator.** Adopt the dynamic-workflow / agent-team
+- ✅ **R7 · Parallel orchestrator.** Adopt the dynamic-workflow / agent-team
   primitive in `orchestrate.sh --team` so Review/Security/QA run concurrently
   (roadmap §3). Same gates, lower wall-clock — directly answers Factory/Cursor.
-- **R8 · Publish a benchmark.** A small, reproducible eval: run the SDLC loop on
+- ✅ **R8 · Publish a benchmark.** A small, reproducible eval: run the SDLC loop on
   a fixed set of seeded-bug repos, report fix-rate + review precision/recall +
   $/task, gated in CI like the router eval already is. Converts the pitch from
   adjectives to numbers.
-- **R9 · Test-impact selection + diff-size routing.** Already on the roadmap
+- ✅ **R9 · Test-impact selection + diff-size routing.** Already on the roadmap
   (§10): run only tests affected by the diff; use haiku review for ≤N-line
   diffs. Pure latency/cost win.
 
 ### Futuristic — the leapfrog bets (where compass can lead, not follow)
 
-- **R10 · "Policy-as-code" guardrails with an eval, not regex.** Evolve hooks
+- ✅ **R10 · "Policy-as-code" guardrails with an eval, not regex.** Evolve hooks
   from grep patterns to a small, declarative, *tested* policy file (the OWASP/
   NIST/EU-AI-Act "AI gateway guardrail" pattern the enterprise field is moving
   to) — compass already has the eval-gate muscle (`route --eval`) to make policy
   changes *measured*. This would make compass the only readable, self-hosted,
   *evaluated* guardrail layer.
-- **R11 · Cross-model, cost-aware smart router (real, not keyword).** Today's
+- ✅ **R11 · Cross-model, cost-aware smart router (real, not keyword).** Today's
   router is a deterministic keyword matcher (good, honest, evaluated). The
   frontier (Factory, Requesty-style gateways) routes per-subtask across
   providers by measured difficulty/cost. Keep the deterministic floor; add an
   optional learned tier scored against the same evalset.
-- **R12 · A "fleet brain" — org-wide learnings + auto-policy.** Once R5 memory
+- ✅ **R12 · A "fleet brain" — org-wide learnings + auto-policy.** Once R5 memory
   exists, let the fleet *learn its own guardrails*: recurring review findings →
   a proposed `CLAUDE.md` rule or a new policy check (human-approved). This is
   the self-improving loop the "self-learning hooks" crowd is gesturing at, but
   governed and auditable.
-- **R13 · Spec-kit interop.** spec-kit owns spec-driven dev and works with 30+
+- ✅ **R13 · Spec-kit interop.** spec-kit owns spec-driven dev and works with 30+
   agents. Rather than compete, make compass *consume* a spec-kit `spec.md`/
   `plan.md` natively in `orchestrate.sh` (compass already has `SDLC_SPEC=`). Be
   the *governance + execution* layer under the spec-driven standard.
-- **R14 · Supply-chain & SBOM gate + signed Builder commits.** Already flagged
+- ✅ **R14 · Supply-chain & SBOM gate + signed Builder commits.** Already flagged
   (roadmap §11). In a world of autonomous PRs, "this fix was generated by an
   agent, here's its provenance and SBOM delta" becomes a trust differentiator no
   SaaS competitor offers transparently.
