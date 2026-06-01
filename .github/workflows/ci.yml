@@ -50,6 +50,9 @@ jobs:
       - name: Workflow scripts (shape + JS syntax)
         run: bash scripts/check-workflows.sh
 
+      - name: Actions audit (mirror drift · least-privilege · SHA-pinning · run-block injection)
+        run: bash scripts/check-actions.sh
+
       - name: Router eval (accuracy floor gates autoroute)
         run: bash scripts/compass-route.sh --eval
 

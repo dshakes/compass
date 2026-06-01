@@ -101,6 +101,13 @@ printf "export const meta = { name: 'mismatch', description: 'x' }\nawait agent(
 if bash "$ROOT/scripts/check-workflows.sh" "$WF" >/dev/null 2>&1; then no "name!=filename should FAIL"; else ok "name/filename mismatch rejected"; fi
 rm -rf "$WF"
 
+echo "check-actions — drift + injection gates bite:"
+if bash "$ROOT/scripts/check-actions.sh" >/dev/null 2>&1; then ok "repo workflows pass the actions audit"; else no "repo workflows should pass the actions audit"; fi
+AF="$(mktemp -d)"
+printf 'name: bad\non: [pull_request]\njobs:\n  x:\n    runs-on: ubuntu-latest\n    steps:\n      - run: |\n          echo "${{ github.event.issue.body }}"\n' > "$AF/bad.yml"
+if bash "$ROOT/scripts/check-actions.sh" --lint "$AF/bad.yml" >/dev/null 2>&1; then no "run-block injection + missing-permissions should FAIL"; else ok "injection / missing-permissions rejected"; fi
+rm -rf "$AF"
+
 echo "quickstart — non-interactive dry-run is side-effect-free:"
 QS="$("$ROOT/quickstart.sh" --dry-run --yes 2>&1)"; QSRC=$?
 eq  "quickstart --dry-run --yes exit 0" "$QSRC" 0

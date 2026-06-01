@@ -55,6 +55,14 @@ if [ -d "$REPO"/claude/workflows ]; then
   else fail "workflow scripts invalid — run: scripts/check-workflows.sh"; fi
 fi
 
+# GitHub Actions: mirror drift + least-privilege + SHA-pinning + run-block injection.
+if "$REPO"/scripts/check-actions.sh >/dev/null 2>&1; then pass "actions audit clean (drift · permissions · pinning · injection)"
+else fail "actions audit failed — run: scripts/check-actions.sh"; fi
+
+# Guardrail policy: the bypass corpus must pass (the safety-critical eval).
+if "$REPO"/scripts/test-protect-paths.sh >/dev/null 2>&1; then pass "guardrail bypass corpus passes (protect-paths policy)"
+else fail "guardrail corpus failed — run: scripts/test-protect-paths.sh"; fi
+
 # Fleet / mobile: notify smoke + the listener's command parser.
 if printf '%s' "$(COMPASS_NOTIFY_SLACK='https://hooks.test/x' "$REPO"/scripts/compass-notify.sh --dry-run 'doctor smoke' 2>&1)" | grep -q 'slack: POST'; then
   pass "compass notify dry-run works (channel-agnostic)"
