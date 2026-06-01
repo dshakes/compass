@@ -41,6 +41,10 @@ jobs:
       - name: Mint GitHub App token
         id: apptoken
         if: ${{ vars.SDLC_APP_ID != '' }}
+        # A missing/invalid private key must not fail the job — fall through to
+        # SDLC_BOT_TOKEN / github.token (the loop degrades to manual). Makes the
+        # documented fallback real instead of erroring before it is reached.
+        continue-on-error: true
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ vars.SDLC_APP_ID }}
