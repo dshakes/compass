@@ -16,15 +16,24 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# ── tier rules (first match wins) ────────────────────────────────────────────
+# ── tier rules — loaded from the router module (THE single source of truth) ──────
 #
-# opus  — high-stakes: architecture, security, auth, crypto, concurrency,
-#         multi-tenancy, protocol design, threat modelling.
-# haiku — trivial: typos, renames, formatting, comments, version bumps,
-#         one-liners.
-# sonnet (default) — features, fixes, tests, refactors, docs.
-OPUS_PAT='architect|security|\bauth\b|authn|authz|crypto|encrypt|migration|concurren|race condition|deadlock|tenant|isolation|protocol|threat|redesign|sharding|trust model'
-HAIKU_PAT='typo|rename|reformat|format this|formatter|\blint\b|comment|docstring|copyright|trailing whitespace|one.liner|\bbump\b|version in|log statement'
+# The patterns + tiers live in exactly one place: router/router.json. The standalone
+# module (router/route.sh, router/bench.sh) and this richer CLI (--eval / --score) both
+# read that spec, so they can never drift. jq is a compass dependency; if it or the spec
+# is missing we exit non-zero (callers like orchestrate.sh's autoroute fall back to sonnet).
+#   opus  — high-stakes (architecture, security/auth/crypto, concurrency, migrations, tenancy)
+#   haiku — trivial (typos, renames, formatting, comments, version bumps, one-liners)
+#   sonnet (default) — features, fixes, tests, refactors, docs
+ROUTER_SPEC="${COMPASS_ROUTER_SPEC:-$HERE/../router/router.json}"
+command -v jq >/dev/null 2>&1 || { echo "compass route: jq required (reads router/router.json)" >&2; exit 2; }
+[ -f "$ROUTER_SPEC" ] || { echo "compass route: router spec not found: $ROUTER_SPEC" >&2; exit 2; }
+# jq -r (not @tsv) so backslashes in patterns like \bauth\b survive intact.
+OPUS_PAT="$(jq -r '[.rules[] | select(.tier=="opus")  | .pattern] | .[0] // empty' "$ROUTER_SPEC")"
+HAIKU_PAT="$(jq -r '[.rules[] | select(.tier=="haiku") | .pattern] | .[0] // empty' "$ROUTER_SPEC")"
+ROUTER_DEFAULT="$(jq -r '.default' "$ROUTER_SPEC")"
+[ -n "$OPUS_PAT" ] && [ -n "$HAIKU_PAT" ] && [ -n "$ROUTER_DEFAULT" ] \
+  || { echo "compass route: spec missing opus/haiku rules or default — $ROUTER_SPEC" >&2; exit 2; }
 
 # route_one "<task>" -> sets globals MODEL and REASON (prints nothing). Single source
 # of truth for the tiering, reused by both the CLI path and --eval. Callers must invoke
@@ -37,7 +46,7 @@ route_one() {
   elif printf '%s' "$task_lc" | grep -qE "$HAIKU_PAT"; then
     MODEL="haiku"; REASON="matched haiku keyword"
   else
-    MODEL="sonnet"; REASON="no opus/haiku keyword matched — defaulting to sonnet"
+    MODEL="$ROUTER_DEFAULT"; REASON="no opus/haiku keyword matched — defaulting to $ROUTER_DEFAULT"
   fi
 }
 
