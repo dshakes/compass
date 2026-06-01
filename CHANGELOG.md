@@ -5,8 +5,34 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-06-01
+
+Closes the gap analysis G1–G7 — a security, supply-chain, and DX hardening pass (#8).
+Every item is CI-gated; the full local gate is green.
+
 ### Added
 
+- **Secret scanning at the agent boundary** (G1) — `compass scan [--staged|--diff|--all]`
+  finds secrets before they're committed (pre-commit / CI). High-precision built-in detectors
+  (Anthropic/OpenAI/AWS/GitHub/GCP/Slack/Stripe/GitLab/npm/private-key) are the deterministic
+  gate; `gitleaks` adds depth when installed. Mark a deliberate placeholder with an
+  `allowlist secret` comment.
+- **MCP supply-chain pinning** (G3) — every executable MCP server in `mcp/servers.json` is
+  pinned to an explicit version (no `@latest`). `scripts/check-mcp.sh` enforces pins +
+  manifest integrity (shell-injection markers) as a `setup-mcp` pre-flight and in `doctor` + CI.
+- **Release provenance** (G4) — `.github/workflows/release-sign.yml` emits a keyless SLSA
+  build-provenance attestation for every `v*` tag; `compass verify [vX.Y.Z|FILE]` rejects a
+  tampered or look-alike tarball (needs `gh`).
+- **`compass drift`** (G5) — diffs the installed `~/.claude` (and `~/.codex`) against the repo
+  source: clobbered/repointed symlinks, hand-edited or stale copies, dangling links, and a
+  guardrail hook that lost its `+x` bit.
+- **`compass audit-log`** (G6) — a structured JSONL trail of every blocked/gated action
+  (ts · decision · tool · rule · redacted detail); `--since` / `--json` for SIEM export.
+- **`compass sandbox -- CMD`** (G2) — a real containment boundary (no network, writes confined
+  to cwd + temp) via bubblewrap / firejail / macOS `sandbox-exec`, for untrusted code. Refuses
+  rather than run unconfined when no backend is available.
+- **`harden` skill** (G7) — a repeatable pre-ship security sweep (scan → check-mcp → drift →
+  verify → sandbox).
 - **One-click release workflow** (`sdlc/workflows/release.yml`, dogfooded at
   `.github/workflows/release.yml`) — a `workflow_dispatch` job that cuts a release from the
   Actions tab / GitHub Mobile (no terminal): resolves the version (input or newest
@@ -14,6 +40,26 @@ All notable changes to this project are documented here. Format loosely follows
   from the CHANGELOG, and — if the repo ships a Homebrew tap formula — opens a formula-bump
   PR. Generic (the formula step self-skips when there's no `Formula/*.rb`), idempotent, and
   installed into any repo by `sdlc/setup.sh --workflows`. The local twin is `compass release`.
+
+### Security
+
+- **Inline-secret write-hook** (G1) — `protect-paths` now blocks a Write/Edit that introduces
+  a recognizable live credential into a file's content, not just secret file paths.
+- **Pinned, integrity-checked MCP manifest** (G3) — a compromised upstream MCP release is no
+  longer auto-pulled (tool-poisoning / CVE-2025-54136), and a tampered manifest is rejected.
+- **Signed releases** (G4) — provenance you can verify, alongside the existing Homebrew `sha256` pin.
+- **Real sandbox for untrusted code** (G2) — an actual boundary beside the (honestly
+  best-effort) footgun-reducing hooks.
+- **Repo secret self-scan in CI** — `compass scan --all` runs in CI so no credential lands in
+  the repo.
+
+### Fixed
+
+- **`policy-synth` parses on bash 3.2** (macOS `/bin/bash`) — a heredoc-in-command-substitution
+  with apostrophes broke it on every macOS run; switched to `read -r -d ''`.
+- **SDLC orchestrator tests are source-anchored** — `selftest.sh` asserts its mirrored logic
+  still matches `orchestrate.sh`, so drift in budget / round-cap / diff-threshold / spec-order
+  fails the suite instead of passing silently.
 
 ## [0.10.1] — 2026-06-01
 
