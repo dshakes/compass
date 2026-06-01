@@ -5,6 +5,29 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.10.1] — 2026-06-01
+
+### Security
+
+- **Reviewer App-token scoped to least privilege** (#7) — `sdlc-review.yml` minted its
+  GitHub App installation token without constraining permissions, so a `read-only` reviewer
+  could receive a `contents:write` token when the org App grants it (needed by the
+  fix/implement builders). The reviewer now requests `permission-contents: read` +
+  `permission-issues: write` + `permission-pull-requests: write`, so untrusted PR content can
+  never drive a write-capable token through the read-only reviewer. The builders keep their
+  broad write token (they legitimately push).
+- **Reviewer no longer falls back to `SDLC_BOT_TOKEN`** (#7) — the reviewer degrades to the
+  default `github.token` (loop runs in manual mode) instead of a broad contents-write PAT, so a
+  misconfigured App can't silently re-grant write access.
+
+### Fixed
+
+- **App-token fallback is now real** (#7) — all five `Mint GitHub App token` steps
+  (`review`/`fix`/`implement`/`implement-on-label`/`control`) are `continue-on-error: true`, so a
+  missing/invalid `SDLC_APP_PRIVATE_KEY` falls through to `SDLC_BOT_TOKEN`/`github.token` instead
+  of failing the job before the documented fallback is reached. Templates + `.github/` mirrors
+  updated identically (drift gate clean).
+
 ## [0.10.0] — 2026-06-01
 
 ### Added — hardening + frontier layer (competitive-audit recommendations R1–R14)
