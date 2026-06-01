@@ -31,12 +31,12 @@ check("explicit deny", store.trust_tier("evil", TRUST), "deny")
 # secret detection
 check(
     "anthropic key is secret",
-    store.looks_secret("key sk-ant-oat01-abcdefghijklmnop"),
+    store.looks_secret("key sk-ant-oat01-abcdefghijklmnop"),  # allowlist secret
     True,
 )
 check(
     "github token is secret",
-    store.looks_secret("ghp_0123456789abcdefghijABCDEFG"),
+    store.looks_secret("ghp_0123456789abcdefghijABCDEFG"),  # allowlist secret
     True,
 )
 check("password kv is secret", store.looks_secret("password = hunter2"), True)

@@ -59,6 +59,10 @@ fi
 if "$REPO"/scripts/check-actions.sh >/dev/null 2>&1; then pass "actions audit clean (drift · permissions · pinning · injection)"
 else fail "actions audit failed — run: scripts/check-actions.sh"; fi
 
+# MCP supply chain: every executable server pinned, no injection markers in the manifest.
+if "$REPO"/scripts/check-mcp.sh >/dev/null 2>&1; then pass "MCP manifest clean (version-pinned · no injection markers)"
+else fail "MCP manifest audit failed — run: scripts/check-mcp.sh"; fi
+
 # Guardrail policy: the bypass corpus must pass (the safety-critical eval).
 if "$REPO"/scripts/test-protect-paths.sh >/dev/null 2>&1; then pass "guardrail bypass corpus passes (protect-paths policy)"
 else fail "guardrail corpus failed — run: scripts/test-protect-paths.sh"; fi

@@ -21,6 +21,13 @@ command -v jq >/dev/null || { echo "jq required for setup-mcp.sh" >&2; exit 1; }
 run() { if [ "$DRY" = 1 ]; then echo "  [dry-run] $*"; else eval "$*"; fi; }
 say() { printf '  %s\n' "$*"; }
 
+# Supply-chain pre-flight: never register an unpinned or tampered manifest.
+if [ -x "$REPO/scripts/check-mcp.sh" ]; then
+  "$REPO/scripts/check-mcp.sh" "$MANIFEST" \
+    || { echo "setup-mcp: manifest failed the supply-chain audit (above) — refusing to register." >&2; exit 1; }
+  echo
+fi
+
 # Existing Codex plugin keywords, to avoid duplicating (e.g. "github").
 codex_plugins=""
 [ -f "$CODEX" ] && codex_plugins="$(grep -oE '\[plugins\."[a-z0-9-]+' "$CODEX" 2>/dev/null | sed 's/.*"//' | tr '\n' ' ')"

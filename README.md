@@ -111,7 +111,7 @@ brew install dshakes/compass/compass     # latest release · add --HEAD to track
 compass quickstart                       # previews, asks, then wires it into ~/.claude
 ```
 
-`brew upgrade compass` updates it; `compass --version`-style pinning comes from the tag you installed. The formula is right here in the repo — [`Formula/compass.rb`](Formula/compass.rb) — read it first.
+`brew upgrade compass` updates it; `compass --version`-style pinning comes from the tag you installed. The formula is right here in the repo — [`Formula/compass.rb`](Formula/compass.rb) — read it first. **Verify provenance** before trusting a download: `compass verify` confirms the release tarball carries a keyless [SLSA build-provenance attestation](https://slsa.dev) signed by this repo's [`release-sign.yml`](.github/workflows/release-sign.yml) workflow (needs `gh`) — a tampered or look-alike tarball is rejected.
 
 ### 📦 Git clone — *own and edit your config (recommended)*
 
@@ -429,7 +429,7 @@ Hooks are the part that runs *for* you on every action — the difference betwee
 
 | Hook | Fires | What it does for you |
 |---|---|---|
-| **`protect-paths`** | before a command runs | **Blocks** secret writes, `rm -rf /` `~` `$HOME`, fork bombs, `curl \| sh`, and force-push / hard-reset to `main` — while letting real subpaths like `./build` through. The policy is [data-driven and **eval-gated**](docs/16-hardening-and-frontier.md): an 85-case bypass corpus + a `compass bench` precision/recall floor run in CI, so split-flag, quoted-`$HOME`, `find -delete`, `+refspec`-force and `curl\|zsh` variants don't slip through |
+| **`protect-paths`** | before a command runs | **Blocks** secret writes, **secrets pasted *into* a file's content** (Anthropic/OpenAI/AWS/GitHub… key formats — caught before the write lands), `rm -rf /` `~` `$HOME`, fork bombs, `curl \| sh`, and force-push / hard-reset to `main` — while letting real subpaths like `./build` through. The policy is [data-driven and **eval-gated**](docs/16-hardening-and-frontier.md): a bypass corpus + a `compass bench` precision/recall floor run in CI, so split-flag, quoted-`$HOME`, `find -delete`, `+refspec`-force and `curl\|zsh` variants don't slip through. Pairs with **`compass scan`** for the commit boundary |
 | **`format-on-edit`** | after every edit | Formats the file with its canonical formatter (gofmt, rustfmt, prettier/biome, ruff, shfmt, terraform, buf) — clean diffs, zero effort |
 | **`inject-context`** | at session start | Hands the agent the branch, dirty state, and recent commits up front, so it starts oriented |
 | **`notify`** | on finish / waiting | A desktop ping when a turn completes or needs your input (macOS / Linux) |
@@ -458,11 +458,16 @@ Hooks are the part that runs *for* you on every action — the difference betwee
 | **`compass status`** `[dir]` | **Is compass enabled here?** Shows the global config plus this repo's per-repo extras. |
 | **`compass onboard`** `[dir]` · `--all <glob>` | Detect the stack → install deps → get build + test green → write a grounded `CLAUDE.md` → print a codebase map. `--all` does many repos with a per-repo budget cap. |
 | **`compass impact`** | **What compass saved you:** footguns blocked, files auto-formatted, spend by model, and an estimated `$` saved versus running everything on Opus. |
+| **`compass audit-log`** `[--since\|--json]` | **The security trail.** Every gated action (secret write, dangerous command, scan hit) is one JSON line in `audit.jsonl` — tool · rule · decision · redacted detail. Turns "N footguns blocked" into evidence you can show a security team or pipe to a SIEM. |
 | **`compass spend`** `[--week\|--month]` | Agent cost rolled up by model and repo, against a budget (`COMPASS_BUDGET_USD`). |
 | **`compass route`** `"<task>"` · `--eval` · `--score` | Picks the cheapest-correct model tier for a task. `--eval` scores the picker against a labeled set (CI-gated); `--score` adds a confidence + cost-aware budget bias. |
 | **`compass dashboard`** `[--html]` | **Mission control:** one read-only panel of impact + spend + **live fleet PR state** (via `gh`). `--html` writes a shareable page. No service, no upload. |
 | **`compass bench`** `[--guardrail\|--router]` | **Reproducible scorecard:** guardrail precision/recall + router accuracy — deterministic and CI-gated, so the claims are numbers, not adjectives. |
 | **`compass sbom`** `[--gate]` | Dependency SBOM + native vuln audit (npm/go/cargo/pip/syft). `--gate` fails on known vulns. |
+| **`compass drift`** `[--json]` | **Is the install still faithful to the source?** Diffs `~/.claude` (and `~/.codex`) against the repo — clobbered/repointed symlinks, hand-edited or stale copies, dangling links, and a guardrail hook that lost its `+x` bit (a silently-disabled safety net). The question `doctor`'s existence check can't answer. |
+| **`compass scan`** `[--staged\|--diff\|--all]` | **Secret scanning at the commit boundary** — the companion to the write-hook. High-precision built-in detectors (Anthropic/OpenAI/AWS/GitHub/GCP/Slack/Stripe… keys) are the deterministic gate; uses `gitleaks` for extra depth if installed. Exits non-zero on a hit, so it drops into a pre-commit hook or CI. Mark a deliberate placeholder with an `allowlist secret` comment. |
+| **`compass sandbox`** `-- CMD` | **A real containment boundary** (unlike the footgun-reducing hooks): runs `CMD` with **no network** and writes confined to cwd + temp, via bubblewrap / firejail / macOS `sandbox-exec`. For untrusted code — a downloaded build, a script you didn't write. Refuses rather than run unconfined if no backend exists. |
+| **`compass verify`** `[vX.Y.Z\|FILE]` | **Release provenance:** confirms a tarball carries the keyless SLSA attestation built by `release-sign.yml` (needs `gh`). A tampered or look-alike tarball is rejected. |
 | **`compass policy-synth`** | **Fleet brain:** clusters recurring review findings into *proposed* CLAUDE.md rules — you accept them; it never edits the manual. |
 | **`compass schedule`** `add\|run <routine>` | Local cron agents that open PRs/issues and never merge: `dep-refresh` · `flaky-triage` · `doc-freshness` · `pr-babysit`. |
 | **`compass doctor`** | Validate the whole install (JSON, hooks, plugin sync, guardrail corpus, actions audit, executability). |
@@ -481,6 +486,7 @@ compass plugs your agent into live context and other tools — and bends easily 
 
 - **Auto-registered, secret-free:** **`context7`** (up-to-date library docs, so the agent stops hallucinating old APIs) · **`fetch`** (URL → markdown) · **`git`** (structured git operations).
 - **Opt-in:** **`github`** (issues/PRs over OAuth) · **`postgres`** (read-only, project-scoped) · **`browser`** (drive a real browser via Playwright) · **`compass-memory`** (durable, cross-repo learnings, local SQLite v1).
+- **Version-pinned supply chain.** Every executable server is pinned to an explicit version (never `@latest`), so a compromised upstream release isn't auto-pulled. [`scripts/check-mcp.sh`](scripts/check-mcp.sh) enforces it — pins present + matching `args`, and no shell-injection markers in the manifest (tamper defense against [tool-poisoning](https://www.truefoundry.com/blog/blog-mcp-tool-poisoning-gateway-defense)) — and runs in `setup-mcp` pre-flight, `doctor`, and CI.
 
 **Language-server intelligence (LSP).** An opt-in companion plugin gives Claude background **diagnostics + navigation at zero context cost** for Go, Rust, TypeScript, and Python — install it with `/plugin install core-lsp@compass` (needs `gopls` / `rust-analyzer` / `typescript-language-server` / `pyright` on PATH). → [LSP guide](docs/06-lsp.md)
 

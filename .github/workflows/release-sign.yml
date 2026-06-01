@@ -1,0 +1,38 @@
+# release · sign + attest — on every pushed v* tag, generate a keyless SLSA build-
+# provenance attestation for the exact source tarball that Homebrew and `git` users
+# download (github …/archive/refs/tags/<tag>.tar.gz). Anyone can then verify the
+# artifact's origin with `compass verify` (or `gh attestation verify`), so a tampered
+# or look-alike tarball is detectable. The human still cuts the release (scripts/
+# release.sh); this only adds provenance to it — it never tags, merges, or deploys.
+name: "release · sign + attest"
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read        # checkout only
+  id-token: write       # keyless OIDC identity for the attestation
+  attestations: write   # write the build-provenance attestation to GitHub's store
+
+jobs:
+  attest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Fetch the release source tarball (what users + Homebrew download)
+        env:
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          url="https://github.com/${REPO}/archive/refs/tags/${TAG}.tar.gz"
+          echo "fetching $url"
+          curl -fsSL "$url" -o "compass-${TAG}.tar.gz"
+          sha256sum "compass-${TAG}.tar.gz"
+
+      - name: Attest build provenance (SLSA, keyless)
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: compass-${{ github.ref_name }}.tar.gz

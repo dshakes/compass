@@ -28,7 +28,9 @@ esac; done
 
 # ── theme catalog: keyword regex → (rule it would propose) ───────────────────────
 # Tab-separated: id | match-regex | proposed CLAUDE.md rule. Data-driven so it's easy to extend.
-THEMES="$(cat <<'EOF'
+# NB: read -r -d '' (not $(cat <<'EOF')) — bash 3.2 (macOS /bin/bash) mis-parses a
+# heredoc nested in command substitution when the body contains apostrophes.
+IFS= read -r -d '' THEMES <<'EOF' || true
 error-handling	(missing|no|unchecked|swallow).{0,20}(error|err)|ignore[sd]? (the )?error|err != nil	Always check and wrap errors with context (Go: %w); never silently swallow an error path.
 tests	(no|missing|lacks?|untested).{0,20}test|add (a )?test|test coverage|failing.path	New behavior ships with a test for it — including the failure path — before it's called done.
 input-validation	(unvalidated|unsanitized|missing).{0,20}(input|validation)|validate (the )?input	Validate/parse untrusted input at the boundary (zod/pydantic/typed structs) before use.
@@ -39,7 +41,6 @@ concurrency	(race condition|data race|deadlock|unsynchronized|not thread.safe)	P
 perf	(n\+1|unbounded|o\(n\^?2\)|hot path.*alloc|blocking i/o)	Avoid N+1 queries and unbounded growth on hot paths; measure before/after.
 rust-unwrap	\.unwrap\(\)|\.expect\(	No unwrap()/expect() on fallible production paths — propagate with ? and typed errors.
 EOF
-)"
 
 # ── gather the finding corpus ────────────────────────────────────────────────────
 gather() {

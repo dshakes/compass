@@ -1,5 +1,6 @@
 {
   "_comment": "Single source of truth for MCP servers across Claude Code and Codex. scripts/setup-mcp.sh reads this and registers each server in both tools (Claude: `claude mcp add-json --scope user`; Codex: appended [mcp_servers.*] in ~/.codex/config.toml). Secrets are referenced via ${ENV} expansion, never baked in. Servers with autoRegister:false are documented opt-ins (need a secret or a remote/OAuth flow) — see docs/04-mcp.md.",
+  "_pinning": "Every executable server is pinned to an explicit version (the 'pin' field, baked into args) — never `@latest` or a bare floating spec. This is the supply-chain control: a compromised upstream release (tool-poisoning, CVE-2025-54136) is not auto-pulled. scripts/check-mcp.sh enforces it (auto-registered servers MUST be pinned, pin must match args, no injection markers in any field) and runs in doctor + CI. To bump: change pin + args together and re-run check-mcp.",
   "servers": {
     "context7": {
       "autoRegister": true,
@@ -8,7 +9,8 @@
       "description": "Up-to-date, version-correct documentation and code examples for any library. Frontier: kills 'trained on an old API' hallucinations.",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"],
+      "pin": "3.1.0",
+      "args": ["-y", "@upstash/context7-mcp@3.1.0"],
       "env": {},
       "note": "Works without a key; set CONTEXT7_API_KEY for higher rate limits."
     },
@@ -19,7 +21,8 @@
       "description": "Fetch a URL and return clean, model-ready markdown. Gives Codex web-fetch parity with Claude's WebFetch.",
       "type": "stdio",
       "command": "uvx",
-      "args": ["mcp-server-fetch"],
+      "pin": "2025.4.7",
+      "args": ["--from", "mcp-server-fetch==2025.4.7", "mcp-server-fetch"],
       "env": {}
     },
     "git": {
@@ -29,7 +32,8 @@
       "description": "Structured local git operations (status, diff, log, blame, show) as typed tools rather than parsed shell output.",
       "type": "stdio",
       "command": "uvx",
-      "args": ["mcp-server-git"],
+      "pin": "2026.1.14",
+      "args": ["--from", "mcp-server-git==2026.1.14", "mcp-server-git"],
       "env": {}
     },
     "github": {
@@ -50,7 +54,8 @@
       "description": "Read-only SQL over a Postgres database (schema introspection + SELECT). Best as a PROJECT server (e.g. project), gated on ${PROJECT_DATABASE_URL}.",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres", "${PROJECT_DATABASE_URL}"],
+      "pin": "0.6.2",
+      "args": ["-y", "@modelcontextprotocol/server-postgres@0.6.2", "${PROJECT_DATABASE_URL}"],
       "env": {},
       "note": "Point at a read-replica or a read-only role. Never a write-capable prod credential."
     },
@@ -61,7 +66,8 @@
       "description": "Drive a real browser (navigate, click, type, screenshot, extract) via Playwright. The sanctioned 'browser agent' — opt-in, for UI verification / scraping / repro of web bugs.",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"],
+      "pin": "0.0.75",
+      "args": ["-y", "@playwright/mcp@0.0.75"],
       "env": {},
       "setup": "npx playwright install chromium   # one-time browser download, then enable in scripts/setup-mcp.sh",
       "note": "Off by default — it can act on live sites. Use deliberately; scope to trusted pages. The agent that drives it still follows the same guardrails."

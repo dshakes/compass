@@ -27,6 +27,9 @@ must_allow() { local r; r="$(danger_reason "$1")"; [ -z "$r" ] && ok "allow  $1"
 # secret_blocked / secret_allowed for the file-write path.
 secret_blocked() { local r; r="$(secret_file_reason "$1")"; [ -n "$r" ] && ok "SECRET $1" || no "should block secret: $1"; }
 secret_allowed() { local r; r="$(secret_file_reason "$1")"; [ -z "$r" ] && ok "ok-file $1" || no "should allow file: $1"; }
+# content_blocked / content_allowed for the inline-secret scanner (the write-content path).
+content_blocked() { local r; r="$(secret_content_findings "$1")"; [ -n "$r" ] && ok "INLINE $1" || no "should detect secret in: $1"; }
+content_allowed() { local r; r="$(secret_content_findings "$1")"; [ -z "$r" ] && ok "ok-text $1" || no "should NOT flag: $1  (flagged: $r)"; }
 
 echo "recursive delete of root / home / system dirs — every flag form:"
 must_block 'rm -rf /'
@@ -125,6 +128,41 @@ secret_allowed '/repo/README.md'
 secret_allowed '/repo/env.example'
 secret_allowed '/repo/config.yaml'
 
+echo "inline secrets in file content — detected by the high-precision scanner:"
+# Fixtures are assembled from fragments at runtime, so the committed file holds NO
+# contiguous credential — this keeps real scanners AND GitHub push-protection off the
+# test corpus. Each runtime value is still a real-format token, so the detectors fire.
+ak="sk-ant""-api03-AbCdEf0123456789AbCdEf0123456789"
+opai="sk-proj""-AbCdEf0123456789AbCdEf0123456789AbCdEf"
+awsid="AKIA""IOSFODNN7REALKEYX"
+awssec="aws_secret_access_key = wJalrXUtnFEMIxK7MDENGxbPxRf""iCYzREALKEYabc"
+ghtok="ghp""_0123456789abcdef0123456789abcdef0123"
+gkey="AIza""SyA0123456789abcdefghijklmnopqrstuv"
+slk="xoxb""-1234567890-abcdefghIJKL"
+strp="sk_live""_0123456789abcdefABCDEF12"
+glp="glpat""-ABCdef0123456789xyzQ"
+pk="-----BEGIN RSA PRIVATE ""KEY-----"
+content_blocked "ANTHROPIC_API_KEY=$ak"
+content_blocked "OPENAI_API_KEY=$opai"
+content_blocked "aws_id = $awsid"
+content_blocked "$awssec"
+content_blocked "token: $ghtok"
+content_blocked "GOOGLE_KEY=$gkey"
+content_blocked "SLACK=$slk"
+content_blocked "STRIPE=$strp"
+content_blocked "gl=$glp"
+content_blocked "$(printf 'line one\n%s\nMIIE...' "$pk")"
+content_blocked "$(printf 'clean line\nANTHROPIC_API_KEY=%s\nmore' "$ak")"
+echo "  …and NOT flagged: placeholders, examples, ordinary code (no false positives):"
+content_allowed 'ANTHROPIC_API_KEY=sk-ant-your-key-here'
+content_allowed 'AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE          # AWS docs example'
+content_allowed 'export OPENAI_API_KEY=<your-openai-api-key>'
+content_allowed 'token = "REDACTED"'
+content_allowed 'const greeting = "hello world"; // just code'
+content_allowed 'url = https://example.com/api'
+content_allowed 'password = os.environ["DB_PASSWORD"]'
+content_allowed 'api_key=sk-ant-placeholder  # allowlist secret'
+
 echo "end-to-end through protect-paths.sh (JSON contract → deny / allow):"
 e2e() { # <expect: deny|allow> <json>
   local out rc; out="$(printf '%s' "$2" | "$ROOT/claude/hooks/protect-paths.sh" 2>/dev/null)"; rc=$?
@@ -136,8 +174,11 @@ e2e() { # <expect: deny|allow> <json>
 }
 e2e deny  '{"tool_name":"Bash","tool_input":{"command":"rm -rf /"}}'
 e2e deny  '{"tool_name":"Write","tool_input":{"file_path":"/repo/.env"}}'
+e2e deny  "$(printf '{"tool_name":"Write","tool_input":{"file_path":"/repo/config.py","content":"KEY = \\"%s\\""}}' "$ak")"
+e2e deny  "$(printf '{"tool_name":"Edit","tool_input":{"file_path":"/repo/app.js","new_string":"const t = \\"%s\\""}}' "$ghtok")"
 e2e allow '{"tool_name":"Bash","tool_input":{"command":"rm -rf ./build"}}'
 e2e allow '{"tool_name":"Write","tool_input":{"file_path":"/repo/src/main.go"}}'
+e2e allow '{"tool_name":"Write","tool_input":{"file_path":"/repo/src/main.go","content":"package main\nfunc main(){}"}}'
 
 echo
 printf 'guardrail corpus: %d passed, %d failed\n' "$pass" "$fail"

@@ -28,6 +28,8 @@ usage: compass <command> [args]
   quickstart [flags]       Install + validate + the 60-second on-ramp (idempotent;
                            re-run to repair). Pass-through: --mcp --gemini --copy --yes.
   status  [DIR]            Is compass enabled here? Global config + this-repo extras.
+  drift   [--json]         Does the installed config still match the repo source?
+                           Catches clobbered/stale/hand-edited installs + non-+x hooks.
   onboard [DIR] | --all <glob>
                            Onboard into a repo: detect stack, deps, build+test green,
                            write a grounded CLAUDE.md, print a codebase map. --all does many.
@@ -49,11 +51,22 @@ usage: compass <command> [args]
   sbom    [--no-audit|--gate|--json]
                            Dependency SBOM + native vuln audit (npm/pip/go/cargo/syft).
                            --gate exits non-zero on known vulns (CI/QA use).
+  scan    [--staged|--diff|--all] [PATH...]
+                           Find secrets before they're committed (pre-commit / CI).
+                           Built-in detectors gate; uses gitleaks for depth if present.
+  verify  [vX.Y.Z|FILE]    Verify a release tarball's provenance (keyless SLSA
+                           attestation built by release-sign.yml). Needs gh. No arg = latest.
+  sandbox [--net allow] [--rw DIR] -- CMD...
+                           Run CMD in a REAL OS sandbox (no network + writes confined to
+                           cwd/tmp) via bwrap/firejail/sandbox-exec. For untrusted code.
   notify  "<message>"      DM your phone: Slack·Discord·Telegram·iMessage/WhatsApp
                            (set COMPASS_NOTIFY_URL/_TOKEN; --dry-run to preview).
   listen                   Run the command listener: act on /status /approve /hold /build
                            from your phone DM via Telegram (free) or an iMessage/WhatsApp bridge
                            (long-running daemon; needs gh + a configured transport).
+  audit-log [--since D] [-n N] [--json]
+                           The security trail: every blocked footgun (secret write,
+                           dangerous command, scan hit) as a queryable JSONL record.
   doctor                   Validate the compass install (make doctor).
   release [vX.Y.Z|--dry-run]
                            Finish a release: push the tag, pin the Homebrew sha, publish the
@@ -69,6 +82,7 @@ run() { local s="$SCRIPTS/compass-$1.sh"; shift; [ -x "$s" ] || { echo "compass:
 case "$cmd" in
   quickstart) exec "$ROOT/quickstart.sh" "$@" ;;
   status)   run status "$@" ;;
+  drift)    run drift "$@" ;;
   onboard)  run onboard "$@" ;;
   impact)   run impact "$@" ;;
   dashboard) run dashboard "$@" ;;
@@ -78,8 +92,12 @@ case "$cmd" in
   bench)    run bench "$@" ;;
   policy-synth) run policy-synth "$@" ;;
   sbom)     run sbom "$@" ;;
+  scan)     run scan "$@" ;;
+  verify)   exec "$SCRIPTS/verify-release.sh" "$@" ;;
+  sandbox)  run sandbox "$@" ;;
   notify)   run notify "$@" ;;
   listen)   command -v node >/dev/null || { echo "compass listen: node required" >&2; exit 1; }; exec node "$SCRIPTS/compass-listen.mjs" "$@" ;;
+  audit-log) run audit-log "$@" ;;
   doctor)   exec make -C "$ROOT" doctor ;;
   release)  exec "$SCRIPTS/release.sh" "$@" ;;
   -h|--help|help) usage ;;
