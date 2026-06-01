@@ -80,6 +80,30 @@ rm -f "$TMP/metrics.tsv"
 eq "logged 2 rows" "$(wc -l < "$TMP/metrics.tsv" | tr -d ' ')" 2
 has "tab-separated block row" "$(head -1 "$TMP/metrics.tsv")" "$(printf 'block')"
 
+echo "compass-memory hooks — record (with redaction) + inject (opt-in, ADR 0001):"
+if command -v python3 >/dev/null 2>&1 && command -v git >/dev/null 2>&1; then
+  REPO_NAME="$(basename "$ROOT")"
+  MEMDB="$TMP/mem.db"
+  TR="$TMP/transcript.jsonl"
+  printf '{"message":{"role":"assistant","content":[{"type":"text","text":"Done.\\nLEARNED: the suite needs CASS_SEED set or it flakes\\nMEMORY: api_key=sk-abc123def456ghi789jkl must be dropped"}]}}\n' > "$TR"
+  # write path: only the safe LEARNED line should persist; the secret MEMORY line is scrubbed.
+  REC="$(COMPASS_MEMORY_DB="$MEMDB" COMPASS_MEMORY_TRUST="$REPO_NAME:read-write" \
+        printf '{"transcript_path":"%s"}' "$TR" | COMPASS_MEMORY_DB="$MEMDB" COMPASS_MEMORY_TRUST="$REPO_NAME:read-write" bash "$ROOT/claude/hooks/record-learning.sh" 2>/dev/null)"
+  has "record hook confirms 1 learning" "$REC" "recorded 1 learning"
+  ROWS="$(COMPASS_MEMORY_DB="$MEMDB" python3 "$ROOT/mcp/compass-memory/store.py" search "$REPO_NAME:read-write" --limit 9 2>/dev/null; COMPASS_MEMORY_DB="$MEMDB" COMPASS_MEMORY_TRUST="$REPO_NAME:read-write" python3 "$ROOT/mcp/compass-memory/store.py" search 'CASS_SEED' --json 2>/dev/null)"
+  has "safe learning persisted"  "$ROWS" "CASS_SEED"
+  case "$ROWS" in *sk-abc123*) no "secret learning leaked into the store" ;; *) ok "secret learning was scrubbed (not stored)" ;; esac
+  # read path: SessionStart inject surfaces it as additionalContext.
+  INJ="$(COMPASS_MEMORY_DB="$MEMDB" COMPASS_MEMORY_TRUST="$REPO_NAME:read-write" bash "$ROOT/claude/hooks/session-memory.sh" 2>/dev/null)"
+  has "session inject emits SessionStart context" "$INJ" "SessionStart"
+  has "session inject includes the learning"      "$INJ" "CASS_SEED"
+  # disabled by default: no trust env → silent no-op.
+  OFF="$(env -u COMPASS_MEMORY_TRUST bash "$ROOT/claude/hooks/session-memory.sh" 2>/dev/null; echo "rc=$?")"
+  has "memory off by default (no trust → no-op)" "$OFF" "rc=0"
+  case "$OFF" in *SessionStart*) no "memory should be silent when COMPASS_MEMORY_TRUST is unset" ;; *) ok "silent when unconfigured" ;; esac
+  rm -f "$MEMDB"* "$TR"
+else ok "python3/git absent — skipping memory hook tests"; fi
+
 echo "require-tests — policy hook (nudge on source change with no test diff):"
 if command -v git >/dev/null 2>&1; then
   G="$(mktemp -d)"
