@@ -259,10 +259,79 @@ own rule), is opt-in, and leaves the human merge gate untouched.
 
 ## 6. Findings register (code-audit pass)
 
-> Populated from the deep read of hooks / scripts / workflows. Each item:
-> `[TAG] severity — file:line — description → fix`.
+From a deep read of the hooks, scripts, and GitHub Actions workflows. The
+codebase is **careful and security-aware** overall: pinned action SHAs, untrusted
+input routed through `env:` (never inlined into `run:`), write-permission gates
+that correctly distrust `author_association`, fork guards on self-hosted runners,
+bounded `claude -p` budgets, hooks that fail-open by design so they "never fail a
+session." No `pull_request_target` anywhere (the usual injection sink) — confirmed
+absent. The findings below are mostly *guardrail-coverage gaps* and *silent-drift*
+risks, consistent with the code's own honest disclaimer (`protect-paths.sh:12-14`).
 
-_(pending — folded in from the background code-audit agent.)_
+### Guardrail bypasses (`claude/hooks/protect-paths.sh`)
+
+These are **gap** findings, not broken promises (the hook self-describes as
+best-effort) — but the README and `compass impact` advertise "rm -rf, secret
+writes, force-push" as blocked, so the gap between perception and coverage is the
+top trust risk. All confirmed empirically:
+
+- **[SECURITY/High] `:52-54` recursive-delete bypassed** by long/split flags
+  (`rm --recursive --force /`, `rm -r -f /`), quoted home (`rm -rf "$HOME"` — regex
+  only matches bare `$HOME`/`${HOME}`/`~`), and `find / -delete` (entirely unmatched).
+- **[SECURITY/High] `:69-72` `curl|sh` bypassed** by `curl …|sh` (no space —
+  `tr -s ' '` doesn't insert one), `| sudo bash`, `| zsh` (only `sh`/`bash`
+  matched), and `f=$(curl …); eval "$f"` indirection.
+- **[SECURITY/High] `:75-83` force-push bypassed** by `git push origin +main`
+  (plus-refspec force — no `-f`/`--force` token) and `git -c k=v push --force
+  origin main` (the `-c …` between `git` and `push` defeats the adjacency regex).
+  Also only `main|master|release|production|prod` are protected — `develop`,
+  `release/*`, renamed defaults are not.
+- **[SECURITY/Medium] `:30` secret-file blocklist holes:** `.envrc` (direnv),
+  `secrets.yaml`/`.yml`, `application.properties`, `*.keystore`, `.htpasswd` all pass.
+
+→ Fix is cheap and matches **R1/R2**: normalize flag forms, match
+`\|\s*(sudo\s+)?(ba|z|k|da)?sh`, detect `+<branch>` refspecs, strip `-c …`, widen
+the secret list — and add the bypass-corpus test.
+
+### Drift
+
+- **[DRIFT/Medium] `.github/workflows/sdlc-*.yml` are unguarded copies of
+  `sdlc/workflows/sdlc-*.yml`.** All 13 are currently byte-identical, but nothing
+  enforces it — CI only sync-checks `claude/` → `plugins/core/`. A security fix to
+  one copy and not the other ships green. Add a `diff -q` gate (matches **R3**).
+- **[DRIFT/Low] Round-cap/verdict/domain logic is duplicated** across workflow +
+  `sdlc/selfhosted` + `selftest.sh`, bound only by a comment. `core-lsp` plugin
+  isn't covered by `sync-plugin.sh`.
+
+### Workflows (mostly clean)
+
+- **[SECURITY/Low] `sdlc/workflows/sdlc-classify.yml:33`** inlines
+  `${{ github.event.pull_request.base.ref }}` into the model `prompt:` — prompt-
+  context only (not shell) and constrained by Git ref naming, but it's the one spot
+  that interpolates event data into a prompt rather than passing it as a file.
+- **[SECURITY/Low] `inject-context.sh:24,30`** injects recent commit *messages*
+  (attacker-influenceable on a PR) into `additionalContext` — safely JSON-encoded
+  via `json_string`, so no shell/JSON break; a prompt-injection surface inherent to
+  the feature. Acceptable, flagged as known.
+
+### Test gaps
+
+- **[TEST-GAP/High] `protect-paths.sh` has zero tests** — the most
+  security-relevant script, with the bypasses above, has no unit test asserting
+  blocked-vs-allowed command strings. A regression widening the guardrail ships
+  green. **Highest-value test to add (R1).**
+- **[TEST-GAP/Medium]** no drift test for `.github/workflows` vs `sdlc/workflows`;
+  `format-on-edit.sh` / `checkpoint-wip.sh` / `inject-context.sh` untested;
+  `sdlc-autoapprove.yml` policy logic (traced and *correct*) has no `selftest.sh`
+  mirror despite being exactly what selftest exists to protect.
+
+### Verified non-issues (no action)
+
+- Hooks intentionally omit `set -e` (must never fail a session) — each degrades to
+  `exit 0`. `notify.sh:27` uses the safe `osascript /dev/stdin … "$msg"` argv form.
+  `compass-spend.sh`/`compass-impact.sh` pass values to awk via `-v` (no injection).
+  `route_one`'s global-propagation pattern is correct and regression-tested.
+- The `protect-paths.sh:47` jq/python3-absent fallback errs *safe* (toward block).
 
 ---
 
