@@ -33,11 +33,22 @@ usage: compass <command> [args]
                            write a grounded CLAUDE.md, print a codebase map. --all does many.
   impact  [--week|--all]   What compass did for you: footguns blocked, files formatted,
                            spend by model, estimated \$ saved vs all-Opus.
+  dashboard [--json|--html] Mission control: impact + spend + live fleet PR state in one
+                           panel (reads ~/.compass + gh, read-only). --html writes a page.
   spend   [--week|--month] Agent cost dashboard + budget (set COMPASS_BUDGET_USD).
   schedule add|list|remove|run <routine>
                            Local scheduled agents (cron + claude -p): dep-refresh,
                            flaky-triage, doc-freshness, pr-babysit.
   route   "<task>"         Print the cheapest-correct model tier (experimental).
+  bench   [--guardrail|--router|--json]
+                           Reproducible scorecard: guardrail precision/recall + router
+                           accuracy (deterministic, CI-gated). --sdlc <dir> for fix-rate.
+  policy-synth [--from <glob>|-] [--min N]
+                           Fleet brain: cluster recurring review findings into PROPOSED
+                           CLAUDE.md rules (human reviews & merges; never auto-applied).
+  sbom    [--no-audit|--gate|--json]
+                           Dependency SBOM + native vuln audit (npm/pip/go/cargo/syft).
+                           --gate exits non-zero on known vulns (CI/QA use).
   notify  "<message>"      DM your phone: Slack·Discord·Telegram·iMessage/WhatsApp
                            (set COMPASS_NOTIFY_URL/_TOKEN; --dry-run to preview).
   listen                   Run the command listener: act on /status /approve /hold /build
@@ -57,9 +68,13 @@ case "$cmd" in
   status)   run status "$@" ;;
   onboard)  run onboard "$@" ;;
   impact)   run impact "$@" ;;
+  dashboard) run dashboard "$@" ;;
   spend)    run spend "$@" ;;
   schedule) run schedule "$@" ;;
   route)    run route "$@" ;;
+  bench)    run bench "$@" ;;
+  policy-synth) run policy-synth "$@" ;;
+  sbom)     run sbom "$@" ;;
   notify)   run notify "$@" ;;
   listen)   command -v node >/dev/null || { echo "compass listen: node required" >&2; exit 1; }; exec node "$SCRIPTS/compass-listen.mjs" "$@" ;;
   doctor)   exec make -C "$ROOT" doctor ;;

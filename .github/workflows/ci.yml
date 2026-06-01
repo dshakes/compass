@@ -38,6 +38,9 @@ jobs:
             .github/workflows/*.yml sdlc/workflows/*.yml sdlc/selfhosted/*.yml \
             sdlc/routines/*.yml sdlc/fleet/*.yml
 
+      - name: Guardrail bypass corpus (protect-paths policy eval)
+        run: bash scripts/test-protect-paths.sh
+
       - name: compass CLI tests (route · spend · impact · notify · listen parser)
         run: bash scripts/test-cli.sh
 
@@ -47,8 +50,14 @@ jobs:
       - name: Workflow scripts (shape + JS syntax)
         run: bash scripts/check-workflows.sh
 
+      - name: Actions audit (mirror drift · least-privilege · SHA-pinning · run-block injection)
+        run: bash scripts/check-actions.sh
+
       - name: Router eval (accuracy floor gates autoroute)
         run: bash scripts/compass-route.sh --eval
+
+      - name: Benchmark scorecard (guardrail precision/recall + router accuracy, gated)
+        run: bash scripts/compass-bench.sh
 
       - name: SDLC loop self-test (round cap + verdict parsing)
         run: bash sdlc/selftest.sh

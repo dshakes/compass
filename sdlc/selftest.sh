@@ -70,6 +70,20 @@ eq "infra"             "$(printf 'SDLC-DOMAIN: infra\n'                 | domain
 eq "no line → core"    "$(printf 'no verdict here\n'                    | domain_parse)" "core"
 eq "garbage → core"    "$(printf 'SDLC-DOMAIN: banana\n'                | domain_parse)" "core"
 
+# ── 5 · Diff-size review routing (mirror of orchestrate.sh REVIEW_MODEL) ──────────
+# Tiny diffs review on haiku; larger ones on sonnet; an explicit override always wins.
+review_model() { # args: <diff-lines> <threshold> [override] → haiku|sonnet
+  local lines="$1" thresh="$2" override="${3:-}"
+  [ -n "$override" ] && { echo "$override"; return; }
+  if [ "$lines" -gt 0 ] && [ "$lines" -le "$thresh" ]; then echo haiku; else echo sonnet; fi
+}
+echo "diff-size review routing:"
+eq "10-line diff → haiku"        "$(review_model 10 25)"        haiku
+eq "25-line diff (at cap) → haiku" "$(review_model 25 25)"      haiku
+eq "26-line diff → sonnet"       "$(review_model 26 25)"        sonnet
+eq "0-line diff → sonnet (safe default)" "$(review_model 0 25)" sonnet
+eq "override wins over size"     "$(review_model 5 25 sonnet)"  sonnet
+
 echo
 printf 'selftest: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

@@ -143,3 +143,55 @@ def search(
         if len(out) >= cap:
             break
     return out
+
+
+def _main(argv: list[str]) -> int:
+    """Tiny CLI so the opt-in hooks (session-memory / record-learning) can use the
+    SAME redaction + trust logic as the MCP server, without the MCP SDK. Local only.
+
+        store.py record --repo R [--tags T] <text…>
+        store.py search [--repo R] [--limit N] [--json] <query…>
+    """
+    import json as _json
+
+    if not argv:
+        print("usage: store.py record|search …", file=__import__("sys").stderr)
+        return 2
+    cmd, rest = argv[0], argv[1:]
+    repo, tags, limit, as_json, words = "", "", 20, False, []
+    i = 0
+    while i < len(rest):
+        a = rest[i]
+        if a == "--repo":
+            i += 1; repo = rest[i] if i < len(rest) else ""
+        elif a == "--tags":
+            i += 1; tags = rest[i] if i < len(rest) else ""
+        elif a == "--limit":
+            i += 1; limit = int(rest[i]) if i < len(rest) and rest[i].isdigit() else 20
+        elif a == "--json":
+            as_json = True
+        else:
+            words.append(a)
+        i += 1
+    text = " ".join(words)
+    conn = connect()
+    if cmd == "record":
+        print(record(conn, text, repo, tags))
+        return 0
+    if cmd == "search":
+        rows = search(conn, text, repo=repo, limit=limit)
+        if as_json:
+            print(_json.dumps(rows))
+        else:
+            for r in rows:
+                tg = f"  [{r['tags']}]" if r["tags"] else ""
+                print(f"- {r['text']}  ({r['repo']}){tg}")
+        return 0
+    print(f"unknown command: {cmd}", file=__import__("sys").stderr)
+    return 2
+
+
+if __name__ == "__main__":
+    import sys
+
+    raise SystemExit(_main(sys.argv[1:]))
