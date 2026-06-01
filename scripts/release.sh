@@ -89,6 +89,12 @@ else
   else printf '%s\n' "$notes" | gh release create "$VER" --latest --title "$VER — compass" --notes-file -; fi
 fi
 
+# ── 4 · provenance (handled by the release-sign.yml workflow on the pushed tag) ──
+say "4 · provenance"
+echo "  the pushed tag triggers .github/workflows/release-sign.yml, which generates a"
+echo "  keyless SLSA build-provenance attestation for $VER's source tarball."
+echo "  verify any download with:  compass verify $VER"
+
 say "done — $VER"
 [ "$DRY" = 1 ] && { echo; echo "── release notes preview ──"; printf '%s\n' "$notes"; }
 exit 0

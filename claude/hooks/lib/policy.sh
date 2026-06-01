@@ -23,6 +23,29 @@ POLICY_PROTECTED_BRANCHES="main master release production prod develop staging"
 # A *deeper* path (e.g. /usr/local/share/foo) is allowed — only the dir itself or its glob.
 POLICY_SYSTEM_DIRS="/usr /etc /var /bin /sbin /lib /lib64 /lib32 /boot /dev /proc /sys /opt /root /home /System /Library"
 
+# Inline-secret detectors: "name|ERE", one per line. HIGH PRECISION by design —
+# secret_content_findings() runs on the write hot path (protect-paths blocks a
+# Write/Edit that introduces a match), so it only matches structured, unambiguous
+# credential formats, never generic high-entropy strings. Broader/entropy scanning
+# lives in `compass scan` (off the hot path; can shell out to gitleaks).
+POLICY_SECRET_DETECTORS='anthropic-api-key|sk-ant-[A-Za-z0-9_-]{20,}
+openai-api-key|sk-(proj-)?[A-Za-z0-9_-]{32,}
+aws-access-key-id|(AKIA|ASIA)[0-9A-Z]{16}
+aws-secret-access-key|aws_secret_access_key[^A-Za-z0-9]{1,4}[A-Za-z0-9/+]{40}
+gcp-api-key|AIza[0-9A-Za-z_-]{35}
+github-token|gh[posru]_[A-Za-z0-9]{36,}
+github-pat|github_pat_[0-9A-Za-z_]{60,}
+gitlab-pat|glpat-[0-9A-Za-z_-]{20,}
+slack-token|xox[baprs]-[0-9A-Za-z-]{10,}
+stripe-secret-key|[sr]k_live_[0-9A-Za-z]{16,}
+npm-token|npm_[0-9A-Za-z]{36}
+private-key-block|-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----'
+
+# Markers that neutralise a match on the SAME line — placeholders, AWS's documented
+# EXAMPLE key, doc fences, and an explicit `allowlist secret` pragma — so READMEs,
+# fixtures, and templates don't trip the guardrail.
+POLICY_SECRET_ALLOW='allowlist[ _-]?secret|EXAMPLE|example\.com|placeholder|REDACTED|dummy|sample|\bfake|your[_-]|YOUR_|<[A-Za-z0-9_]|xxxxxxxx|\.\.\.'
+
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 # Strip quotes and a trailing slash / glob from a token, so "/usr/", '/usr/*',
@@ -163,4 +186,25 @@ danger_reason() {
   fi
 
   return 0
+}
+
+# ── inline secret content ──────────────────────────────────────────────────────
+# secret_content_findings "<text>"  -> one "rule: redacted…" line per detected
+# secret (empty output = clean). Scans the WHOLE blob once per detector (cost is
+# O(detectors), not O(lines)), so it stays cheap on the write hot path. A match is
+# dropped if its line also carries an allowlist marker, so placeholders and the
+# documented AWS EXAMPLE key never trip it. Tokens are redacted to their first 4
+# chars — a finding tells you the *kind* of secret, never reprints the secret.
+secret_content_findings() {
+  local text="$1" name re hit
+  [ -n "$text" ] || return 0
+  printf '%s\n' "$POLICY_SECRET_DETECTORS" | while IFS='|' read -r name re; do
+    [ -n "$name" ] || continue
+    # matching lines → drop allowlisted lines → extract the offending token
+    hit="$(printf '%s\n' "$text" \
+      | grep -E -- "$re" 2>/dev/null \
+      | grep -Eiv -- "$POLICY_SECRET_ALLOW" 2>/dev/null \
+      | grep -Eo -- "$re" 2>/dev/null | head -1)"
+    [ -n "$hit" ] && printf '%s: %s…\n' "$name" "$(printf '%s' "$hit" | cut -c1-4)"
+  done
 }

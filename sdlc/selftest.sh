@@ -84,6 +84,118 @@ eq "26-line diff → sonnet"       "$(review_model 26 25)"        sonnet
 eq "0-line diff → sonnet (safe default)" "$(review_model 0 25)" sonnet
 eq "override wins over size"     "$(review_model 5 25 sonnet)"  sonnet
 
+# ── 6 · Per-step budget cap math (mirror of orchestrate.sh STEP_BUDGET) ─────────
+# BUDGET/4 via awk; default SDLC_BUDGET=8 → STEP_BUDGET=2.00.
+step_budget() { awk "BEGIN{printf \"%.2f\", $1/4}"; }
+echo "per-step budget cap (BUDGET/4):"
+eq "default budget 8 → 2.00 per step" "$(step_budget 8)"  "2.00"
+eq "budget 4 → 1.00 per step"         "$(step_budget 4)"  "1.00"
+eq "budget 12 → 3.00 per step"        "$(step_budget 12)" "3.00"
+eq "budget 1 → 0.25 per step"         "$(step_budget 1)"  "0.25"
+eq "budget 3 → 0.75 per step"         "$(step_budget 3)"  "0.75"
+
+# ── 7 · SDLC_LITE mode skips the right stages ────────────────────────────────────
+# SDLC_LITE=1 emits a note saying audit+security are skipped; review+QA+gate remain.
+# We mirror the exact logic branch rather than calling orchestrate.sh itself.
+lite_note() {
+  local lite="${1:-0}"
+  if [ "$lite" = 1 ]; then
+    printf 'SDLC_LITE — skipping Codex audit + security pass (review + QA + human gate remain).'
+  else
+    printf 'full pipeline'
+  fi
+}
+echo "SDLC_LITE mode:"
+eq "LITE=1 skips audit+security"         "$(lite_note 1)" "SDLC_LITE — skipping Codex audit + security pass (review + QA + human gate remain)."
+eq "LITE=0 runs full pipeline"           "$(lite_note 0)" "full pipeline"
+eq "LITE unset behaves like 0"           "$(lite_note)"   "full pipeline"
+
+# ── 8 · CONVERGE loop — bounded by round cap (mirror of orchestrate.sh converge) ──
+# The while condition: grep BLOCKING in review.md AND r <= MAXR.
+# We test: default MAXR=3; loop stops when r>MAXR; loop stops when verdict is CLEAN.
+# No real git or claude calls — we use a tmp dir with a synthetic review.md.
+converge_rounds() { # args: <verdict: BLOCKING|CLEAN> <maxr> → N (rounds actually run)
+  local verdict="$1" maxr="${2:-3}"
+  local TMPD; TMPD="$(mktemp -d)"
+  # write an initial review.md with the given verdict
+  printf 'SDLC-VERDICT: %s\n' "$verdict" > "$TMPD/review.md"
+  local r=1 rounds=0
+  while grep -qiE '^SDLC-VERDICT: BLOCKING' "$TMPD/review.md" 2>/dev/null && [ "$r" -le "$maxr" ]; do
+    rounds=$((rounds + 1))
+    # simulate a fix round: after each round the verdict stays BLOCKING (worst case)
+    # so the loop hits the cap.  We re-write the same BLOCKING verdict so the only
+    # exit is the counter, which is the bound we're testing.
+    printf 'SDLC-VERDICT: BLOCKING\n' > "$TMPD/review.md"
+    r=$((r + 1))
+  done
+  rm -rf "$TMPD"
+  echo "$rounds"
+}
+converge_stops_on_clean() { # arg: <maxr> → 0 (never enters the loop when already CLEAN)
+  converge_rounds CLEAN "$1"
+}
+echo "CONVERGE loop bound:"
+eq "BLOCKING + cap 3 → exactly 3 rounds" "$(converge_rounds BLOCKING 3)" "3"
+eq "BLOCKING + cap 1 → exactly 1 round"  "$(converge_rounds BLOCKING 1)" "1"
+eq "BLOCKING + cap 5 → exactly 5 rounds" "$(converge_rounds BLOCKING 5)" "5"
+eq "CLEAN verdict → 0 rounds (never enters)" "$(converge_stops_on_clean 3)" "0"
+# default MAXR is 3 (SDLC_MAX_FIX_ROUNDS default)
+MAXR_DEFAULT="${SDLC_MAX_FIX_ROUNDS:-3}"
+eq "SDLC_MAX_FIX_ROUNDS default is 3" "$MAXR_DEFAULT" "3"
+
+# ── 9 · Spec-kit discovery candidate paths ───────────────────────────────────────
+# orchestrate.sh iterates: .specify/specs/*/spec.md specs/*/spec.md specs/spec.md
+# spec.md SPEC.md docs/spec.md — first match wins. We test first-match priority.
+# The original loop runs in the target repo's CWD; we mirror it by cd-ing into the
+# test fixture directory so the glob expansion works identically.
+spec_discover() { # arg: <tmpdir> → discovered path or empty
+  ( cd "$1" && for cand in .specify/specs/*/spec.md specs/*/spec.md specs/spec.md spec.md SPEC.md docs/spec.md; do
+      [ -f "$cand" ] && echo "$cand" && return 0
+    done )
+}
+echo "spec-kit discovery:"
+# each case uses an isolated tmp dir to avoid cross-test contamination
+SD1="$(mktemp -d)"
+eq "no spec → empty discovery"  "$(spec_discover "$SD1")" ""
+rm -rf "$SD1"
+
+SD2="$(mktemp -d)"
+printf 'spec\n' > "$SD2/spec.md"
+eq "spec.md discovered" "$(spec_discover "$SD2")" "spec.md"
+rm -rf "$SD2"
+
+SD3="$(mktemp -d)"
+mkdir -p "$SD3/.specify/specs/myspec"; printf 'spec\n' > "$SD3/.specify/specs/myspec/spec.md"
+printf 'spec\n' > "$SD3/spec.md"     # lower-priority candidate also present
+eq ".specify/specs/*/spec.md wins (first candidate)" "$(spec_discover "$SD3")" ".specify/specs/myspec/spec.md"
+rm -rf "$SD3"
+
+SD4="$(mktemp -d)"
+mkdir -p "$SD4/docs"; printf 'spec\n' > "$SD4/docs/spec.md"
+eq "docs/spec.md discovered as last candidate" "$(spec_discover "$SD4")" "docs/spec.md"
+rm -rf "$SD4"
+
+SD5="$(mktemp -d)"
+mkdir -p "$SD5/specs/feat"; printf 'spec\n' > "$SD5/specs/feat/spec.md"
+eq "specs/*/spec.md priority over specs/spec.md" "$(spec_discover "$SD5")" "specs/feat/spec.md"
+rm -rf "$SD5"
+
+# ── 10 · Source anchors — tie the mirrors above to the REAL orchestrate.sh ────────
+# Sections 5–9 mirror inline logic that can't be sourced (orchestrate.sh runs the
+# pipeline on load). A mirror alone is tautological — it would still pass if the real
+# script drifted. These anchors assert the exact expressions still exist in the source,
+# so changing BUDGET/4, the round cap, the diff threshold, the LITE text, or the spec
+# search order in orchestrate.sh fails this test until the mirror above is updated too.
+ORCH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/orchestrate.sh"
+src_has() { if grep -Fq -- "$2" "$ORCH"; then ok "$1"; else bad "$1" "absent from orchestrate.sh" "$2"; fi; }
+echo "source anchors (mirrors must match orchestrate.sh):"
+src_has "per-step budget is BUDGET/4"               'BUDGET/4}'
+src_has "fix-round cap default is 3"                'SDLC_MAX_FIX_ROUNDS:-3'
+src_has "diff-size haiku threshold default is 25"   'SDLC_HAIKU_DIFF_LINES:-25'
+src_has "tiny diff routes review to haiku"          'REVIEW_MODEL="haiku"'
+src_has "SDLC_LITE note text matches"               'SDLC_LITE — skipping Codex audit + security pass (review + QA + human gate remain).'
+src_has "spec-kit discovery order matches"          '.specify/specs/*/spec.md specs/*/spec.md specs/spec.md spec.md SPEC.md docs/spec.md'
+
 echo
 printf 'selftest: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
