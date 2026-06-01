@@ -5,6 +5,16 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+
+- **One-click release workflow** (`sdlc/workflows/release.yml`, dogfooded at
+  `.github/workflows/release.yml`) — a `workflow_dispatch` job that cuts a release from the
+  Actions tab / GitHub Mobile (no terminal): resolves the version (input or newest
+  `[X.Y.Z]` in CHANGELOG), pushes the tag, publishes the GitHub Release with notes pulled
+  from the CHANGELOG, and — if the repo ships a Homebrew tap formula — opens a formula-bump
+  PR. Generic (the formula step self-skips when there's no `Formula/*.rb`), idempotent, and
+  installed into any repo by `sdlc/setup.sh --workflows`. The local twin is `compass release`.
+
 ## [0.10.1] — 2026-06-01
 
 ### Security

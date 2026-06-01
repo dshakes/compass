@@ -1,0 +1,114 @@
+name: release
+
+# One-click release: tag → publish GitHub Release (notes from CHANGELOG) → open the
+# Homebrew formula-bump PR. Runs on GitHub's runners, which have the ref-write access a
+# local/sandboxed clone may not — so "cut a release" becomes a single tap from the
+# Actions tab or GitHub Mobile (Run workflow), no terminal required.
+#
+# The formula bump lands as a PR (main is branch-protected) — merge it to point
+# `brew install` at the new tag. Mirrors scripts/release.sh; idempotent (safe to re-run).
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. v0.10.1. Leave blank to use the newest [X.Y.Z] heading in CHANGELOG.md."
+        required: false
+        default: ""
+
+permissions:
+  contents: write          # create + push the tag, publish the Release
+  pull-requests: write     # open the Homebrew formula-bump PR
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0     # full history so the tag + CHANGELOG parsing work
+
+      - name: Resolve version
+        id: ver
+        env:
+          IN: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          v="$IN"
+          if [ -z "$v" ]; then
+            v="v$(grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | head -1 | tr -dc '0-9.')"
+          fi
+          case "$v" in v*) ;; *) v="v$v" ;; esac
+          [ "$v" != "v" ] || { echo "could not resolve a version (pass one, or add a [X.Y.Z] heading)"; exit 1; }
+          echo "version=$v"      >> "$GITHUB_OUTPUT"
+          echo "num=${v#v}"      >> "$GITHUB_OUTPUT"
+          echo "Releasing $v"
+
+      - name: Extract release notes from CHANGELOG
+        id: notes
+        env:
+          NUM: ${{ steps.ver.outputs.num }}
+        run: |
+          set -euo pipefail
+          {
+            echo 'body<<RELEASE_NOTES_EOF'
+            awk -v v="$NUM" '$0 ~ ("^## \\[" v "\\]"){f=1;next} f&&/^## \[/{exit} f{print}' CHANGELOG.md
+            echo 'RELEASE_NOTES_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create and push the tag (idempotent)
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null 2>&1; then
+            echo "tag $VERSION already on origin — skipping"
+          else
+            git tag -a "$VERSION" -m "compass $VERSION"
+            git push origin "refs/tags/$VERSION"
+          fi
+
+      - name: Publish the GitHub Release (idempotent, marks Latest)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.ver.outputs.version }}
+          NOTES: ${{ steps.notes.outputs.body }}
+        run: |
+          set -euo pipefail
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            printf '%s' "$NOTES" | gh release edit "$VERSION" --notes-file -
+          else
+            printf '%s' "$NOTES" | gh release create "$VERSION" --latest --title "$VERSION — compass" --notes-file -
+          fi
+
+      - name: Open the Homebrew formula-bump PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.ver.outputs.version }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # Optional + generic: only repos that ship a Homebrew tap formula get this PR.
+          formula="$(ls Formula/*.rb 2>/dev/null | head -1 || true)"
+          [ -n "$formula" ] || { echo "no Homebrew formula in this repo — skipping formula PR"; exit 0; }
+          url="https://github.com/$REPO/archive/refs/tags/$VERSION.tar.gz"
+          sha="$(curl -fsSL "$url" | sha256sum | cut -d' ' -f1)"
+          [ -n "$sha" ] || { echo "could not compute tarball sha"; exit 1; }
+          tmp="$(mktemp)"
+          sed -E -e "s#archive/refs/tags/v[0-9.]+\.tar\.gz#archive/refs/tags/$VERSION.tar.gz#" \
+                 -e "s/^([[:space:]]*sha256 )\"[a-f0-9]*\"/\1\"$sha\"/" "$formula" >"$tmp" && mv "$tmp" "$formula"
+          if git diff --quiet -- "$formula"; then echo "formula already at $VERSION — no PR needed"; exit 0; fi
+          branch="release/formula-$VERSION"
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git commit -aqm "chore(release): pin $VERSION + tarball sha in the Homebrew formula"
+          git push -f origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "chore(release): Homebrew formula -> $VERSION" \
+            --body "Automated formula bump for **$VERSION** (url + tarball \`sha256 $sha\`). Merge to point \`brew install\` at the new release." \
+            || gh pr edit "$branch" --body "Automated formula bump for $VERSION (sha256 $sha)." || true

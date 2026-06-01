@@ -269,6 +269,26 @@ revert the bad commit, push, and the loop restarts from round 1.
 
 ---
 
+## Releasing — one tap or one command
+
+Two ways to cut a release; both tag, publish the GitHub Release (notes pulled from the
+matching `CHANGELOG.md` section), and — for a repo that ships a Homebrew tap formula — pin
+the formula to the new tarball. Pick whichever fits; they're idempotent and interchangeable.
+
+- **From your phone / the Actions tab — `release.yml`.** `setup.sh --workflows` installs a
+  `workflow_dispatch` **release** workflow. Open **Actions → release → Run workflow** (works
+  from GitHub Mobile), optionally type a version (blank = newest `[X.Y.Z]` in the CHANGELOG),
+  and it pushes the tag, publishes the Release as *Latest*, and — only if a `Formula/*.rb`
+  exists — opens a **formula-bump PR** (kept a PR because `main` is branch-protected; merge it
+  to point `brew install` at the new tag). Runs on GitHub's runners, so no local write access
+  is needed. Least-privilege (`contents: write` + `pull-requests: write`), SHA-pinned, inputs
+  passed via `env:` (no script injection) — it passes compass's own `check-actions` gate.
+- **From a terminal — `compass release`.** The local twin (`scripts/release.sh`): same three
+  steps from your machine. `compass release --dry-run` previews the plan + notes. Needs `gh`.
+
+The version's notes come from the CHANGELOG section whose heading matches — so keep a
+`## [X.Y.Z] — DATE` block current and the release notes write themselves.
+
 ## Customize
 
 Edit the registry (`sdlc/agents.registry.md`) for names/tags, the role prompts in
