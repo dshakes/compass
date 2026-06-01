@@ -1,0 +1,50 @@
+# Routine: policy-synth — the fleet brain. Weekly, it reviews recent SDLC findings and
+# PROPOSES new CLAUDE.md rules as a GitHub ISSUE — it never edits the manual or merges.
+# The self-improving governance loop, kept fully human-gated. Opt-in.
+name: "routine · policy-synth"
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"     # Mondays 07:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read            # read findings only
+  issues: write             # file a proposal issue (never edits code/manual, never merges)
+
+concurrency:
+  group: routine-policy-synth
+  cancel-in-progress: false
+
+jobs:
+  synth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      - name: Propose governance rules from recurring findings
+        uses: anthropics/claude-code-action@787c5a0ce96a9a6cfb050ea0c8f4c05f2447c251 # v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: |
+            You are **Policy Synth** (a scheduled fleet-brain agent). Your job is to make the
+            team's playbook self-improving — WITHOUT ever editing it yourself.
+            1. Gather recent review/security findings: read `.sdlc/run-*/review.md` and
+               `*/security.md` if present, and the last ~30 merged PRs' review comments
+               (`gh pr list --state merged --limit 30`, then `gh pr view <n> --comments`).
+            2. Cluster them into recurring themes (a theme = the same class of finding seen
+               3+ times across different PRs): e.g. "unchecked errors", "missing failure-path
+               tests", "unvalidated input", "secrets in logs".
+            3. For each recurring theme, draft ONE crisp candidate rule for the project
+               CLAUDE.md (a single imperative line, not a paragraph).
+            4. Open a GitHub ISSUE titled "Policy synth: N proposed CLAUDE.md rules" whose body
+               lists each theme, how many times it recurred, an example, and the proposed rule.
+            Do NOT edit CLAUDE.md or any code. Do NOT open a PR. Do NOT merge. The issue is a
+            proposal a human accepts by hand — that human gate is the whole point.
+          claude_args: |
+            --model sonnet
+            --max-turns 20
+            --max-budget-usd 2.00
+            --allowedTools "Read,Grep,Glob,Bash(gh pr list:*),Bash(gh pr view:*),Bash(gh issue create:*),Bash(git log:*)"

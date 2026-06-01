@@ -146,6 +146,15 @@ printf "export const meta = { name: 'mismatch', description: 'x' }\nawait agent(
 if bash "$ROOT/scripts/check-workflows.sh" "$WF" >/dev/null 2>&1; then no "name!=filename should FAIL"; else ok "name/filename mismatch rejected"; fi
 rm -rf "$WF"
 
+echo "policy-synth — fleet brain proposes rules from recurring findings (never applies):"
+PS="$(printf 'Blocking: missing error handling\nunchecked error in writer\nshould add a test for the failure path\nno test for this branch\n' | "$COMPASS" policy-synth --min 2 - 2>/dev/null)"
+has "proposes a rule above threshold" "$PS" "Consider adding to CLAUDE.md"
+has "error-handling theme detected"   "$PS" "error-handling"
+PSQ="$(printf 'unchecked error\nmissing error handling\n' | "$COMPASS" policy-synth --min 2 --json - 2>/dev/null)"
+has "json proposals array"            "$PSQ" '"proposals":[{'
+NONE="$(printf 'just a nit about naming\n' | "$COMPASS" policy-synth --min 3 - 2>/dev/null)"
+has "nothing proposed when nothing recurs" "$NONE" "Nothing to propose"
+
 echo "bench — reproducible scorecard meets its floors:"
 BJ="$("$COMPASS" bench --json 2>/dev/null)"
 has "guardrail precision 100"  "$BJ" '"precision":100'
