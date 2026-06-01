@@ -62,6 +62,18 @@ has "2 blocked"    "$I" '"footguns_blocked":2'
 has "1 formatted"  "$I" '"files_formatted":1'
 has "savings est"  "$I" 'estimated_saved'
 
+echo "dashboard — composes impact + fleet, degrades without gh:"
+printf '%s\tblock\trepoA\trm\n%s\tformat\trepoA\tgo\n' "$TS" "$TS" > "$TMP/metrics.tsv"
+DJ="$(COMPASS_HOME="$TMP" "$COMPASS" dashboard --json 2>/dev/null)"
+has "json embeds impact"     "$DJ" '"impact":{'
+has "json has fleet block"   "$DJ" '"fleet":{'
+has "fleet open count"       "$DJ" '"open":0'
+DH="$(COMPASS_HOME="$TMP" "$COMPASS" dashboard --html 2>/dev/null)"
+has "html path printed"      "$DH" 'dashboard.html'
+if [ -f "$TMP/dashboard.html" ]; then ok "html file written"; else no "dashboard.html not written"; fi
+if COMPASS_HOME="$TMP" "$COMPASS" dashboard --no-fleet >/dev/null 2>&1; then ok "terminal panel exits 0 (no gh needed)"; else no "dashboard panel should exit 0"; fi
+rm -f "$TMP/metrics.tsv" "$TMP/dashboard.html"
+
 echo "metric logger (hook hot path):"
 rm -f "$TMP/metrics.tsv"
 ( . "$ROOT/claude/hooks/lib/common.sh"; compass_log_metric block "a reason"; compass_log_metric format py )

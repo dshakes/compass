@@ -33,6 +33,8 @@ usage: compass <command> [args]
                            write a grounded CLAUDE.md, print a codebase map. --all does many.
   impact  [--week|--all]   What compass did for you: footguns blocked, files formatted,
                            spend by model, estimated \$ saved vs all-Opus.
+  dashboard [--json|--html] Mission control: impact + spend + live fleet PR state in one
+                           panel (reads ~/.compass + gh, read-only). --html writes a page.
   spend   [--week|--month] Agent cost dashboard + budget (set COMPASS_BUDGET_USD).
   schedule add|list|remove|run <routine>
                            Local scheduled agents (cron + claude -p): dep-refresh,
@@ -57,6 +59,7 @@ case "$cmd" in
   status)   run status "$@" ;;
   onboard)  run onboard "$@" ;;
   impact)   run impact "$@" ;;
+  dashboard) run dashboard "$@" ;;
   spend)    run spend "$@" ;;
   schedule) run schedule "$@" ;;
   route)    run route "$@" ;;
