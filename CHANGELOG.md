@@ -39,7 +39,7 @@ uses, and grown from a deterministic heuristic into a hybrid cascade (#9–#13).
 
 ### Docs
 
-- World-class Mermaid diagrams (#13): the cascade hero, the routing pipeline, and the
+- Polished Mermaid diagrams (#13): the cascade hero, the routing pipeline, and the
   data-flywheel — in `router/README.md` and the main README.
 
 ## [0.11.0] — 2026-06-01

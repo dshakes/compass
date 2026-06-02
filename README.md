@@ -514,6 +514,12 @@ You don't have to think about it — delegation happens automatically. When you 
 
 **The router is a standalone, reusable module** ([`router/`](router/)) — a three-layer cascade that pays for intelligence only where it's needed: a free keyword heuristic answers the confident majority, an optional local classifier mops up most of the rest for free, and a Haiku LLM judge is consulted only on the genuinely ambiguous tail. Default routing is the heuristic alone (zero network); layers ②/③ are opt-in.
 
+<p align="center">
+  <img src="assets/router-cascade.svg" alt="compass router cascade — task → ① free keyword heuristic → ② optional free local classifier → ③ Haiku LLM judge for the ambiguous tail; ~80% exits early for free. Plus the data flywheel that trains the classifier from logged LLM judgments." width="880">
+</p>
+
+<details><summary>the same flow as a Mermaid diagram</summary>
+
 ```mermaid
 flowchart LR
     T(["📝 task"]) --> H{"① heuristic<br/>keywords · 0ms · free"}
@@ -529,6 +535,8 @@ flowchart LR
     class J paid
     class T,OUT io
 ```
+
+</details>
 
 <sub>Measured: ~61% cheaper than all-opus at ~98% quality-retention on a fair task mix; the cascade lifts the ambiguous tail where pure keyword routing under-serves. → [`router/README.md`](router/README.md)</sub>
 
@@ -570,7 +578,7 @@ compass is built to be **trusted before it's run** — and honest about its limi
 | [12 · Every agent](docs/12-every-agent.md) | one manual for Claude Code, Codex, Gemini, Cursor, Copilot |
 | [13 · Dynamic workflows](docs/13-workflows.md) | parallel, adversarially-verified subagent orchestration |
 | [14 · Fleet](docs/14-fleet.md) | autonomous agent fleet + mobile mission-control (iMessage/WhatsApp · Telegram · GitHub Mobile) |
-| [15 · Competitive audit](docs/15-competitive-audit.md) | how compass compares to the 2026 field + the prioritized path to world-class |
+| [15 · Competitive audit](docs/15-competitive-audit.md) | how compass compares to the 2026 field + the prioritized path to best-in-class |
 | [16 · Hardening + frontier](docs/16-hardening-and-frontier.md) | the hardening + frontier layer: eval-gated guardrail, memory, parallel SDLC, fleet brain, dashboard, bench, SBOM |
 | [ADRs](docs/adr/) | load-bearing decisions (cross-repo memory; autonomous-loop trust boundary) |
 
