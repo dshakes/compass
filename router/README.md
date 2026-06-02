@@ -30,6 +30,12 @@ Keep `router.json` as the single source of truth; `route.sh` is just the referen
 | `route.sh` | reference implementation (bash + jq + grep) — `route.sh [--explain] "<task>"` |
 | `evalset.tsv` | labeled ground truth: `split` (base / holdout / adversarial) · tier · task |
 | `bench.sh` | accuracy **and cost-at-iso-quality**, gated; `bench.sh` exits non-zero below floors |
+| `fallback-llm.sh` | opt-in escalation fallback — a Haiku judge for the ambiguous middle (stdin→tier) |
+| `train-classifier.sh` | distill logged judgments into a local Naive-Bayes model (zero ML deps) |
+| `classify.sh` | local classifier fallback (stdin→tier); abstains when off / no model / unsure |
+| `fallback-cascade.sh` | the "both" fallback: classifier first (free), LLM judge for the rest |
+| `bench-live.sh` | real (token-spending, non-CI) measurement of the fallback's accuracy lift |
+| `router.local.json.example` | per-app overlay template (turn on the fallback, add rules) |
 | `test.sh` | module unit tests |
 
 ## Embedding in another app
@@ -130,6 +136,59 @@ Measure any knob's tradeoff: `bench.sh --route-args "--bias cheap --ceiling sonn
 cost-at-iso-quality under that setting. (Bias/escalation only move *low-confidence* picks, so they
 barely shift the curated evalset — their effect shows on real ambiguous traffic.)
 
+## The Haiku fallback (hybrid: cheap heuristic + a smart call for the middle)
+
+`fallback-llm.sh` is the cascade's smart half: on a **low-confidence** pick it asks Claude
+Haiku to choose the tier (it reads the task on stdin and prints one tier, from the spec's
+own tier descriptions). The keyword heuristic stays in charge of the confident majority — the
+LLM is consulted only on the ambiguous middle, where keyword routing under-serves.
+
+Enable it (off by default — default routing makes zero network calls):
+```bash
+route.sh --escalate-below 75 --fallback "$PWD/fallback-llm.sh" "<task>"
+# or persist in router.local.json — see router.local.json.example
+```
+- **Threshold ~75** escalates the *no-keyword* (default-tier, conf 45–70) picks — the ambiguous
+  ones — while leaving confident keyword matches (opus/haiku, conf ≥75) deterministic.
+- **Provider:** the `claude` CLI if present, else the Anthropic API (`ANTHROPIC_API_KEY`).
+  Fail-safe: any error or unrecognized output → the spec default tier (never blocks routing).
+- **Cost:** one Haiku call per escalated task. Measure whether it pays with
+  `bench-live.sh` — it prints the adversarial accuracy / under-serve delta vs the extra calls.
+  (CI stays deterministic and token-free; `bench-live.sh` is run by hand.)
+
+## The three-layer cascade (heuristic → classifier → LLM)
+
+The progression, each layer handling what the cheaper one can't — and you can **toggle the
+middle layer off**:
+
+1. **Heuristic** (`route.sh`) — free, 0ms, deterministic; handles the confident majority.
+2. **Classifier** (`classify.sh`, **off by default**) — a tiny local Naive-Bayes model
+   (`train-classifier.sh`), free + fast, no network. Used as a fallback layer once trained.
+3. **LLM judge** (`fallback-llm.sh`) — Haiku, best zero-shot accuracy on the genuinely
+   ambiguous middle; costs one call.
+
+`fallback-cascade.sh` wires 2→3: try the classifier; if it **abstains** (off / no model /
+margin < `min_margin`), fall through to the LLM. Wire the cascade as the escalation fallback:
+```bash
+route.sh --escalate-below 75 --fallback "$PWD/fallback-cascade.sh" "<task>"
+```
+
+**The data flywheel:** turn on `--log` → the LLM judge labels real traffic for free →
+`train-classifier.sh router-log.tsv` distills those labels into the local model → flip the
+classifier **on** (`ROUTER_CLASSIFIER=on` or `classifier.enabled=true`). Now the classifier
+handles most of the middle for free and the LLM is called only on what the classifier itself
+is unsure about.
+
+**When to flip it on:** not before you have data and the per-call LLM cost/latency is the
+bottleneck. For a 3-way tier decision the classifier's *accuracy* edge over the Haiku judge is
+small — its win is **speed and cost at volume**, paid for by data you've already logged. Until
+then, leave it off and let the LLM judge handle the middle.
+
+```bash
+ROUTER_CLASSIFIER=off   # default — classifier abstains, cascade uses the LLM judge
+ROUTER_CLASSIFIER=on    # use the local model; LLM only for the model's own low-margin cases
+```
+
 ## Roadmap
-- A trained/LLM classifier as the `--fallback` for the ambiguous middle (the escalation hook is ready).
 - Auto-grow the evalset from `--log` telemetry (ties into `compass policy-synth`).
+- Swap the Naive-Bayes model for an embedding classifier if your task mix needs it.

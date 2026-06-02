@@ -21,3 +21,8 @@ venv/
 
 # Backups created by the installer (these live under ~/.claude anyway)
 backups/
+
+# router module — generated model + per-app local overlay (never commit)
+router/classifier.model
+router/router.local.json
+router/*.model
