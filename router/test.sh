@@ -126,6 +126,20 @@ COMPASS_ROUTE_CACHELOG="$CL" COMPASS_ROUTE_WARM=sonnet COMPASS_PREFIX_TOKENS=800
 case "$(cat "$CL")" in *"$(printf 'haiku\tsonnet\tsonnet\t1')"*) ok "cachelog records an affinity upgrade" ;; *) no "cachelog affinity row missing" ;; esac
 case "$(bash "$HERE/bench.sh" --calibrate "$CL" 2>&1)" in *"cache-affinity:"*) ok "calibrate summarizes affinity" ;; *) no "calibrate missing affinity" ;; esac
 
+echo "domain floors (#5 — quality floor by detected domain):"
+eq "infra trivial-phrased → floor sonnet" "$(R 'rename the k8s ingress')" sonnet
+eq "api trivial-phrased → floor sonnet"   "$(R 'fix a typo in the rest endpoint handler')" sonnet
+eq "ui trivial → haiku (no floor)"        "$(R 'fix a typo in the css')" haiku
+eq "core trivial → haiku (no floor)"      "$(R 'fix a typo in the readme')" haiku
+eq "domain floor never lowers opus"       "$(R 'redesign the auth trust model for the api')" opus
+
+echo "spec validation + ReDoS lint (#6):"
+bash "$HERE/validate.sh" >/dev/null 2>&1 && ok "validate passes the shipped spec" || no "validate should pass the shipped spec"
+VB="$TMP/bad-spec.json"
+jq '.default="ghost"' "$HERE/router.json" > "$VB"; if bash "$HERE/validate.sh" "$VB" >/dev/null 2>&1; then no "should reject unknown default"; else ok "rejects unknown default tier"; fi
+jq '.rules += [{"tier":"haiku","pattern":"(a+)+b"}]' "$HERE/router.json" > "$VB"; if bash "$HERE/validate.sh" "$VB" >/dev/null 2>&1; then no "should reject ReDoS pattern"; else ok "rejects a ReDoS-shaped pattern"; fi
+jq '.rules += [{"tier":"ghost","pattern":"z"}]' "$HERE/router.json" > "$VB"; if bash "$HERE/validate.sh" "$VB" >/dev/null 2>&1; then no "should reject non-tier rule"; else ok "rejects a rule referencing an unknown tier"; fi
+
 echo
 printf 'router module: %d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

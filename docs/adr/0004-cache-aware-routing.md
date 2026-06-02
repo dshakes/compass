@@ -45,8 +45,15 @@ Add **stage 4.5 — cache-aware cost-min** to the pipeline
   tier within a speed budget — a second objective, still deterministic.
 - **Measurement**: `bench.sh --cache` reports effective $ saved vs cold (cache read/write modeled),
   gated on 100% decision-accuracy + savings > 0; `COMPASS_ROUTE_CACHELOG` + `bench.sh --calibrate`
-  surface the realized cache-affinity rate. All four stages preserve parity when no signal is set,
-  so the existing accuracy / cost-at-iso-quality gates are untouched.
+  surface the realized cache-affinity rate.
+- **Domain quality floors** (`domain_floors`): a detected domain (infra/api) raises the effective
+  floor — folded into clamps so it holds against the cost dials but never lowers a higher pick.
+- **Spec hardening** (`validate.sh`): schema validation (every tier reference resolves; patterns
+  compile) + a **ReDoS lint** on rule patterns, gated in CI and `compass doctor`. The spec is a
+  copied-around asset, so it's validated, not trusted.
+
+All stages preserve parity when no signal is set, so the existing accuracy / cost-at-iso-quality
+gates are untouched.
 
 ## How this exceeds Not Diamond / industry routers
 - **Deterministic + reproducible + offline** — no recommender API, no latency, no data egress.

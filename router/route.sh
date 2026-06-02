@@ -113,7 +113,8 @@ DUMP="$(printf '%s' "$MERGED" | jq -r --arg p "$PROFILE" '
                (($root.profiles[$p][.key].latency // .value.latency // 0)|tostring)]))
      + (.rules | map(["R", .tier, .pattern, (.reason // ""), (.unless // ""), ((.weight // 1)|tostring)]))
      + ((.length_rules // []) | map(["L", (.min_words|tostring), .at_least]))
-     + ((.domains // []) | map(["D", .domain, .pattern])) )
+     + ((.domains // []) | map(["D", .domain, .pattern]))
+     + ((.domain_floors // {}) | to_entries | map(["DF", .key, .value])) )
   | .[] | join("\t")
 ')"
 
@@ -121,7 +122,7 @@ DUMP="$(printf '%s' "$MERGED" | jq -r --arg p "$PROFILE" '
 S_strategy=""; S_bias=""; S_default=""; S_floor=""; S_ceiling=""; S_allow=""; S_escalate="0"; S_fallback=""; S_maxrank="0"
 S_cr="0.1"; S_cw="1.25"; S_cwl="2.0"; S_cP="8000"; S_cD="600"; S_cO="400"; S_cow="4"
 S_bwarn="80"; S_bcap="95"; S_bceil=""
-TIER_META=(); TIERS_ORDERED=""; RULES=(); LENGTHS=(); DOMAINS=()
+TIER_META=(); TIERS_ORDERED=""; RULES=(); LENGTHS=(); DOMAINS=(); DOMFLOORS=()
 while IFS=$'\t' read -r typ f1 f2 f3 f4 f5; do
   case "$typ" in
     S) case "$f1" in
@@ -136,6 +137,7 @@ while IFS=$'\t' read -r typ f1 f2 f3 f4 f5; do
     R) RULES+=("$f1"$'\t'"$f2"$'\t'"$f3"$'\t'"$f4"$'\t'"$f5") ;;
     L) LENGTHS+=("$f1 $f2") ;;
     D) DOMAINS+=("$f1"$'\t'"$f2") ;;
+    DF) DOMFLOORS+=("$f1 $f2") ;;
   esac
 done <<EOF
 $DUMP
@@ -160,9 +162,22 @@ cost_of()      { local t="$1" e; for e in "${TIER_META[@]}"; do case "$e" in "$t
 model_of()     { local t="$1" e; for e in "${TIER_META[@]}"; do case "$e" in "$t "*) set -- $e; printf '%s' "$4"; return;; esac; done; }
 tier_of_rank() { local n="$1" e; for e in "${TIER_META[@]}"; do set -- $e; [ "$2" = "$n" ] && { printf '%s' "$1"; return; }; done; }
 latency_of()   { local t="$1" e; for e in "${TIER_META[@]}"; do case "$e" in "$t "*) set -- $e; printf '%s' "${5:-0}"; return;; esac; done; printf '0'; }
+domfloor_of()  { local d="$1" e; for e in "${DOMFLOORS[@]}"; do case "$e" in "$d "*) set -- $e; printf '%s' "$2"; return;; esac; done; }
 tier_pattern() { local t="$1" r rest; for r in "${RULES[@]}"; do case "$r" in "$t"$'\t'*) rest="${r#*$'\t'}"; printf '%s' "${rest%%$'\t'*}"; return;; esac; done; }
 
 LC="$(printf '%s' "$TASK" | tr '[:upper:]' '[:lower:]')"
+
+# domain detection (computed once, always — used by domain_floors in clamps + --domain output)
+DOMAIN=""
+if [ "${#DOMAINS[@]}" -gt 0 ]; then
+  for d in "${DOMAINS[@]}"; do
+    IFS=$'\t' read -r dom pat <<EOF
+$d
+EOF
+    [ -n "$dom" ] || continue
+    printf '%s' "$LC" | grep -qE -- "$pat" && { DOMAIN="$dom"; break; }
+  done
+fi
 
 # ── stage 1: decide a tier ────────────────────────────────────────────────────
 MATCH_TIER=""; MATCH_REASON=""
@@ -304,6 +319,10 @@ if [ -n "$MAXLAT" ] && printf '%s' "$MAXLAT" | grep -qE '^[0-9]+$'; then
 fi
 
 # ── stage 6: clamps (hard bounds, applied LAST) ───────────────────────────────
+# domain quality floor (#5) folds into the effective floor, so it holds against the cost
+# dials (budget/latency) but never lowers a higher pick.
+dfl="$(domfloor_of "$DOMAIN")"
+[ -n "$dfl" ] && [ "$(rank_of "$dfl")" -gt "$(rank_of "$FLOOR")" ] && { FLOOR="$dfl"; MATCH_REASON="$MATCH_REASON; domain($DOMAIN) floor->$dfl"; }
 if [ -n "$ALLOW" ]; then
   case ",$ALLOW," in
     *",$MATCH_TIER,"*) : ;;
@@ -317,17 +336,8 @@ else
   [ -n "$CEILING" ] && [ "$(rank_of "$MATCH_TIER")" -gt "$(rank_of "$CEILING")" ] && { MATCH_TIER="$CEILING"; MATCH_REASON="$MATCH_REASON; clamp ceiling->$CEILING"; }
 fi
 
-# ── stage 7: domain (optional second axis) ────────────────────────────────────
-DOMAIN=""
-if [ "$WANT_DOMAIN" = 1 ] && [ "${#DOMAINS[@]}" -gt 0 ]; then
-  for d in "${DOMAINS[@]}"; do
-    IFS=$'\t' read -r dom pat <<EOF
-$d
-EOF
-    [ -n "$dom" ] || continue
-    printf '%s' "$LC" | grep -qE -- "$pat" && { DOMAIN="$dom"; break; }
-  done
-fi
+# ── stage 7: domain (optional second axis) — DOMAIN was detected once up front ──
+# (kept as a labeled stage for the pipeline narrative; nothing to recompute here)
 
 # ── telemetry + output ────────────────────────────────────────────────────────
 [ -n "$LOGFILE" ] && { printf '%s\t%s\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$MATCH_TIER" "$CONFIDENCE" "$TASK" >>"$LOGFILE" 2>/dev/null || true; }

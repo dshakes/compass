@@ -57,5 +57,8 @@
     { "domain": "api",   "pattern": "endpoint|rest|graphql|grpc|handler|route|webhook|openapi|payload" },
     { "domain": "core",  "pattern": ".*" }
   ],
-  "_domains_note": "optional SECOND axis (orthogonal to tier): --domain also emits a specialist (ui/api/infra/docs/core) via first-match, for apps that dispatch to domain agents. 'core' is the catch-all."
+  "_domains_note": "optional SECOND axis (orthogonal to tier): --domain also emits a specialist (ui/api/infra/docs/core) via first-match, for apps that dispatch to domain agents. 'core' is the catch-all.",
+
+  "domain_floors": { "infra": "sonnet", "api": "sonnet" },
+  "_domain_floors_note": "Per-domain QUALITY floor (OFF for domains not listed). A task whose detected domain maps here is raised to at least that tier — infra (deploys/k8s/terraform) and api (endpoints/contracts) aren't trivial even when phrased tersely. Folded into the effective clamp floor, so it holds against the cost dials (budget/latency) but never lowers a higher pick. Edit per app; {} disables."
 }

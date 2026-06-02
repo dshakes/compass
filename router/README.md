@@ -92,6 +92,14 @@ summarizes the realized cache-affinity rate.
 - **Latency ceiling** (`--max-latency N` / `COMPASS_ROUTE_MAX_LATENCY`; per-tier `latency` in the
   spec). Caps the pick to the most-capable tier within the speed budget — multi-objective routing,
   still deterministic.
+- **Domain quality floors** (`domain_floors` block). A task whose detected domain maps here is
+  raised to at least that tier (infra/api aren't trivial even when phrased tersely). Folds into the
+  effective clamp floor, so it holds against the cost dials but never lowers a higher pick.
+
+**Spec is validated, not trusted.** `validate.sh` checks the schema (required keys, every tier
+reference in `default`/`clamps`/`length_rules`/`domain_floors`/`rules` resolves, patterns compile)
+and **lints rule patterns for ReDoS** (catastrophic-backtracking shapes like `(a+)+`). Runs in CI
+and `compass doctor`, so a malformed or unsafe spec fails loudly before any app embeds it.
 
 Full pipeline: `decide → confidence → length → bias → cache → escalation → budget → latency →
 clamps → domain`. See [`docs/adr/0004-cache-aware-routing.md`](../docs/adr/0004-cache-aware-routing.md).
@@ -105,6 +113,7 @@ clamps → domain`. See [`docs/adr/0004-cache-aware-routing.md`](../docs/adr/000
 | `evalset.tsv` | labeled ground truth: `split` (base / holdout / adversarial) · tier · task |
 | `bench.sh` | accuracy **and cost-at-iso-quality**, gated; `--cache` scores cache savings; `--calibrate` reads telemetry |
 | `cache-evalset.tsv` | labeled warm/cold set for `bench.sh --cache` (cache-aware cost-min savings) |
+| `validate.sh` | schema validation + ReDoS lint of `router.json` (CI- and doctor-gated) |
 | `fallback-llm.sh` | opt-in escalation fallback — a Haiku judge for the ambiguous middle (stdin→tier) |
 | `train-classifier.sh` | distill logged judgments into a local Naive-Bayes model (zero ML deps) |
 | `classify.sh` | local classifier fallback (stdin→tier); abstains when off / no model / unsure |

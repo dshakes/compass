@@ -53,6 +53,9 @@ jobs:
       - name: Router cache savings (cache-aware cost-min, gated)
         run: bash router/bench.sh --cache
 
+      - name: Router spec validation + ReDoS lint
+        run: bash router/validate.sh
+
       - name: compass CLI tests (route · spend · impact · notify · listen parser)
         run: bash scripts/test-cli.sh
 
