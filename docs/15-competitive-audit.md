@@ -1,4 +1,4 @@
-# Competitive audit — where compass stands, and how it becomes world-class
+# Competitive audit — where compass stands, and how it becomes best-in-class
 
 > A code audit, a parity check against the rest of the field, and a prioritized
 > path to making compass the best-in-class, futuristic version of itself.
@@ -181,7 +181,7 @@ Across every category the same handful of gaps recur. In priority order:
 
 ---
 
-## 5. Recommendations — the path to world-class & futuristic
+## 5. Recommendations — the path to best-in-class & futuristic
 
 > **Status: R1–R14 are now implemented** — production-grade, opt-in where they add
 > spend/risk, each safety-critical piece CI-gated, human merge gate untouched. See
@@ -344,7 +344,7 @@ the secret list — and add the bypass-corpus test.
 
 compass is on the **correct strategic axis** (configuration & governance is the
 edge, not models) and its **execution rigor is top-decile** for its category —
-honest, linted, evaluated, reversible. To become *world-class* it must close the
+honest, linted, evaluated, reversible. To become *best-in-class* it must close the
 field's two structural leads — **persistent codebase/org context** (which fixes
 both the review-depth and the learning gap at once) and a **visible control
 surface** — while hardening the one place perception outruns reality: the
