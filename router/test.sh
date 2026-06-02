@@ -93,6 +93,20 @@ bash "$HERE/bench.sh" >/dev/null 2>&1 && ok "bench passes its floors" || no "ben
 ROUTER_ACC_FLOOR=101 bash "$HERE/bench.sh" >/dev/null 2>&1 && no "acc floor=101 should FAIL" || ok "accuracy floor bites"
 bash "$HERE/bench.sh" --route-args "--ceiling sonnet" >/dev/null 2>&1; ok "bench accepts --route-args passthrough"
 
+echo "cache-aware cost-min (stage 4.5 — OFF unless COMPASS_ROUTE_WARM is set):"
+eq "no warm → parity (unchanged)"            "$(R 'fix a typo in the readme')" haiku
+eq "warm sonnet + tiny task rides sonnet"    "$(COMPASS_ROUTE_WARM=sonnet COMPASS_PREFIX_TOKENS=8000 COMPASS_TASK_TOKENS=100 COMPASS_OUTPUT_TOKENS=200 R 'fix a typo in the readme')" sonnet
+eq "warm sonnet + big task stays haiku"      "$(COMPASS_ROUTE_WARM=sonnet COMPASS_PREFIX_TOKENS=8000 COMPASS_TASK_TOKENS=5000 COMPASS_OUTPUT_TOKENS=400 R 'fix a typo in the readme')" haiku
+eq "warm opus + huge prefix/tiny rides opus" "$(COMPASS_ROUTE_WARM=opus COMPASS_PREFIX_TOKENS=12000 COMPASS_TASK_TOKENS=80 COMPASS_OUTPUT_TOKENS=150 R 'apply a tiny fix')" opus
+eq "opus pick + warm haiku → opus (upgrade-only)" "$(COMPASS_ROUTE_WARM=haiku R 'redesign the auth trust model')" opus
+eq "cache upgrade still bounded by ceiling"  "$(COMPASS_ROUTE_WARM=opus COMPASS_PREFIX_TOKENS=12000 COMPASS_TASK_TOKENS=80 R --ceiling sonnet 'apply a tiny fix')" sonnet
+
+echo "ttl recommender (cache-write TTL: 5m default; 1h when reused ≥2× across a >5m gap):"
+eq "default → 5m"                      "$(R --ttl)" 5m
+eq "converge (3 reuses, 8m gap) → 1h"  "$(COMPASS_ROUTE_REUSES=3 COMPASS_ROUTE_GAP_MIN=8 R --ttl)" 1h
+eq "2 reuses but no gap → 5m"          "$(COMPASS_ROUTE_REUSES=2 COMPASS_ROUTE_GAP_MIN=0 R --ttl)" 5m
+eq "json carries ttl"                  "$(R --json 'fix a typo' | jq -r .ttl)" 5m
+
 echo
 printf 'router module: %d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

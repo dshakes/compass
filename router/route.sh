@@ -2,14 +2,15 @@
 # route.sh — reference implementation of the compass cost-tier router (v1.1).
 #
 # Deterministic, zero network, zero model calls (unless you wire an escalation fallback).
-# Pipeline:  decide(tier) -> confidence -> length-rules -> bias -> escalation -> clamps -> domain.
-# With no flags it reproduces v1.0 exactly (strategy first-match, balanced, no escalation).
+# Pipeline:  decide(tier) -> confidence -> length-rules -> bias -> cache-aware -> escalation -> clamps -> domain.
+# With no flags it reproduces v1.0 exactly (strategy first-match, balanced, no escalation, no warm set).
 #
 #   route.sh "<task>"                      -> haiku | sonnet | opus
 #   route.sh --explain "<task>"            -> tier  (+ reason on stderr)
 #   route.sh --score "<task>"              -> tier<TAB>confidence
-#   route.sh --json "<task>"               -> {tier,confidence,model,cost,reason[,domain]}
+#   route.sh --json "<task>"               -> {tier,confidence,model,cost,ttl,reason[,domain]}
 #   route.sh --domain "<task>"             -> tier<TAB>domain
+#   route.sh --ttl                         -> 5m | 1h   (cache-write TTL recommendation)
 # Knobs (each overrides the spec default):
 #   --strategy first-match|max-hits|weighted   --bias cheap|balanced|quality
 #   --profile NAME                              --floor TIER  --ceiling TIER  --allow t1,t2
@@ -21,7 +22,7 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SPEC="${COMPASS_ROUTER_SPEC:-$HERE/router.json}"; LOCAL=""
-EXPLAIN=0; JSON=0; SCORE=0; WANT_DOMAIN=0; TASK=""
+EXPLAIN=0; JSON=0; SCORE=0; WANT_DOMAIN=0; TTL_ONLY=0; TASK=""
 PROFILE="default"; STRATEGY=""; BIAS=""; FLOOR=""; CEILING=""; ALLOW=""
 ESCALATE=""; FALLBACK=""; LOGFILE=""
 while [ $# -gt 0 ]; do
@@ -30,6 +31,7 @@ while [ $# -gt 0 ]; do
     --json)    JSON=1 ;;
     --score)   SCORE=1 ;;
     --domain)  WANT_DOMAIN=1 ;;
+    --ttl)     TTL_ONLY=1 ;;
     --spec)    SPEC="${2:?}"; shift ;;
     --local)   LOCAL="${2:?}"; shift ;;
     --profile) PROFILE="${2:?}"; shift ;;
@@ -47,6 +49,27 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
+# validated integer or default — keeps hostile COMPASS_* env out of arithmetic/awk.
+cnum(){ case "$1" in ''|*[!0-9]*) printf '%s' "$2" ;; *) printf '%s' "$1" ;; esac; }
+
+# Cache-write TTL recommendation: 5m (write 1.25x) pays off inside one window; 1h (write
+# 2x) only amortizes when the prefix is reused >=2 times across a gap > 5m (e.g. a converge
+# loop with a long QA run between rounds). Reachable on the direct-API path (cache_control.ttl);
+# on `claude -p` it's a surfaced recommendation (Claude Code manages a 5m cache itself).
+TTL_REC=5m; TTL_WHY=""
+recommend_ttl(){
+  local reuses gap; reuses="$(cnum "${COMPASS_ROUTE_REUSES:-}" 1)"; gap="$(cnum "${COMPASS_ROUTE_GAP_MIN:-}" 0)"
+  if [ "$reuses" -ge 2 ] && [ "$gap" -gt 5 ]; then TTL_REC=1h; TTL_WHY="${reuses} reuses across a >5m gap — 1h write amortizes"
+  else TTL_REC=5m; TTL_WHY="write pays off inside one 5m window"; fi
+}
+
+# --ttl: standalone recommendation, no task / no spec needed.
+if [ "$TTL_ONLY" = 1 ]; then
+  recommend_ttl
+  [ "$EXPLAIN" = 1 ] && printf 'ttl: %s (%s)\n' "$TTL_REC" "$TTL_WHY" >&2
+  printf '%s\n' "$TTL_REC"; exit 0
+fi
+
 [ -n "$TASK" ] || { echo "route: empty task" >&2; exit 2; }
 command -v jq >/dev/null || { echo "route: jq required (other languages parse router.json natively)" >&2; exit 2; }
 [ -f "$SPEC" ] || { echo "route: spec not found: $SPEC" >&2; exit 2; }
@@ -70,7 +93,14 @@ DUMP="$(printf '%s' "$MERGED" | jq -r --arg p "$PROFILE" '
        ["S","allow",((.clamps.allow // []) | join(","))],
        ["S","escalate",((.escalation.threshold // 0)|tostring)],
        ["S","fallback",(.escalation.fallback // "")],
-       ["S","maxrank",(([.tiers[].rank]|max)|tostring)] ]
+       ["S","maxrank",(([.tiers[].rank]|max)|tostring)],
+       ["S","cread",((.cache.read_mult // 0.1)|tostring)],
+       ["S","cwrite",((.cache.write_mult // 1.25)|tostring)],
+       ["S","cwritelong",((.cache.write_mult_long // 2.0)|tostring)],
+       ["S","cP",((.cache.prefix_tokens // 8000)|tostring)],
+       ["S","cD",((.cache.task_tokens // 600)|tostring)],
+       ["S","cO",((.cache.output_tokens // 400)|tostring)],
+       ["S","cow",((.cache.out_weight // 4)|tostring)] ]
      + (.tiers | to_entries | sort_by(.value.rank)
         | map(["T", .key, (.value.rank|tostring),
                (($root.profiles[$p][.key].cost  // .value.cost)|tostring),
@@ -83,6 +113,7 @@ DUMP="$(printf '%s' "$MERGED" | jq -r --arg p "$PROFILE" '
 
 # ── parse the dump into shell state (pure bash, no further subprocesses) ──────────
 S_strategy=""; S_bias=""; S_default=""; S_floor=""; S_ceiling=""; S_allow=""; S_escalate="0"; S_fallback=""; S_maxrank="0"
+S_cr="0.1"; S_cw="1.25"; S_cwl="2.0"; S_cP="8000"; S_cD="600"; S_cO="400"; S_cow="4"
 TIER_META=(); TIERS_ORDERED=""; RULES=(); LENGTHS=(); DOMAINS=()
 while IFS=$'\t' read -r typ f1 f2 f3 f4 f5; do
   case "$typ" in
@@ -90,6 +121,8 @@ while IFS=$'\t' read -r typ f1 f2 f3 f4 f5; do
          strategy) S_strategy="$f2" ;; bias) S_bias="$f2" ;; default) S_default="$f2" ;;
          floor) S_floor="$f2" ;; ceiling) S_ceiling="$f2" ;; allow) S_allow="$f2" ;;
          escalate) S_escalate="$f2" ;; fallback) S_fallback="$f2" ;; maxrank) S_maxrank="$f2" ;;
+         cread) S_cr="$f2" ;; cwrite) S_cw="$f2" ;; cwritelong) S_cwl="$f2" ;;
+         cP) S_cP="$f2" ;; cD) S_cD="$f2" ;; cO) S_cO="$f2" ;; cow) S_cow="$f2" ;;
        esac ;;
     T) TIER_META+=("$f1 $f2 $f3 $f4"); TIERS_ORDERED="$TIERS_ORDERED $f1" ;;
     R) RULES+=("$f1"$'\t'"$f2"$'\t'"$f3"$'\t'"$f4"$'\t'"$f5") ;;
@@ -195,6 +228,31 @@ if [ "$CONFIDENCE" -lt 55 ]; then
   esac
 fi
 
+# ── stage 4.5: cache-aware cost-min (OFF unless a warm tier is supplied) ───────
+# When COMPASS_ROUTE_WARM names tiers whose prompt-cache prefix is already hot, ride a
+# warm pricier tier in [pick..maxrank] if its EXPECTED cost (cache read on the prefix)
+# beats cold-loading the current pick. UPGRADE-ONLY (never below the pick → no quality
+# loss); the clamps stage still bounds the result. Reuses each tier's relative `cost`.
+if [ -n "${COMPASS_ROUTE_WARM:-}" ]; then
+  cP="$(cnum "${COMPASS_PREFIX_TOKENS:-}" "$S_cP")"; cD="$(cnum "${COMPASS_TASK_TOKENS:-}" "$S_cD")"; cO="$(cnum "${COMPASS_OUTPUT_TOKENS:-}" "$S_cO")"
+  case "${COMPASS_ROUTE_TTL:-5m}" in 1h) cwrm="$S_cwl" ;; *) cwrm="$S_cw" ;; esac
+  TC=""; for e in "${TIER_META[@]}"; do set -- $e; TC="$TC$1:$2:$3 "; done
+  cbest="$(awk -v pr="$(rank_of "$MATCH_TIER")" -v warm="$COMPASS_ROUTE_WARM" \
+              -v P="$cP" -v D="$cD" -v O="$cO" -v rd="$S_cr" -v wr="$cwrm" -v ow="$S_cow" -v tc="$TC" '
+    BEGIN{
+      n=split(tc, a, " "); m=split(warm, wl, /[, ]+/); for(i=1;i<=m;i++) if(wl[i]!="") iswarm[wl[i]]=1;
+      best=""; bestc=0;
+      for(i=1;i<=n;i++){ if(a[i]=="") continue; split(a[i], f, ":"); t=f[1]; rk=f[2]+0; c=f[3]+0;
+        if(rk < pr) continue;                                   # upgrade-only
+        w=(t in iswarm)?1:0; cost=(w?rd:wr)*c*P + c*D + c*ow*O;
+        if(best=="" || cost < bestc-1e-9){ best=t; bestc=cost } }
+      printf "%s", best;
+    }')"
+  if [ -n "$cbest" ] && [ "$cbest" != "$MATCH_TIER" ]; then
+    MATCH_REASON="$MATCH_REASON; cache-aware: warm $cbest cheaper than cold $MATCH_TIER"; MATCH_TIER="$cbest"
+  fi
+fi
+
 # ── stage 5: escalation (cascade) ─────────────────────────────────────────────
 if [ "${ESCALATE:-0}" -gt 0 ] && [ "$CONFIDENCE" -lt "$ESCALATE" ]; then
   if [ -n "$FALLBACK" ]; then
@@ -233,11 +291,12 @@ fi
 
 # ── telemetry + output ────────────────────────────────────────────────────────
 [ -n "$LOGFILE" ] && { printf '%s\t%s\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$MATCH_TIER" "$CONFIDENCE" "$TASK" >>"$LOGFILE" 2>/dev/null || true; }
+recommend_ttl
 
 if [ "$JSON" = 1 ]; then
   jq -n --arg tier "$MATCH_TIER" --arg reason "$MATCH_REASON" --argjson conf "$CONFIDENCE" \
-        --arg model "$(model_of "$MATCH_TIER")" --argjson cost "$(cost_of "$MATCH_TIER")" --arg domain "$DOMAIN" \
-        '{tier:$tier, confidence:$conf, model:$model, cost:$cost, reason:$reason} + (if $domain=="" then {} else {domain:$domain} end)'
+        --arg model "$(model_of "$MATCH_TIER")" --argjson cost "$(cost_of "$MATCH_TIER")" --arg ttl "$TTL_REC" --arg domain "$DOMAIN" \
+        '{tier:$tier, confidence:$conf, model:$model, cost:$cost, ttl:$ttl, reason:$reason} + (if $domain=="" then {} else {domain:$domain} end)'
 elif [ "$SCORE" = 1 ]; then
   printf '%s\t%s\n' "$MATCH_TIER" "$CONFIDENCE"
 else

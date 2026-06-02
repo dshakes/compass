@@ -54,11 +54,36 @@ The algorithm any host implements is the same ~10 lines:
 Keep `router.json` as the single source of truth; `route.sh` is just the reference impl, and
 `bench.sh` scores *any* implementation against `evalset.tsv`.
 
+## Cache-aware cost-min (stage 4.5)
+
+A small but distinctive stage that folds **prompt-cache economics** into the pick — the
+prefix/KV-cache-aware idea (route same-prefix work to the already-warm tier), at the model-
+selection layer. **OFF unless `COMPASS_ROUTE_WARM` names a tier whose prompt-cache prefix is
+already hot this session.** When on, among the tiers in `[pick .. ceiling]` it rides a *warm
+pricier* tier when its expected cost is lower than cold-loading the pick:
+
+```
+cost(tier) = (warm ? read_mult : write_mult)·tier.cost·P  +  tier.cost·D  +  tier.cost·out_weight·O
+```
+
+reusing each tier's relative `cost` (haiku 1 / sonnet 4 / opus 20). It models Anthropic's
+cache pricing (read **0.1×**, 5m write **1.25×**, 1h write **2×**). The headline case:
+**warm Sonnet beats cold Haiku once the task delta `D` is small relative to the cached prefix
+`P`** — a small edit on a hot prefix. It is **upgrade-only** (never routes below the pick, so
+quality can't drop) and the clamps stage still bounds it. Tunables live in the `cache` block of
+`router.json`; override per run with `COMPASS_PREFIX_TOKENS` / `COMPASS_TASK_TOKENS` /
+`COMPASS_OUTPUT_TOKENS` / `COMPASS_ROUTE_TTL`. `--ttl` recommends the cache-write TTL (5m vs 1h)
+from `COMPASS_ROUTE_REUSES` / `COMPASS_ROUTE_GAP_MIN`. Full rationale + the honest reachable-levers
+table: [`docs/adr/0004-cache-aware-routing.md`](../docs/adr/0004-cache-aware-routing.md).
+
+> This is the one place the router goes *beyond* a plain cost dial: it accounts for the cache
+> you've already paid to warm — deterministically, client-side, and gated by `test.sh`.
+
 ## Files
 
 | File | What |
 |------|------|
-| `router.json` | the spec — tiers, costs, ordered rules (the asset to copy into other repos) |
+| `router.json` | the spec — tiers, costs, ordered rules, **`cache` block** (the asset to copy into other repos) |
 | `route.sh` | reference implementation (bash + jq + grep) — `route.sh [--explain] "<task>"` |
 | `evalset.tsv` | labeled ground truth: `split` (base / holdout / adversarial) · tier · task |
 | `bench.sh` | accuracy **and cost-at-iso-quality**, gated; `bench.sh` exits non-zero below floors |
