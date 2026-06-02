@@ -54,6 +54,15 @@ The algorithm any host implements is the same ~10 lines:
 Keep `router.json` as the single source of truth; `route.sh` is just the reference impl, and
 `bench.sh` scores *any* implementation against `evalset.tsv`.
 
+## The pipeline
+
+<p align="center">
+  <img src="../assets/router-pipeline.svg" alt="The router pipeline: task → decide → confidence → length → bias → cache → escalation → budget → latency → clamps → domain → tier. Core classify/shape stages always run; cache, escalation, budget, latency, and domain-floor stages are OFF unless their signal is set (parity with v1.0); the spec is validated + ReDoS-linted, not trusted; cache savings are measured by bench.sh --cache." width="900">
+</p>
+
+`decide → confidence → length → bias → cache → escalation → budget → latency → clamps → domain`.
+Everything past `bias` is **off unless its signal is set**, so the default is byte-for-byte v1.0.
+
 ## Cache-aware cost-min (stage 4.5)
 
 A small but distinctive stage that folds **prompt-cache economics** into the pick — the
