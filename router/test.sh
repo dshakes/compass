@@ -66,6 +66,28 @@ echo "telemetry (--log):"
 R --log "$TMP/audit.tsv" 'fix a typo' >/dev/null
 grep -q 'haiku' "$TMP/audit.tsv" && ok "--log appends a routed line" || no "--log did not write"
 
+echo "escalation fallback (Haiku judge — stubbed, no tokens):"
+eq "fallback extracts tier from prose" "$(printf x | ROUTER_FALLBACK_STUB='I would use OPUS for this.' bash "$HERE/fallback-llm.sh")" opus
+eq "fallback defaults on garbage"      "$(printf x | ROUTER_FALLBACK_STUB='hmm not sure' bash "$HERE/fallback-llm.sh")" sonnet
+AMB="make sure one customer can never see another customer's invoices"
+eq "cascade routes ambiguous via fallback" "$(R --escalate-below 75 --fallback "ROUTER_FALLBACK_STUB=opus $HERE/fallback-llm.sh" "$AMB")" opus
+eq "confident keyword pick ignores fallback" "$(R --escalate-below 75 --fallback "ROUTER_FALLBACK_STUB=haiku $HERE/fallback-llm.sh" 'redesign the auth trust model')" opus
+# bench-live spends tokens, so the suite only verifies its SKIP path (force no provider).
+if env -u ANTHROPIC_API_KEY PATH="/usr/bin:/bin" bash "$HERE/bench-live.sh" >/dev/null 2>&1; then no "bench-live should skip without a provider"; else ok "bench-live skips without a provider (exit 77)"; fi
+
+echo "local classifier (toggleable; trained from the evalset — no tokens):"
+CM="$TMP/clf.model"
+bash "$HERE/train-classifier.sh" "$HERE/evalset.tsv" -o "$CM" 2>/dev/null
+eq "trained model exists"      "$( [ -s "$CM" ] && echo yes )" yes
+eq "classify typo → haiku"     "$(printf 'fix a typo in the readme'      | ROUTER_CLASSIFIER=on bash "$HERE/classify.sh" --model "$CM")" haiku
+eq "classify feature → sonnet" "$(printf 'add a rate limiter with tests' | ROUTER_CLASSIFIER=on bash "$HERE/classify.sh" --model "$CM")" sonnet
+eq "classify tenancy → opus"   "$(printf 'fix the cross-tenant data leak' | ROUTER_CLASSIFIER=on bash "$HERE/classify.sh" --model "$CM")" opus
+if printf 'fix a typo' | bash "$HERE/classify.sh" --model "$CM" >/dev/null 2>&1; then no "classifier OFF should abstain"; else ok "classifier OFF abstains (exit 3)"; fi
+# cascade: OFF (default) → LLM judge (stubbed); ON + model → classifier, no LLM
+eq "cascade off → LLM stub" "$(printf 'something ambiguous' | ROUTER_FALLBACK_STUB=sonnet bash "$HERE/fallback-cascade.sh")" sonnet
+jq --arg m "$CM" '.classifier.enabled=true | .classifier.model=$m' "$HERE/router.json" > "$TMP/spec-clf.json"
+eq "cascade on → classifier (no LLM)" "$(printf 'fix a typo in the readme' | ROUTER_FALLBACK_STUB=opus COMPASS_ROUTER_SPEC="$TMP/spec-clf.json" bash "$HERE/fallback-cascade.sh")" haiku
+
 echo "bench.sh — runs, floors gate, knob passthrough:"
 bash "$HERE/bench.sh" >/dev/null 2>&1 && ok "bench passes its floors" || no "bench should pass"
 ROUTER_ACC_FLOOR=101 bash "$HERE/bench.sh" >/dev/null 2>&1 && no "acc floor=101 should FAIL" || ok "accuracy floor bites"

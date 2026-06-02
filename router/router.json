@@ -27,6 +27,9 @@
   "clamps": { "floor": "haiku", "ceiling": "opus", "allow": [] },
   "_clamps_note": "hard bounds applied LAST. floor = never route below; ceiling = never above (cost cap). allow = explicit allowlist (overrides floor/ceiling when non-empty). Override per run: --floor/--ceiling/--allow.",
 
+  "classifier": { "enabled": false, "model": "classifier.model", "min_margin": 1.0 },
+  "_classifier_note": "OFF by default. A local Naive-Bayes tier classifier (train-classifier.sh from --log judgments) used as a free/fast fallback layer before the LLM. Toggle on with ROUTER_CLASSIFIER=on or enabled:true once you've logged enough data. classify.sh ABSTAINS when off / no model / margin<min_margin, so fallback-cascade.sh falls through to the LLM judge. The progression: heuristic -> classifier -> LLM, paid for by data the LLM judge already labeled.",
+
   "escalation": { "threshold": 0, "fallback": "" },
   "_escalation_note": "if the pick's confidence < threshold (0 = off): when `fallback` is set it is run (the task is piped on stdin; it prints a tier) and that tier is used — the cascade: heuristic for the confident majority, a smarter call (LLM/classifier) for the ambiguous middle. With no fallback, the tier is bumped one step. Override: --escalate-below N, --fallback CMD.",
 

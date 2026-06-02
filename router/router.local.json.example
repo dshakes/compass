@@ -1,0 +1,12 @@
+{
+  "_about": "Copy to router.local.json to persist per-app overrides — it auto-loads beside router.json. Local rules are PREPENDED (higher priority); scalar fields override the base. This example turns on the Haiku LLM fallback for the ambiguous middle and adds an app-specific rule.",
+
+  "escalation": {
+    "threshold": 75,
+    "fallback": "/absolute/path/to/router/fallback-llm.sh"
+  },
+
+  "rules": [
+    { "tier": "opus", "pattern": "payment|billing|pii|gdpr", "reason": "app: money/PII is high-stakes" }
+  ]
+}
