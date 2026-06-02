@@ -15,6 +15,9 @@
 #   --profile NAME                              --floor TIER  --ceiling TIER  --allow t1,t2
 #   --escalate-below N  --fallback "CMD"        --local FILE   --spec FILE   --log FILE
 # Env: COMPASS_ROUTE_BIAS, COMPASS_ROUTER_SPEC.  The SPEC (router.json) is the reusable asset.
+#
+# PERF: the whole spec is read in ONE jq pass into shell vars/arrays; the per-route hot path
+# then uses pure-bash lookups + the grep matches that regex routing inherently needs.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SPEC="${COMPASS_ROUTER_SPEC:-$HERE/router.json}"; LOCAL=""
@@ -48,67 +51,106 @@ done
 command -v jq >/dev/null || { echo "route: jq required (other languages parse router.json natively)" >&2; exit 2; }
 [ -f "$SPEC" ] || { echo "route: spec not found: $SPEC" >&2; exit 2; }
 
-# ── load spec (+ optional local overlay: local rules take priority, scalars override) ──
+# ── load spec (+ optional local overlay) and dump EVERYTHING in ONE jq pass ───────
 [ -z "$LOCAL" ] && [ -f "$HERE/router.local.json" ] && LOCAL="$HERE/router.local.json"
-EFFSPEC="$(mktemp)"; trap 'rm -f "$EFFSPEC"' EXIT
 if [ -n "$LOCAL" ] && [ -f "$LOCAL" ]; then
-  jq -s '(.[0] * .[1]) | .rules = (((.[1].rules) // []) + ((.[0].rules) // [])) ' "$SPEC" "$LOCAL" 2>/dev/null \
-    > "$EFFSPEC" || jq '.' "$SPEC" > "$EFFSPEC"
-  # the * merge above loses base.rules ordering ref; recompute cleanly:
-  jq -s '.[0] as $b | .[1] as $l | ($b * $l) | .rules = (($l.rules // []) + ($b.rules // []))' "$SPEC" "$LOCAL" > "$EFFSPEC"
+  MERGED="$(jq -s '.[0] as $b | .[1] as $l | ($b * $l) | .rules = (($l.rules // []) + ($b.rules // []))' "$SPEC" "$LOCAL")"
 else
-  cp "$SPEC" "$EFFSPEC"
+  MERGED="$(cat "$SPEC")"
 fi
-SPEC="$EFFSPEC"
-jqr() { jq -r "$1" "$SPEC"; }
+# Single jq pass → tab-joined typed rows. join("\t") (NOT @tsv) keeps backslashes in
+# patterns intact (\bauth\b). Tiers/rules emitted in rank order.
+DUMP="$(printf '%s' "$MERGED" | jq -r --arg p "$PROFILE" '
+  . as $root
+  | ([ ["S","strategy",(.strategy // "first-match")],
+       ["S","bias",(.bias // "balanced")],
+       ["S","default",.default],
+       ["S","floor",(.clamps.floor // "")],
+       ["S","ceiling",(.clamps.ceiling // "")],
+       ["S","allow",((.clamps.allow // []) | join(","))],
+       ["S","escalate",((.escalation.threshold // 0)|tostring)],
+       ["S","fallback",(.escalation.fallback // "")],
+       ["S","maxrank",(([.tiers[].rank]|max)|tostring)] ]
+     + (.tiers | to_entries | sort_by(.value.rank)
+        | map(["T", .key, (.value.rank|tostring),
+               (($root.profiles[$p][.key].cost  // .value.cost)|tostring),
+               ($root.profiles[$p][.key].model // .value.model)]))
+     + (.rules | map(["R", .tier, .pattern, (.reason // ""), (.unless // ""), ((.weight // 1)|tostring)]))
+     + ((.length_rules // []) | map(["L", (.min_words|tostring), .at_least]))
+     + ((.domains // []) | map(["D", .domain, .pattern])) )
+  | .[] | join("\t")
+')"
 
-# ── resolve knobs (CLI > env > spec default) ──────────────────────────────────
-STRATEGY="${STRATEGY:-$(jqr '.strategy // "first-match"')}"
-BIAS="${BIAS:-${COMPASS_ROUTE_BIAS:-$(jqr '.bias // "balanced"')}}"
-DEFAULT_TIER="$(jqr '.default')"
-[ -n "$FLOOR" ]   || FLOOR="$(jqr '.clamps.floor // empty')"
-[ -n "$CEILING" ] || CEILING="$(jqr '.clamps.ceiling // empty')"
-[ -n "$ALLOW" ]   || ALLOW="$(jqr '((.clamps.allow // []) | join(","))')"
-[ -n "$ESCALATE" ] || ESCALATE="$(jqr '.escalation.threshold // 0')"
-[ -n "$FALLBACK" ] || FALLBACK="$(jqr '.escalation.fallback // empty')"
-MAXRANK="$(jqr '[.tiers[].rank] | max')"
-LOWTIER="$(jq -r '.tiers | to_entries | min_by(.value.rank) | .key' "$SPEC")"
+# ── parse the dump into shell state (pure bash, no further subprocesses) ──────────
+S_strategy=""; S_bias=""; S_default=""; S_floor=""; S_ceiling=""; S_allow=""; S_escalate="0"; S_fallback=""; S_maxrank="0"
+TIER_META=(); TIERS_ORDERED=""; RULES=(); LENGTHS=(); DOMAINS=()
+while IFS=$'\t' read -r typ f1 f2 f3 f4 f5; do
+  case "$typ" in
+    S) case "$f1" in
+         strategy) S_strategy="$f2" ;; bias) S_bias="$f2" ;; default) S_default="$f2" ;;
+         floor) S_floor="$f2" ;; ceiling) S_ceiling="$f2" ;; allow) S_allow="$f2" ;;
+         escalate) S_escalate="$f2" ;; fallback) S_fallback="$f2" ;; maxrank) S_maxrank="$f2" ;;
+       esac ;;
+    T) TIER_META+=("$f1 $f2 $f3 $f4"); TIERS_ORDERED="$TIERS_ORDERED $f1" ;;
+    R) RULES+=("$f1"$'\t'"$f2"$'\t'"$f3"$'\t'"$f4"$'\t'"$f5") ;;
+    L) LENGTHS+=("$f1 $f2") ;;
+    D) DOMAINS+=("$f1"$'\t'"$f2") ;;
+  esac
+done <<EOF
+$DUMP
+EOF
+TIERS_ORDERED="${TIERS_ORDERED# }"
+LOWTIER="${TIERS_ORDERED%% *}"
 
-rank_of()      { jq -r --arg t "$1" '.tiers[$t].rank // 0' "$SPEC"; }
-tier_of_rank() { jq -r --argjson r "$1" 'first(.tiers | to_entries[] | select(.value.rank==$r) | .key) // empty' "$SPEC"; }
-cost_of()      { jq -r --arg t "$1" --arg p "$PROFILE" '(.profiles[$p][$t].cost  // .tiers[$t].cost)'  "$SPEC"; }
-model_of()     { jq -r --arg t "$1" --arg p "$PROFILE" '(.profiles[$p][$t].model // .tiers[$t].model)' "$SPEC"; }
-tier_pattern() { jq -r --arg t "$1" '[.rules[] | select(.tier==$t) | .pattern] | .[0] // ""' "$SPEC"; }
+# resolve knobs: CLI flag > env > spec default
+STRATEGY="${STRATEGY:-$S_strategy}"
+BIAS="${BIAS:-${COMPASS_ROUTE_BIAS:-$S_bias}}"
+DEFAULT_TIER="$S_default"
+[ -n "$FLOOR" ]    || FLOOR="$S_floor"
+[ -n "$CEILING" ]  || CEILING="$S_ceiling"
+[ -n "$ALLOW" ]    || ALLOW="$S_allow"
+[ -n "$ESCALATE" ] || ESCALATE="$S_escalate"
+[ -n "$FALLBACK" ] || FALLBACK="$S_fallback"
+MAXRANK="$S_maxrank"
 
-TIERS_ORDERED="$(jq -r '.tiers | to_entries | sort_by(.value.rank) | .[].key' "$SPEC" | tr '\n' ' ')"
+# pure-bash metadata lookups over TIER_META ("tier rank cost model")
+rank_of()      { local t="$1" e; for e in "${TIER_META[@]}"; do case "$e" in "$t "*) set -- $e; printf '%s' "$2"; return;; esac; done; printf '0'; }
+cost_of()      { local t="$1" e; for e in "${TIER_META[@]}"; do case "$e" in "$t "*) set -- $e; printf '%s' "$3"; return;; esac; done; }
+model_of()     { local t="$1" e; for e in "${TIER_META[@]}"; do case "$e" in "$t "*) set -- $e; printf '%s' "$4"; return;; esac; done; }
+tier_of_rank() { local n="$1" e; for e in "${TIER_META[@]}"; do set -- $e; [ "$2" = "$n" ] && { printf '%s' "$1"; return; }; done; }
+tier_pattern() { local t="$1" r rest; for r in "${RULES[@]}"; do case "$r" in "$t"$'\t'*) rest="${r#*$'\t'}"; printf '%s' "${rest%%$'\t'*}"; return;; esac; done; }
+
 LC="$(printf '%s' "$TASK" | tr '[:upper:]' '[:lower:]')"
-DELIM=$'\t'
-
-rules_stream() { jq -r '.rules[] | [.tier, .pattern, (.reason // ""), (.unless // ""), ((.weight // 1)|tostring)] | join("\t")' "$SPEC"; }
 
 # ── stage 1: decide a tier ────────────────────────────────────────────────────
 MATCH_TIER=""; MATCH_REASON=""
 decide_first_match() {
-  local tier pat reason unl w
-  while IFS="$DELIM" read -r tier pat reason unl w; do
+  local r tier pat reason unl
+  for r in "${RULES[@]}"; do
+    IFS=$'\t' read -r tier pat reason unl _ <<EOF
+$r
+EOF
     [ -n "$tier" ] || continue
     printf '%s' "$LC" | grep -qE -- "$pat" || continue
     [ -n "$unl" ] && printf '%s' "$LC" | grep -qE -- "$unl" && continue
     MATCH_TIER="$tier"; MATCH_REASON="$reason"; return 0
-  done < <(rules_stream)
+  done
   MATCH_TIER="$DEFAULT_TIER"; MATCH_REASON="no rule matched — default"
 }
 decide_scored() {  # $1 = hits|weighted
-  local mode="$1" cand tier pat reason unl w kh s best="$DEFAULT_TIER" bestscore=0
+  local mode="$1" cand r tier pat unl w kh s best="$DEFAULT_TIER" bestscore=0
   for cand in $TIERS_ORDERED; do
     s=0
-    while IFS="$DELIM" read -r tier pat reason unl w; do
+    for r in "${RULES[@]}"; do
+      IFS=$'\t' read -r tier pat _ unl w <<EOF
+$r
+EOF
       [ "$tier" = "$cand" ] || continue
       printf '%s' "$LC" | grep -qE -- "$pat" || continue
       [ -n "$unl" ] && printf '%s' "$LC" | grep -qE -- "$unl" && continue
-      kh="$({ printf '%s' "$LC" | grep -oE -- "$pat" | grep -c . ; } 2>/dev/null || echo 0)"  # KEYWORD hits, not rule count
+      kh="$({ printf '%s' "$LC" | grep -oE -- "$pat" | grep -c . ; } 2>/dev/null || echo 0)"
       if [ "$mode" = weighted ]; then s=$((s + kh * w)); else s=$((s + kh)); fi
-    done < <(rules_stream)
+    done
     if [ "$s" -gt "$bestscore" ]; then best="$cand"; bestscore="$s"
     elif [ "$s" -eq "$bestscore" ] && [ "$s" -gt 0 ] && [ "$(rank_of "$cand")" -gt "$(rank_of "$best")" ]; then best="$cand"; fi
   done
@@ -135,18 +177,20 @@ fi
 [ "$CONFIDENCE" -gt 99 ] && CONFIDENCE=99
 
 # ── stage 3: length rules (raise the floor for long tasks) ────────────────────
-while IFS="$DELIM" read -r minw atleast; do
-  [ -n "$minw" ] || continue
-  if [ "$WORDS" -ge "$minw" ] && [ "$(rank_of "$MATCH_TIER")" -lt "$(rank_of "$atleast")" ]; then
-    MATCH_TIER="$atleast"; MATCH_REASON="$MATCH_REASON; len>=$minw->>=$atleast"
-  fi
-done < <(jq -r '(.length_rules // [])[] | [((.min_words)|tostring), .at_least] | join("\t")' "$SPEC")
+if [ "${#LENGTHS[@]}" -gt 0 ]; then
+  for lr in "${LENGTHS[@]}"; do
+    set -- $lr; minw="$1"; atleast="$2"
+    if [ "$WORDS" -ge "$minw" ] && [ "$(rank_of "$MATCH_TIER")" -lt "$(rank_of "$atleast")" ]; then
+      MATCH_TIER="$atleast"; MATCH_REASON="$MATCH_REASON; len>=$minw->>=$atleast"
+    fi
+  done
+fi
 
 # ── stage 4: bias (nudge only weak picks) ─────────────────────────────────────
 if [ "$CONFIDENCE" -lt 55 ]; then
   r="$(rank_of "$MATCH_TIER")"
   case "$BIAS" in
-    cheap)   [ "$r" -gt 1 ]        && { MATCH_TIER="$(tier_of_rank $((r-1)))"; MATCH_REASON="$MATCH_REASON; bias=cheap->$MATCH_TIER"; } ;;
+    cheap)   [ "$r" -gt 1 ]          && { MATCH_TIER="$(tier_of_rank $((r-1)))"; MATCH_REASON="$MATCH_REASON; bias=cheap->$MATCH_TIER"; } ;;
     quality) [ "$r" -lt "$MAXRANK" ] && { MATCH_TIER="$(tier_of_rank $((r+1)))"; MATCH_REASON="$MATCH_REASON; bias=quality->$MATCH_TIER"; } ;;
   esac
 fi
@@ -177,11 +221,14 @@ fi
 
 # ── stage 7: domain (optional second axis) ────────────────────────────────────
 DOMAIN=""
-if [ "$WANT_DOMAIN" = 1 ]; then
-  while IFS="$DELIM" read -r d pat; do
-    [ -n "$d" ] || continue
-    printf '%s' "$LC" | grep -qE -- "$pat" && { DOMAIN="$d"; break; }
-  done < <(jq -r '(.domains // [])[] | [.domain, .pattern] | join("\t")' "$SPEC")
+if [ "$WANT_DOMAIN" = 1 ] && [ "${#DOMAINS[@]}" -gt 0 ]; then
+  for d in "${DOMAINS[@]}"; do
+    IFS=$'\t' read -r dom pat <<EOF
+$d
+EOF
+    [ -n "$dom" ] || continue
+    printf '%s' "$LC" | grep -qE -- "$pat" && { DOMAIN="$dom"; break; }
+  done
 fi
 
 # ── telemetry + output ────────────────────────────────────────────────────────
