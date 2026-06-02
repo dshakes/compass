@@ -512,6 +512,26 @@ The single biggest lever on agent cost is **which model does which job** — tok
 
 You don't have to think about it — delegation happens automatically. When you want control, `/cost` re-plans a task into the cheapest-correct mix before you spend, and `compass route "<task>"` picks a tier deterministically (now **scored against a labeled eval set and gated in CI**). Every autonomous step is hard-capped by budget, and `compass spend` / `compass impact` show you exactly where the money went and what you saved. → [Cost & models](docs/02-cost-and-models.md)
 
+**The router is a standalone, reusable module** ([`router/`](router/)) — a three-layer cascade that pays for intelligence only where it's needed: a free keyword heuristic answers the confident majority, an optional local classifier mops up most of the rest for free, and a Haiku LLM judge is consulted only on the genuinely ambiguous tail. Default routing is the heuristic alone (zero network); layers ②/③ are opt-in.
+
+```mermaid
+flowchart LR
+    T(["📝 task"]) --> H{"① heuristic<br/>keywords · 0ms · free"}
+    H -- "confident · ~80%" --> OUT(["🎯 tier<br/>haiku · sonnet · opus"])
+    H -- "ambiguous" --> C{"② classifier<br/>local · ~1ms · free<br/>(opt-in)"}
+    C -- "confident" --> OUT
+    C -- "abstains / off" --> J["③ LLM judge<br/>Haiku · ~300ms · $"]
+    J --> OUT
+    classDef free fill:#dcfce7,stroke:#16a34a,color:#14532d;
+    classDef paid fill:#fef9c3,stroke:#ca8a04,color:#713f12;
+    classDef io   fill:#e0f2fe,stroke:#0284c7,color:#075985;
+    class H,C free
+    class J paid
+    class T,OUT io
+```
+
+<sub>Measured: ~61% cheaper than all-opus at ~98% quality-retention on a fair task mix; the cascade lifts the ambiguous tail where pure keyword routing under-serves. → [`router/README.md`](router/README.md)</sub>
+
 <div align="right"><a href="#contents">↑ top</a></div>
 
 ---
