@@ -47,11 +47,11 @@ jobs:
           # 1. Author allowlist — never a human's in-progress PR.
           case ",$TRUSTED_AUTHORS," in *",$AUTHOR,"*) : ;; *) deny "author '$AUTHOR' not in the trusted set" ;; esac
 
-          # 2. Green checks only.
+          # 2. Green checks only — deny when rollup is empty or unknown (no required checks = not eligible).
           rollup="$(gh pr view "$PR" --json statusCheckRollup --jq '[.statusCheckRollup[]?.conclusion // .statusCheckRollup[]?.state] | unique | join(",")' 2>/dev/null || echo unknown)"
           case "$rollup" in
-            SUCCESS|success|"SUCCESS,"*|*",SUCCESS") : ;;
-            *) printf '%s' "$rollup" | grep -qiE 'fail|error|pending|cancel' && deny "checks not all green ($rollup)" ;;
+            SUCCESS|success) : ;;
+            *) deny "checks not all green or no required checks present ($rollup)" ;;
           esac
 
           # 3. Diff-scope allowlist + fail-closed destructive globs.

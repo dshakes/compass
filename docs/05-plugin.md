@@ -26,7 +26,7 @@ Local testing from a clone:
 ```
 
 ## What the plugin delivers
-9 subagents · 12 commands · 4 hooks (incl. the `protect-paths` guardrail) ·
+10 subagents · 12 commands · 4 hooks (incl. the `protect-paths` guardrail) ·
 `bootstrap-agent-config` skill · "Concise" output style ·
 3 MCP servers. Validated via `claude plugin details core@compass`
 (≈1,165 always-on tokens; agents/commands cost only when invoked).

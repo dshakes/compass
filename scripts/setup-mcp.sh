@@ -18,7 +18,6 @@ MARK_END="# <<< compass mcp <<<"
 DRY=0; [ "${1:-}" = "--dry-run" ] && DRY=1
 
 command -v jq >/dev/null || { echo "jq required for setup-mcp.sh" >&2; exit 1; }
-run() { if [ "$DRY" = 1 ]; then echo "  [dry-run] $*"; else eval "$*"; fi; }
 say() { printf '  %s\n' "$*"; }
 
 # Supply-chain pre-flight: never register an unpinned or tampered manifest.
@@ -43,8 +42,16 @@ for name in $names; do
   if jq -e ".servers[\"$name\"].claude==true" "$MANIFEST" >/dev/null; then
     if claude mcp get "$name" >/dev/null 2>&1; then say "already registered: $name"; continue; fi
     cfg="$(jq -c ".servers[\"$name\"] | {type, command, args, env}" "$MANIFEST")"
-    run "claude mcp add-json '$name' '$cfg' --scope user"
-    [ "$DRY" = 1 ] || say "registered: $name"
+    _tmp="$(mktemp)"
+    printf '%s' "$cfg" >"$_tmp"
+    if [ "$DRY" = 1 ]; then
+      echo "  [dry-run] claude mcp add-json '$name' <cfg> --scope user"
+      rm -f "$_tmp"
+    else
+      claude mcp add-json "$name" "$(cat "$_tmp")" --scope user
+      rm -f "$_tmp"
+      say "registered: $name"
+    fi
   fi
 done
 

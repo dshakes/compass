@@ -117,8 +117,15 @@ resolve_files() {
 
 # --- Collect built-in findings -------------------------------------------------
 case "$mode" in
-  staged) findings="$(in_git && git diff --cached --no-color -U0 | emit_added | scan_stream)" ;;
-  diff)   findings="$(in_git && git diff --no-color -U0 | emit_added | scan_stream)" ;;
+  staged|diff)
+    if ! in_git; then
+      echo "compass scan: --${mode} requires a git repository (no .git found)" >&2
+      exit 2
+    fi ;;
+esac
+case "$mode" in
+  staged) findings="$(git diff --cached --no-color -U0 | emit_added | scan_stream)" ;;
+  diff)   findings="$(git diff --no-color -U0 | emit_added | scan_stream)" ;;
   all|paths)
     files="$(resolve_files)"
     if [ -n "$files" ]; then

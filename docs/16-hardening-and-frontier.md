@@ -11,7 +11,7 @@ changes the product's spine — readable config, reversible install, you always 
 > are opt-in and labeled experimental in the same honest spirit as the rest of the repo.
 
 <p align="center">
-  <img src="../assets/hardening-frontier.svg" alt="The hardening + frontier layer in three bands flowing to an unmoved human merge gate. HARDENED CORE (stable, CI-gated): policy.sh data-driven guardrail · 85-case bypass corpus · compass bench (100% precision/recall, router 96.9%) · actions audit (drift, least-privilege, SHA-pinning, injection). FRONTIER (opt-in): persistent memory · parallel SDLC + test-impact + diff-size routing · fleet brain (recurring findings to proposed rules) · cost-aware router · spec-kit interop · SBOM + signed commits. CONTROL SURFACE: compass dashboard (impact, spend, live fleet PRs) · --html/--json. Everything flows to the HUMAN MERGE GATE — unmoved by design; you always merge and deploy." width="900">
+  <img src="../assets/hardening-frontier.svg" alt="The hardening + frontier layer in three bands flowing to an unmoved human merge gate. HARDENED CORE (stable, CI-gated): policy.sh data-driven guardrail · 61-case bypass corpus · compass bench (100% precision/recall, router 96.9%) · actions audit (drift, least-privilege, SHA-pinning, injection). FRONTIER (opt-in): persistent memory · parallel SDLC + test-impact + diff-size routing · fleet brain (recurring findings to proposed rules) · cost-aware router · spec-kit interop · SBOM + signed commits. CONTROL SURFACE: compass dashboard (impact, spend, live fleet PRs) · --html/--json. Everything flows to the HUMAN MERGE GATE — unmoved by design; you always merge and deploy." width="900">
 </p>
 
 <p align="center"><sub>↑ the hardening + frontier layer. Below, the same layer as a text diagram:</sub></p>
@@ -20,7 +20,7 @@ changes the product's spine — readable config, reversible install, you always 
 flowchart TB
   subgraph HARDEN["🛡️ Hardened core — stable, CI-gated"]
     pol["policy.sh<br/>data-driven guardrail<br/>(sourceable, pure)"]
-    corp["85-case bypass corpus<br/>+ benchmark<br/>100% precision / recall"]
+    corp["61-case bypass corpus<br/>+ benchmark<br/>100% precision / recall"]
     act["check-actions.sh<br/>drift · least-priv · pinning · injection"]
     pol --> corp
   end
@@ -65,7 +65,7 @@ contract. Every bypass the audit found is closed:
 | `git push origin +main` (plus-refspec), `git -c k=v push --force` | blocked |
 
 This is **"policy-as-code with an eval"**: [`scripts/test-protect-paths.sh`](../scripts/test-protect-paths.sh)
-is an 85-case labeled corpus (must-block / must-allow) — the highest-stakes file finally
+is a 61-case labeled corpus (must-block / must-allow) — the highest-stakes file finally
 has a test, and it found 3 real bugs while being written. Still footgun-prevention, **not
 a security boundary** — unchanged framing.
 

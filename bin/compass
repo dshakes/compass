@@ -98,7 +98,7 @@ case "$cmd" in
   notify)   run notify "$@" ;;
   listen)   command -v node >/dev/null || { echo "compass listen: node required" >&2; exit 1; }; exec node "$SCRIPTS/compass-listen.mjs" "$@" ;;
   audit-log) run audit-log "$@" ;;
-  doctor)   exec make -C "$ROOT" doctor ;;
+  doctor)   exec "$SCRIPTS/doctor.sh" "$@" ;;
   release)  exec "$SCRIPTS/release.sh" "$@" ;;
   -h|--help|help) usage ;;
   *) echo "compass: unknown command '$cmd'" >&2; echo; usage; exit 2 ;;

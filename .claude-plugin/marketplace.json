@@ -11,7 +11,7 @@
     {
       "name": "core",
       "source": "./plugins/core",
-      "description": "9 specialist subagents, /ship /review /tdd /pr /adr /triage /scaffold /cost, guardrail + format-on-edit + notify hooks, bootstrap-agent-config skill, Concise output style, and context7/fetch/git MCP servers.",
+      "description": "10 specialist subagents; 12 commands (/ship /review /tdd /pr /adr /triage /scaffold /cost /onboard /spec /sdlc /team-review); guardrail + format-on-edit + notify hooks; bootstrap-agent-config, harden, and route skills; a Concise output style; and version-pinned context7/fetch/git MCP servers (context7 reaches Upstash; fetch makes outbound HTTP).",
       "homepage": "https://github.com/dshakes/compass/tree/main/plugins/core",
       "repository": "https://github.com/dshakes/compass",
       "author": { "name": "Shekhar Mudarapu", "url": "https://github.com/dshakes" },

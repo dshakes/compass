@@ -19,6 +19,7 @@
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+trap 'rm -f /tmp/_inj.$$' EXIT
 pass=0; fail=0
 ok() { printf '  \033[32mok\033[0m   %s\n' "$1"; pass=$((pass + 1)); }
 no() { printf '  \033[31mFAIL\033[0m %s\n' "$1"; fail=$((fail + 1)); }

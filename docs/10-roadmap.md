@@ -221,7 +221,7 @@ The through-line: **the PR (and its required checks + human gate) stays the coor
 medium and the safety boundary.** Everything above either *feeds* that loop (scheduled
 agents open PRs; routing trims who reviews) or *enriches* it (teams/memory/checkpoints) —
 none of it removes the human from merge or deploy. We ship one item at a time, behind a flag,
-each validated like the closed loop was (live smoke test in [`sdlc/SMOKETEST.md`](../sdlc/SMOKETEST.md)).
+each validated like the closed loop (CI: actionlint + selftest; live smoke test is a checklist you run in [`sdlc/SMOKETEST.md`](../sdlc/SMOKETEST.md)).
 
 > Want one built? **Work-type routing (#1)** is the shippable next step; **`babysit-prs`
 > (#2)** is the most striking "it runs itself" demo. Cross-repo memory (#6) needs an ADR first.

@@ -125,7 +125,7 @@ Stay on branch $BRANCH. Add tests. Build/test what you touch. Commit your work. 
 # safety net: capture any uncommitted work so the diff/PR is complete
 if ! git diff --quiet || ! git diff --cached --quiet; then
   # shellcheck disable=SC2086  # SIGN_FLAG is intentionally word-split (empty or -S)
-  if git add -A && git commit -q $SIGN_FLAG -m "sdlc(builder): $TASK"; then note "committed builder leftovers"
+  if git add -u && git commit -q $SIGN_FLAG -m "sdlc(builder): $TASK"; then note "committed builder leftovers"
   else note "⚠ could not commit builder leftovers — the review/PR may see a stale tree"; fi
 fi
 
@@ -153,7 +153,7 @@ if [ "${SDLC_CONVERGE:-0}" = 1 ]; then
 Edit the code, add/adjust tests, build/test what you touch, commit. Do not push or merge."
     if ! git diff --quiet || ! git diff --cached --quiet; then
       # shellcheck disable=SC2086  # SIGN_FLAG is intentionally word-split (empty or -S)
-      git add -A && git commit -q $SIGN_FLAG -m "sdlc(converge $r): $TASK"
+      git add -u && git commit -q $SIGN_FLAG -m "sdlc(converge $r): $TASK"
     fi
     claude_step review reviewer.md "$REVIEW_MODEL" plan "$REVIEW_TOOLS" "$REVIEW_PROMPT"
     r=$((r + 1))

@@ -27,6 +27,10 @@ if [ -z "$VER" ]; then
 fi
 [ -n "$VER" ] || { echo "could not determine version — pass it, e.g. scripts/release.sh v0.10.0"; exit 2; }
 case "$VER" in v*) ;; *) VER="v$VER" ;; esac
+
+# ── strict semver validation — reject anything not matching vMAJOR.MINOR.PATCH ──
+printf '%s\n' "$VER" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+  || { echo "invalid version format — must match vMAJOR.MINOR.PATCH (e.g. v0.10.0)" >&2; exit 2; }
 NUM="${VER#v}"
 TARBALL="https://github.com/$REPO_SLUG/archive/refs/tags/$VER.tar.gz"
 say "Releasing $VER  (dry-run=$DRY)"

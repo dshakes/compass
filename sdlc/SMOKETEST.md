@@ -10,7 +10,7 @@ workflow chaining. Run it once per major change to the pipeline.
 - [ ] [Claude GitHub App](https://github.com/apps/claude) installed on it.
 - [ ] Secrets set: `CLAUDE_CODE_OAUTH_TOKEN` (or `ANTHROPIC_API_KEY`), `OPENAI_API_KEY`,
       and **`SDLC_BOT_TOKEN`** (fine-grained PAT: Contents + Pull requests = write).
-- [ ] `~/compass/sdlc/setup.sh --all` run on it (labels, 8 workflows on the default
+- [ ] `~/compass/sdlc/setup.sh --all` run on it (labels, the SDLC workflows on the default
       branch, CODEOWNERS, branch protection with required checks `review` + `qa`).
 - [ ] Confirm: `gh api repos/<owner>/<repo>/branches/<default>/protection` shows
       `required_status_checks.contexts = ["review","qa"]`.

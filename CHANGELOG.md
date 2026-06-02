@@ -5,6 +5,30 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Pre-launch hardening (truth + manifests + fixes)
+
+- **Manifests aligned to the release** — `plugins/core` + `core-lsp` `plugin.json` version
+  `0.8.0` → `0.12.1`; marketplace description corrected to 10 subagents / 12 commands / 3
+  skills and now discloses the context7/fetch network reach. `new-repo.sh` team pin no longer
+  hardcodes a stale tag (uses the current release).
+- **Docs made falsifiable-proof** — corrected the guardrail corpus size (85 → **61**, the
+  real `compass bench` number) everywhere incl. the SVG; reframed the SDLC loop from
+  "validated live end-to-end" to "logic statically validated in CI; reproduce live via the
+  smoke-test checklist"; relabeled `loop.gif` as a scripted replay; fixed stale workflow
+  counts and a stale version-pin example; added an iMessage/WhatsApp "self-hosted bridge"
+  caveat and a network-egress note in the README safety section.
+- **README UX** — differentiated the headline (eval-gated safety + cost + provenance, not
+  "senior engineer"); added a "verify → first run" quickstart so install → test → use is one
+  path; added the `test-architect` safety-gate to the crew table (10th agent).
+- **Code SHOULD-FIX** — `compass-sbom` dropped dead syft branch + portable requirements glob;
+  `compass scan --staged/--diff` now errors (exit 2) outside a git repo instead of silently
+  passing; `compass doctor` no longer requires `make`; `release.sh` validates the version
+  string; `setup-mcp` writes MCP config via temp file (no eval-quoting hazard);
+  `compass-dashboard` HTML-escapes PR titles; `sdlc-autoapprove` denies on an empty
+  status-check rollup; `orchestrate.sh` safety-net commit uses `git add -u`.
+- **Launch kit** — rewritten with the correct awesome-claude-code eligibility gates (incl. the
+  ≥5-star requirement), an honest submission packet, and multi-channel GTM.
+
 ## [0.12.1] — 2026-06-01
 
 ### Docs
@@ -141,7 +165,7 @@ Every item is CI-gated; the full local gate is green.
   flags, quoted `$HOME`, `find … -delete`, system dirs, `curl|sh` no-space/`zsh`/`sudo`/
   process-sub/eval, `git push origin +main`, `git -c … push --force`, wider secret-file +
   protected-branch sets. Still footgun-prevention, not a security boundary.
-- **Guardrail bypass corpus** (`scripts/test-protect-paths.sh`, R1) — 85-case must-block /
+- **Guardrail bypass corpus** (`scripts/test-protect-paths.sh`, R1) — 61-case must-block /
   must-allow labeled corpus, gated in CI; found and fixed 3 real bugs while being written.
 - **GitHub Actions audit** (`scripts/check-actions.sh`, R3/R4) — gates mirror-drift
   (`.github/workflows/sdlc-*` vs `sdlc/workflows/` templates), least-privilege `permissions:`,
@@ -474,7 +498,7 @@ Every item is CI-gated; the full local gate is green.
 ### Added
 - **Keyless cloud agents** (`sdlc/selfhosted/`) — review / audit / implement workflows that
   shell out to `claude -p` / `codex exec` on a self-hosted runner (your **subscription** — no
-  API key or token). `setup.sh --self-hosted`. Proven end-to-end on a pilot PR.
+  API key or token). `setup.sh --self-hosted`. Statically validated in CI (actionlint + selftest); a live smoke-test checklist is provided.
 - **One-command onboarding** — `setup.sh --all`: labels + workflows + CODEOWNERS + commit/push
   + secrets + branch protection (via the GitHub API).
 - **Subscription auth for hosted runners** — workflows accept `CLAUDE_CODE_OAUTH_TOKEN`
