@@ -5,6 +5,43 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.12.0] — 2026-06-01
+
+A standalone, reusable **cost-tier router** module (`router/`) — extracted so it can be
+dropped into any app (Go/Rust/TS/Python), instrumented with the metric the field actually
+uses, and grown from a deterministic heuristic into a hybrid cascade (#9–#13).
+
+### Added
+
+- **`router/` module** (#9) — a language-agnostic spec (`router.json`: tiers, costs, ordered
+  rules) + a bash reference impl (`route.sh`) + a labeled eval set. Any host loads the same
+  spec and reimplements a ~10-line matcher (README has Go/Rust/TS/Python snippets).
+- **Cost-at-iso-quality harness** (#9) — `bench.sh` reports the metric routers are actually
+  judged on (cost vs all-opus at fixed quality), with base/holdout/**adversarial** splits.
+  Headline: **~61% cheaper than all-opus at ~98% quality-retention** on a fair mix; the
+  adversarial split honestly quantifies where keyword routing under-serves.
+- **v1.1 knobs** (#11) — matching `strategy` (first-match/max-hits/weighted), rule `unless`
+  veto + `weight`, `length_rules`, cost↔quality `--bias`, `--floor`/`--ceiling`/`--allow`
+  clamps, pricing/model `profiles`, a `--domain` second axis, `router.local.json` overlays,
+  `--log` telemetry, and `--json`/`--score` output.
+- **Three-layer cascade** (#12) — escalation (`--escalate-below` + pluggable `--fallback`)
+  with a **Haiku LLM judge** (`fallback-llm.sh`) and an **opt-in local Naive-Bayes classifier**
+  (`train-classifier.sh` / `classify.sh`, off by default) chained by `fallback-cascade.sh`:
+  free heuristic → free classifier → LLM judge, paying for intelligence only where needed.
+  The LLM judge labels real traffic (`--log`) to train the classifier — the data flywheel.
+
+### Changed
+
+- **`compass route` is now backed by the module** (#10) — `compass-route.sh` reads its tier
+  rules from `router/router.json` (single source of truth; no more duplicated patterns).
+- **`route.sh` reads the spec in one `jq` pass** (#13) — ~15 calls/route → 1; the module
+  test suite went from ~112s to ~14s. Behavior identical (`compass route --eval` 96.9%).
+
+### Docs
+
+- World-class Mermaid diagrams (#13): the cascade hero, the routing pipeline, and the
+  data-flywheel — in `router/README.md` and the main README.
+
 ## [0.11.0] — 2026-06-01
 
 Closes the gap analysis G1–G7 — a security, supply-chain, and DX hardening pass (#8).
