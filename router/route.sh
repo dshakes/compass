@@ -254,21 +254,35 @@ fi
 
 # ── stage 4.5: cache-aware cost-min (OFF unless a warm tier is supplied) ───────
 # When COMPASS_ROUTE_WARM names tiers whose prompt-cache prefix is already hot, ride a
-# warm pricier tier in [pick..maxrank] if its EXPECTED cost (cache read on the prefix)
-# beats cold-loading the current pick. UPGRADE-ONLY (never below the pick → no quality
-# loss); the clamps stage still bounds the result. Reuses each tier's relative `cost`.
+# warm pricier tier in [pick..ceiling] if its EXPECTED cost (cache read on the prefix)
+# beats cold-loading the current pick. Candidate set is the cold pick PLUS warm tiers only
+# (a cold non-pick tier is never selectable, even if a custom profile makes it cheaper —
+# that would not be "cache-affinity"); warm names are intersected with real tiers so a
+# typo/stale value is a no-op; and the effective ceiling/allow bound the set BEFORE the
+# cost-min, so the choice is never above-ceiling-then-clamped. UPGRADE-ONLY (never below
+# the pick → no quality loss). Reuses each tier's relative `cost`.
 PRECACHE_TIER="$MATCH_TIER"
 if [ -n "${COMPASS_ROUTE_WARM:-}" ]; then
   cP="$(cnum "${COMPASS_PREFIX_TOKENS:-}" "$S_cP")"; cD="$(cnum "${COMPASS_TASK_TOKENS:-}" "$S_cD")"; cO="$(cnum "${COMPASS_OUTPUT_TOKENS:-}" "$S_cO")"
   case "${COMPASS_ROUTE_TTL:-5m}" in 1h) cwrm="$S_cwl" ;; *) cwrm="$S_cw" ;; esac
+  # intersect the warm set with real tier names (a typo/stale value must not warm anything)
+  cwarm=""; for w in ${COMPASS_ROUTE_WARM//,/ }; do case " $TIERS_ORDERED " in *" $w "*) cwarm="$cwarm $w" ;; esac; done
+  # effective upper bound: --ceiling (else maxrank); --allow, when set, overrides it
+  ceilrank="$MAXRANK"; [ -n "$CEILING" ] && ceilrank="$(rank_of "$CEILING")"
   TC=""; for e in "${TIER_META[@]}"; do set -- $e; TC="$TC$1:$2:$3 "; done
-  cbest="$(awk -v pr="$(rank_of "$MATCH_TIER")" -v warm="$COMPASS_ROUTE_WARM" \
+  cbest="$(awk -v pick="$MATCH_TIER" -v pr="$(rank_of "$MATCH_TIER")" -v ceilrank="$ceilrank" \
+              -v warm="$cwarm" -v allow="$ALLOW" \
               -v P="$cP" -v D="$cD" -v O="$cO" -v rd="$S_cr" -v wr="$cwrm" -v ow="$S_cow" -v tc="$TC" '
     BEGIN{
-      n=split(tc, a, " "); m=split(warm, wl, /[, ]+/); for(i=1;i<=m;i++) if(wl[i]!="") iswarm[wl[i]]=1;
+      n=split(tc, a, " ");
+      m=split(warm, wl, /[ ,]+/); for(i=1;i<=m;i++) if(wl[i]!="") iswarm[wl[i]]=1;
+      al=split(allow, aw, /[ ,]+/); for(i=1;i<=al;i++) if(aw[i]!="") inallow[aw[i]]=1; have_allow=(allow!="");
       best=""; bestc=0;
       for(i=1;i<=n;i++){ if(a[i]=="") continue; split(a[i], f, ":"); t=f[1]; rk=f[2]+0; c=f[3]+0;
-        if(rk < pr) continue;                                   # upgrade-only
+        if(rk < pr) continue;                                  # upgrade-only
+        if(have_allow){ if(!(t in inallow)) continue }         # --allow bounds the set (B)
+        else if(rk > ceilrank) continue;                       # --ceiling bounds the set (B)
+        if(!(t==pick || (t in iswarm))) continue;              # only the cold pick or a WARM tier (A)
         w=(t in iswarm)?1:0; cost=(w?rd:wr)*c*P + c*D + c*ow*O;
         if(best=="" || cost < bestc-1e-9){ best=t; bestc=cost } }
       printf "%s", best;

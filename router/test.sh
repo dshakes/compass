@@ -100,6 +100,13 @@ eq "warm sonnet + big task stays haiku"      "$(COMPASS_ROUTE_WARM=sonnet COMPAS
 eq "warm opus + huge prefix/tiny rides opus" "$(COMPASS_ROUTE_WARM=opus COMPASS_PREFIX_TOKENS=12000 COMPASS_TASK_TOKENS=80 COMPASS_OUTPUT_TOKENS=150 R 'apply a tiny fix')" opus
 eq "opus pick + warm haiku → opus (upgrade-only)" "$(COMPASS_ROUTE_WARM=haiku R 'redesign the auth trust model')" opus
 eq "cache upgrade still bounded by ceiling"  "$(COMPASS_ROUTE_WARM=opus COMPASS_PREFIX_TOKENS=12000 COMPASS_TASK_TOKENS=80 R --ceiling sonnet 'apply a tiny fix')" sonnet
+# regression (Codex audit A): a COLD tier is never ridden, even if a custom profile makes it cheaper
+CHEAP="$TMP/cheap-opus.json"; jq '.tiers.opus.cost=0.001' "$HERE/router.json" > "$CHEAP"
+case "$(COMPASS_ROUTE_WARM=sonnet COMPASS_PREFIX_TOKENS=8000 COMPASS_TASK_TOKENS=100 R --spec "$CHEAP" 'fix a typo in the readme')" in
+  opus) no "cold cheaper tier must NOT be ridden (got opus)" ;; *) ok "cold tier never ridden even if cheaper (audit A)" ;; esac
+eq "stale/typo warm value is a no-op"        "$(COMPASS_ROUTE_WARM=sonet COMPASS_PREFIX_TOKENS=8000 COMPASS_TASK_TOKENS=100 R 'fix a typo in the readme')" haiku
+# regression (Codex audit B): cache candidate set is ceiling-bounded BEFORE the cost-min
+eq "above-ceiling warm tier excluded pre-min" "$(COMPASS_ROUTE_WARM=opus COMPASS_PREFIX_TOKENS=12000 COMPASS_TASK_TOKENS=80 R --spec "$CHEAP" --ceiling sonnet 'apply a tiny fix')" sonnet
 
 echo "ttl recommender (cache-write TTL: 5m default; 1h when reused ≥2× across a >5m gap):"
 eq "default → 5m"                      "$(R --ttl)" 5m
