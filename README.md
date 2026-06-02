@@ -459,7 +459,7 @@ Hooks are the part that runs *for* you on every action — the difference betwee
 | **`compass onboard`** `[dir]` · `--all <glob>` | Detect the stack → install deps → get build + test green → write a grounded `CLAUDE.md` → print a codebase map. `--all` does many repos with a per-repo budget cap. |
 | **`compass impact`** | **What compass saved you:** footguns blocked, files auto-formatted, spend by model, and an estimated `$` saved versus running everything on Opus. |
 | **`compass spend`** `[--week\|--month]` | Agent cost rolled up by model and repo, against a budget (`COMPASS_BUDGET_USD`). |
-| **`compass route`** `"<task>"` · `--eval` · `--score` | Picks the cheapest-correct model tier for a task. `--eval` scores the picker against a labeled set (CI-gated); `--score` adds a confidence + cost-aware budget bias. |
+| **`compass route`** `"<task>"` · `--eval` · `--eval-cost` · `--score` | **Cache-aware, two-stage, deterministic router** ([ADR-0004](docs/adr/0004-cache-aware-routing.md)): a quality floor (opus-class never downgraded) then **cache-aware cost-min** that rides an already-warm tier when it beats cold-loading a cheaper one. Two CI gates — `--eval` (floor accuracy) + `--eval-cost` (cache decisions, 100%). Client-side, no network, no data leaves you. |
 | **`compass dashboard`** `[--html]` | **Mission control:** one read-only panel of impact + spend + **live fleet PR state** (via `gh`). `--html` writes a shareable page. No service, no upload. |
 | **`compass bench`** `[--guardrail\|--router]` | **Reproducible scorecard:** guardrail precision/recall + router accuracy — deterministic and CI-gated, so the claims are numbers, not adjectives. |
 | **`compass sbom`** `[--gate]` | Dependency SBOM + native vuln audit (npm/go/cargo/pip/syft). `--gate` fails on known vulns. |
@@ -504,7 +504,7 @@ The single biggest lever on agent cost is **which model does which job** — tok
 | **Standard** | Sonnet 4.6 | most coding, review, and docs | ~1/5 the per-token cost of Opus |
 | **Deep** | Opus 4.8 | architecture, security, subtle debugging | the expensive model, used sparingly |
 
-You don't have to think about it — delegation happens automatically. When you want control, `/cost` re-plans a task into the cheapest-correct mix before you spend, and `compass route "<task>"` picks a tier deterministically (now **scored against a labeled eval set and gated in CI**). Every autonomous step is hard-capped by budget, and `compass spend` / `compass impact` show you exactly where the money went and what you saved. → [Cost & models](docs/02-cost-and-models.md)
+You don't have to think about it — delegation happens automatically. When you want control, `/cost` re-plans a task into the cheapest-correct mix before you spend, and `compass route "<task>"` picks a tier with a **cache-aware, two-stage, deterministic router** ([ADR-0004](docs/adr/0004-cache-aware-routing.md)): a quality floor (opus-class never downgraded) then **cache-aware cost-min** that rides an already-warm prompt-cache tier when that beats cold-loading a cheaper one — folding Anthropic cache economics (read 0.1×, write 1.25×) into the choice the way prefix/KV-cache-aware routers do, but client-side and **gated by two CI evals** (`--eval` floor accuracy + `--eval-cost` cache decisions). Every autonomous step is hard-capped by budget, and `compass spend` / `compass impact` show you exactly where the money went and what you saved. → [Cost & models](docs/02-cost-and-models.md)
 
 <div align="right"><a href="#contents">↑ top</a></div>
 

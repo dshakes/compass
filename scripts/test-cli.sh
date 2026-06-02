@@ -38,6 +38,25 @@ eq  "vague short → low-confidence sonnet"            "$("$COMPASS" route --sco
 eq  "budget-bias=low downgrades weak sonnet→haiku"   "$(COMPASS_ROUTE_BUDGET_BIAS=low "$COMPASS" route --score 'update it' | cut -f1)" haiku
 eq  "budget-bias=low NEVER downgrades opus"          "$(COMPASS_ROUTE_BUDGET_BIAS=low "$COMPASS" route --score 'redesign the auth trust model' | cut -f1)" opus
 
+echo "route — cache-aware Stage 2 (cost-min over the quality floor):"
+# default (no cache signals) == quality floor — behavior unchanged
+eq "cold default → floor sonnet" "$("$COMPASS" route 'add a rate limiter with tests')" sonnet
+eq "cold default → floor haiku"  "$("$COMPASS" route 'fix a typo in the readme')" haiku
+# cache-affinity UPGRADE: tiny task on a warm pricier prefix rides the hot tier
+eq "warm sonnet + tiny task upgrades haiku→sonnet" \
+   "$(COMPASS_ROUTE_WARM=sonnet COMPASS_PREFIX_TOKENS=8000 COMPASS_TASK_TOKENS=100 COMPASS_OUTPUT_TOKENS=200 "$COMPASS" route 'fix a typo in the readme')" sonnet
+# big task → warm prefix can't pay for the pricier rate → stay on the cold cheap floor
+eq "warm sonnet + big task stays haiku" \
+   "$(COMPASS_ROUTE_WARM=sonnet COMPASS_PREFIX_TOKENS=8000 COMPASS_TASK_TOKENS=5000 COMPASS_OUTPUT_TOKENS=400 "$COMPASS" route 'fix a typo in the readme')" haiku
+# hard opus floor is NEVER downgraded for cache savings (security guarantee)
+eq "warm haiku never downgrades opus floor" \
+   "$(COMPASS_ROUTE_WARM=haiku "$COMPASS" route 'redesign the auth trust model')" opus
+# json surface
+has "json carries model + floor" "$("$COMPASS" route --json 'fix a typo in the readme')" '"model":"haiku","floor":"haiku"'
+# the cache-aware cost eval gate
+if "$ROOT/scripts/compass-route.sh" --eval-cost >/dev/null 2>&1; then ok "cost eval meets its accuracy floor"; else no "cost eval below floor"; fi
+if COMPASS_ROUTE_COST_MIN_ACCURACY=101 "$ROOT/scripts/compass-route.sh" --eval-cost >/dev/null 2>&1; then no "cost floor=101 should fail"; else ok "cost accuracy floor actually gates"; fi
+
 echo "route — eval harness (scores the router vs the labeled set):"
 if "$ROOT/scripts/compass-route.sh" --eval >/dev/null 2>&1; then ok "eval meets accuracy floor"; else no "eval below accuracy floor"; fi
 # a deliberately tiny set passes; a floor of 101 must fail (proves the gate bites)

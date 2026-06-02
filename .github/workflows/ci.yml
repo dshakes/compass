@@ -53,8 +53,11 @@ jobs:
       - name: Actions audit (mirror drift · least-privilege · SHA-pinning · run-block injection)
         run: bash scripts/check-actions.sh
 
-      - name: Router eval (accuracy floor gates autoroute)
+      - name: Router eval (quality-floor accuracy gates autoroute)
         run: bash scripts/compass-route.sh --eval
+
+      - name: Router cache-cost eval (cache-aware decisions, 100% floor)
+        run: bash scripts/compass-route.sh --eval-cost
 
       - name: Benchmark scorecard (guardrail precision/recall + router accuracy, gated)
         run: bash scripts/compass-bench.sh

@@ -129,10 +129,25 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   else note "⚠ could not commit builder leftovers — the review/PR may see a stale tree"; fi
 fi
 
-# Diff-size routing (R9): a tiny diff doesn't need sonnet to review it. Pick haiku for
-# diffs ≤ SDLC_HAIKU_DIFF_LINES (default 25); sonnet otherwise. Security always stays opus.
+# Cache-aware routing signals (ADR-0004): the Builder just warmed $BUILD_MODEL's prompt
+# cache, and the diff is the variable task delta D (~8 tokens per changed line). Export
+# them so the router's Stage-2 cost-min can ride the hot prefix instead of cold-loading a
+# cheaper tier for a small change.
+export COMPASS_ROUTE_WARM="$BUILD_MODEL"
+COMPASS_TASK_TOKENS="$(git diff "$BASE"...HEAD --numstat 2>/dev/null | awk '{a+=$1+$2} END{print int((a+0)*8)}')"
+export COMPASS_TASK_TOKENS
+
+# Review tier selection. SDLC_REVIEW_MODEL overrides everything. With SDLC_AUTOROUTE the
+# cache-aware router decides (review floors at sonnet, so quality holds, but a tiny diff on
+# the warm Builder tier can ride it instead of cold haiku). Otherwise the diff-size
+# heuristic (R9): haiku for diffs ≤ SDLC_HAIKU_DIFF_LINES (default 25), else sonnet.
 REVIEW_MODEL="${SDLC_REVIEW_MODEL:-sonnet}"
-if [ -z "${SDLC_REVIEW_MODEL:-}" ]; then
+if [ -n "${SDLC_REVIEW_MODEL:-}" ]; then
+  :
+elif [ "${SDLC_AUTOROUTE:-0}" = 1 ]; then
+  REVIEW_MODEL="$("$SDLC_DIR/../scripts/compass-route.sh" "review the code diff for correctness and quality" 2>/dev/null || echo sonnet)"
+  note "cache-aware review routing → $REVIEW_MODEL (warm=$BUILD_MODEL, ~${COMPASS_TASK_TOKENS} task tokens)"
+else
   DIFF_LINES="$(git diff "$BASE"...HEAD --numstat 2>/dev/null | awk '{a+=$1+$2} END{print a+0}')"
   if [ "${DIFF_LINES:-0}" -gt 0 ] && [ "${DIFF_LINES:-0}" -le "${SDLC_HAIKU_DIFF_LINES:-25}" ]; then
     REVIEW_MODEL="haiku"; note "diff-size routing: ${DIFF_LINES}-line diff → haiku review (override: SDLC_REVIEW_MODEL=sonnet)"

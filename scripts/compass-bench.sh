@@ -46,13 +46,16 @@ bench_guardrail() {
   done < "$CORPUS"
 }
 
-# ── router: reuse the deterministic accuracy eval ────────────────────────────────
-R_ACC=0; R_RC=0
+# ── router: reuse the deterministic quality-floor + cache-cost evals ──────────────
+R_ACC=0; R_RC=0; RC_ACC=0; RC_RC=0
 bench_router() {
   local out
   out="$(bash "$ROOT/scripts/compass-route.sh" --eval 2>&1)"; R_RC=$?
   R_ACC="$(printf '%s' "$out" | sed -n 's/^accuracy: \([0-9.]*\)%.*/\1/p' | tail -1)"
   : "${R_ACC:=0}"
+  out="$(bash "$ROOT/scripts/compass-route.sh" --eval-cost 2>&1)"; RC_RC=$?
+  RC_ACC="$(printf '%s' "$out" | sed -n 's/^cost-decision accuracy: \([0-9.]*\)%.*/\1/p' | tail -1)"
+  : "${RC_ACC:=0}"
 }
 
 pct() { awk "BEGIN{ d=$2; if(d==0){print \"100.0\"} else printf \"%.1f\", 100*$1/d }"; }
@@ -83,8 +86,8 @@ g_recall="$(pct "$G_TP" "$((G_TP+G_FN))")"
 g_acc="$(pct "$((G_TP+G_TN))" "$g_total")"
 
 if [ "$JSON" = 1 ]; then
-  printf '{"guardrail":{"cases":%d,"tp":%d,"fp":%d,"tn":%d,"fn":%d,"precision":%s,"recall":%s,"accuracy":%s},"router":{"accuracy":%s}}\n' \
-    "$g_total" "$G_TP" "$G_FP" "$G_TN" "$G_FN" "${g_prec:-0}" "${g_recall:-0}" "${g_acc:-0}" "${R_ACC:-0}"
+  printf '{"guardrail":{"cases":%d,"tp":%d,"fp":%d,"tn":%d,"fn":%d,"precision":%s,"recall":%s,"accuracy":%s},"router":{"accuracy":%s,"cache_cost_accuracy":%s}}\n' \
+    "$g_total" "$G_TP" "$G_FP" "$G_TN" "$G_FN" "${g_prec:-0}" "${g_recall:-0}" "${g_acc:-0}" "${R_ACC:-0}" "${RC_ACC:-0}"
   exit 0
 fi
 
@@ -95,7 +98,9 @@ if [ "$WHAT" != router ]; then
   printf "  guardrail   %d cases   precision %s%%   recall %s%%   accuracy %s%%\n" "$g_total" "$g_prec" "$g_recall" "$g_acc"
   printf "              TP %d · FP %d · TN %d · FN %d   (floors: precision %s%%, recall %s%%)\n" "$G_TP" "$G_FP" "$G_TN" "$G_FN" "$PREC_FLOOR" "$RECALL_FLOOR"
 fi
-[ "$WHAT" != guardrail ] && printf "  router      accuracy %s%%   (deterministic tier-picker vs labeled set)\n" "$R_ACC"
+if [ "$WHAT" != guardrail ]; then
+  printf "  router      quality-floor %s%%   ·   cache-cost decisions %s%%   (deterministic, eval-gated)\n" "$R_ACC" "$RC_ACC"
+fi
 echo
 echo "  model-driven SDLC fix-rate: compass bench --sdlc <fixtures>  (needs a CLI + tokens; not CI-gated)"
 echo
@@ -106,6 +111,7 @@ if [ "$WHAT" != router ]; then
   awk "BEGIN{exit !($g_prec >= $PREC_FLOOR)}"   || { echo "FAIL: guardrail precision $g_prec% < $PREC_FLOOR% (a safe command was blocked)" >&2; rc=1; }
   awk "BEGIN{exit !($g_recall >= $RECALL_FLOOR)}" || { echo "FAIL: guardrail recall $g_recall% < $RECALL_FLOOR% (a footgun slipped through)" >&2; rc=1; }
 fi
-[ "$WHAT" != guardrail ] && [ "$R_RC" -ne 0 ] && { echo "FAIL: router eval below its accuracy floor" >&2; rc=1; }
+[ "$WHAT" != guardrail ] && [ "$R_RC" -ne 0 ]  && { echo "FAIL: router quality-floor eval below its accuracy floor" >&2; rc=1; }
+[ "$WHAT" != guardrail ] && [ "$RC_RC" -ne 0 ] && { echo "FAIL: router cache-cost eval below its accuracy floor" >&2; rc=1; }
 [ "$rc" -eq 0 ] && echo "  PASS — all benches meet their floors"
 exit "$rc"

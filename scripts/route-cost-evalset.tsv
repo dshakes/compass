@@ -1,0 +1,21 @@
+# Cache-aware cost-decision eval (Stage 2). One labeled case per line:
+#   expected <TAB> P(prefix) <TAB> D(task) <TAB> O(output) <TAB> warm(tiers) <TAB> task
+# Verified by hand against the cost model in compass-route.sh (read 0.1x, write 1.25x@5m,
+# prices Haiku=1 / Sonnet=3.6 / Opus=18 input-relative, OUTF=4). 100% accuracy is the CI floor.
+#
+# cold default → quality floor (no warm signal = today's behavior, unchanged)
+sonnet	8000	600	400	-	add a rate limiter with tests
+haiku	8000	600	400	-	fix a typo in the readme
+haiku	8000	600	400	-	rename a variable
+# hard opus floor is never traded for cache savings (security guarantee), even with a warm cheap tier
+opus	8000	600	400	haiku	redesign the auth trust model
+opus	8000	600	400	haiku	plan a database migration with tenant isolation
+# same-tier warm → stay on the hot prefix (cache read beats cold re-load)
+sonnet	8000	100	200	sonnet	make a small tweak to the handler
+# cache-affinity UPGRADE: tiny task on a warm pricier prefix beats cold-loading the cheaper floor
+sonnet	8000	100	200	sonnet	fix a typo in the readme
+opus	12000	80	150	opus	apply a tiny fix
+# big task → the warm prefix can't pay for the pricier per-token rate → stay on the cold cheap floor
+haiku	8000	5000	400	sonnet	fix a typo in the readme
+# warm higher tier that ISN'T worth it (output+variable on opus too dear) → keep the cold floor
+sonnet	8000	600	400	opus	add a rate limiter with tests

@@ -51,6 +51,19 @@ rate rather than fight it:
   cheaper to cache and higher-signal. Building on the API directly? The `claude-api`
   skill bakes in `cache_control` so apps cache by default.
 
+## Cache-aware routing (the router consumes the cache, [ADR-0004](adr/0004-cache-aware-routing.md))
+`compass route` is a **two-stage, client-side, deterministic** router. Stage 1 sets a **quality
+floor** (opus-class work is a hard floor, never downgraded); Stage 2 does **cache-aware cost-min**
+over tiers at/above the floor, using Anthropic cache economics (read 0.1×, write 1.25×@5m / 2×@1h)
+and a session **warm-set** (`COMPASS_ROUTE_WARM`). The decision only moves *up* to an already-warm
+pricier tier when that's cheaper than cold-loading the floor — e.g. **warm Sonnet beats cold Haiku
+when the task delta `D < ~⅓` of the cached prefix `P`** (small edits on a hot prefix, compass's
+common case). With no cache signals it returns the floor, so default behaviour is unchanged.
+Two CI gates keep it honest: `compass route --eval` (quality-floor accuracy ≥90%) and
+`compass route --eval-cost` (cache decisions, 100% vs a hand-verified set); both roll up into
+`compass bench`. `orchestrate.sh` feeds it the warm tier + diff-size under `SDLC_AUTOROUTE` so the
+reviewer can ride the warm Builder tier instead of cold haiku.
+
 ## Bring your own model — local LLMs & cost routers (Codex side)
 The cheapest token is one you don't pay for. Codex talks to **any OpenAI-compatible endpoint**,
 so a tier can run on a **local model** (free, private) or a **cost router**:
