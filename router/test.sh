@@ -93,6 +93,60 @@ bash "$HERE/bench.sh" >/dev/null 2>&1 && ok "bench passes its floors" || no "ben
 ROUTER_ACC_FLOOR=101 bash "$HERE/bench.sh" >/dev/null 2>&1 && no "acc floor=101 should FAIL" || ok "accuracy floor bites"
 bash "$HERE/bench.sh" --route-args "--ceiling sonnet" >/dev/null 2>&1; ok "bench accepts --route-args passthrough"
 
+echo "cache-aware cost-min (stage 4.5 — OFF unless COMPASS_ROUTE_WARM is set):"
+eq "no warm → parity (unchanged)"            "$(R 'fix a typo in the readme')" haiku
+eq "warm sonnet + tiny task rides sonnet"    "$(COMPASS_ROUTE_WARM=sonnet COMPASS_PREFIX_TOKENS=8000 COMPASS_TASK_TOKENS=100 COMPASS_OUTPUT_TOKENS=200 R 'fix a typo in the readme')" sonnet
+eq "warm sonnet + big task stays haiku"      "$(COMPASS_ROUTE_WARM=sonnet COMPASS_PREFIX_TOKENS=8000 COMPASS_TASK_TOKENS=5000 COMPASS_OUTPUT_TOKENS=400 R 'fix a typo in the readme')" haiku
+eq "warm opus + huge prefix/tiny rides opus" "$(COMPASS_ROUTE_WARM=opus COMPASS_PREFIX_TOKENS=12000 COMPASS_TASK_TOKENS=80 COMPASS_OUTPUT_TOKENS=150 R 'apply a tiny fix')" opus
+eq "opus pick + warm haiku → opus (upgrade-only)" "$(COMPASS_ROUTE_WARM=haiku R 'redesign the auth trust model')" opus
+eq "cache upgrade still bounded by ceiling"  "$(COMPASS_ROUTE_WARM=opus COMPASS_PREFIX_TOKENS=12000 COMPASS_TASK_TOKENS=80 R --ceiling sonnet 'apply a tiny fix')" sonnet
+# regression (Codex audit A): a COLD tier is never ridden, even if a custom profile makes it cheaper
+CHEAP="$TMP/cheap-opus.json"; jq '.tiers.opus.cost=0.001' "$HERE/router.json" > "$CHEAP"
+case "$(COMPASS_ROUTE_WARM=sonnet COMPASS_PREFIX_TOKENS=8000 COMPASS_TASK_TOKENS=100 R --spec "$CHEAP" 'fix a typo in the readme')" in
+  opus) no "cold cheaper tier must NOT be ridden (got opus)" ;; *) ok "cold tier never ridden even if cheaper (audit A)" ;; esac
+eq "stale/typo warm value is a no-op"        "$(COMPASS_ROUTE_WARM=sonet COMPASS_PREFIX_TOKENS=8000 COMPASS_TASK_TOKENS=100 R 'fix a typo in the readme')" haiku
+# regression (Codex audit B): cache candidate set is ceiling-bounded BEFORE the cost-min
+eq "above-ceiling warm tier excluded pre-min" "$(COMPASS_ROUTE_WARM=opus COMPASS_PREFIX_TOKENS=12000 COMPASS_TASK_TOKENS=80 R --spec "$CHEAP" --ceiling sonnet 'apply a tiny fix')" sonnet
+
+echo "ttl recommender (cache-write TTL: 5m default; 1h when reused ≥2× across a >5m gap):"
+eq "default → 5m"                      "$(R --ttl)" 5m
+eq "converge (3 reuses, 8m gap) → 1h"  "$(COMPASS_ROUTE_REUSES=3 COMPASS_ROUTE_GAP_MIN=8 R --ttl)" 1h
+eq "2 reuses but no gap → 5m"          "$(COMPASS_ROUTE_REUSES=2 COMPASS_ROUTE_GAP_MIN=0 R --ttl)" 5m
+eq "json carries ttl"                  "$(R --json 'fix a typo' | jq -r .ttl)" 5m
+
+echo "budget governor (OFF unless COMPASS_ROUTE_BUDGET_USD set):"
+eq "cap ≥95% caps opus→sonnet"        "$(COMPASS_ROUTE_BUDGET_USD=10 COMPASS_ROUTE_SPENT_USD=9.6 R 'redesign the auth trust model')" sonnet
+eq "warn ≥80% cheap-biases weak pick" "$(COMPASS_ROUTE_BUDGET_USD=10 COMPASS_ROUTE_SPENT_USD=8.5 R 'update it')" haiku
+eq "under budget → unchanged"         "$(COMPASS_ROUTE_BUDGET_USD=10 COMPASS_ROUTE_SPENT_USD=1 R 'redesign the auth trust model')" opus
+eq "no budget signal → parity"        "$(R 'redesign the auth trust model')" opus
+
+echo "latency ceiling (--max-latency / COMPASS_ROUTE_MAX_LATENCY):"
+eq "max-latency 2 caps opus→sonnet"   "$(R --max-latency 2 'redesign the auth trust model')" sonnet
+eq "max-latency 1 caps →haiku"        "$(R --max-latency 1 'redesign the auth trust model')" haiku
+eq "max-latency 4 leaves opus"        "$(R --max-latency 4 'redesign the auth trust model')" opus
+eq "no latency signal → parity"       "$(R 'redesign the auth trust model')" opus
+
+echo "cache savings bench + telemetry calibrate:"
+bash "$HERE/bench.sh" --cache >/dev/null 2>&1 && ok "bench --cache passes (100% accuracy + savings>0)" || no "bench --cache should pass"
+CL="$TMP/cachelog.tsv"
+COMPASS_ROUTE_CACHELOG="$CL" COMPASS_ROUTE_WARM=sonnet COMPASS_PREFIX_TOKENS=8000 COMPASS_TASK_TOKENS=100 COMPASS_OUTPUT_TOKENS=200 R 'fix a typo in the readme' >/dev/null
+case "$(cat "$CL")" in *"$(printf 'haiku\tsonnet\tsonnet\t1')"*) ok "cachelog records an affinity upgrade" ;; *) no "cachelog affinity row missing" ;; esac
+case "$(bash "$HERE/bench.sh" --calibrate "$CL" 2>&1)" in *"cache-affinity:"*) ok "calibrate summarizes affinity" ;; *) no "calibrate missing affinity" ;; esac
+
+echo "domain floors (#5 — quality floor by detected domain):"
+eq "infra trivial-phrased → floor sonnet" "$(R 'rename the k8s ingress')" sonnet
+eq "api trivial-phrased → floor sonnet"   "$(R 'fix a typo in the rest endpoint handler')" sonnet
+eq "ui trivial → haiku (no floor)"        "$(R 'fix a typo in the css')" haiku
+eq "core trivial → haiku (no floor)"      "$(R 'fix a typo in the readme')" haiku
+eq "domain floor never lowers opus"       "$(R 'redesign the auth trust model for the api')" opus
+
+echo "spec validation + ReDoS lint (#6):"
+bash "$HERE/validate.sh" >/dev/null 2>&1 && ok "validate passes the shipped spec" || no "validate should pass the shipped spec"
+VB="$TMP/bad-spec.json"
+jq '.default="ghost"' "$HERE/router.json" > "$VB"; if bash "$HERE/validate.sh" "$VB" >/dev/null 2>&1; then no "should reject unknown default"; else ok "rejects unknown default tier"; fi
+jq '.rules += [{"tier":"haiku","pattern":"(a+)+b"}]' "$HERE/router.json" > "$VB"; if bash "$HERE/validate.sh" "$VB" >/dev/null 2>&1; then no "should reject ReDoS pattern"; else ok "rejects a ReDoS-shaped pattern"; fi
+jq '.rules += [{"tier":"ghost","pattern":"z"}]' "$HERE/router.json" > "$VB"; if bash "$HERE/validate.sh" "$VB" >/dev/null 2>&1; then no "should reject non-tier rule"; else ok "rejects a rule referencing an unknown tier"; fi
+
 echo
 printf 'router module: %d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

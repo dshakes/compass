@@ -54,14 +54,75 @@ The algorithm any host implements is the same ~10 lines:
 Keep `router.json` as the single source of truth; `route.sh` is just the reference impl, and
 `bench.sh` scores *any* implementation against `evalset.tsv`.
 
+## The pipeline
+
+<p align="center">
+  <img src="../assets/router-pipeline.svg" alt="The router pipeline: task → decide → confidence → length → bias → cache → escalation → budget → latency → clamps → domain → tier. Core classify/shape stages always run; cache, escalation, budget, latency, and domain-floor stages are OFF unless their signal is set (parity with v1.0); the spec is validated + ReDoS-linted, not trusted; cache savings are measured by bench.sh --cache." width="900">
+</p>
+
+`decide → confidence → length → bias → cache → escalation → budget → latency → clamps → domain`.
+Everything past `bias` is **off unless its signal is set**, so the default is byte-for-byte v1.0.
+
+## Cache-aware cost-min (stage 4.5)
+
+A small but distinctive stage that folds **prompt-cache economics** into the pick — the
+prefix/KV-cache-aware idea (route same-prefix work to the already-warm tier), at the model-
+selection layer. **OFF unless `COMPASS_ROUTE_WARM` names a tier whose prompt-cache prefix is
+already hot this session.** When on, among the tiers in `[pick .. ceiling]` it rides a *warm
+pricier* tier when its expected cost is lower than cold-loading the pick:
+
+```
+cost(tier) = (warm ? read_mult : write_mult)·tier.cost·P  +  tier.cost·D  +  tier.cost·out_weight·O
+```
+
+reusing each tier's relative `cost` (haiku 1 / sonnet 4 / opus 20). It models Anthropic's
+cache pricing (read **0.1×**, 5m write **1.25×**, 1h write **2×**). The headline case:
+**warm Sonnet beats cold Haiku once the task delta `D` is small relative to the cached prefix
+`P`** — a small edit on a hot prefix. It is **upgrade-only** (never routes below the pick, so
+quality can't drop) and the clamps stage still bounds it. Tunables live in the `cache` block of
+`router.json`; override per run with `COMPASS_PREFIX_TOKENS` / `COMPASS_TASK_TOKENS` /
+`COMPASS_OUTPUT_TOKENS` / `COMPASS_ROUTE_TTL`. `--ttl` recommends the cache-write TTL (5m vs 1h)
+from `COMPASS_ROUTE_REUSES` / `COMPASS_ROUTE_GAP_MIN`. Full rationale + the honest reachable-levers
+table: [`docs/adr/0004-cache-aware-routing.md`](../docs/adr/0004-cache-aware-routing.md).
+
+> This is the one place the router goes *beyond* a plain cost dial: it accounts for the cache
+> you've already paid to warm — deterministically, client-side, and gated by `test.sh`.
+
+Measure it: `bench.sh --cache` scores the cache-aware picks on `cache-evalset.tsv` and reports
+**effective $ saved vs cold** (cache read/write modeled), gated on 100% decision-accuracy and
+savings > 0. `COMPASS_ROUTE_CACHELOG=<file>` records each decision; `bench.sh --calibrate <file>`
+summarizes the realized cache-affinity rate.
+
+## More cost dials (each OFF unless its signal is set)
+
+- **Budget governor** (`budget` block; `COMPASS_ROUTE_BUDGET_USD` [+ `COMPASS_ROUTE_SPENT_USD`,
+  else today's `spend.tsv`]). Near the cap it pulls back: at `warn_pct` it cheap-biases weak
+  picks; at `cap_pct` it applies `cap_ceiling` as a hard cost cap. A deliberate operator dial.
+- **Latency ceiling** (`--max-latency N` / `COMPASS_ROUTE_MAX_LATENCY`; per-tier `latency` in the
+  spec). Caps the pick to the most-capable tier within the speed budget — multi-objective routing,
+  still deterministic.
+- **Domain quality floors** (`domain_floors` block). A task whose detected domain maps here is
+  raised to at least that tier (infra/api aren't trivial even when phrased tersely). Folds into the
+  effective clamp floor, so it holds against the cost dials but never lowers a higher pick.
+
+**Spec is validated, not trusted.** `validate.sh` checks the schema (required keys, every tier
+reference in `default`/`clamps`/`length_rules`/`domain_floors`/`rules` resolves, patterns compile)
+and **lints rule patterns for ReDoS** (catastrophic-backtracking shapes like `(a+)+`). Runs in CI
+and `compass doctor`, so a malformed or unsafe spec fails loudly before any app embeds it.
+
+Full pipeline: `decide → confidence → length → bias → cache → escalation → budget → latency →
+clamps → domain`. See [`docs/adr/0004-cache-aware-routing.md`](../docs/adr/0004-cache-aware-routing.md).
+
 ## Files
 
 | File | What |
 |------|------|
-| `router.json` | the spec — tiers, costs, ordered rules (the asset to copy into other repos) |
+| `router.json` | the spec — tiers, costs, ordered rules, **`cache` block** (the asset to copy into other repos) |
 | `route.sh` | reference implementation (bash + jq + grep) — `route.sh [--explain] "<task>"` |
 | `evalset.tsv` | labeled ground truth: `split` (base / holdout / adversarial) · tier · task |
-| `bench.sh` | accuracy **and cost-at-iso-quality**, gated; `bench.sh` exits non-zero below floors |
+| `bench.sh` | accuracy **and cost-at-iso-quality**, gated; `--cache` scores cache savings; `--calibrate` reads telemetry |
+| `cache-evalset.tsv` | labeled warm/cold set for `bench.sh --cache` (cache-aware cost-min savings) |
+| `validate.sh` | schema validation + ReDoS lint of `router.json` (CI- and doctor-gated) |
 | `fallback-llm.sh` | opt-in escalation fallback — a Haiku judge for the ambiguous middle (stdin→tier) |
 | `train-classifier.sh` | distill logged judgments into a local Naive-Bayes model (zero ML deps) |
 | `classify.sh` | local classifier fallback (stdin→tier); abstains when off / no model / unsure |

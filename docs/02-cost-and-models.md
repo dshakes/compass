@@ -95,6 +95,14 @@ Cross-provider *smart routing* as a first-class compass layer is roadmapped (`do
 deterministic keyword heuristic. `orchestrate.sh` uses it for the Builder step **only** when
 `SDLC_AUTOROUTE=1` (off by default; the default stays Sonnet).
 
+> **Cache-aware routing** ([`router/`](../router/) module, [ADR-0004](adr/0004-cache-aware-routing.md)).
+> The deterministic router adds a **cache-aware cost-min** stage that folds Anthropic prompt-cache
+> economics (read 0.1×, write 1.25×@5m / 2×@1h) + a session warm-set into the pick — riding an
+> already-warm tier when it's cheaper than cold-loading a cheaper one (upgrade-only, never a quality
+> drop). Plus a **budget governor**, a **latency ceiling**, **domain quality floors**, and spec
+> **validation + ReDoS lint** — each off unless its signal is set. `router/bench.sh --cache` reports
+> the effective $ saved; see [`router/README.md`](../router/README.md).
+
 The honest caveat used to be "no eval set, so a wrong route can hurt quality more than it
 saves." That gap is now closed: a labeled ground-truth set lives at
 [`scripts/route-evalset.tsv`](../scripts/route-evalset.tsv), and
