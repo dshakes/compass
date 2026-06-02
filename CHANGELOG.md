@@ -5,6 +5,16 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.12.1] — 2026-06-01
+
+### Docs
+
+- **Router hero diagram** (`assets/router-cascade.svg`) — an animated SVG in the repo's
+  existing style showing the three-layer cascade (free heuristic → optional free local
+  classifier → Haiku LLM judge) with the early-exit lane, plus the data-flywheel loop.
+  Embedded at the top of `router/README.md` and in the main README (Mermaid kept alongside).
+- Dropped the "world-class" phrasing across the docs in favor of plainer equivalents.
+
 ## [0.12.0] — 2026-06-01
 
 A standalone, reusable **cost-tier router** module (`router/`) — extracted so it can be
