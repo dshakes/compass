@@ -37,9 +37,11 @@ jchk "every rule.tier ∈ tiers"     '(.tiers|keys) as $t | all((.rules//[])[]; 
 jchk "every rule.pattern non-empty" 'all((.rules//[])[]; (.pattern|type=="string") and (.pattern|length>0))'
 
 # ── every regex compiles (ERE) + ReDoS lint ───────────────────────────────────────
-mapfile -t PATTERNS < <(jq -r '[ (.rules//[])[].pattern, (.rules//[])[].unless//empty, (.domains//[])[].pattern ] | .[]' "$SPEC" 2>/dev/null)
+# bash 3.2 (macOS) has no mapfile/readarray — read into the array portably.
+PATTERNS=()
+while IFS= read -r _p; do PATTERNS+=("$_p"); done < <(jq -r '[ (.rules//[])[].pattern, (.rules//[])[].unless//empty, (.domains//[])[].pattern ] | .[]' "$SPEC" 2>/dev/null)
 bad_compile=0; redos=0
-for p in "${PATTERNS[@]}"; do
+for p in ${PATTERNS[@]+"${PATTERNS[@]}"}; do
   [ -n "$p" ] || continue
   printf '' | grep -E -- "$p" >/dev/null 2>&1; [ "$?" = 2 ] && { no "pattern does not compile: $p"; bad_compile=1; }
   # ReDoS tripwire: a quantified token nested inside a group that is itself quantified by * or +

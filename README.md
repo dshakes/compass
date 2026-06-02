@@ -117,7 +117,7 @@ compass quickstart                       # previews, asks, then wires it into ~/
 
 ```bash
 git clone https://github.com/dshakes/compass ~/compass && cd ~/compass
-git checkout v0.12.1     # optional: pin to a release instead of tracking main
+git checkout v0.13.0     # optional: pin to a release instead of tracking main
 ./quickstart.sh
 ```
 
