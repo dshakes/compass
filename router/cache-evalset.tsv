@@ -1,0 +1,11 @@
+# cache-evalset.tsv — labeled set for `bench.sh --cache` (cache-aware cost-min savings).
+# Columns: expected <TAB> P(prefix) <TAB> D(task) <TAB> O(output) <TAB> warm(- = none) <TAB> task
+# expected = the tier the cache-aware router SHOULD pick given the warm signal. The bench
+# also routes each task COLD (no warm) and reports effective-$ saved (cache read/write modeled).
+sonnet	8000	100	200	sonnet	fix a typo in the readme
+sonnet	8000	120	200	sonnet	make a small tweak to the handler
+opus	12000	80	150	opus	apply a tiny fix
+haiku	8000	5000	400	sonnet	fix a typo in the readme
+haiku	8000	600	400	-	fix a typo in the readme
+sonnet	8000	600	400	-	add a rate limiter with tests
+opus	8000	600	400	haiku	redesign the auth trust model

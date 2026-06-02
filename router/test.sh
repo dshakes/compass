@@ -107,6 +107,25 @@ eq "converge (3 reuses, 8m gap) → 1h"  "$(COMPASS_ROUTE_REUSES=3 COMPASS_ROUTE
 eq "2 reuses but no gap → 5m"          "$(COMPASS_ROUTE_REUSES=2 COMPASS_ROUTE_GAP_MIN=0 R --ttl)" 5m
 eq "json carries ttl"                  "$(R --json 'fix a typo' | jq -r .ttl)" 5m
 
+echo "budget governor (OFF unless COMPASS_ROUTE_BUDGET_USD set):"
+eq "cap ≥95% caps opus→sonnet"        "$(COMPASS_ROUTE_BUDGET_USD=10 COMPASS_ROUTE_SPENT_USD=9.6 R 'redesign the auth trust model')" sonnet
+eq "warn ≥80% cheap-biases weak pick" "$(COMPASS_ROUTE_BUDGET_USD=10 COMPASS_ROUTE_SPENT_USD=8.5 R 'update it')" haiku
+eq "under budget → unchanged"         "$(COMPASS_ROUTE_BUDGET_USD=10 COMPASS_ROUTE_SPENT_USD=1 R 'redesign the auth trust model')" opus
+eq "no budget signal → parity"        "$(R 'redesign the auth trust model')" opus
+
+echo "latency ceiling (--max-latency / COMPASS_ROUTE_MAX_LATENCY):"
+eq "max-latency 2 caps opus→sonnet"   "$(R --max-latency 2 'redesign the auth trust model')" sonnet
+eq "max-latency 1 caps →haiku"        "$(R --max-latency 1 'redesign the auth trust model')" haiku
+eq "max-latency 4 leaves opus"        "$(R --max-latency 4 'redesign the auth trust model')" opus
+eq "no latency signal → parity"       "$(R 'redesign the auth trust model')" opus
+
+echo "cache savings bench + telemetry calibrate:"
+bash "$HERE/bench.sh" --cache >/dev/null 2>&1 && ok "bench --cache passes (100% accuracy + savings>0)" || no "bench --cache should pass"
+CL="$TMP/cachelog.tsv"
+COMPASS_ROUTE_CACHELOG="$CL" COMPASS_ROUTE_WARM=sonnet COMPASS_PREFIX_TOKENS=8000 COMPASS_TASK_TOKENS=100 COMPASS_OUTPUT_TOKENS=200 R 'fix a typo in the readme' >/dev/null
+case "$(cat "$CL")" in *"$(printf 'haiku\tsonnet\tsonnet\t1')"*) ok "cachelog records an affinity upgrade" ;; *) no "cachelog affinity row missing" ;; esac
+case "$(bash "$HERE/bench.sh" --calibrate "$CL" 2>&1)" in *"cache-affinity:"*) ok "calibrate summarizes affinity" ;; *) no "calibrate missing affinity" ;; esac
+
 echo
 printf 'router module: %d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

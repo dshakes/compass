@@ -2,8 +2,9 @@
 # route.sh — reference implementation of the compass cost-tier router (v1.1).
 #
 # Deterministic, zero network, zero model calls (unless you wire an escalation fallback).
-# Pipeline:  decide(tier) -> confidence -> length-rules -> bias -> cache-aware -> escalation -> clamps -> domain.
-# With no flags it reproduces v1.0 exactly (strategy first-match, balanced, no escalation, no warm set).
+# Pipeline:  decide -> confidence -> length -> bias -> cache-aware -> escalation -> budget -> latency -> clamps -> domain.
+# Every stage past `bias` is OFF unless its signal is present, so with no flags/env it
+# reproduces v1.0 exactly (first-match, balanced, no escalation, no warm set, no budget/latency).
 #
 #   route.sh "<task>"                      -> haiku | sonnet | opus
 #   route.sh --explain "<task>"            -> tier  (+ reason on stderr)
@@ -24,7 +25,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SPEC="${COMPASS_ROUTER_SPEC:-$HERE/router.json}"; LOCAL=""
 EXPLAIN=0; JSON=0; SCORE=0; WANT_DOMAIN=0; TTL_ONLY=0; TASK=""
 PROFILE="default"; STRATEGY=""; BIAS=""; FLOOR=""; CEILING=""; ALLOW=""
-ESCALATE=""; FALLBACK=""; LOGFILE=""
+ESCALATE=""; FALLBACK=""; LOGFILE=""; MAXLAT=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --explain) EXPLAIN=1 ;;
@@ -42,6 +43,7 @@ while [ $# -gt 0 ]; do
     --allow)   ALLOW="${2:?}"; shift ;;
     --escalate-below) ESCALATE="${2:?}"; shift ;;
     --fallback) FALLBACK="${2:?}"; shift ;;
+    --max-latency) MAXLAT="${2:?}"; shift ;;
     --log)     LOGFILE="${2:?}"; shift ;;
     -h|--help) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     -*)        echo "route: unknown flag '$1'" >&2; exit 2 ;;
@@ -100,11 +102,15 @@ DUMP="$(printf '%s' "$MERGED" | jq -r --arg p "$PROFILE" '
        ["S","cP",((.cache.prefix_tokens // 8000)|tostring)],
        ["S","cD",((.cache.task_tokens // 600)|tostring)],
        ["S","cO",((.cache.output_tokens // 400)|tostring)],
-       ["S","cow",((.cache.out_weight // 4)|tostring)] ]
+       ["S","cow",((.cache.out_weight // 4)|tostring)],
+       ["S","bwarn",((.budget.warn_pct // 80)|tostring)],
+       ["S","bcap",((.budget.cap_pct // 95)|tostring)],
+       ["S","bceil",(.budget.cap_ceiling // "")] ]
      + (.tiers | to_entries | sort_by(.value.rank)
         | map(["T", .key, (.value.rank|tostring),
                (($root.profiles[$p][.key].cost  // .value.cost)|tostring),
-               ($root.profiles[$p][.key].model // .value.model)]))
+               ($root.profiles[$p][.key].model // .value.model),
+               (($root.profiles[$p][.key].latency // .value.latency // 0)|tostring)]))
      + (.rules | map(["R", .tier, .pattern, (.reason // ""), (.unless // ""), ((.weight // 1)|tostring)]))
      + ((.length_rules // []) | map(["L", (.min_words|tostring), .at_least]))
      + ((.domains // []) | map(["D", .domain, .pattern])) )
@@ -114,6 +120,7 @@ DUMP="$(printf '%s' "$MERGED" | jq -r --arg p "$PROFILE" '
 # ── parse the dump into shell state (pure bash, no further subprocesses) ──────────
 S_strategy=""; S_bias=""; S_default=""; S_floor=""; S_ceiling=""; S_allow=""; S_escalate="0"; S_fallback=""; S_maxrank="0"
 S_cr="0.1"; S_cw="1.25"; S_cwl="2.0"; S_cP="8000"; S_cD="600"; S_cO="400"; S_cow="4"
+S_bwarn="80"; S_bcap="95"; S_bceil=""
 TIER_META=(); TIERS_ORDERED=""; RULES=(); LENGTHS=(); DOMAINS=()
 while IFS=$'\t' read -r typ f1 f2 f3 f4 f5; do
   case "$typ" in
@@ -123,8 +130,9 @@ while IFS=$'\t' read -r typ f1 f2 f3 f4 f5; do
          escalate) S_escalate="$f2" ;; fallback) S_fallback="$f2" ;; maxrank) S_maxrank="$f2" ;;
          cread) S_cr="$f2" ;; cwrite) S_cw="$f2" ;; cwritelong) S_cwl="$f2" ;;
          cP) S_cP="$f2" ;; cD) S_cD="$f2" ;; cO) S_cO="$f2" ;; cow) S_cow="$f2" ;;
+         bwarn) S_bwarn="$f2" ;; bcap) S_bcap="$f2" ;; bceil) S_bceil="$f2" ;;
        esac ;;
-    T) TIER_META+=("$f1 $f2 $f3 $f4"); TIERS_ORDERED="$TIERS_ORDERED $f1" ;;
+    T) TIER_META+=("$f1 $f2 $f3 $f4 $f5"); TIERS_ORDERED="$TIERS_ORDERED $f1" ;;
     R) RULES+=("$f1"$'\t'"$f2"$'\t'"$f3"$'\t'"$f4"$'\t'"$f5") ;;
     L) LENGTHS+=("$f1 $f2") ;;
     D) DOMAINS+=("$f1"$'\t'"$f2") ;;
@@ -151,6 +159,7 @@ rank_of()      { local t="$1" e; for e in "${TIER_META[@]}"; do case "$e" in "$t
 cost_of()      { local t="$1" e; for e in "${TIER_META[@]}"; do case "$e" in "$t "*) set -- $e; printf '%s' "$3"; return;; esac; done; }
 model_of()     { local t="$1" e; for e in "${TIER_META[@]}"; do case "$e" in "$t "*) set -- $e; printf '%s' "$4"; return;; esac; done; }
 tier_of_rank() { local n="$1" e; for e in "${TIER_META[@]}"; do set -- $e; [ "$2" = "$n" ] && { printf '%s' "$1"; return; }; done; }
+latency_of()   { local t="$1" e; for e in "${TIER_META[@]}"; do case "$e" in "$t "*) set -- $e; printf '%s' "${5:-0}"; return;; esac; done; printf '0'; }
 tier_pattern() { local t="$1" r rest; for r in "${RULES[@]}"; do case "$r" in "$t"$'\t'*) rest="${r#*$'\t'}"; printf '%s' "${rest%%$'\t'*}"; return;; esac; done; }
 
 LC="$(printf '%s' "$TASK" | tr '[:upper:]' '[:lower:]')"
@@ -233,6 +242,7 @@ fi
 # warm pricier tier in [pick..maxrank] if its EXPECTED cost (cache read on the prefix)
 # beats cold-loading the current pick. UPGRADE-ONLY (never below the pick → no quality
 # loss); the clamps stage still bounds the result. Reuses each tier's relative `cost`.
+PRECACHE_TIER="$MATCH_TIER"
 if [ -n "${COMPASS_ROUTE_WARM:-}" ]; then
   cP="$(cnum "${COMPASS_PREFIX_TOKENS:-}" "$S_cP")"; cD="$(cnum "${COMPASS_TASK_TOKENS:-}" "$S_cD")"; cO="$(cnum "${COMPASS_OUTPUT_TOKENS:-}" "$S_cO")"
   case "${COMPASS_ROUTE_TTL:-5m}" in 1h) cwrm="$S_cwl" ;; *) cwrm="$S_cw" ;; esac
@@ -260,6 +270,36 @@ if [ "${ESCALATE:-0}" -gt 0 ] && [ "$CONFIDENCE" -lt "$ESCALATE" ]; then
     case " $TIERS_ORDERED " in *" $out "*) MATCH_TIER="$out"; MATCH_REASON="$MATCH_REASON; escalate->fallback($out)" ;; esac
   else
     r="$(rank_of "$MATCH_TIER")"; [ "$r" -lt "$MAXRANK" ] && { MATCH_TIER="$(tier_of_rank $((r+1)))"; MATCH_REASON="$MATCH_REASON; escalate(bump)->$MATCH_TIER"; }
+  fi
+fi
+
+# ── stage 5.5: budget governor (OFF unless COMPASS_ROUTE_BUDGET_USD is set) ────
+# Near a spend cap, pull back: at warn_pct cheap-bias weak picks; at cap_pct apply
+# cap_ceiling as a hard cost cap. A deliberate operator dial; clamps still bound it.
+if [ -n "${COMPASS_ROUTE_BUDGET_USD:-}" ]; then
+  spent="${COMPASS_ROUTE_SPENT_USD:-}"
+  if [ -z "$spent" ]; then
+    led="${COMPASS_HOME:-$HOME/.compass}/spend.tsv"; today="$(date -u +%Y-%m-%d)"
+    spent="$(awk -F'\t' -v d="$today" 'index($1,d)==1{s+=$5} END{printf "%.4f", s+0}' "$led" 2>/dev/null || echo 0)"
+  fi
+  bpct="$(awk -v s="$spent" -v b="$COMPASS_ROUTE_BUDGET_USD" 'BEGIN{ if(b+0<=0){print 0}else{printf "%.0f", 100*s/b} }')"
+  if [ "${bpct:-0}" -ge "${S_bcap:-95}" ] && [ -n "$S_bceil" ] && [ "$(rank_of "$MATCH_TIER")" -gt "$(rank_of "$S_bceil")" ]; then
+    MATCH_TIER="$S_bceil"; MATCH_REASON="$MATCH_REASON; budget ${bpct}%>=${S_bcap}%->cap $S_bceil"
+  elif [ "${bpct:-0}" -ge "${S_bwarn:-80}" ] && [ "$CONFIDENCE" -lt 55 ]; then
+    r="$(rank_of "$MATCH_TIER")"; [ "$r" -gt 1 ] && { MATCH_TIER="$(tier_of_rank $((r-1)))"; MATCH_REASON="$MATCH_REASON; budget ${bpct}%->cheap $MATCH_TIER"; }
+  fi
+fi
+
+# ── stage 5.6: latency ceiling (OFF unless --max-latency / COMPASS_ROUTE_MAX_LATENCY) ─
+[ -n "$MAXLAT" ] || MAXLAT="${COMPASS_ROUTE_MAX_LATENCY:-}"
+if [ -n "$MAXLAT" ] && printf '%s' "$MAXLAT" | grep -qE '^[0-9]+$'; then
+  if [ "$(latency_of "$MATCH_TIER")" -gt "$MAXLAT" ]; then
+    lbest=""; lbestrank=-1
+    for t in $TIERS_ORDERED; do
+      lt="$(latency_of "$t")"; [ "${lt:-0}" -le "$MAXLAT" ] || continue
+      lr="$(rank_of "$t")"; [ "$lr" -gt "$lbestrank" ] && { lbest="$t"; lbestrank="$lr"; }
+    done
+    [ -n "$lbest" ] && { MATCH_REASON="$MATCH_REASON; max-latency $MAXLAT->$lbest"; MATCH_TIER="$lbest"; }
   fi
 fi
 
@@ -291,6 +331,12 @@ fi
 
 # ── telemetry + output ────────────────────────────────────────────────────────
 [ -n "$LOGFILE" ] && { printf '%s\t%s\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$MATCH_TIER" "$CONFIDENCE" "$TASK" >>"$LOGFILE" 2>/dev/null || true; }
+# Cache-decision telemetry (opt-in, separate from --log so train-classifier's format is
+# untouched): ts<TAB>precache_pick<TAB>final<TAB>warm<TAB>affinity(0/1). Feeds `bench.sh --calibrate`.
+if [ -n "${COMPASS_ROUTE_CACHELOG:-}" ]; then
+  aff=0; [ -n "${COMPASS_ROUTE_WARM:-}" ] && [ "${PRECACHE_TIER:-$MATCH_TIER}" != "$MATCH_TIER" ] && aff=1
+  printf '%s\t%s\t%s\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${PRECACHE_TIER:-$MATCH_TIER}" "$MATCH_TIER" "${COMPASS_ROUTE_WARM:-}" "$aff" >>"$COMPASS_ROUTE_CACHELOG" 2>/dev/null || true
+fi
 recommend_ttl
 
 if [ "$JSON" = 1 ]; then

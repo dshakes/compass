@@ -37,6 +37,17 @@ Add **stage 4.5 — cache-aware cost-min** to the pipeline
   upgrade-only-never-downgrade, ceiling still caps, TTL recommendations). `bench.sh` is
   unaffected (no warm set in the evalset), so cost-at-iso-quality stays a clean regression gate.
 
+### Companion cost dials (shipped in the same change, each OFF unless its signal is set)
+- **Budget governor** (`budget` block + `COMPASS_ROUTE_BUDGET_USD`): near a spend cap, cheap-bias
+  weak picks at `warn_pct` and apply `cap_ceiling` as a hard cost cap at `cap_pct` — a deliberate
+  operator dial commercial routers don't expose. Spent is read from the env or today's `spend.tsv`.
+- **Latency ceiling** (`--max-latency` + per-tier `latency`): caps the pick to the most-capable
+  tier within a speed budget — a second objective, still deterministic.
+- **Measurement**: `bench.sh --cache` reports effective $ saved vs cold (cache read/write modeled),
+  gated on 100% decision-accuracy + savings > 0; `COMPASS_ROUTE_CACHELOG` + `bench.sh --calibrate`
+  surface the realized cache-affinity rate. All four stages preserve parity when no signal is set,
+  so the existing accuracy / cost-at-iso-quality gates are untouched.
+
 ## How this exceeds Not Diamond / industry routers
 - **Deterministic + reproducible + offline** — no recommender API, no latency, no data egress.
 - **Cache-economics native** — folds read/write/TTL + a warm-set into the choice (the

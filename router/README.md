@@ -79,6 +79,23 @@ table: [`docs/adr/0004-cache-aware-routing.md`](../docs/adr/0004-cache-aware-rou
 > This is the one place the router goes *beyond* a plain cost dial: it accounts for the cache
 > you've already paid to warm — deterministically, client-side, and gated by `test.sh`.
 
+Measure it: `bench.sh --cache` scores the cache-aware picks on `cache-evalset.tsv` and reports
+**effective $ saved vs cold** (cache read/write modeled), gated on 100% decision-accuracy and
+savings > 0. `COMPASS_ROUTE_CACHELOG=<file>` records each decision; `bench.sh --calibrate <file>`
+summarizes the realized cache-affinity rate.
+
+## More cost dials (each OFF unless its signal is set)
+
+- **Budget governor** (`budget` block; `COMPASS_ROUTE_BUDGET_USD` [+ `COMPASS_ROUTE_SPENT_USD`,
+  else today's `spend.tsv`]). Near the cap it pulls back: at `warn_pct` it cheap-biases weak
+  picks; at `cap_pct` it applies `cap_ceiling` as a hard cost cap. A deliberate operator dial.
+- **Latency ceiling** (`--max-latency N` / `COMPASS_ROUTE_MAX_LATENCY`; per-tier `latency` in the
+  spec). Caps the pick to the most-capable tier within the speed budget — multi-objective routing,
+  still deterministic.
+
+Full pipeline: `decide → confidence → length → bias → cache → escalation → budget → latency →
+clamps → domain`. See [`docs/adr/0004-cache-aware-routing.md`](../docs/adr/0004-cache-aware-routing.md).
+
 ## Files
 
 | File | What |
@@ -86,7 +103,8 @@ table: [`docs/adr/0004-cache-aware-routing.md`](../docs/adr/0004-cache-aware-rou
 | `router.json` | the spec — tiers, costs, ordered rules, **`cache` block** (the asset to copy into other repos) |
 | `route.sh` | reference implementation (bash + jq + grep) — `route.sh [--explain] "<task>"` |
 | `evalset.tsv` | labeled ground truth: `split` (base / holdout / adversarial) · tier · task |
-| `bench.sh` | accuracy **and cost-at-iso-quality**, gated; `bench.sh` exits non-zero below floors |
+| `bench.sh` | accuracy **and cost-at-iso-quality**, gated; `--cache` scores cache savings; `--calibrate` reads telemetry |
+| `cache-evalset.tsv` | labeled warm/cold set for `bench.sh --cache` (cache-aware cost-min savings) |
 | `fallback-llm.sh` | opt-in escalation fallback — a Haiku judge for the ambiguous middle (stdin→tier) |
 | `train-classifier.sh` | distill logged judgments into a local Naive-Bayes model (zero ML deps) |
 | `classify.sh` | local classifier fallback (stdin→tier); abstains when off / no model / unsure |

@@ -28,17 +28,67 @@ ADV_FLOOR="${ROUTER_ADV_FLOOR:-25}"        # adversarial = generalization PROBE,
                                            # gate; this floor is a regression TRIPWIRE only.
                                            # Don't raise it by overfitting rules to the probe.
 ROUTE_ARGS=""   # forwarded to route.sh, e.g. --route-args "--bias cheap --ceiling sonnet"
+CACHE=0; CALIB=""; CACHE_SET="$HERE/cache-evalset.tsv"
 while [ $# -gt 0 ]; do
   case "$1" in
     --spec) SPEC="${2:?}"; shift ;;
     --set)  SET="${2:?}"; shift ;;
     --route-args) ROUTE_ARGS="${2:-}"; shift ;;
+    --cache) CACHE=1 ;;
+    --cache-set) CACHE_SET="${2:?}"; shift ;;
+    --calibrate) CALIB="${2:?}"; shift ;;
     -h|--help) sed -n '2,6p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "bench: unknown arg '$1'" >&2; exit 2 ;;
   esac
   shift
 done
 command -v jq >/dev/null || { echo "bench: jq required" >&2; exit 2; }
+
+# ── --calibrate: summarize cache-decision telemetry (from COMPASS_ROUTE_CACHELOG) ──
+if [ -n "$CALIB" ]; then
+  [ -f "$CALIB" ] || { echo "calibrate: no telemetry at $CALIB" >&2; exit 2; }
+  awk -F'\t' '{ tot++; if($5==1) aff++; if($2!=$3) shift++ }
+    END{ printf "cache calibration  (%d logged decisions)\n", tot;
+         printf "  cache-affinity:  %d (%.0f%%) rode a warm tier off the pre-cache pick\n", aff+0, (tot?100*aff/tot:0);
+         printf "  tier shifts:     %d\n", shift+0; }' "$CALIB"
+  exit 0
+fi
+
+# ── --cache: cache-aware cost-min savings on a labeled warm/cold set ───────────────
+# Columns: expected <TAB> P <TAB> D <TAB> O <TAB> warm(- = none) <TAB> task
+# Measures the REAL win: effective $ (cache read/write modeled) of the cache-aware pick
+# vs the cold pick (same task, no warm set). Gates accuracy=100% and savings>0.
+if [ "$CACHE" = 1 ]; then
+  [ -f "$CACHE_SET" ] || { echo "bench --cache: set not found: $CACHE_SET" >&2; exit 2; }
+  cr=$(jq -r '.cache.read_mult // 0.1' "$SPEC"); cw=$(jq -r '.cache.write_mult // 1.25' "$SPEC"); cow=$(jq -r '.cache.out_weight // 4' "$SPEC")
+  ch=$(jq -r '.tiers.haiku.cost' "$SPEC"); cs=$(jq -r '.tiers.sonnet.cost' "$SPEC"); co=$(jq -r '.tiers.opus.cost' "$SPEC")
+  CRES="$(mktemp)"; trap 'rm -f "$CRES"' EXIT
+  while IFS=$'\t' read -r expected P D O warm task; do
+    case "$expected" in '#'*|'') continue ;; esac
+    [ -n "${task:-}" ] || continue
+    [ "$warm" = "-" ] && warm=""
+    cold="$(bash "$HERE/route.sh" --spec "$SPEC" "$task" 2>/dev/null || echo '?')"
+    got="$(COMPASS_ROUTE_WARM="$warm" COMPASS_PREFIX_TOKENS="$P" COMPASS_TASK_TOKENS="$D" COMPASS_OUTPUT_TOKENS="$O" \
+           bash "$HERE/route.sh" --spec "$SPEC" "$task" 2>/dev/null || echo '?')"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$expected" "$got" "$cold" "$P" "$D" "$O" "$warm" >> "$CRES"
+  done < "$CACHE_SET"
+  awk -F'\t' -v ch="$ch" -v cs="$cs" -v co="$co" -v cr="$cr" -v cw="$cw" -v ow="$cow" '
+    function tc(t){ return t=="haiku"?ch:(t=="sonnet"?cs:co) }
+    function eff(t,P,D,O,w){ return (w?cr:cw)*tc(t)*P + tc(t)*D + tc(t)*ow*O }
+    { tot++; want=$1; got=$2; cold=$3; P=$4; D=$5; O=$6; warm=$7
+      if(got==want) ok++
+      w=(warm!=""); chosen_cost += eff(got,P,D,O,w); cold_cost += eff(cold,P,D,O,0) }
+    END{
+      acc = tot? 100*ok/tot : 0; sav = cold_cost>0 ? 100*(1-chosen_cost/cold_cost) : 0
+      printf "\033[1mrouter cache benchmark\033[0m  (read %.2fx write %.2fx)\n", cr, cw
+      printf "  cases %d   decision-accuracy %.1f%%   effective $ saved vs cold %.1f%%\n", tot, acc, sav
+      fail=0
+      if(acc < 100){ printf "  \033[31m✗\033[0m accuracy %.1f%% (floor 100%%)\n", acc; fail=1 } else printf "  \033[32m✓\033[0m accuracy 100%%\n"
+      if(sav <= 0){ printf "  \033[31m✗\033[0m savings %.1f%% (must be >0)\n", sav; fail=1 } else printf "  \033[32m✓\033[0m savings %.1f%% > 0\n", sav
+      exit fail
+    }' "$CRES"
+  exit $?
+fi
 
 ch=$(jq -r '.tiers.haiku.cost' "$SPEC"); cs=$(jq -r '.tiers.sonnet.cost' "$SPEC"); co=$(jq -r '.tiers.opus.cost' "$SPEC")
 rh=$(jq -r '.tiers.haiku.rank' "$SPEC"); rs=$(jq -r '.tiers.sonnet.rank' "$SPEC"); ro=$(jq -r '.tiers.opus.rank' "$SPEC")

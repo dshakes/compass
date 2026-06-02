@@ -1,5 +1,5 @@
 {
-  "_about": "Language-agnostic spec for a deterministic cost-tier router. THIS FILE is the reusable asset: any app (Go/Rust/TS/Python/bash) loads it and implements the matcher — lowercase the task, select a tier per `strategy`, then apply length_rules → bias → escalation → clamps. See README.md. route.sh is the reference implementation; bench.sh scores any implementation against evalset.tsv.",
+  "_about": "Language-agnostic spec for a deterministic cost-tier router. THIS FILE is the reusable asset: any app (Go/Rust/TS/Python/bash) loads it and implements the matcher — lowercase the task, select a tier per `strategy`, then apply length_rules → bias → cache → escalation → budget → latency → clamps. See README.md. route.sh is the reference implementation; bench.sh scores any implementation against evalset.tsv (and `--cache` against cache-evalset.tsv).",
   "version": "1.1.0",
 
   "strategy": "first-match",
@@ -11,11 +11,14 @@
   "default": "sonnet",
 
   "tiers": {
-    "haiku":  { "rank": 1, "cost": 1,  "model": "claude-haiku-4-5",  "use": "mechanical / low-reasoning: typos, renames, formatting, comments, version bumps, one-liners" },
-    "sonnet": { "rank": 2, "cost": 4,  "model": "claude-sonnet-4-6", "use": "default: features, fixes, tests, refactors, docs" },
-    "opus":   { "rank": 3, "cost": 20, "model": "claude-opus-4-8",   "use": "high-stakes reasoning: architecture, security/auth/crypto, concurrency, migrations, multi-tenancy, protocol/threat design" }
+    "haiku":  { "rank": 1, "cost": 1,  "latency": 1, "model": "claude-haiku-4-5",  "use": "mechanical / low-reasoning: typos, renames, formatting, comments, version bumps, one-liners" },
+    "sonnet": { "rank": 2, "cost": 4,  "latency": 2, "model": "claude-sonnet-4-6", "use": "default: features, fixes, tests, refactors, docs" },
+    "opus":   { "rank": 3, "cost": 20, "latency": 4, "model": "claude-opus-4-8",   "use": "high-stakes reasoning: architecture, security/auth/crypto, concurrency, migrations, multi-tenancy, protocol/threat design" }
   },
-  "_cost_note": "cost is a RELATIVE weight (~output $/Mtok ratio: haiku 1 : sonnet 4 : opus 20). Override per app via `profiles`.",
+  "_cost_note": "cost is a RELATIVE weight (~output $/Mtok ratio: haiku 1 : sonnet 4 : opus 20). `latency` is a RELATIVE speed weight (lower = faster). Override per app via `profiles`.",
+
+  "budget": { "warn_pct": 80, "cap_pct": 95, "cap_ceiling": "sonnet" },
+  "_budget_note": "Spend governor (stage, OFF unless COMPASS_ROUTE_BUDGET_USD is set). spent = COMPASS_ROUTE_SPENT_USD or sum of today's ${COMPASS_HOME}/spend.tsv. At warn_pct of budget it cheap-biases LOW-confidence picks; at cap_pct it applies cap_ceiling as a hard cost cap (don't burn opus when nearly out). A deliberate operator dial — opt-in.",
 
   "profiles": {
     "default": {},

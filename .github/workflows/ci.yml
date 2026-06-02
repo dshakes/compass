@@ -50,6 +50,9 @@ jobs:
       - name: Router module (accuracy + cost-at-iso-quality, gated)
         run: bash router/test.sh
 
+      - name: Router cache savings (cache-aware cost-min, gated)
+        run: bash router/bench.sh --cache
+
       - name: compass CLI tests (route · spend · impact · notify · listen parser)
         run: bash scripts/test-cli.sh
 
