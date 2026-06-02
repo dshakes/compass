@@ -51,7 +51,7 @@
         <text x="145" y="183" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">data-driven guardrail</text>
         <text x="145" y="198" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">sourceable · pure</text></g>
       <g><rect x="246" y="138" width="178" height="74" rx="11" fill="#0d1117" stroke="#3fb950" stroke-width="1.6"/>
-        <text x="335" y="164" text-anchor="middle" font-size="13.5" fill="#e6edf3">85-case corpus</text>
+        <text x="335" y="164" text-anchor="middle" font-size="13.5" fill="#e6edf3">61-case corpus</text>
         <text x="335" y="183" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">must-block / must-allow</text>
         <text x="335" y="198" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">closes every bypass</text></g>
       <g><rect x="436" y="138" width="178" height="74" rx="11" fill="#10231a" stroke="#2ea44f" stroke-width="2.2"/>

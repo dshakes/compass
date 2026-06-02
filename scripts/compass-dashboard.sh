@@ -83,7 +83,11 @@ if [ "$HTML" = 1 ]; then
     echo "<pre>$("$ROOT/scripts/compass-impact.sh" 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g')</pre>"
     if [ -n "$FLEET_TSV" ]; then
       echo "<h2>fleet — open SDLC PRs</h2><table><tr><th>repo</th><th>#</th><th>state</th><th>title</th></tr>"
-      printf '%s\n' "$FLEET_TSV" | awk -F'\t' 'NF>=4{printf "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",$1,$2,$3,$4}'
+      printf '%s\n' "$FLEET_TSV" | awk -F'\t' '
+        function he(s,  r) {
+          r=s; gsub(/&/,"\\&amp;",r); gsub(/</,"\\&lt;",r); gsub(/>/,"\\&gt;",r); gsub(/"/,"\\&quot;",r); return r
+        }
+        NF>=4{printf "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",he($1),he($2),he($3),he($4)}'
       echo "</table>"
     fi
   } > "$out"

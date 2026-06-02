@@ -2,9 +2,9 @@
 
 # 🧭 compass
 
-### One config that turns Claude Code, Codex, and Gemini into your most senior engineer — by default, in every repo.
+### Eval-gated guardrails, a measured cost router, and signed releases for Claude Code, Codex & Gemini — auditable config you own, not a service.
 
-It reads before it changes, stays in scope, and verifies before it says "done." It blocks the catastrophic, formats every edit, spends the cheap model on cheap work, and can even open and fix its own PRs. You install it once. You always merge.
+One install gives every agent, in every repo: catastrophic actions **blocked before they run** (with a published precision/recall number), secrets caught at the boundary, the cheap model spent on cheap work, supply-chain **provenance you can verify** — and an optional loop that opens and **fixes its own PRs**. No service, no `curl | sh`, `git pull` to update. You always merge.
 
 *Linting made bad code visible. CI made it unmergeable. compass makes a careless agent harmless — by default.*
 
@@ -57,7 +57,7 @@ No app. No service. No `curl | sh`. Just files you can read, audit, and `git pul
 
 <div id="contents"></div>
 
-**Contents** &nbsp;·&nbsp; [Why compass?](#why-compass) &nbsp;·&nbsp; [What you get](#what-you-get) &nbsp;·&nbsp; [Install](#install) &nbsp;·&nbsp; [See it work](#see-it-work) &nbsp;·&nbsp; [Autonomous SDLC](#autonomous-sdlc) &nbsp;·&nbsp; [The fleet](#the-autonomous-fleet) &nbsp;·&nbsp; [How it fits together](#how-it-fits-together) &nbsp;·&nbsp; [The crew](#the-crew-9-subagents-12-commands-3-workflows) &nbsp;·&nbsp; [Guardrails](#guardrails-and-automation) &nbsp;·&nbsp; [The compass CLI](#the-compass-cli) &nbsp;·&nbsp; [Connected & extensible](#connected-and-extensible) &nbsp;·&nbsp; [Cost model](#cost-model) &nbsp;·&nbsp; [Safety & status](#safety-honesty-and-status) &nbsp;·&nbsp; [Docs](#docs)
+**Contents** &nbsp;·&nbsp; [Why compass?](#why-compass) &nbsp;·&nbsp; [What you get](#what-you-get) &nbsp;·&nbsp; [Install](#install) &nbsp;·&nbsp; [See it work](#see-it-work) &nbsp;·&nbsp; [Autonomous SDLC](#autonomous-sdlc) &nbsp;·&nbsp; [The fleet](#the-autonomous-fleet) &nbsp;·&nbsp; [How it fits together](#how-it-fits-together) &nbsp;·&nbsp; [The crew](#the-crew-10-subagents-12-commands-3-workflows) &nbsp;·&nbsp; [Guardrails](#guardrails-and-automation) &nbsp;·&nbsp; [The compass CLI](#the-compass-cli) &nbsp;·&nbsp; [Connected & extensible](#connected-and-extensible) &nbsp;·&nbsp; [Cost model](#cost-model) &nbsp;·&nbsp; [Safety & status](#safety-honesty-and-status) &nbsp;·&nbsp; [Docs](#docs)
 
 ---
 
@@ -79,17 +79,17 @@ The whole point is **less friction and fewer nasty surprises**, in every repo, f
 Everything above is on after a single install. Here's what's in the box, each link jumps to the detail:
 
 - ⭐ **It runs your PRs — and fixes its own review comments.** The headline: an optional [autonomous pipeline](#autonomous-sdlc) reviews, security-checks, tests, and cross-audits every change, then pushes its *own* fixes until it's green. You just merge. (Try it locally in 30 seconds, no tokens.) [→](#autonomous-sdlc)
-- ✅ **A senior crew on call.** 9 cost-tiered specialist subagents, 12 slash-commands, and 3 parallel "dynamic workflows" that review and audit in parallel and fact-check each other. [→](#the-crew-9-subagents-12-commands-3-workflows)
+- ✅ **A senior crew on call.** 10 cost-tiered specialist subagents, 12 slash-commands, and 3 parallel "dynamic workflows" that review and audit in parallel and fact-check each other. [→](#the-crew-9-subagents-12-commands-3-workflows)
 - 🛰️ **A fleet that runs your repos — from your phone.** The second headline: scheduled, governed agents scan, security-fix, and test across *all* your repos, each fix forced through a test gate; watch and approve from **GitHub Mobile, Slack/Telegram, or iMessage/WhatsApp**. You still merge. [→](#the-autonomous-fleet)
 - ✅ **Every agent, one source.** Claude Code, Codex, Gemini — plus Cursor / Windsurf / Copilot via the open [`AGENTS.md`](https://agents.md/) standard — read the *same* playbook. Switch or mix vendors without rewriting a thing. [→](#connected-and-extensible)
 - ✅ **Guardrails that stay out of your way.** 4 hooks block disasters, format edits, and orient the agent — silently. [→](#guardrails-and-automation)
 - ✅ **It onboards you and proves its value.** `compass onboard` gets you productive in a new repo in minutes; `compass impact` shows what it saved. [→](#the-compass-cli)
 - ✅ **Cheaper by design, measurably.** Model routing is now scored against an eval set and gated in CI. [→](#cost-model)
-- ✅ **Trust you can measure.** The guardrail is data-driven and **eval-gated** — `compass bench` reports its precision/recall (100/100 on an 85-case bypass corpus) and the router's accuracy, in CI. [→](docs/16-hardening-and-frontier.md)
+- ✅ **Trust you can measure.** The guardrail is data-driven and **eval-gated** — `compass bench` reports its precision/recall (100/100 on a 61-case bypass corpus) and the router's accuracy, in CI. [→](docs/16-hardening-and-frontier.md)
 - ✅ **It remembers, sees, and improves.** Opt-in persistent **memory** carries learnings across sessions and repos; `compass dashboard` shows impact + spend + live fleet PRs in one panel; the **fleet brain** proposes new rules from recurring findings (you accept them). [→](docs/16-hardening-and-frontier.md)
 
 <p align="center">
-  <img src="assets/hardening-frontier.svg" alt="The hardening + frontier layer: a HARDENED CORE (eval-gated guardrail, 85-case bypass corpus, compass bench at 100% precision/recall, actions audit), a FRONTIER of opt-in capabilities (persistent memory, parallel SDLC, fleet brain, cost-aware router, spec-kit interop, SBOM + signed commits), and a zero-infra CONTROL SURFACE (compass dashboard) — all flowing into an unmoved human merge gate." width="900">
+  <img src="assets/hardening-frontier.svg" alt="The hardening + frontier layer: a HARDENED CORE (eval-gated guardrail, 61-case bypass corpus, compass bench at 100% precision/recall, actions audit), a FRONTIER of opt-in capabilities (persistent memory, parallel SDLC, fleet brain, cost-aware router, spec-kit interop, SBOM + signed commits), and a zero-infra CONTROL SURFACE (compass dashboard) — all flowing into an unmoved human merge gate." width="900">
 </p>
 <p align="center"><sub>The hardening + frontier layer — measurable trust, self-improving config, cheaper & visible, human merge gate unmoved. <a href="docs/16-hardening-and-frontier.md">Full breakdown →</a></sub></p>
 
@@ -117,7 +117,7 @@ compass quickstart                       # previews, asks, then wires it into ~/
 
 ```bash
 git clone https://github.com/dshakes/compass ~/compass && cd ~/compass
-git checkout v0.10.0     # optional: pin to a release instead of tracking main
+git checkout v0.12.1     # optional: pin to a release instead of tracking main
 ./quickstart.sh
 ```
 
@@ -150,6 +150,21 @@ Symlink install means `git pull` (or `brew upgrade`) updates everything; use `./
 
 → **New here?** [Using compass](docs/11-using-compass.md) walks through the pieces in plain language and the daily workflow.
 
+### ✅ Verify it works → your first run
+
+```bash
+compass doctor      # validate the install (JSON, hooks, plugin sync, symlinks) — expect "0 error"
+compass status      # is compass active here, and what's loaded?
+```
+
+Then just open Claude Code as usual — the manual, guardrails, subagents, commands, and live status line are already loaded. Three ways to feel it working in a minute:
+
+1. **Watch a footgun get blocked.** Ask the agent to `rm -rf /` or write a `.env` — the guardrail denies it before it runs (and logs it: `compass audit-log`).
+2. **Run a senior workflow.** Type `/review` to review your current diff, or `/ship` to test → review → commit.
+3. **See cost routing.** `compass route "redesign the auth model"` → `opus`; `compass route "fix a typo"` → `haiku`. `compass impact` shows what it's saved you as you work.
+
+No tokens, no signup for any of the above — that's the whole local experience.
+
 <div align="right"><a href="#contents">↑ top</a></div>
 
 ---
@@ -163,7 +178,7 @@ Symlink install means `git pull` (or `brew upgrade`) updates everything; use `./
 
 A normal session after install — there's nothing extra to invoke:
 
-1. **Open any repo.** The manual, guardrails, 9 subagents, 12 commands, and the live status line are already loaded.
+1. **Open any repo.** The manual, guardrails, 10 subagents, 12 commands, and the live status line are already loaded.
 2. **Ask for a change.** It plans, implements, and hands the test run to a cheap Haiku subagent while Opus stays on the hard parts. Every file it touches is auto-formatted.
 3. **Dangerous command?** `rm -rf $HOME`, a secret write, a force-push to `main` → **blocked before it runs.** `rm -rf ./build` sails straight through.
 4. **`/ship`, then open the PR.** The [autonomous loop](#autonomous-sdlc) reviews, security-checks, tests, and cross-audits — and **fixes its own Blocking findings** on the branch until it's green. You review and merge.
@@ -201,7 +216,7 @@ Opus 4.8 · myrepo · main* · 45k ctx · $1.23 · 🧭 🛡1 🧹2 💡1 📉~$
 <p align="center">
   <img src="assets/loop.gif" alt="The autonomous loop on a real PR: Reviewer flags a bug as Blocking + QA red → the Builder pushes a fix commit → re-review goes CLEAN, QA green → mergeable, awaiting a code-owner approval (you merge)." width="820">
 </p>
-<p align="center"><sub>↑ a real run (PR #4): Reviewer flagged the bug → Builder pushed the fix → re-review went green → you merge. (<a href="sdlc/SMOKETEST.md">reproduce it yourself</a>)</sub></p>
+<p align="center"><sub>↑ a scripted replay of the loop on PR #4: Reviewer flags → Builder pushes a fix → re-review goes green → you merge. Run the smoke-test checklist (<a href="sdlc/SMOKETEST.md">sdlc/SMOKETEST.md</a>) to reproduce the behavior on your own repo.</sub></p>
 
 **Three ways to kick it off — only the merge is ever yours:**
 
@@ -240,7 +255,7 @@ export OPENAI_API_KEY=…            # optional — the Codex cross-audit
 ~/compass/sdlc/setup.sh --all      # labels + workflows + CODEOWNERS + secrets + branch protection
 ```
 
-`setup.sh` prompts for and stores these as repo secrets for you. The loop auto-chains **only** with `SDLC_BOT_TOKEN` (GitHub blocks workflow-to-workflow recursion with the default token); without it, the review and one fix still run. Validated end-to-end on a live repo — see [`sdlc/SMOKETEST.md`](sdlc/SMOKETEST.md). Roster, gates, security posture, and troubleshooting: [`docs/09-sdlc.md`](docs/09-sdlc.md).
+`setup.sh` prompts for and stores these as repo secrets for you. The loop auto-chains **only** with `SDLC_BOT_TOKEN` (GitHub blocks workflow-to-workflow recursion with the default token); without it, the review and one fix still run. Its logic is statically validated in CI (actionlint + selftest); run the smoke-test checklist ([`sdlc/SMOKETEST.md`](sdlc/SMOKETEST.md)) on your repo to verify the live GitHub behavior end-to-end. Roster, gates, security posture, and troubleshooting: [`docs/09-sdlc.md`](docs/09-sdlc.md).
 
 **The same loop, as a text diagram:**
 
@@ -322,7 +337,7 @@ The fleet's control plane is GitHub itself, so you steer it from anywhere — th
 
 - **GitHub Mobile** *(zero setup, universal)* — push when you're needed, view runs/logs, **approve · merge · comment**, trigger any workflow, and `/hold` · `/approve` from a comment.
 - **Any chat app** — `compass notify` pushes digests + "needs you" alerts to **Slack, Discord, Telegram, ntfy, or a webhook** (free, 2-minute setup).
-- **Two-way DM control** — `compass listen` lets you reply `/status` · `/approve #42` · `/build #7` from a local **iMessage/WhatsApp** bridge or **Telegram** (free); it relays to GitHub where the same governed gates apply.
+- **Two-way DM control** — `compass listen` lets you reply `/status` · `/approve #42` · `/build #7` via **Telegram** (built-in, free) or a **self-hosted iMessage/WhatsApp bridge** you run; it relays to GitHub where the same governed gates apply.
 
 ```mermaid
 flowchart LR
@@ -361,7 +376,7 @@ flowchart LR
 
   repo -->|"on PATH"| cli["compass CLI · ~/.local/bin<br/>quickstart · onboard · impact · spend · route"]
 
-  claude --> bundle["manual · guardrail + format hooks<br/>9 subagents (deep tier: Opus 4.8) · commands<br/>status line · MCP (context7/fetch/git)"]
+  claude --> bundle["manual · guardrail + format hooks<br/>10 subagents (deep tier: Opus 4.8) · commands<br/>status line · MCP (context7/fetch/git)"]
   codex --> tiers["tiers: deep / standard / cheap<br/>+ local (Ollama) · router (OpenRouter)"]
 
   claude --> wf["dynamic workflows (parallel + verified)<br/>/compass-review · /compass-audit · /compass-plan"]
@@ -380,19 +395,20 @@ flowchart LR
 
 ---
 
-## The crew: 9 subagents, 12 commands, 3 workflows
+## The crew: 10 subagents, 12 commands, 3 workflows
 
 compass turns one assistant into a **team of specialists**, each scoped to a job and pinned to the right-sized (and right-priced) model.
 
-### 9 specialist subagents, cost-tiered
+### 10 specialist subagents, cost-tiered
 
-A subagent reads dozens of files and runs long searches in its *own* context, then hands back a short conclusion — so your main session stays fast and cheap. compass ships nine, deliberately spread across three model tiers so spend follows difficulty:
+A subagent reads dozens of files and runs long searches in its *own* context, then hands back a short conclusion — so your main session stays fast and cheap. compass ships ten — nine cost-tiered across three model tiers so spend follows difficulty, plus a safety gate:
 
 | Tier | Model | Subagents | For |
 |---|---|---|---|
 | **Deep** | Opus 4.8 | `architect` · `security-auditor` · `debugger` | architecture, security review, subtle bugs |
 | **Standard** | Sonnet 4.6 | `code-reviewer` · `go-engineer` · `rust-engineer` · `docs-writer` · `k8s-operator` | most coding, review, and docs |
 | **Cheap** | Haiku 4.5 | `test-runner` | running tests, parsing failures, log triage |
+| **Gate** | Sonnet 4.6 | `test-architect` | generates + runs unit/e2e tests as the safety gate — no tests, no merge |
 
 ### 12 commands — one-keystroke senior workflows
 
@@ -551,9 +567,10 @@ compass is built to be **trusted before it's run** — and honest about its limi
 - **You own the irreversible.** Agents prepare; humans push, merge, and deploy. Required checks plus a code-owner approval enforce it — there is no "merge to prod" button.
 - **Readable and reversible.** No `curl | sh`. The installer backs up anything it replaces to `~/.claude/backups/`, is idempotent, and `make uninstall` removes only what it added. Pin a tagged release, not `main`.
 - **Guardrails reduce footguns; they are not a security boundary.** Keep least-privilege credentials and review your diffs.
+- **What talks to the network.** compass itself phones home to nothing. The auto-registered MCP servers reach non-Anthropic endpoints — **`context7`** → Upstash (live library docs), **`fetch`** → the URLs you ask it to fetch; **`git`** is local. Everything else (guardrails, router, scanning, CLI) runs locally. Hooks are short, commented shell scripts you can read in `claude/hooks/`; disable any by editing `claude/settings.json` (or skip the plugin entirely).
 - **Grounded, not invented.** Every capability maps to a real, documented Claude Code / Codex primitive — there's a cited mapping (and an honest note on what we *didn't* fabricate) in [`docs/07-practices.md`](docs/07-practices.md). Built on [Anthropic's best practices](https://code.claude.com/docs/en/best-practices), the [agents.md](https://agents.md/) standard, and Garry Tan's [`gstack`](https://github.com/garrytan/gstack).
 
-> **Status: alpha.** The core — manual, hooks, subagents, commands, MCP, plugin — is stable and dogfooded daily. The **SDLC pipeline** is newer: proven end-to-end on a pilot repo, treat it as early. **Dynamic workflows** are a Claude Code research preview (need v2.1.154+). The human merge/deploy gate is permanent, by design.
+> **Status: alpha.** The core — manual, hooks, subagents, commands, MCP, plugin — is stable and dogfooded daily. The **SDLC pipeline** is newer: its logic is statically validated in CI and exercised via a smoke-test checklist you run on your own repo — treat it as early. **Dynamic workflows** are a Claude Code research preview (need v2.1.154+). The human merge/deploy gate is permanent, by design.
 
 <div align="right"><a href="#contents">↑ top</a></div>
 

@@ -34,7 +34,7 @@ pushes → re-review → repeat until clean (you still merge)?
 ```bash
 cd <any-repo>          # needs the Claude GitHub App installed
 export CLAUDE_CODE_OAUTH_TOKEN=…  OPENAI_API_KEY=…  SDLC_BOT_TOKEN=…
-~/compass/sdlc/setup.sh --all     # installs 10 workflows + the merge gate
+~/compass/sdlc/setup.sh --all     # installs the SDLC workflows + the merge gate
 ```
 The loop auto-chains only with `SDLC_BOT_TOKEN` (a fine-grained PAT). Full walkthrough,
 the why, and troubleshooting: [`09-sdlc.md`](09-sdlc.md). **Newest piece — treat as early.**
@@ -44,7 +44,7 @@ the why, and troubleshooting: [`09-sdlc.md`](09-sdlc.md). **Newest piece — tre
 - **Cloud PR automation** (the closed review⇄fix loop) needs the GitHub App + a
   `SDLC_BOT_TOKEN` PAT, or a self-hosted runner for the keyless path — see
   [`09-sdlc.md`](09-sdlc.md). The local pipeline above needs neither.
-- **Pin a release** (e.g. `v0.9.0`), not `main`, for stability.
+- **Pin a release** (e.g. `v0.12.1`), not `main`, for stability.
 - It's safe to uninstall: `make uninstall` removes only what it added (backups in `~/.claude/backups/`).
 
 ## Please report

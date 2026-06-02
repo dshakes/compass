@@ -41,15 +41,16 @@ if [ "$TEAM" = 1 ]; then
   if [ -e .claude/settings.json ]; then
     echo ".claude/settings.json exists — add the pin manually (see docs/08-defaults.md)"
   else
-    cat > .claude/settings.json <<'JSON'
+    PIN="$(git -C "$REPO_HOME" describe --tags --abbrev=0 2>/dev/null || echo main)"   # pin the team to the current release, not a stale literal
+    cat > .claude/settings.json <<JSON
 {
   "extraKnownMarketplaces": {
-    "compass": { "source": { "source": "github", "repo": "dshakes/compass", "ref": "v0.9.0" } }
+    "compass": { "source": { "source": "github", "repo": "dshakes/compass", "ref": "$PIN" } }
   },
   "enabledPlugins": { "core@compass": true }
 }
 JSON
-    echo "wrote .claude/settings.json (pins core@compass for the team)"
+    echo "wrote .claude/settings.json (pins core@compass @ $PIN for the team)"
   fi
 fi
 

@@ -1,174 +1,238 @@
 # Launch kit (internal) — submit & announce compass
 
-Everything needed to list compass on **awesome-claude-code** and announce it. Prepared
-ahead of time; **you** do the submitting/posting as a human (see why below).
-
-> **Eligibility gate:** awesome-claude-code requires *"over one week since the first public
-> commit."* compass's first commit was **2026-05-25** → **submit on or after 2026-06-02.**
-> A calendar reminder was created for that date.
+Everything to list compass on the awesome-Claude ecosystem and announce it, written to be
+**true** (a reviewer can run every claim) and **differentiated** (lead where the giants
+don't compete). **You** submit/post as a human — automated/self-promo posting is exactly
+what these communities flag, and awesome-claude-code *bans* non-human submissions.
 
 ---
 
-## 1. List on awesome-claude-code
+## 0. Pre-flight — hard eligibility gates (check ALL before submitting)
 
-**Their rules (do NOT break — they ban for it):** submissions are **Web-UI issue-form only**.
-**Do not open a PR. Do not use the `gh` CLI. Must be submitted by a human.** (So there is no
-"raise a PR" here — the one-click action is the pre-filled issue form; the maintainer's bot
-turns an approved issue into the PR automatically.)
+awesome-claude-code rejects (and cooldown-bans) on these. Verify each at submission time:
 
-### ✅ One-click action (open on/after 2026-06-02)
-Opens the issue form with the dropdowns + short fields pre-filled:
+| Gate | Requirement | Status |
+|---|---|---|
+| **Repo public age** | ≥ 7 days since first commit | ✅ first commit 2026-05-24 → met on/after 2026-05-31 |
+| **Stars** | **≥ 5 stars** | ⚠️ **GATE — get to ≥ 5 before submitting** (share with a few colleagues first) |
+| **Account age** | GitHub account ≥ 14 days | ✅ (existing account) |
+| **No other open issues** by you in their repo | 0 | ✅ confirm at submit time |
+| **Human, web UI** | issue **form** in a browser — **not** `gh`, **not** an agent, **not** a PR | ⚠️ you do this by hand |
+| **Not crypto-related** | n/a | ✅ |
 
-```
-https://github.com/hesreallyhim/awesome-claude-code/issues/new?template=recommend-resource.yml&title=%5BResource%5D+compass+%E2%80%94+config+manager+for+Claude+Code+%2B+Codex&display_name=compass&category=Tooling&subcategory=Tooling%3A+Config+Managers&primary_link=https%3A%2F%2Fgithub.com%2Fdshakes%2Fcompass&author_name=Shekhar+Mudarapu&author_link=https%3A%2F%2Fgithub.com%2Fdshakes&license=MIT
-```
+> The ≥ 5 stars gate is the one thing that will silently fail the submission. Do it first.
 
-If any field didn't pre-fill, set it manually (verbatim — these match their dropdowns exactly):
+---
+
+## 1. Primary listing — awesome-claude-code (the canonical list)
+
+**Submission model (2026):** you do **not** open a PR and do **not** edit files. You open a
+GitHub **issue form** in the browser; a bot validates it; the maintainer's bot turns an
+approved issue into the PR. Read `docs/CONTRIBUTING.md` + `docs/CODE_OF_CONDUCT.md` first
+(the form makes you attest you did).
+
+**Pre-flight rubric:** run their own reviewer prompt on compass before submitting —
+`.claude/commands/evaluate-repository.md` in their repo (scores Code Quality, Security,
+Docs/Transparency, Functionality, Hygiene). compass should score well; fix anything it flags.
+
+### Open the form (in a browser, logged in, on/after the star gate is met)
+`https://github.com/hesreallyhim/awesome-claude-code/issues/new?template=recommend-resource.yml`
+
+### Field values (verbatim)
 
 | Field | Value |
 |---|---|
 | Display Name | `compass` |
-| Category | `Tooling` |
-| Sub-Category | `Tooling: Config Managers` |
+| Category | `Tooling` — sub-category **`Tooling: Config Managers`** *(if the form routes plugins to `Agent Skills` / `General`, accept it; the maintainer recategorizes — don't fight the dropdown)* |
 | Primary Link | `https://github.com/dshakes/compass` |
 | Author Name | `Shekhar Mudarapu` |
 | Author Link | `https://github.com/dshakes` |
 | License | `MIT` |
 
-### Paste into "Description"
-> compass is a **config manager** for Claude Code + Codex: one source of truth, symlinked into `~/.claude` and `~/.codex`, that makes both tools behave consistently in every repo. It ships a lean operating manual (`CLAUDE.md` ≙ `AGENTS.md` via symlink — one source for both tools), guardrail + auto-format hooks, cost-tiered specialist subagents, workflow commands, and an optional **human-gated autonomous PR loop** (label an issue *or* open a PR → review → security → tests → Codex cross-audit → **auto-fixes its own Blocking findings** → re-review → you merge), steerable mid-flight from a PR comment (`/revise`, `/hold`, `/approve`). The loop is **validated end-to-end on a live repo**.
->
-> It's **modular** — the manual + guardrails are the core; everything else is opt-in. A small `compass` CLI adds local tooling: `compass onboard` gets you productive in a new repo in minutes, and `compass impact` shows what it actually saved you (footguns blocked, files auto-formatted, `$` saved by cheap-model tiering). Two more optional notes: the `AGENTS.md` standard means the same manual also feeds Cursor/Windsurf/Copilot (and Gemini CLI via `--gemini`), and the Codex cheap tier can run on a local model or a cost router. Use as little or as much as you want.
->
-> **Install:** `git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && make install && make doctor`. **Uninstall:** `make uninstall` (removes only what it created). Zero-setup alternative inside Claude Code: `/plugin marketplace add dshakes/compass` then `/plugin install core@compass`.
->
-> **Disclosures (per CONTRIBUTING):** Modifies shared files — symlinks config into `~/.claude`, `~/.codex`, and (with `--gemini`) `~/.gemini` (idempotent, backed up, all reversible via `make uninstall`). Network beyond Anthropic only via opt-in tools: context7 + fetch MCP (auto-registered, secret-free), the opt-in cloud SDLC agents (GitHub API, OpenAI for the Codex audit), optional Playwright/Postgres MCP, and an optional Codex cost router (OpenRouter) — none enabled silently (see SECURITY.md egress table). **No telemetry. No `--dangerously-skip-permissions` anywhere.** Hooks run documented shell scripts on tool/session events (guardrails + formatting) and never fail a session. MIT.
+### Description (1–3 sentences, no emojis, descriptive not promotional, third-person)
+> compass is a single-source configuration and safety layer for Claude Code, Codex, and
+> Gemini: one operating manual (CLAUDE.md ≙ AGENTS.md), guardrail hooks that block
+> catastrophic actions and secret writes before they run, a cost-tier model router, and an
+> optional human-gated autonomous PR loop. Its guardrail and router are eval-gated — `compass
+> bench` reports precision/recall and routing accuracy in CI — and releases carry verifiable
+> SLSA provenance. Everything is auditable config files installed locally; there is no service
+> and no `curl | sh`.
 
-### Paste into "Validate Claims" / "Specific Task" / "Specific Prompt"
-> After `make install`, ask Claude to run `rm -rf $HOME` → it is **blocked** before executing, while `rm -rf ./build` is allowed. The autonomous loop is proven, not aspirational: on a live private repo, a buggy PR went review-**Blocking** → the Builder auto-fixed it on the branch → re-review **green** (human merge gate held); a `agent:build`-labeled issue had an agent write the change and open a PR; and a `/revise` comment steered the loop to add a requested test. Repeatable via `sdlc/SMOKETEST.md` + `scripts/smoketest-scaffold.sh`.
+### Validate Claims / Specific Task(s) / Specific Prompt(s) — *mandatory for plugins*
+Lead with the claim a reviewer can confirm in 30 seconds, not the loop.
 
-### See it in action (the maintainer explicitly rewards "show me before I run it")
-- Renders on GitHub straight from the repo: the **animated explainer**, the **self-fixing loop diagram** (`assets/sdlc-loop.svg`), a ~25s **terminal demo** (`demo/preview.gif`), and **`assets/loop.gif` — the loop on the *real* PR #4** (Reviewer flags `Sub` Blocking → Builder pushes fix `737d589` → re-review green → you merge). Real data; regenerate with `vhs demo/loop.tape`.
-- **Optional upgrade — a GitHub-UI screencast (§4):** a ~20s capture of the same loop in the PR's Checks tab. Purely nice-to-have now that `loop.gif` already shows the real run.
+> **Task:** Confirm the guardrail and the eval gate, then (optionally) the loop.
+> **Prompt / steps:**
+> 1. `git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && make install && make doctor` (expect `0 error`).
+> 2. In Claude Code, ask it to run `rm -rf $HOME` or write a `.env` → **blocked before it runs**; `rm -rf ./build` is allowed. (`compass audit-log` shows the block.)
+> 3. `bash scripts/compass-bench.sh` → guardrail **100% precision/recall on a 61-case corpus**, router **96.9%** — reproducible, CI-gated.
+> 4. `compass verify v0.12.1` → confirms the release's keyless SLSA provenance.
+> 5. *(Optional, needs a GitHub repo + token)* the autonomous PR loop's logic is statically validated in CI (actionlint + selftest); reproduce the live behavior with the checklist in `sdlc/SMOKETEST.md`.
 
-### Paste into "Additional Comments"
-> **Unique within "Tooling: Config Managers"** — I checked the 3 current entries: **agnix** *lints* config files, **claude-rules-doctor** finds *dead* `.claude/rules/`, **ClaudeCTX** *switches* between configs. None is what compass is: an *opinionated, single-source* config for **Claude Code + Codex** (`AGENTS.md` ≙ `CLAUDE.md`, one source) that also runs an optional **governed, closed autonomous PR loop** — Claude reviews · **Codex cross-audits** · it **auto-fixes its own Blocking findings** with spec/intent verification · re-reviews until green; a labeled issue can become a PR, it's steerable mid-flight (`/revise`), and it reports its own impact (`compass impact`). Humans always merge (branch protection, not trust). (vs the broader entries: SuperClaude / Everything Claude Code are single-tool pattern frameworks; Auto-Claude / The Agentic Startup are standalone orchestrators, not a config; claude-code-tools does Claude↔Codex *handoff*, not a shared config + loop.)
-> **Focused, not a marketplace:** the core is just the operating manual + guardrail hooks — one `make install` and it works immediately; *everything else* (the loop, the CLI, cross-tool, local models) is opt-in and off until you switch it on.
-> **Security (your #1 concern):** no telemetry; **no `--dangerously-skip-permissions`** anywhere; **no auto-update** — you run `git pull` (no `npx @latest`); a network-egress table is in `SECURITY.md`; `install.sh` and the hooks are short and fully commented for review.
-> Alpha. The loop is validated **live end-to-end** on a real repo (review-Blocking → auto-fix → green; `agent:build` issue → agent PR; `/revise` steered in a test). CI self-validates the config (actionlint/shellcheck/unit tests). Ran your `evaluate-repository.md` rubric ahead of time.
+### Additional Comments (uniqueness + security — the maintainer's two filters)
+> **Differentiated, not a category-of-one.** Within *Config Managers* the 3 entries are a
+> linter (agnix), a dead-rule detector (claude-rules-doctor), and a config-switcher (ClaudeCTX);
+> none is an opinionated single source for **Claude Code + Codex**. compass's real wedge is
+> what the broad config frameworks (SuperClaude, Everything Claude Code) lack: an **eval-gated**
+> safety layer with a published precision/recall number, **cost routing that's measured not
+> asserted**, and **SLSA supply-chain provenance** for the config itself — directly answering
+> the marketplace-plugin-hijack concerns of 2026.
+> **Security (your #1 filter):** no telemetry; **no `--dangerously-skip-permissions`** anywhere;
+> no auto-update (you `git pull`); install is reversible (`make uninstall`). **Network beyond
+> Anthropic only via opt-in MCP:** `context7` → Upstash (library docs), `fetch` → URLs you
+> request; everything else is local. Hooks are short, commented shell scripts in `claude/hooks/`,
+> disabled by editing `claude/settings.json`. Egress table in `SECURITY.md`. MIT.
 
-### The required checklist (tick all — they're true)
-- [x] Not already submitted · [x] **over one week since first commit** (true on/after Jun 2) · [x] links work · [x] no other open issues in their repo · [x] human
+### After acceptance — add the badge to README
+```markdown
+[![Mentioned in Awesome Claude Code](https://awesome.re/mentioned-badge.svg)](https://github.com/hesreallyhim/awesome-claude-code)
+```
 
-**Approval odds (honest, after scanning their live repo May 2026): ~75–85%.** In favor: the *Config Managers* subcategory has only 3 entries (a linter, a dead-rule detector, a config-switcher) and compass is genuinely distinct; security posture is strong (their stated #1 filter — egress table, no telemetry, no dangerous flags, commented scripts); clear install/uninstall, demos, and a *live-validated* loop give evidence; precedent shows broad configs (SuperClaude, claude-code-tools) get listed; format is airtight (human issue-form, 1-week age gate met Jun 2). The one real swing factor: CONTRIBUTING explicitly *"values focused resources… select a small subset"* and is wary of **bloat / complex systems with long onboarding** — compass is comprehensive. Mitigation is baked into the Description/Comments: lead with the single differentiator and "the core is tiny, everything else opt-in." The decision is the maintainer's subjective focused-vs-bloat call.
+---
 
-### Uniqueness check (done — compass is NOT a category-of-one, but it is differentiated)
-The list already has similar resources; the maintainer requires uniqueness, so lead with the real differentiator, not breadth.
+## 2. Secondary listings (lower bar, parallel reach)
 
-**Same subcategory — Tooling: Config Managers (the 3 current entries; this is the comparison the maintainer checks):**
-
-| Existing entry | What it is | How compass differs |
+| Channel | How | Notes |
 |---|---|---|
-| **agnix** | a *linter/validator* for Claude config files (CLAUDE.md/AGENTS.md/SKILL.md/hooks/MCP) | compass *is* the config (a single source), not a linter for one |
-| **claude-rules-doctor** | CLI that finds *dead* `.claude/rules/` (globs that match nothing) | compass ships + governs the rules cross-tool; not a dead-file detector |
-| **ClaudeCTX** | *switches* your entire Claude config with one command | compass is one opinionated source + a governed loop, not a profile-switcher |
+| **claudemarketplaces.com** | Auto-crawls GitHub for a valid `.claude-plugin/marketplace.json` — **already valid** (name, owner, plugins[], pinned versions). Nothing to submit; optionally email `hi@claudemarketplaces.com`. | Discovery-based. |
+| **Chat2AnyLLM/awesome-claude-plugins** | PR-based awesome-list for plugins/marketplaces — add an entry. | Standard PR. |
+| **jeremylongshore/claude-code-plugins-plus-skills** (`ccpi`) | Submit repo link per its CONTRIBUTING / email `jeremy@intentsolutions.io`. | Accepted ones get featured. |
+| **aitmpl.com** | Aggregator; gets picked up once you're in a crawled marketplace. | Passive. |
+| **anthropics/claude-plugins-official** | Highest bar — directory submission form; automated validation + safety screening. | Apply after traction. |
 
-**Broader-config entries (other subcategories), for context:**
-
-| Existing entry | What it is | Overlap | How compass differs |
-|---|---|---|---|
-| **SuperClaude** (General) | config framework: commands, personas, methodologies | "config framework w/ commands" | no cross-tool single source, no autonomous PR loop, no cross-model audit, no governance/ADRs |
-| **Everything Claude Code** (General) | broad grab-bag of exemplary patterns | breadth | compass is *integrated + opinionated + installable* with a governed loop, not a pattern store |
-| **Claude Codex Settings** (General) | cross-tool integration plugins, "not overly-opinionated" | Claude+Codex | compass is *opinionated senior-engineer defaults* + the loop, not integration plugins |
-| **claude-code-tools** (General) | session continuity + Claude↔Codex handoff + safety hooks | cross-agent + hooks | compass shares one *config* across tools + a review/fix loop, not handoff/continuity |
-| **Auto-Claude / The Agentic Startup** (Orchestrators) | autonomous multi-agent SDLC frameworks | "autonomous SDLC" | those are standalone orchestrators; compass is a *config* whose loop is one optional, human-gated layer with a Codex cross-audit |
-
-**The non-arbitrary unique intersection:** an *opinionated, single-source config for both Claude Code and Codex* **+** a *governed, closed PR loop with a cross-model (Claude+Codex) second opinion, spec/intent verification, and a hard human merge gate.* No listed resource combines those. We submit under **Tooling: Config Managers** (only 3 entries — a linter, a rules-checker, a config-switcher — none opinionated configs), which is both accurate and keeps us out of the crowded "General" config-framework bucket where SuperClaude lives.
-
-**Honest risk:** a selective curator could still see "another config framework." Mitigation is baked into the Description/Comments above — lead with the cross-tool + cross-model-loop angle, never with "comprehensive."
+Install path for all of them is already shipped: `/plugin marketplace add dshakes/compass` → `/plugin install core@compass`.
 
 ---
 
-## 2. Launch post (short — X / LinkedIn / Discord)
-> 🧭 **compass** — one config that makes **Claude Code, Codex *and* Gemini** behave like your best engineer in every repo. Guardrail hooks, cost-tiered subagents, a `compass` CLI that shows what it saved you, and a **human-gated autonomous PR loop**: label an issue *or* open a PR → it reviews, security-checks, tests, cross-audits with Codex, and **auto-fixes its own findings** (steer it with `/revise`) → you merge. No magic, no `curl\|sh`; every piece is a documented feature you can read. MIT, alpha. → github.com/dshakes/compass
+## 3. Positioning — the one line everything leads with
+
+> **compass — eval-gated guardrails, a measured cost router, and signed supply-chain for
+> Claude Code, Codex & Gemini. Auditable config you own, not a service.**
+
+Do **not** lead with "turns your agent into a senior engineer" — that's Superpowers' owned
+position (~150k★). Lead with the two things the giants *don't* have: **measured safety** and
+**provenance**. The self-fixing PR loop is the demo; the eval numbers and `compass verify` are
+the proof.
 
 ---
 
-## 3. Credibility pitches for public portals (post as a human, from your accounts)
+## 4. Go-to-market — channels (executive tone, honest, you post as a human)
 
-> **Why you, not me:** I have no auth to these platforms, and — more importantly —
-> automated/self-promo posting is exactly what these communities flag as spam (it would *hurt*
-> credibility, the opposite of the goal). These are ready to post; engage genuinely and stay to
-> answer comments (that's what earns trust). Check each community's self-promo rules first.
+> Post from your own accounts, engage genuinely, stay to answer. Check each community's
+> self-promo rules. Sequence: GitHub stars → awesome-claude-code → Show HN (Tue–Thu AM PT) →
+> X/LinkedIn same day → Reddit → dev.to write-up.
 
 ### Show HN
-**Title:** `Show HN: Compass – one config so Claude Code, Codex, and Gemini act like your best engineer`
+**Title:** `Show HN: Compass – eval-gated guardrails + cost router + signed releases for Claude Code`
 **Body:**
-> I kept rebuilding the same Claude Code / Codex / Gemini setup in every repo, so I shipped it once. Compass is a config manager: it symlinks one source into ~/.claude and ~/.codex (and ~/.gemini) so the tools share a lean operating manual (AGENTS.md is a symlink to CLAUDE.md), guardrail hooks (blocks rm -rf /, secret writes, force-push to main; auto-formats edits), cost-tiered subagents (cheap models for grunt work, Opus for hard calls), and an optional, human-gated autonomous PR loop: label an issue or open a PR and it reviews, security-checks, tests, cross-audits with Codex, then auto-fixes its own Blocking findings and re-reviews until green — steerable mid-flight with /revise, and you still click merge.
-> There's also a compass CLI that onboards you into a new repo and shows what it saved you (footguns blocked, $ saved). It's deliberately "no magic": every piece is a documented feature, no curl|sh, MIT, and CI validates its own config (the loop is validated live end-to-end). Alpha — I'd love feedback, especially on the loop's guardrails. Repo: https://github.com/dshakes/compass
+> I kept rebuilding the same Claude Code / Codex / Gemini setup in every repo, and I didn't
+> trust the "vibes-based" safety in most agent configs — so I built one that's measured.
+> Compass installs one operating manual across ~/.claude and ~/.codex, plus guardrail hooks
+> that block the catastrophic before it runs (rm -rf /, secret writes, force-push to main) and
+> a cost-tier router that sends cheap work to cheap models. Two things I haven't seen elsewhere:
+> (1) the guardrail and router are **eval-gated** — `compass bench` reports 100% precision/recall
+> on a 61-case bypass corpus and 96.9% routing accuracy, in CI, so the safety claim is a number
+> you can reproduce, not a promise; (2) releases carry **SLSA provenance** (`compass verify`),
+> because 2026 had real marketplace-plugin-hijack incidents. There's also an optional, human-gated
+> autonomous PR loop (review → security → tests → Codex cross-audit → auto-fix its own Blocking
+> findings → re-review until green; you merge). It's deliberately no-magic: no service, no
+> curl|sh, MIT, every hook is a commented shell script. Alpha — feedback welcome, especially on
+> the guardrail corpus. https://github.com/dshakes/compass
 
-### r/ClaudeAI (or r/ChatGPTCoding)
-**Title:** `I open-sourced my Claude Code + Codex config — guardrails, cost-tiering, and an autonomous PR loop (MIT)`
-**Body:** (same gist as Show HN, a touch more casual) — lead with the problem (rebuilding config per repo), the 3–4 concrete things you get, the honesty angle (read every file, no curl|sh), MIT + alpha, ask for feedback. Include the hero image.
+### LinkedIn (executive)
+> Most "AI coding agent" setups ask you to trust their safety on faith. I open-sourced **compass**
+> to make it measurable instead.
+>
+> compass is a single-source configuration and safety layer for Claude Code, Codex, and Gemini.
+> What makes it different from the dozens of agent-config repos:
+> • **Safety with a number.** The guardrail that blocks destructive commands and secret writes is
+>   eval-gated — 100% precision/recall on a published 61-case corpus, enforced in CI. You can
+>   reproduce it.
+> • **Cost discipline that's measured.** A cost-tier router (eval-scored, ~61% cheaper than
+>   all-Opus at ~98% quality on a fair task mix) instead of "up to 80%" marketing.
+> • **Supply-chain provenance.** Releases are signed (SLSA); `compass verify` rejects a tampered
+>   download — a direct answer to 2026's marketplace-plugin-hijack incidents.
+> • **No service.** Auditable config files, `git pull` to update, MIT.
+>
+> Plus an optional human-gated loop that reviews and fixes its own PRs — you always merge.
+> Alpha, and I'd value your feedback. → github.com/dshakes/compass
+
+### LinkedIn (authentic / personal — written by hand, first person)
+> I almost didn't post this.
+>
+> A few weeks ago I noticed I was doing the same thing in every repo: re-explaining to Claude
+> Code (and Codex, and Gemini) how I actually work — what to read first, what never to touch,
+> which model to use for which job. Copy-paste config, every time. So I started keeping it in one
+> place. Then it grew teeth.
+>
+> The part that changed my mind about sharing it: I stopped trusting "safe by default" claims —
+> including my own. It's easy to say "it blocks dangerous commands." So I made it prove it. There's
+> a little corpus of 61 commands that must-block or must-allow, and the guardrail is scored against
+> it in CI — 100% precision and recall, and you can run the exact command and see the number. Same
+> for cost: instead of "saves you money," it's an eval you can reproduce.
+>
+> It's called compass. It's alpha. It's MIT. It is honestly not perfect — the autonomous PR loop
+> is the newest part and I've been deliberately careful not to oversell it (its logic is tested in
+> CI; the live behavior you reproduce with a checklist). I'd rather undersell and have you find it
+> better than the README, than the other way around.
+>
+> If you use Claude Code or Codex daily, I'd genuinely love your eyes on the guardrail corpus — tell
+> me what it should catch that it doesn't. That feedback is worth more to me than stars.
+>
+> github.com/dshakes/compass — and thanks to everyone who let me think out loud about this.
 
 ### X / Twitter (thread)
-1. I shipped **compass** 🧭 — one config that makes **Claude Code, Codex, and Gemini** behave like a senior engineer in every repo. MIT, open source. 🧵
-2. It's a config manager: one source → ~/.claude + ~/.codex. Lean operating manual, guardrail hooks (blocks rm -rf /, secret writes, force-push to main), auto-format on edit.
-3. Cost-tiered: grunt work → Haiku/Sonnet, Opus for the hard calls, live $ in the status line.
-4. The fun part — a human-gated autonomous PR loop: **label an issue or open a PR** → review → security → tests → **Codex cross-audit** → **auto-fix its own findings** → re-review until green. Steer it mid-flight with `/revise`. You keep the merge.
-5. And it proves it: `compass impact` shows footguns blocked + `$` saved. No magic, no curl|sh — every piece is a documented feature you can read. Alpha; feedback welcome 👉 github.com/dshakes/compass
+1. Most Claude Code / agent configs ask you to *trust* their safety. I shipped **compass** 🧭 to make it **measurable**. One config for Claude Code, Codex & Gemini. MIT. 🧵
+2. Guardrails with a number: `compass bench` → **100% precision/recall on a 61-case bypass corpus**, in CI. It blocks `rm -rf /`, secret writes, force-push to `main` — and you can reproduce the score, not just read a promise.
+3. Cost routing that's *measured*: an eval-scored cost-tier router, **~61% cheaper than all-Opus at ~98% quality** on a fair task mix. Cheap work → Haiku/Sonnet; hard calls → Opus.
+4. Supply-chain provenance for a config: releases are **SLSA-signed**; `compass verify` rejects a tampered tarball. (2026 had real marketplace-plugin-hijack incidents — this is the answer.)
+5. The demo: an optional human-gated PR loop — review → security → tests → **Codex cross-audit** → **auto-fix its own findings** → green. You keep the merge. No service, no curl|sh. Alpha; feedback welcome 👉 github.com/dshakes/compass
 
-### dev.to / blog (optional, highest-credibility)
-A 600–900 word post: *"One config for Claude Code and Codex — and an autonomous PR loop that fixes its own review findings."* Outline: the per-repo-config problem → what compass ships → the closed loop (with the spec-driven story from SMOKETEST as the hook) → the honesty/security stance → install + uninstall. Link from the README once published.
+### r/ClaudeAI / r/ChatGPTCoding
+**Title:** `I open-sourced an eval-gated safety + cost layer for Claude Code, Codex & Gemini (MIT)`
+**Body:** Same substance as Show HN, slightly more casual. Lead with the problem (per-repo
+config + unmeasured safety), the three proof points (bench number, measured router, provenance),
+then the optional loop, then MIT/alpha + ask for feedback on the corpus. Include the hero image.
 
----
-
-## 4. Record the autonomous loop (the hero asset)
-
-The most impressive, authentic visual is the **real loop on a PR** — review flags a Blocking
-issue, the Builder pushes a fix, checks go green. You capture it (I can't screen-record); I've
-made it turnkey.
-
-### Step 1 — stage a clean BLOCKING → fix → green PR (one paste)
-Run right before recording, on the smoke-test repo (workflows + `SDLC_BOT_TOKEN` already set):
-```bash
-cd ~/workspace/compass-sdlc-smoketest && git checkout -q main && git pull -q
-git checkout -q -b demo/loop-$(date +%s)
-mkdir -p specs
-cat > specs/divide.md <<'EOF'
-# Spec: Divide
-## Acceptance criteria
-1. Divide(10,2) == 5
-2. Returns 0 when the divisor is 0 (no panic)
-3. A table-driven test TestDivide covers both
-EOF
-printf 'package smoketest\n\n// Divide returns a / b.\nfunc Divide(a, b int) int { return a / b }\n' > divide.go
-git add -A && git commit -q -m "feat: add Divide (per specs/divide.md)"
-git push -q -u origin HEAD
-gh pr create --fill --body "Implements specs/divide.md. Spec: specs/divide.md"
-```
-The code is "fine" but violates the spec (no zero-guard, no test) → the reviewer flags it
-**Blocking**, the Builder fixes it on the branch, re-review goes **green**.
-
-### Step 2 — record
-- Open the PR; show the **Checks** + the conversation/commits. Start a screen recording
-  (macOS ⌘⇧5, or Kap/CleanShot for direct GIF).
-- The loop takes a few minutes, so **record the three beats and speed up later**:
-  1. checks running → `review` **red** + `agent:needs-fix`
-  2. the **Builder's fix commit** lands on the branch
-  3. re-review → **green ✓** (mergeable, pending your approval)
-
-### Step 3 — convert + hand back
-```bash
-ffmpeg -i loop.mov -vf "setpts=0.2*PTS,fps=12,scale=1000:-1:flags=lanczos" -loop 0 assets/loop.gif
-```
-(`setpts=0.2*PTS` = 5× speed → ~20–30s.) Then drop `assets/loop.gif` in the repo and ping me —
-I'll wire it under the hero. *(MP4 alternative: upload to a GitHub Release/Issue; GitHub renders
-uploaded `.mp4` as a player — paste that URL instead.)*
-
-> Until it exists, the hero is the animated `assets/explainer.svg` (YC-style, minimal-text) +
-> the terminal demo. The recording becomes the centerpiece once captured.
+### dev.to / blog (highest-credibility, optional)
+600–900 words: *"Stop trusting your AI agent's safety on faith — measure it."* Outline: the
+unmeasured-safety problem → the 61-case corpus + how precision/recall is computed → the measured
+router (cost-at-iso-quality) → provenance (`compass verify`) → the optional loop → install/uninstall.
+Link from README once live.
 
 ---
 
-*Generated as a launch checklist. Update the eligibility date if the first-commit date changes.*
+## 5. Differentiator cheat-sheet (when someone compares you in a thread)
+
+| If they mention… | Lead with |
+|---|---|
+| **Superpowers** ("senior engineer" skills) | "Different aim — compass is the *measured safety + cost + provenance* layer; it composes with skill frameworks, doesn't replace them." |
+| **spec-kit** | "compass has `/spec` and reads spec-kit's `spec.md`; it's a layer on top, not a competitor." |
+| **claude-router / cost tools** | "Ours is eval-scored + CI-gated with a reproducible cost-at-iso-quality number, and it's a reusable module (`router/`)." |
+| **rulebricks / cloud guardrails** | "No service or cloud dependency — auditable files, `git pull` to update; the policy is a corpus-tested pure function." |
+| **amtiYo/agents, agent-kit (config sync)** | "Those sync config; compass *is* opinionated config plus guardrails, routing, provenance, and a governed loop." |
+
+---
+
+## 6. Assets
+
+Render on GitHub straight from the repo: the animated **explainer** (`assets/explainer.svg`),
+the **router cascade** hero (`assets/router-cascade.svg`), the **self-fixing loop diagram**
+(`assets/sdlc-loop.svg`), the **hardening/frontier** map, and a terminal demo
+(`demo/preview.gif`). `assets/loop.gif` is a **scripted replay** of the loop's behavior on PR #4
+(label it as such — it is a VHS reenactment, not a screen recording). The highest-value asset to
+add is a real screen capture of the loop in a PR's Checks tab — turnkey steps below.
+
+<details><summary>Record the real loop (turnkey)</summary>
+
+1. Stage a clean BLOCKING→fix→green PR on the smoke-test repo (workflows + `SDLC_BOT_TOKEN` set):
+   write code that violates a `specs/*.md` acceptance criterion, push, `gh pr create --fill`.
+2. Record the three beats (⌘⇧5 / Kap): checks → `review` red + `agent:needs-fix`; the Builder's
+   fix commit lands; re-review green ✓ (pending your merge).
+3. `ffmpeg -i loop.mov -vf "setpts=0.2*PTS,fps=12,scale=1000:-1:flags=lanczos" -loop 0 assets/loop.gif`
+   (5× speed → ~20–30s). Replace the scripted `loop.gif` and relabel it a real recording.
+</details>
+
+---
+
+*Internal checklist. Re-verify the star count and eligibility gates immediately before submitting.*

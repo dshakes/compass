@@ -3,11 +3,11 @@
 #
 # In a world of agent-generated changes, "what's in this build, and is any of it known-
 # vulnerable?" becomes a trust differentiator. This detects the ecosystem, emits a simple
-# dependency SBOM (prefers syft/native CycloneDX when present), and runs the native vuln
-# audit. Best-effort + dependency-light: every tool is optional and it degrades to a plain
-# dependency list. With --gate it exits non-zero when the audit finds vulnerabilities.
+# dependency SBOM and runs the native vuln audit. Best-effort + dependency-light: every
+# tool is optional and it degrades to a plain dependency list. With --gate it exits
+# non-zero when the audit finds vulnerabilities.
 #
-#   compass-sbom.sh                 # SBOM + audit for the current repo
+#   compass-sbom.sh                 # dependency list + audit for the current repo
 #   compass-sbom.sh --no-audit      # SBOM only (offline, fast)
 #   compass-sbom.sh --gate          # non-zero exit if the audit finds vulns (CI/QA use)
 #   compass-sbom.sh --json          # machine-readable summary
@@ -26,11 +26,6 @@ sbom_lines=""
 
 add_deps() { deps=$(( deps + $(printf '%s' "$1" | grep -c . ) )); sbom_lines="$sbom_lines$1
 "; }
-
-# Prefer a real SBOM tool if the operator has one.
-if have syft; then
-  eco="$(syft -o cyclonedx-json . 2>/dev/null >/tmp/_sbom.$$ && echo 'syft' || echo none)"
-fi
 
 if [ -f package.json ]; then
   eco="node"
@@ -53,14 +48,13 @@ elif [ -f Cargo.toml ]; then
   have cargo && add_deps "$(cargo tree --prefix none 2>/dev/null | sort -u | tr ' ' '@')"
   if [ "$NO_AUDIT" = 0 ] && have cargo-audit; then cargo audit -q >/tmp/_ca.$$ 2>&1; audit_ran=1
     vulns="$(grep -c 'RUSTSEC' /tmp/_ca.$$ 2>/dev/null || echo 0)"; audit_note="cargo audit"; rm -f /tmp/_ca.$$; fi
-elif [ -f pyproject.toml ] || ls requirements*.txt >/dev/null 2>&1; then
+elif { [ -f pyproject.toml ] || for _f in requirements*.txt; do [ -f "$_f" ] && break; done; }; then
   eco="python"
   if [ -f requirements.txt ]; then add_deps "$(grep -vE '^\s*(#|$)' requirements.txt 2>/dev/null)"; fi
   if [ "$NO_AUDIT" = 0 ] && have pip-audit; then pip-audit -q >/tmp/_pa.$$ 2>&1; audit_ran=1
     vulns="$(grep -cE 'PYSEC|GHSA' /tmp/_pa.$$ 2>/dev/null || echo 0)"; audit_note="pip-audit"; rm -f /tmp/_pa.$$; fi
 fi
 : "${vulns:=0}"
-[ -f /tmp/_sbom.$$ ] && rm -f /tmp/_sbom.$$
 
 if [ "$JSON" = 1 ]; then
   printf '{"ecosystem":"%s","dependencies":%d,"audit_ran":%s,"audit_tool":"%s","vulnerabilities":%d}\n' \
