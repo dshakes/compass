@@ -18,6 +18,7 @@ permissions:
   contents: write
   pull-requests: write
   issues: write
+  id-token: write
 
 concurrency:
   group: sdlc-implement-${{ github.event.issue.number }}
@@ -31,6 +32,16 @@ jobs:
       GH_TOKEN: ${{ secrets.SDLC_BOT_TOKEN || github.token }}
       ISSUE: ${{ github.event.issue.number }}
     steps:
+      # Org-wide bot identity (optional): a GitHub App installed on the org mints a short-lived
+      # token to push (which is what chains the re-review). Falls back to SDLC_BOT_TOKEN.
+      - name: Mint GitHub App token
+        id: apptoken
+        if: ${{ vars.SDLC_APP_ID != '' }}
+        continue-on-error: true
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.SDLC_APP_ID }}
+          private-key: ${{ secrets.SDLC_APP_PRIVATE_KEY }}
       - name: Gate — only a maintainer's label may trigger
         env:
           SENDER: ${{ github.event.sender.login }}
@@ -48,9 +59,10 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-          token: ${{ secrets.SDLC_BOT_TOKEN || github.token }}
+          token: ${{ steps.apptoken.outputs.token || secrets.SDLC_BOT_TOKEN || github.token }}
       - name: Implement via `claude -p` → new branch + open PR
         env:
+          GH_TOKEN: ${{ steps.apptoken.outputs.token || secrets.SDLC_BOT_TOKEN || github.token }}
           ISSUE_NUM: ${{ github.event.issue.number }}
         run: |
           set -euo pipefail

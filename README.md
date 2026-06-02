@@ -74,7 +74,7 @@ The whole point is **less friction and fewer nasty surprises**, in every repo, f
 | "Done" means "it looks right" | **"Done" means it ran** — the agent verifies before it claims |
 | Code review is one slow, single-pass opinion | **A panel of agents reviews in parallel** and fact-checks each other before reporting |
 | You babysit the AI through every change | **It opens PRs and fixes its own review findings** — you just merge |
-| You can't tell if any of this is helping | **It proves its worth** — footguns blocked and `$` saved, live in your status line |
+| You can't tell if any of this is helping | **It proves its worth** — footguns blocked and files formatted live in your status line; estimated `$` saved appears there once spend is logged (an SDLC / onboard / scheduled run), and `compass impact` is the full ledger view |
 
 Everything above is on after a single install. Here's what's in the box, each link jumps to the detail:
 

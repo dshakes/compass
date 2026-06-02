@@ -5,6 +5,27 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.13.0] — 2026-06-02
+
+Pre-launch hardening + manifest alignment, so the corrected manifests ship in a downloadable
+tag (the v0.12.1 tarball still carried the old 0.8.0 plugin versions). Plugin manifests are
+now `0.13.0`.
+
+### Added / Changed — self-hosted SDLC parity
+
+- **Self-hosted workflows brought current** — the `claude -p` keyless variants in
+  `sdlc/selfhosted/` gained the PR #7 App-token mint + token fallback on the push workflows
+  (`sdlc-fix`/`implement`/`implement-on-label`/`control`), and a ported `sdlc-design-review`.
+  `sdlc-autoapprove` and `release` stay hosted-only (documented in `sdlc/selfhosted/README.md`).
+  Already covered by `check-actions` + actionlint.
+
+### Fixed — docs truth
+
+- **Status-line `$` claim made honest** — the `📉~$ saved` segment is today-scoped and fed by
+  the spend ledger (`~/.compass/spend.tsv`, written by SDLC / onboard / scheduled runs), not by
+  everyday interactive use; the README no longer implies it is always present. `compass impact`
+  remains the full benefit view.
+
 ### Pre-launch hardening (truth + manifests + fixes)
 
 - **Manifests aligned to the release** — `plugins/core` + `core-lsp` `plugin.json` version

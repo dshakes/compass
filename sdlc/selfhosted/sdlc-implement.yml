@@ -26,6 +26,7 @@ permissions:
   contents: write
   pull-requests: write
   issues: write
+  id-token: write
 
 jobs:
   implement:
@@ -35,9 +36,19 @@ jobs:
     if: contains(github.event.comment.body, '@claude')
     runs-on: [self-hosted, compass]
     steps:
+      # Org-wide bot identity (optional): a GitHub App installed on the org mints a short-lived
+      # token to push (which is what chains the re-review). Falls back to SDLC_BOT_TOKEN.
+      - name: Mint GitHub App token
+        id: apptoken
+        if: ${{ vars.SDLC_APP_ID != '' }}
+        continue-on-error: true
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.SDLC_APP_ID }}
+          private-key: ${{ secrets.SDLC_APP_PRIVATE_KEY }}
       - name: Authorize — require repo WRITE permission
         env:
-          GH_TOKEN: ${{ secrets.SDLC_BOT_TOKEN || github.token }}
+          GH_TOKEN: ${{ steps.apptoken.outputs.token || secrets.SDLC_BOT_TOKEN || github.token }}
           GH_REPO: ${{ github.repository }}
           SENDER: ${{ github.event.comment.user.login }}
         run: |
@@ -51,7 +62,7 @@ jobs:
       - name: Determine context (PR or issue)
         id: ctx
         env:
-          GH_TOKEN: ${{ secrets.SDLC_BOT_TOKEN || github.token }}
+          GH_TOKEN: ${{ steps.apptoken.outputs.token || secrets.SDLC_BOT_TOKEN || github.token }}
           ISSUE: ${{ github.event.issue.number }}
           # For pull_request_review_comment events, the PR number is in pull_request.number
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -98,17 +109,17 @@ jobs:
         with:
           ref: ${{ steps.ctx.outputs.pr_head_ref }}
           fetch-depth: 0
-          token: ${{ secrets.SDLC_BOT_TOKEN || github.token }}
+          token: ${{ steps.apptoken.outputs.token || secrets.SDLC_BOT_TOKEN || github.token }}
       - name: Checkout (issue mode — default branch)
         if: steps.ctx.outputs.is_pr_comment != 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-          token: ${{ secrets.SDLC_BOT_TOKEN || github.token }}
+          token: ${{ steps.apptoken.outputs.token || secrets.SDLC_BOT_TOKEN || github.token }}
       - name: Implement via `claude -p` — PR mode (push back to PR branch)
         if: steps.ctx.outputs.is_pr_comment == 'true'
         env:
-          GH_TOKEN: ${{ secrets.SDLC_BOT_TOKEN || github.token }}
+          GH_TOKEN: ${{ steps.apptoken.outputs.token || secrets.SDLC_BOT_TOKEN || github.token }}
           PR_NUM: ${{ steps.ctx.outputs.pr_num }}
           TASK: ${{ github.event.comment.body }}
         run: |
@@ -138,7 +149,7 @@ jobs:
       - name: Implement via `claude -p` — issue mode (new branch + open PR)
         if: steps.ctx.outputs.is_pr_comment != 'true'
         env:
-          GH_TOKEN: ${{ secrets.SDLC_BOT_TOKEN || github.token }}
+          GH_TOKEN: ${{ steps.apptoken.outputs.token || secrets.SDLC_BOT_TOKEN || github.token }}
           ISSUE: ${{ github.event.issue.number }}
           TASK: ${{ github.event.comment.body }}
         run: |
