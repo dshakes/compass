@@ -8,8 +8,8 @@
 class Compass < Formula
   desc "Senior-engineer config for Claude Code, Codex and Gemini coding agents"
   homepage "https://github.com/dshakes/compass"
-  url "https://github.com/dshakes/compass/archive/refs/tags/v0.11.0.tar.gz"
-  sha256 "e5312967b919e8444436367ddcf72e57946b5bcb812c718ffbc79bfb0ec7da58"
+  url "https://github.com/dshakes/compass/archive/refs/tags/v0.12.0.tar.gz"
+  sha256 "b08ea37d446f551f4e163f3c9b233b7469ce80c25eea19fd72bf2cbf4c86460c"
   license "MIT"
   head "https://github.com/dshakes/compass.git", branch: "main"
 
