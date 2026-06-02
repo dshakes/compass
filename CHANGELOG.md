@@ -5,6 +5,38 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.14.0] — 2026-06-02
+
+Cache-aware routing + prompt-cache TTL — the router now folds Anthropic prompt-cache
+economics into tier selection, and the SDLC pipeline opts into the 1-hour cache where it pays.
+Plugin manifests `0.14.0`.
+
+### Added
+
+- **Cache-aware routing** ([ADR-0004](docs/adr/0004-cache-aware-routing.md)) — `route.sh` gains
+  a cache-aware cost-min stage and a `--ttl` (5m|1h) recommendation; `router.json` carries the
+  cache economics (read 0.1×, 5m-write 1.25×, 1h-write 2.0×, prefix/task/output token model).
+  **Upgrade-only** (never routes below the keyword pick, so quality can't drop; clamps still
+  bound it); off unless `COMPASS_ROUTE_WARM` names already-warm tiers. Scored against a new
+  `router/cache-evalset.tsv` (`bench.sh --cache`).
+- **`router/validate.sh`** — schema + safety validation of a router spec (required keys, tier
+  refs resolve, every pattern compiles as ERE, ReDoS-shape lint). Runs in CI and `doctor`, so a
+  malformed/unsafe spec fails loudly before any app embeds it.
+- **1-hour prompt-cache TTL in the SDLC pipeline** — `orchestrate.sh` exports
+  `ENABLE_PROMPT_CACHING_1H=1` for its `claude -p` steps (the pipeline + converge loop reuse the
+  same context across >5min, so reads stay cached); opt out with `SDLC_CACHE_1H=0`. Documented
+  in `docs/02-cost-and-models.md` with the tradeoff and how to enable it for the GitHub loop /
+  interactive sessions.
+
+### Fixed
+
+- **`router/validate.sh` runs on bash 3.2 (macOS)** — replaced `mapfile` (bash 4+) with a
+  portable read loop + `set -u` array guard; CI on Linux had masked the macOS-only failure.
+
+### Docs
+
+- Release-pin examples in the README + `docs/alpha.md` bumped to the latest tag.
+
 ## [0.13.0] — 2026-06-02
 
 Pre-launch hardening + manifest alignment, so the corrected manifests ship in a downloadable
