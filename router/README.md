@@ -10,6 +10,34 @@ agent loop: microsecond, offline, deterministic, auditable. Per RouterBench, tra
 only modestly beat trivial baselines on a realistic mix — so a good keyword+length heuristic
 captures most of the savings with none of the latency/cost/dependency.
 
+```mermaid
+flowchart LR
+    T(["📝 task"]) --> H
+
+    H{"① heuristic<br/>keywords · 0ms · free"}
+    C{"② classifier<br/>local NB · ~1ms · free<br/>(opt-in)"}
+    J["③ LLM judge<br/>Haiku · ~300ms · $"]
+    OUT(["🎯 tier<br/>haiku · sonnet · opus"])
+
+    H -- "confident · ~80%" --> OUT
+    H -- "ambiguous" --> C
+    C -- "confident" --> OUT
+    C -- "abstains / off" --> J
+    J --> OUT
+
+    classDef free fill:#dcfce7,stroke:#16a34a,color:#14532d;
+    classDef paid fill:#fef9c3,stroke:#ca8a04,color:#713f12;
+    classDef io   fill:#e0f2fe,stroke:#0284c7,color:#075985;
+    class H,C free
+    class J paid
+    class T,OUT io
+```
+
+> **Pay for intelligence only where it's needed.** The free heuristic answers the confident
+> majority in microseconds; the optional local classifier mops up most of the rest for free;
+> the LLM judge is consulted only on the genuinely ambiguous tail. Layers ②/③ are opt-in —
+> default routing is layer ① alone (zero network).
+
 ## The reusable asset is `router.json`
 
 Everything routing-specific lives in [`router.json`](router.json) — tiers (rank + relative
@@ -114,9 +142,18 @@ cost math applies and the same floors gate it (just off the CI path).
 
 ## Knobs (v1.1)
 
-The full pipeline is: **decide(tier) → confidence → length-rules → bias → escalation → clamps → domain.**
-With no flags it reproduces v1.0 exactly (`strategy: first-match`, `bias: balanced`, escalation off,
-clamps no-op). Each knob has a spec default and a CLI/env override.
+The full pipeline — with no flags it reproduces v1.0 exactly (`strategy: first-match`,
+`bias: balanced`, escalation off, clamps no-op). Each stage is a knob with a spec default
+and a CLI/env override:
+
+```mermaid
+flowchart LR
+    A["decide<br/>(strategy)"] --> B["confidence"] --> C["length<br/>rules"] --> D["bias<br/>(cheap/quality)"] --> E["escalation<br/>(cascade)"] --> F["clamps<br/>(floor/ceiling)"] --> G["domain"] --> R(["tier<br/>(+domain)"])
+    classDef s  fill:#eef2ff,stroke:#6366f1,color:#312e81;
+    classDef io fill:#e0f2fe,stroke:#0284c7,color:#075985;
+    class A,B,C,D,E,F,G s
+    class R io
+```
 
 | Knob | Flag / env | What it does |
 |------|-----------|--------------|
@@ -178,6 +215,18 @@ route.sh --escalate-below 75 --fallback "$PWD/fallback-cascade.sh" "<task>"
 classifier **on** (`ROUTER_CLASSIFIER=on` or `classifier.enabled=true`). Now the classifier
 handles most of the middle for free and the LLM is called only on what the classifier itself
 is unsure about.
+
+```mermaid
+flowchart LR
+    LOG["🧾 --log<br/>route decisions"] --> JUDGE["🧠 LLM judge<br/>labels the ambiguous"]
+    JUDGE --> TRAIN["⚙️ train-classifier.sh<br/>distill labels"]
+    TRAIN --> MODEL["📦 local model"]
+    MODEL --> ON["✅ classifier ON"]
+    ON --> SAVE["💸 fewer LLM calls<br/>cheaper · faster"]
+    SAVE -. "more traffic, more labels" .-> LOG
+    classDef n fill:#f0fdfa,stroke:#0d9488,color:#134e4a;
+    class LOG,JUDGE,TRAIN,MODEL,ON,SAVE n
+```
 
 **When to flip it on:** not before you have data and the per-call LLM cost/latency is the
 bottleneck. For a 3-way tier decision the classifier's *accuracy* edge over the Haiku judge is
