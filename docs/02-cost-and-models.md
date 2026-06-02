@@ -51,6 +51,24 @@ rate rather than fight it:
   cheaper to cache and higher-signal. Building on the API directly? The `claude-api`
   skill bakes in `cache_control` so apps cache by default.
 
+### 1-hour cache TTL (extended)
+The default cache lives **5 minutes**; the extended TTL is **1 hour** (GA). 1h costs ~2× on
+the *write* but reads stay at 0.1× — a net win **only when the same large prefix is reused
+across calls more than 5 minutes apart**, which is exactly the SDLC pipeline + converge loop
+(`review → fix → review` can span minutes-to-an-hour). It's **not** a win for one-shots
+(`compass onboard`, the router's tiny LLM fallback) — those would just pay the write premium.
+
+Claude Code exposes this only as an **env var** (`ENABLE_PROMPT_CACHING_1H=1`, v2.1.108+) —
+no CLI flag, no `settings.json` field. compass applies it where it pays:
+- **`sdlc/orchestrate.sh`** exports `ENABLE_PROMPT_CACHING_1H=1` for its `claude -p` steps
+  (opt out with `SDLC_CACHE_1H=0`).
+- **GitHub SDLC loop** (`claude-code-action`): set it as a repo/Actions env var or in the
+  workflow's `env:` if you want the hosted converge loop on the 1h TTL too.
+- **Interactive sessions:** add `export ENABLE_PROMPT_CACHING_1H=1` to your shell rc if your
+  day is long, context-heavy sessions (the common case); skip it for short, bursty ones.
+- It does **not** apply to the raw-API path in `router/fallback-llm.sh` — that prompt is below
+  the 1,024-token cache minimum, so caching is a no-op there regardless of TTL.
+
 ## Bring your own model — local LLMs & cost routers (Codex side)
 The cheapest token is one you don't pay for. Codex talks to **any OpenAI-compatible endpoint**,
 so a tier can run on a **local model** (free, private) or a **cost router**:

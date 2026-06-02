@@ -45,6 +45,14 @@ BUILD_MODEL="${SDLC_BUILD_MODEL:-sonnet}"
 SIGN_FLAG=""
 if [ "${SDLC_SIGN:-0}" = 1 ]; then SIGN_FLAG="-S"; git config commit.gpgsign true 2>/dev/null || true; fi
 
+# 1-hour prompt-cache TTL: this pipeline makes many model calls that reuse the SAME repo
+# context, and the converge loop (review→fix→review) re-reads it across gaps >5min — so the
+# longer cache keeps reads hot (0.1x input price) instead of re-paying full input each round.
+# Net win here despite the 2x cache-write premium, precisely because of the reuse. Claude Code
+# reads this env flag at startup; the child `claude -p` calls inherit it. SDLC_CACHE_1H=0 opts
+# out (back to the default 5min TTL — better for genuine one-shots, not this loop).
+if [ "${SDLC_CACHE_1H:-1}" = 1 ]; then export ENABLE_PROMPT_CACHING_1H=1; fi
+
 # Spec-kit interop (R13): if SDLC_SPEC is unset, auto-discover a spec-kit / spec-driven
 # spec so compass becomes the governance+execution layer UNDER the spec-driven standard
 # (github/spec-kit, BMAD, Kiro) rather than competing with it. First match wins; opt out

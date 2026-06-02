@@ -195,6 +195,7 @@ src_has "diff-size haiku threshold default is 25"   'SDLC_HAIKU_DIFF_LINES:-25'
 src_has "tiny diff routes review to haiku"          'REVIEW_MODEL="haiku"'
 src_has "SDLC_LITE note text matches"               'SDLC_LITE — skipping Codex audit + security pass (review + QA + human gate remain).'
 src_has "spec-kit discovery order matches"          '.specify/specs/*/spec.md specs/*/spec.md specs/spec.md spec.md SPEC.md docs/spec.md'
+src_has "1h prompt-cache TTL wired (opt-out)"       'ENABLE_PROMPT_CACHING_1H=1'
 
 echo
 printf 'selftest: %d passed, %d failed\n' "$PASS" "$FAIL"
