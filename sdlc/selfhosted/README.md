@@ -55,3 +55,14 @@ gh secret set SDLC_BOT_TOKEN
 Without it, the loop degrades gracefully to one review + one fix, then waits for a human push.
 
 Your subscription does the model calls; humans keep the merge gate as always.
+
+## Hosted-only workflows (not provided self-hosted)
+
+- **sdlc-autoapprove** — auto-approve stays on hosted with the trusted-author allowlist;
+  auto-approving on a self-hosted runner is riskier (the runner inherits broader machine
+  access) and is intentionally omitted.
+- **release** — the release workflow is a hosted GitHub Actions pipeline and is not
+  ported to self-hosted.
+
+Everything else mirrors the hosted logic on a keyless self-hosted runner. When in doubt,
+check `sdlc/workflows/` for the canonical hosted versions.

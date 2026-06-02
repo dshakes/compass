@@ -20,6 +20,7 @@ on:
 permissions:
   contents: write          # push fixes to the PR's feature branch (never protected branches)
   pull-requests: write
+  id-token: write
 
 concurrency:
   group: sdlc-fix-${{ github.event.pull_request.number }}
@@ -38,6 +39,19 @@ jobs:
       PR: ${{ github.event.pull_request.number }}
       MAX: ${{ vars.SDLC_MAX_FIX_ROUNDS || 3 }}
     steps:
+      # Org-wide bot identity (optional): a GitHub App installed on the org mints a short-lived
+      # token to push the fix (which is what chains the re-review). Falls back to SDLC_BOT_TOKEN.
+      - name: Mint GitHub App token
+        id: apptoken
+        if: ${{ vars.SDLC_APP_ID != '' }}
+        # A missing/invalid private key must not fail the job — fall through to
+        # SDLC_BOT_TOKEN / github.token (the loop degrades to manual). Makes the
+        # documented fallback real instead of erroring before it is reached.
+        continue-on-error: true
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.SDLC_APP_ID }}
+          private-key: ${{ secrets.SDLC_APP_PRIVATE_KEY }}
       - name: Round cap
         id: cap
         run: |
@@ -74,7 +88,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
-          token: ${{ secrets.SDLC_BOT_TOKEN || github.token }}
+          token: ${{ steps.apptoken.outputs.token || secrets.SDLC_BOT_TOKEN || github.token }}
       - name: Gather reviewer feedback
         if: steps.cap.outputs.proceed == 'true'
         id: fb
@@ -124,10 +138,12 @@ jobs:
         if: steps.cap.outputs.proceed == 'true'
         env:
           HEAD_REF: ${{ github.event.pull_request.head.ref }}   # untrusted branch name → via env, never inline
+          BOT_TOKEN: ${{ steps.apptoken.outputs.token || secrets.SDLC_BOT_TOKEN || github.token }}
         run: |
           set -euo pipefail
           # If claude committed anything, push — the push re-triggers the Reviewer via
           # SDLC_BOT_TOKEN (a PAT is required; the default token won't chain workflows).
+          git remote set-url origin "https://x-access-token:${BOT_TOKEN}@github.com/${{ github.repository }}.git"
           if [ -n "$(git log --oneline "origin/$HEAD_REF..HEAD" 2>/dev/null)" ]; then
             git push origin "HEAD:$HEAD_REF"
             echo "Pushed fixes to $HEAD_REF — Reviewer will re-run."
