@@ -4,7 +4,7 @@
 
 ### The trust layer for Claude Code, Codex & Gemini — measured, not vibes.
 
-Guardrails proven **100/100** on a bypass corpus · a cost router measured **~61% cheaper** than all-Opus · **signed releases you can verify** — for every agent, in every repo. Auditable config files you own, not a service. No `curl | sh`. You always merge.
+Anyone can say "safe" and "cheap." compass hands you the number — and lets you reproduce it in 30 seconds: guardrails **100/100** on a 61-case bypass corpus, a router measured **~61% cheaper** than all-Opus at ~98% quality, **signed releases you verify** in one command. One config you own for every agent, in every repo — not a service. No `curl | sh`, no telemetry. **You always merge.**
 
 [![ci](https://github.com/dshakes/compass/actions/workflows/ci.yml/badge.svg)](https://github.com/dshakes/compass/actions/workflows/ci.yml)
 [![release](https://img.shields.io/github/v/release/dshakes/compass?color=8A63D2)](https://github.com/dshakes/compass/releases)
