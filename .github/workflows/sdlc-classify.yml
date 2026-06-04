@@ -41,7 +41,7 @@ jobs:
             - core: core library / business logic (default if mixed/unclear)
           claude_args: |
             --model haiku
-            --max-turns 4
+            --max-turns 6
             --max-budget-usd 0.30
             --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*)"
             --json-schema '{"type":"object","properties":{"domain":{"type":"string","enum":["ui","api","infra","docs","core"]}},"required":["domain"]}'
