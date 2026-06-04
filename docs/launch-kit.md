@@ -52,11 +52,11 @@ Docs/Transparency, Functionality, Hygiene). compass should score well; fix anyth
 ### Description (1–3 sentences, no emojis, descriptive not promotional, third-person)
 > compass is a single-source configuration and safety layer for Claude Code, Codex, and
 > Gemini: one operating manual (CLAUDE.md ≙ AGENTS.md), guardrail hooks that block
-> catastrophic actions and secret writes before they run, a cost-tier model router, and an
-> optional human-gated autonomous PR loop. Its guardrail and router are eval-gated — `compass
-> bench` reports precision/recall and routing accuracy in CI — and releases carry verifiable
-> SLSA provenance. Everything is auditable config files installed locally; there is no service
-> and no `curl | sh`.
+> catastrophic actions and secret writes before they run, a cache-aware cost-tier model
+> router, and an optional human-gated autonomous PR loop that runs per-PR or scheduled across
+> many repos. Its guardrail and router are eval-gated — `compass bench` reports precision/recall
+> and routing accuracy in CI — and releases carry verifiable SLSA provenance. Everything is
+> auditable config files installed locally; there is no service and no `curl | sh`.
 
 ### Validate Claims / Specific Task(s) / Specific Prompt(s) — *mandatory for plugins*
 Lead with the claim a reviewer can confirm in 30 seconds, not the loop.
@@ -65,9 +65,10 @@ Lead with the claim a reviewer can confirm in 30 seconds, not the loop.
 > **Prompt / steps:**
 > 1. `git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && make install && make doctor` (expect `0 error`).
 > 2. In Claude Code, ask it to run `rm -rf $HOME` or write a `.env` → **blocked before it runs**; `rm -rf ./build` is allowed. (`compass audit-log` shows the block.)
-> 3. `bash scripts/compass-bench.sh` → guardrail **100% precision/recall on a 61-case corpus**, router **96.9%** — reproducible, CI-gated.
-> 4. `compass verify v0.12.1` → confirms the release's keyless SLSA provenance.
-> 5. *(Optional, needs a GitHub repo + token)* the autonomous PR loop's logic is statically validated in CI (actionlint + selftest); reproduce the live behavior with the checklist in `sdlc/SMOKETEST.md`.
+> 3. `compass bench` → guardrail **100% precision/recall on a 61-case corpus**, router **96.9%** — reproducible, CI-gated.
+> 4. `compass verify v0.14.0` → confirms the release's keyless SLSA provenance.
+> 5. `compass route "fix a typo"` → `haiku`; `compass route "redesign the auth model"` → `opus` — the cache-aware cost-tier router (ADR-0004), runnable standalone from `router/`.
+> 6. *(Optional, needs a GitHub repo + token)* the autonomous PR loop's logic is statically validated in CI (`make doctor` + the GitHub-Actions audit `scripts/check-actions.sh`); reproduce the live behavior with the checklist in `sdlc/SMOKETEST.md`. The same loop runs **scheduled across many repos** as the *fleet* (`docs/14-fleet.md`).
 
 ### Additional Comments (uniqueness + security — the maintainer's two filters)
 > **Differentiated, not a category-of-one.** Within *Config Managers* the 3 entries are a
@@ -77,6 +78,11 @@ Lead with the claim a reviewer can confirm in 30 seconds, not the loop.
 > safety layer with a published precision/recall number, **cost routing that's measured not
 > asserted**, and **SLSA supply-chain provenance** for the config itself — directly answering
 > the marketplace-plugin-hijack concerns of 2026.
+> **Newest (v0.14.0):** the router is a **reusable, cache-aware module** (`router/`, ADR-0004)
+> with a heuristic → optional-classifier → LLM-judge cascade; and the autonomous loop scales
+> from one PR to a **scheduled fleet across every repo you own** — governed, test-gated, with
+> approve-from-your-phone notifications. None of the comparable plugins do measured-safety +
+> provenance + a governed multi-repo loop in one auditable, no-service package.
 > **Security (your #1 filter):** no telemetry; **no `--dangerously-skip-permissions`** anywhere;
 > no auto-update (you `git pull`); install is reversible (`make uninstall`). **Network beyond
 > Anthropic only via opt-in MCP:** `context7` → Upstash (library docs), `fetch` → URLs you
@@ -135,9 +141,12 @@ the proof.
 > you can reproduce, not a promise; (2) releases carry **SLSA provenance** (`compass verify`),
 > because 2026 had real marketplace-plugin-hijack incidents. There's also an optional, human-gated
 > autonomous PR loop (review → security → tests → Codex cross-audit → auto-fix its own Blocking
-> findings → re-review until green; you merge). It's deliberately no-magic: no service, no
-> curl|sh, MIT, every hook is a commented shell script. Alpha — feedback welcome, especially on
-> the guardrail corpus. https://github.com/dshakes/compass
+> findings → re-review until green; you merge) — and you can run it on one PR or **schedule it
+> across every repo you own** (the "fleet": governed, test-gated, approve from your phone). The
+> router is **cache-aware** (cost-min stage + 1h prompt-cache TTL where it pays) and ships as a
+> reusable module. It's deliberately no-magic: no service, no curl|sh, MIT, every hook is a
+> commented shell script. Alpha — feedback welcome, especially on the guardrail corpus.
+> https://github.com/dshakes/compass
 
 ### LinkedIn (executive)
 > Most "AI coding agent" setups ask you to trust their safety on faith. I open-sourced **compass**
@@ -152,6 +161,8 @@ the proof.
 >   all-Opus at ~98% quality on a fair task mix) instead of "up to 80%" marketing.
 > • **Supply-chain provenance.** Releases are signed (SLSA); `compass verify` rejects a tampered
 >   download — a direct answer to 2026's marketplace-plugin-hijack incidents.
+> • **Scales to your whole org.** The same governed loop runs as a *fleet* — scheduled across
+>   every repo, test-gated, approve from your phone — not just one PR at a time.
 > • **No service.** Auditable config files, `git pull` to update, MIT.
 >
 > Plus an optional human-gated loop that reviews and fixes its own PRs — you always merge.
@@ -184,9 +195,10 @@ the proof.
 ### X / Twitter (thread)
 1. Most Claude Code / agent configs ask you to *trust* their safety. I shipped **compass** 🧭 to make it **measurable**. One config for Claude Code, Codex & Gemini. MIT. 🧵
 2. Guardrails with a number: `compass bench` → **100% precision/recall on a 61-case bypass corpus**, in CI. It blocks `rm -rf /`, secret writes, force-push to `main` — and you can reproduce the score, not just read a promise.
-3. Cost routing that's *measured*: an eval-scored cost-tier router, **~61% cheaper than all-Opus at ~98% quality** on a fair task mix. Cheap work → Haiku/Sonnet; hard calls → Opus.
+3. Cost routing that's *measured*: an eval-scored, **cache-aware** cost-tier router, **~61% cheaper than all-Opus at ~98% quality** on a fair task mix. Cheap work → Haiku/Sonnet; hard calls → Opus. Ships as a reusable module.
 4. Supply-chain provenance for a config: releases are **SLSA-signed**; `compass verify` rejects a tampered tarball. (2026 had real marketplace-plugin-hijack incidents — this is the answer.)
-5. The demo: an optional human-gated PR loop — review → security → tests → **Codex cross-audit** → **auto-fix its own findings** → green. You keep the merge. No service, no curl|sh. Alpha; feedback welcome 👉 github.com/dshakes/compass
+5. The demo: an optional human-gated PR loop — review → security → tests → **Codex cross-audit** → **auto-fix its own findings** → green. You keep the merge.
+6. And it scales: run that loop on one PR, or **schedule it across every repo you own** (the *fleet* — governed, test-gated, approve from your phone). No service, no curl|sh. Alpha; feedback welcome 👉 github.com/dshakes/compass
 
 ### r/ClaudeAI / r/ChatGPTCoding
 **Title:** `I open-sourced an eval-gated safety + cost layer for Claude Code, Codex & Gemini (MIT)`
@@ -208,9 +220,10 @@ Link from README once live.
 |---|---|
 | **Superpowers** ("senior engineer" skills) | "Different aim — compass is the *measured safety + cost + provenance* layer; it composes with skill frameworks, doesn't replace them." |
 | **spec-kit** | "compass has `/spec` and reads spec-kit's `spec.md`; it's a layer on top, not a competitor." |
-| **claude-router / cost tools** | "Ours is eval-scored + CI-gated with a reproducible cost-at-iso-quality number, and it's a reusable module (`router/`)." |
+| **claude-router / cost tools** | "Ours is eval-scored + CI-gated with a reproducible cost-at-iso-quality number, **cache-aware** (ADR-0004), and a reusable module (`router/`)." |
 | **rulebricks / cloud guardrails** | "No service or cloud dependency — auditable files, `git pull` to update; the policy is a corpus-tested pure function." |
 | **amtiYo/agents, agent-kit (config sync)** | "Those sync config; compass *is* opinionated config plus guardrails, routing, provenance, and a governed loop." |
+| **CI bots / Dependabot-style automation** | "compass's *fleet* runs the full review→fix→test loop across all your repos on a schedule, governed and human-gated — not single-purpose, and it fixes its own findings." |
 
 ---
 
@@ -218,7 +231,8 @@ Link from README once live.
 
 Render on GitHub straight from the repo: the animated **explainer** (`assets/explainer.svg`),
 the **router cascade** hero (`assets/router-cascade.svg`), the **self-fixing loop diagram**
-(`assets/sdlc-loop.svg`), the **hardening/frontier** map, and a terminal demo
+(`assets/sdlc-loop.svg`), the **fleet** diagram (`assets/fleet.svg`), the **hardening/frontier**
+map (`assets/hardening-frontier.svg`), and a terminal demo
 (`demo/preview.gif`). `assets/loop.gif` is a **scripted replay** of the loop's behavior on PR #4
 (label it as such — it is a VHS reenactment, not a screen recording). The highest-value asset to
 add is a real screen capture of the loop in a PR's Checks tab — turnkey steps below.
