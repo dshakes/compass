@@ -47,6 +47,6 @@ jobs:
             REPO: ${{ github.repository }}   PR: #${{ github.event.pull_request.number }}
           claude_args: |
             --model opus
-            --max-turns 8
+            --max-turns 16
             --max-budget-usd 2.50
             --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*)"
