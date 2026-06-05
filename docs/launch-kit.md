@@ -52,11 +52,12 @@ Docs/Transparency, Functionality, Hygiene). compass should score well; fix anyth
 ### Description (1–3 sentences, no emojis, descriptive not promotional, third-person)
 > compass is a single-source configuration and safety layer for Claude Code, Codex, and
 > Gemini: one operating manual (CLAUDE.md ≙ AGENTS.md), guardrail hooks that block
-> catastrophic actions and secret writes before they run, a cache-aware cost-tier model
-> router, and an optional human-gated autonomous PR loop that runs per-PR or scheduled across
-> many repos. Its guardrail and router are eval-gated — `compass bench` reports precision/recall
-> and routing accuracy in CI — and releases carry verifiable SLSA provenance. Everything is
-> auditable config files installed locally; there is no service and no `curl | sh`.
+> catastrophic actions and secret writes before they run, a red-team layer that detects
+> prompt-injection and context poisoning, a cache-aware cost-tier model router, and an
+> optional human-gated autonomous PR loop that runs per-PR or scheduled across many repos.
+> Its guardrail, router, and red-team detectors are eval-gated — `compass bench` and
+> `compass redteam` report precision/recall in CI — and releases carry verifiable SLSA
+> provenance. Everything is auditable config files installed locally; no service, no `curl | sh`.
 
 ### Validate Claims / Specific Task(s) / Specific Prompt(s) — *mandatory for plugins*
 Lead with the claim a reviewer can confirm in 30 seconds, not the loop.
@@ -68,7 +69,8 @@ Lead with the claim a reviewer can confirm in 30 seconds, not the loop.
 > 3. `compass bench` → guardrail **100% precision/recall on a 61-case corpus**, router **96.9%** — reproducible, CI-gated.
 > 4. `compass verify v0.16.0` → confirms the release's keyless SLSA provenance.
 > 5. `compass route "fix a typo"` → `haiku`; `compass route "redesign the auth model"` → `opus` — the cache-aware cost-tier router (ADR-0004), runnable standalone from `router/`.
-> 6. *(Optional, needs a GitHub repo + token)* the autonomous PR loop's logic is statically validated in CI (`make doctor` + the GitHub-Actions audit `scripts/check-actions.sh`); reproduce the live behavior with the checklist in `sdlc/SMOKETEST.md`. The same loop runs **scheduled across many repos** as the *fleet* (`docs/14-fleet.md`).
+> 6. `compass redteam` → injection corpus **100% precision/recall**; `compass redteam --attack` → **100% robustness** after base64/zero-width/homoglyph/leetspeak obfuscation; `compass redteam --scan` flags a poisoned `CLAUDE.md`. Eval-gated in CI ([docs/17](docs/17-red-team.md)).
+> 7. *(Optional, needs a GitHub repo + token)* the autonomous PR loop's logic is statically validated in CI (`make doctor` + the GitHub-Actions audit `scripts/check-actions.sh`); reproduce the live behavior with the checklist in `sdlc/SMOKETEST.md`. The same loop runs **scheduled across many repos** as the *fleet* (`docs/14-fleet.md`).
 
 ### Additional Comments (uniqueness + security — the maintainer's two filters)
 > **Differentiated, not a category-of-one.** Within *Config Managers* the 3 entries are a
@@ -79,13 +81,17 @@ Lead with the claim a reviewer can confirm in 30 seconds, not the loop.
 > asserted**, and **SLSA supply-chain provenance** for the config itself — directly answering
 > the marketplace-plugin-hijack concerns of 2026.
 > **Newest (v0.16.0):** a **red-team hardening layer** ([ADR-0005](docs/adr/0005-red-team-hardening.md),
-> [docs/17](docs/17-red-team.md)) — eval-gated defense (100% P/R on a labeled corpus) against
-> prompt-injection (direct/indirect/paste), CLAUDE.md poisoning, local safety-override, malware,
-> and insecure code; `compass redteam` + optional Bedrock/Azure/webhook backend. Also (v0.14.0):
-> the router is a **reusable, cache-aware module** (`router/`, ADR-0004)
-> with a heuristic → optional-classifier → LLM-judge cascade; and the autonomous loop scales
-> from one PR to a **scheduled fleet across every repo you own** — governed, test-gated, with
-> approve-from-your-phone notifications. None of the comparable plugins do measured-safety +
+> [docs/17](docs/17-red-team.md)) that defends the agent itself — prompt-injection
+> (direct/indirect/paste), CLAUDE.md/AGENTS.md poisoning, local safety-override, malware, and
+> insecure code — with a **decode/normalize layer** (base64 · zero-width · homoglyph · leetspeak)
+> so obfuscated payloads are caught too. It's measured: `compass redteam` is **100% P/R** on a
+> labeled corpus and `compass redteam --attack` is **100% robust** against the obfuscation
+> transforms, both CI-gated; optional escalation to a managed guardrails service (webhook ·
+> Bedrock · Azure). *Stated honestly in the docs:* pattern detection is best-effort (corpus
+> recall ≠ real-world), and the Bedrock/Azure **live** calls are response-parsing-tested but not
+> verified against live endpoints in CI. Also (v0.14.0): the router is a **reusable, cache-aware
+> module** (`router/`, ADR-0004); and the autonomous loop scales from one PR to a **scheduled
+> fleet across every repo you own**. No comparable plugin does measured safety + red-team +
 > provenance + a governed multi-repo loop in one auditable, no-service package.
 > **Security (your #1 filter):** no telemetry; **no `--dangerously-skip-permissions`** anywhere;
 > no auto-update (you `git pull`); install is reversible (`make uninstall`). **Network beyond
@@ -116,13 +122,13 @@ Install path for all of them is already shipped: `/plugin marketplace add dshake
 
 ## 3. Positioning — the one line everything leads with
 
-> **compass — eval-gated guardrails, a measured cost router, and signed supply-chain for
-> Claude Code, Codex & Gemini. Auditable config you own, not a service.**
+> **compass — eval-gated guardrails + red-team hardening, a measured cost router, and signed
+> supply-chain for Claude Code, Codex & Gemini. Auditable config you own, not a service.**
 
 Do **not** lead with "turns your agent into a senior engineer" — that's Superpowers' owned
-position (~150k★). Lead with the two things the giants *don't* have: **measured safety** and
-**provenance**. The self-fixing PR loop is the demo; the eval numbers and `compass verify` are
-the proof.
+position (~150k★). Lead with the three things the giants *don't* have: **measured safety**,
+**red-team resistance you can reproduce**, and **provenance**. The self-fixing PR loop is the
+demo; the eval numbers (`compass bench`, `compass redteam`) and `compass verify` are the proof.
 
 ---
 
@@ -133,7 +139,7 @@ the proof.
 > X/LinkedIn same day → Reddit → dev.to write-up.
 
 ### Show HN
-**Title:** `Show HN: Compass – eval-gated guardrails + cost router + signed releases for Claude Code`
+**Title:** `Show HN: Compass – eval-gated guardrails + red-team layer + cost router for Claude Code`
 **Body:**
 > I kept rebuilding the same Claude Code / Codex / Gemini setup in every repo, and I didn't
 > trust the "vibes-based" safety in most agent configs — so I built one that's measured.
@@ -146,10 +152,15 @@ the proof.
 > because 2026 had real marketplace-plugin-hijack incidents. There's also an optional, human-gated
 > autonomous PR loop (review → security → tests → Codex cross-audit → auto-fix its own Blocking
 > findings → re-review until green; you merge) — and you can run it on one PR or **schedule it
-> across every repo you own** (the "fleet": governed, test-gated, approve from your phone). The
-> router is **cache-aware** (cost-min stage + 1h prompt-cache TTL where it pays) and ships as a
-> reusable module. It's deliberately no-magic: no service, no curl|sh, MIT, every hook is a
-> commented shell script. Alpha — feedback welcome, especially on the guardrail corpus.
+> across every repo you own** (the "fleet": governed, test-gated, approve from your phone). New
+> in this release: a **red-team layer** that defends the agent itself — it flags prompt-injection
+> (direct, indirect via web/MCP output, and copy-paste, including base64/zero-width/homoglyph
+> obfuscation), CLAUDE.md poisoning, and a project trying to disable the guardrails. It's
+> measured too: `compass redteam` is 100% precision/recall on a corpus and `--attack` is 100%
+> robust against the obfuscation transforms. (Honest: pattern detection is best-effort, and the
+> optional Bedrock/Azure backends are parsing-tested, not live-verified in CI.) The router is
+> **cache-aware** and ships as a reusable module. No service, no curl|sh, MIT, every hook a
+> commented shell script. Alpha — feedback welcome, especially on the corpora.
 > https://github.com/dshakes/compass
 
 ### LinkedIn (executive)
@@ -163,6 +174,10 @@ the proof.
 >   reproduce it.
 > • **Cost discipline that's measured.** A cost-tier router (eval-scored, ~61% cheaper than
 >   all-Opus at ~98% quality on a fair task mix) instead of "up to 80%" marketing.
+> • **Red-team resistance you can reproduce.** A new layer flags prompt-injection (direct,
+>   indirect, copy-paste — even base64/zero-width/homoglyph-obfuscated), CLAUDE.md poisoning, and
+>   local safety-override. `compass redteam` scores 100% P/R on a corpus and `--attack` stays
+>   100% robust under obfuscation — both CI-gated (and honestly bounded in the docs).
 > • **Supply-chain provenance.** Releases are signed (SLSA); `compass verify` rejects a tampered
 >   download — a direct answer to 2026's marketplace-plugin-hijack incidents.
 > • **Scales to your whole org.** The same governed loop runs as a *fleet* — scheduled across
@@ -201,8 +216,9 @@ the proof.
 2. Guardrails with a number: `compass bench` → **100% precision/recall on a 61-case bypass corpus**, in CI. It blocks `rm -rf /`, secret writes, force-push to `main` — and you can reproduce the score, not just read a promise.
 3. Cost routing that's *measured*: an eval-scored, **cache-aware** cost-tier router, **~61% cheaper than all-Opus at ~98% quality** on a fair task mix. Cheap work → Haiku/Sonnet; hard calls → Opus. Ships as a reusable module.
 4. Supply-chain provenance for a config: releases are **SLSA-signed**; `compass verify` rejects a tampered tarball. (2026 had real marketplace-plugin-hijack incidents — this is the answer.)
-5. The demo: an optional human-gated PR loop — review → security → tests → **Codex cross-audit** → **auto-fix its own findings** → green. You keep the merge.
-6. And it scales: run that loop on one PR, or **schedule it across every repo you own** (the *fleet* — governed, test-gated, approve from your phone). No service, no curl|sh. Alpha; feedback welcome 👉 github.com/dshakes/compass
+5. New: a **red-team layer** that defends the agent itself — prompt-injection (direct/indirect/paste, even base64·zero-width·homoglyph-obfuscated), CLAUDE.md poisoning, a project disabling your guardrails. `compass redteam` → 100% P/R; `--attack` → 100% robust under obfuscation. Measured, and honestly bounded.
+6. The demo: an optional human-gated PR loop — review → security → tests → **Codex cross-audit** → **auto-fix its own findings** → green. You keep the merge.
+7. And it scales: run that loop on one PR, or **schedule it across every repo you own** (the *fleet* — governed, test-gated, approve from your phone). No service, no curl|sh. Alpha; feedback welcome 👉 github.com/dshakes/compass
 
 ### r/ClaudeAI / r/ChatGPTCoding
 **Title:** `I open-sourced an eval-gated safety + cost layer for Claude Code, Codex & Gemini (MIT)`
@@ -228,6 +244,7 @@ Link from README once live.
 | **rulebricks / cloud guardrails** | "No service or cloud dependency — auditable files, `git pull` to update; the policy is a corpus-tested pure function." |
 | **amtiYo/agents, agent-kit (config sync)** | "Those sync config; compass *is* opinionated config plus guardrails, routing, provenance, and a governed loop." |
 | **CI bots / Dependabot-style automation** | "compass's *fleet* runs the full review→fix→test loop across all your repos on a schedule, governed and human-gated — not single-purpose, and it fixes its own findings." |
+| **prompt-injection / red-team tools** (Lasso, promptfoo, garak, Rebuff, Llama Guard) | "compass ships an eval-gated red-team layer in the config itself (`compass redteam` 100% P/R, `--attack` 100% robust) covering injection, CLAUDE.md poisoning, and local safety-override — local-first, and it *escalates* to a managed backend (Bedrock/Azure/webhook) or pairs with garak/promptfoo for live-fire; it doesn't compete with them." |
 
 ---
 
@@ -235,9 +252,9 @@ Link from README once live.
 
 Render on GitHub straight from the repo: the animated **explainer** (`assets/explainer.svg`),
 the **router cascade** hero (`assets/router-cascade.svg`), the **self-fixing loop diagram**
-(`assets/sdlc-loop.svg`), the **fleet** diagram (`assets/fleet.svg`), the **hardening/frontier**
-map (`assets/hardening-frontier.svg`), and a terminal demo
-(`demo/preview.gif`). `assets/loop.gif` is a **scripted replay** of the loop's behavior on PR #4
+(`assets/sdlc-loop.svg`), the **red-team layer** diagram (`assets/red-team.svg`), the **fleet**
+diagram (`assets/fleet.svg`), the **hardening/frontier** map (`assets/hardening-frontier.svg`),
+and a terminal demo (`demo/preview.gif`). `assets/loop.gif` is a **scripted replay** of the loop's behavior on PR #4
 (label it as such — it is a VHS reenactment, not a screen recording). The highest-value asset to
 add is a real screen capture of the loop in a PR's Checks tab — turnkey steps below.
 
