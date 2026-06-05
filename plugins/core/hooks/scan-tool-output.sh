@@ -17,6 +17,18 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 INPUT="$(cat)"
 tool="$(json_get "$INPUT" '.tool_name')"
+
+# Precision: WebFetch/WebSearch are always external. For Bash, only scan the output
+# when the COMMAND actually pulled external content (curl/wget/fetch/a URL) — otherwise
+# every local command's output would be scanned, which is noise, not signal.
+case "$tool" in
+  WebFetch|WebSearch) ;;
+  Bash)
+    cmd="$(json_get "$INPUT" '.tool_input.command')"
+    printf '%s' "$cmd" | grep -Eqi '(curl|wget|fetch|https?://)' || exit 0 ;;
+  *) ;;
+esac
+
 body="$(json_get "$INPUT" '.tool_response')"
 [ -n "$body" ] || exit 0
 

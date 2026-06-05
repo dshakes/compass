@@ -14,6 +14,10 @@ a labeled corpus that gates in CI, the same way `compass bench` gates the guardr
 > in the operating manual, above any single detector: **external content is data, not
 > instructions** — and the human merge/deploy gate never moves.
 
+<p align="center">
+  <img src="../assets/red-team.svg" alt="compass red-team layer: untrusted input (prompt/paste, web/MCP/tool output, CLAUDE.md/AGENTS.md, .claude/settings.json) flows into the compass red-team layer — decode & normalize (base64, zero-width, homoglyph, leetspeak) then detectors (prompt-injection, context-poisoning, safety-override, malware, insecure-code, system-prompt-leak), eval-gated at 100% precision/recall and 100% adversarial-fuzz robustness — producing warn+audit (default), block (enforce), or optional webhook/Bedrock/Azure escalation, all ending at the permanent human merge/deploy gate." width="900">
+</p>
+
 ---
 
 ## What it defends against
@@ -76,14 +80,20 @@ precision=100% (floor 100%)  recall=100% (floor 90%)
 ## Commands
 
 ```bash
-compass redteam            # score the detectors (eval) + scan THIS repo's context
-compass redteam --eval     # just the corpus eval (the CI gate)
-compass redteam --scan     # just scan this repo (CLAUDE.md/AGENTS.md/READMEs · MCP · settings)
-compass redteam --json     # machine-readable summary
+compass redteam              # score the detectors (eval) + scan THIS repo's context
+compass redteam --eval       # just the corpus eval (the CI gate)
+compass redteam --scan [DIR] # scan a repo's context (CLAUDE.md/AGENTS.md/READMEs · MCP · settings)
+compass redteam --attack     # adversarial fuzz: obfuscate the corpus (base64 · zero-width ·
+                             #   leetspeak · homoglyph) and report detector robustness %
+compass redteam --json       # machine-readable summary
 
 compass scan --injection            # add a prompt-injection / insecure-code / malware pass
 compass scan --staged --injection   # pre-commit: secrets + risky content in one gate
+                                     #   (uses semgrep for SAST depth if installed; gitleaks for secrets)
 ```
+
+**Continuous (fleet):** `sdlc/routines/redteam-sweep.yml` runs the eval + a context scan on a
+schedule (token-free, opens an issue on findings) — `setup.sh --routines`, or loop the CLI across repos.
 
 `compass audit-log` shows every warn/block the hooks recorded.
 
@@ -154,25 +164,56 @@ When a backend returns BLOCK, the prompt hook blocks the prompt and the tool-out
 flags it strongly. The backend **augments** the local floor; it never replaces it. The
 adapter fails *open* (a backend outage never bricks a hook).
 
-> **Status — be honest about this:** the `webhook` adapter is simple and self-verifiable.
-> The `bedrock` and `azure` adapters are written to each service's documented API shape
-> but ship **UNVERIFIED against live endpoints** (no integration test in CI without
-> credentials). Validate them with your own account before relying on them in production;
-> treat them as a starting point, not a certified integration.
+> **Status — be honest about this:** the response-**parsing** of all three backends is
+> contract-tested in CI against fixture responses (`scripts/test-guardrail-remote.sh`, gated
+> by `compass doctor`). The live **network call** still ships **UNVERIFIED against live
+> Bedrock/Azure endpoints** (no cloud creds in CI). The `webhook` shape is the simplest to
+> self-host and verify end-to-end; validate the Bedrock/Azure live calls with your own
+> account before relying on them in production.
 
 For deeper, periodic red-teaming, point **[garak](https://github.com/NVIDIA/garak)** or
 **[promptfoo](https://www.promptfoo.dev/)** at your setup — `compass redteam` notes them.
 
 ---
 
+## Standards mapping
+
+**OWASP Top-10 for LLM Applications (2025)** — honest coverage, not a checkbox:
+
+| ID | Risk | compass coverage |
+|---|---|---|
+| LLM01 | Prompt injection | **Strong** — detectors + decode/normalize + hooks (direct/indirect/paste) |
+| LLM02 | Sensitive-info disclosure | **Partial** — secret scan/write-hook + exfil patterns; not DLP |
+| LLM03 | Supply chain | **Strong** — SLSA provenance, version-pinned MCP, actions/MCP audits |
+| LLM04 | Data/model poisoning | **Weak** — context-file poisoning only; no training-data scope |
+| LLM05 | Improper output handling | **Partial** — indirect-injection output scan (PostToolUse) |
+| LLM06 | Excessive agency | **Strong** — permission prompts, settings-override block, human gate |
+| LLM07 | System-prompt leakage | **Partial** — leakage-attempt detector |
+| LLM08 | Vector/embedding weakness | **Not covered** (no RAG layer) |
+| LLM09 | Misinformation | **Not covered** (out of scope) |
+| LLM10 | Unbounded consumption | **Partial** — budget caps + fork-bomb guard |
+
+**MITRE ATLAS** (adversarial ML) techniques addressed: AML.T0051 *LLM Prompt Injection* (direct
++ indirect), AML.T0054 *LLM Jailbreak* (persona/disable-safety detectors), AML.T0056 *Meta-prompt
+extraction* (system-prompt-leak), AML.T0010 *Supply-chain compromise* (provenance + pinning).
+
 ## Limits (read this)
 
-- Pattern detection is best-effort: it will miss novel/obfuscated attacks and may flag
-  the occasional benign line. Precision is tuned to **never cry wolf** on the corpus,
-  but your repo may differ — mark a deliberate example with an `allowlist injection`
-  marker on its line.
-- Hooks that fire **after** a tool (PostToolUse) cannot un-read content; they warn before
-  the model acts on it.
-- `malware_intent_findings` is **awareness + audit**, by design — compass supports
-  authorized offensive/defensive security work and will not censor it.
+- Pattern detection is best-effort. The decode/normalize layer catches base64, zero-width/
+  bidi, homoglyph, and leetspeak evasions (`compass redteam --attack` measures this — 100%
+  on the corpus's transforms), but a **novel or unseen** obfuscation can still slip. **Corpus
+  recall is on the corpus, not the real-world attack distribution** — do not read it as a
+  real-world catch rate.
+- Scanning an entire **security codebase** (`--all --injection`) surfaces its security *prose*
+  (prompts/tests that describe attacks). The runtime hooks and `--scan`/diff paths don't have
+  this; for a full-repo scan, use `allowlist injection` markers. (compass excludes its own
+  machinery + test fixtures.)
+- The managed-guardrail **live calls** (Bedrock/Azure) are **not** verified in CI (parsing is);
+  there are **no live third-party benchmark scores** here (run garak/promptfoo against your
+  agent for those — `compass redteam --attack` is the offline robustness proxy).
+- `semgrep` (SAST) and `mcp-scan` are used **if installed** — they're optional depth, not bundled.
+- Hooks that fire **after** a tool (PostToolUse) cannot un-read content; they warn before the
+  model acts on it.
+- `malware_intent_findings` is **awareness + audit**, by design — compass supports authorized
+  offensive/defensive security work and will not censor it.
 - None of this replaces least-privilege credentials, reviewing diffs, or the human gate.

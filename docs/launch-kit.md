@@ -66,7 +66,7 @@ Lead with the claim a reviewer can confirm in 30 seconds, not the loop.
 > 1. `git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && make install && make doctor` (expect `0 error`).
 > 2. In Claude Code, ask it to run `rm -rf $HOME` or write a `.env` → **blocked before it runs**; `rm -rf ./build` is allowed. (`compass audit-log` shows the block.)
 > 3. `compass bench` → guardrail **100% precision/recall on a 61-case corpus**, router **96.9%** — reproducible, CI-gated.
-> 4. `compass verify v0.15.0` → confirms the release's keyless SLSA provenance.
+> 4. `compass verify v0.16.0` → confirms the release's keyless SLSA provenance.
 > 5. `compass route "fix a typo"` → `haiku`; `compass route "redesign the auth model"` → `opus` — the cache-aware cost-tier router (ADR-0004), runnable standalone from `router/`.
 > 6. *(Optional, needs a GitHub repo + token)* the autonomous PR loop's logic is statically validated in CI (`make doctor` + the GitHub-Actions audit `scripts/check-actions.sh`); reproduce the live behavior with the checklist in `sdlc/SMOKETEST.md`. The same loop runs **scheduled across many repos** as the *fleet* (`docs/14-fleet.md`).
 
@@ -78,7 +78,7 @@ Lead with the claim a reviewer can confirm in 30 seconds, not the loop.
 > safety layer with a published precision/recall number, **cost routing that's measured not
 > asserted**, and **SLSA supply-chain provenance** for the config itself — directly answering
 > the marketplace-plugin-hijack concerns of 2026.
-> **Newest (v0.15.0):** a **red-team hardening layer** ([ADR-0005](docs/adr/0005-red-team-hardening.md),
+> **Newest (v0.16.0):** a **red-team hardening layer** ([ADR-0005](docs/adr/0005-red-team-hardening.md),
 > [docs/17](docs/17-red-team.md)) — eval-gated defense (100% P/R on a labeled corpus) against
 > prompt-injection (direct/indirect/paste), CLAUDE.md poisoning, local safety-override, malware,
 > and insecure code; `compass redteam` + optional Bedrock/Azure/webhook backend. Also (v0.14.0):

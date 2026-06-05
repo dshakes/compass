@@ -71,6 +71,10 @@ else fail "guardrail corpus failed — run: scripts/test-protect-paths.sh"; fi
 if "$REPO"/scripts/test-redteam.sh >/dev/null 2>&1; then pass "red-team corpus passes (injection · override · malware · insecure-code)"
 else fail "red-team corpus failed — run: scripts/test-redteam.sh"; fi
 
+# Red-team: managed-guardrail adapter response-parsing contract (bedrock/azure/webhook).
+if "$REPO"/scripts/test-guardrail-remote.sh >/dev/null 2>&1; then pass "guardrail-backend adapters parse correctly (contract test)"
+else fail "guardrail-backend contract failed — run: scripts/test-guardrail-remote.sh"; fi
+
 # Router module: spec schema + ReDoS lint must pass (the routing config is a copied asset).
 if [ -f "$REPO"/router/validate.sh ]; then
   if "$REPO"/router/validate.sh >/dev/null 2>&1; then pass "router spec valid (schema + ReDoS lint)"

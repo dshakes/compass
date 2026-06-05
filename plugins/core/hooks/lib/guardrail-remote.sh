@@ -31,6 +31,17 @@ remote_guardrail_action() {
   esac
 }
 
+# _gr_verdict <backend> <raw-response>  -> "BLOCK" (echoed) if the service flagged it.
+# Pure parse logic, split out so scripts/test-guardrail-remote.sh contract-tests each
+# backend's response shape against fixtures (the network call still needs your creds).
+_gr_verdict() {
+  case "$1" in
+    bedrock) case "$2" in *GUARDRAIL_INTERVENED*) printf BLOCK ;; esac ;;
+    azure)   case "$2" in *'"attackDetected":true'*|*'"attackDetected": true'*) printf BLOCK ;; esac ;;
+    webhook) case "$2" in *'"action":"BLOCK"'*|*'"action": "BLOCK"'*) printf BLOCK ;; esac ;;
+  esac
+}
+
 _gr_bedrock() {
   have aws || return 0
   [ -n "${COMPASS_GUARDRAIL_ID:-}" ] || return 0
@@ -41,7 +52,7 @@ _gr_bedrock() {
       --source INPUT \
       --content "[{\"text\":{\"text\":$(json_string "$1")}}]" \
       --output json 2>/dev/null)" || return 0
-  case "$out" in *GUARDRAIL_INTERVENED*) printf BLOCK ;; esac
+  _gr_verdict bedrock "$out"
 }
 
 _gr_azure() {
@@ -52,7 +63,7 @@ _gr_azure() {
       -H "Ocp-Apim-Subscription-Key: $COMPASS_GUARDRAIL_KEY" \
       -H 'Content-Type: application/json' \
       -d "{\"userPrompt\":$(json_string "$1"),\"documents\":[]}" 2>/dev/null)" || return 0
-  case "$out" in *'"attackDetected":true'*|*'"attackDetected": true'*) printf BLOCK ;; esac
+  _gr_verdict azure "$out"
 }
 
 _gr_webhook() {
@@ -62,5 +73,5 @@ _gr_webhook() {
   out="$(curl -fsS --max-time 8 -X POST "$COMPASS_GUARDRAIL_URL" \
       -H 'Content-Type: application/json' \
       -d "{\"source\":$(json_string "$1"),\"text\":$(json_string "$2")}" 2>/dev/null)" || return 0
-  case "$out" in *'"action":"BLOCK"'*|*'"action": "BLOCK"'*) printf BLOCK ;; esac
+  _gr_verdict webhook "$out"
 }

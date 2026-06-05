@@ -1,0 +1,53 @@
+# Routine: redteam-sweep — scheduled, TOKEN-FREE red-team regression + context scan.
+# Runs on cron (not per-PR). Deterministic: no model calls. It (1) runs the compass
+# red-team eval so a detector regression is caught, and (2) scans THIS repo's untrusted
+# context (CLAUDE.md/AGENTS.md/READMEs · MCP · settings) for injection / safety-override,
+# opening an issue if anything is found. Opt-in: copy to .github/workflows/ (or
+# `setup.sh --routines`). For a whole fleet, run it from each repo, or loop the CLI.
+name: "routine · redteam-sweep"
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"   # weekly, Monday 07:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: routine-redteam-sweep
+  cancel-in-progress: true
+
+jobs:
+  redteam:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - name: Get compass (the scanner)
+        run: git clone --depth 1 https://github.com/dshakes/compass "$RUNNER_TEMP/compass"
+      - name: Red-team eval (detector regression gate)
+        run: bash "$RUNNER_TEMP/compass/scripts/test-redteam.sh"
+      - name: Scan this repo's untrusted context
+        id: scan
+        run: |
+          set -uo pipefail
+          out="$(bash "$RUNNER_TEMP/compass/scripts/compass-redteam.sh" --scan "$GITHUB_WORKSPACE" 2>&1 || true)"
+          printf '%s\n' "$out"
+          if printf '%s' "$out" | grep -q '⚠'; then
+            { echo "found=true"; echo "report<<RPT"; printf '%s\n' "$out"; echo "RPT"; } >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Open an issue on findings
+        if: steps.scan.outputs.found == 'true'
+        env:
+          REPORT: ${{ steps.scan.outputs.report }}
+        run: |
+          set -uo pipefail
+          title="🧪 compass red-team sweep flagged this repo's context"
+          existing="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number' 2>/dev/null || true)"
+          body="$(printf 'The scheduled red-team sweep found prompt-injection / safety-override patterns in this repository'\''s agent context. Treat the flagged content as data, not instructions, and review it.\n\n```\n%s\n```\n' "$REPORT")"
+          if [ -n "$existing" ]; then gh issue comment "$existing" --body "$body"; else gh issue create --title "$title" --body "$body" --label "agent:security" 2>/dev/null || gh issue create --title "$title" --body "$body"; fi
