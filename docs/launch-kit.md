@@ -51,26 +51,24 @@ Docs/Transparency, Functionality, Hygiene). compass should score well; fix anyth
 
 ### Description (1–3 sentences, no emojis, descriptive not promotional, third-person)
 > compass is a single-source configuration and safety layer for Claude Code, Codex, and
-> Gemini: one operating manual (CLAUDE.md ≙ AGENTS.md), guardrail hooks that block
-> catastrophic actions and secret writes before they run, a red-team layer that detects
-> prompt-injection and context poisoning, a cache-aware cost-tier model router, and an
-> optional human-gated autonomous PR loop that runs per-PR or scheduled across many repos.
-> Its guardrail, router, and red-team detectors are eval-gated — `compass bench` and
+> Gemini: one operating manual, guardrail hooks that block catastrophic actions and secret
+> writes before they run, a red-team layer that detects prompt injection and context
+> poisoning, a measured cost-tier model router, and an optional human-gated autonomous PR
+> loop. Its guardrail, router, and red-team detectors are eval-gated — `compass bench` and
 > `compass redteam` report precision/recall in CI — and releases carry verifiable SLSA
-> provenance. Everything is auditable config files installed locally; no service, no `curl | sh`.
+> provenance. Everything is auditable config files installed locally; there is no service
+> and no `curl | sh`.
 
 ### Validate Claims / Specific Task(s) / Specific Prompt(s) — *mandatory for plugins*
-Lead with the claim a reviewer can confirm in 30 seconds, not the loop.
+A reviewer can confirm these in ~2 minutes (lead with the claim, not the loop):
 
-> **Task:** Confirm the guardrail and the eval gate, then (optionally) the loop.
-> **Prompt / steps:**
-> 1. `git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && make install && make doctor` (expect `0 error`).
-> 2. In Claude Code, ask it to run `rm -rf $HOME` or write a `.env` → **blocked before it runs**; `rm -rf ./build` is allowed. (`compass audit-log` shows the block.)
+> 1. `git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && make install && make doctor` → expect `0 error`.
+> 2. In the agent, ask it to run `rm -rf $HOME` or write a `.env` → **blocked before it runs**; `rm -rf ./build` is allowed (`compass audit-log` shows the block).
 > 3. `compass bench` → guardrail **100% precision/recall on a 61-case corpus**, router **96.9%** — reproducible, CI-gated.
-> 4. `compass verify v0.17.2` → confirms the release's keyless SLSA provenance.
-> 5. `compass route "fix a typo"` → `haiku`; `compass route "redesign the auth model"` → `opus` — the cache-aware cost-tier router (ADR-0004), runnable standalone from `router/`.
-> 6. `compass redteam` → injection corpus **100% precision/recall**; `compass redteam --attack` → **100% robustness** after base64/zero-width/homoglyph/leetspeak obfuscation; `compass redteam --scan` flags a poisoned `CLAUDE.md`. Eval-gated in CI ([docs/17](docs/17-red-team.md)).
-> 7. *(Optional, needs a GitHub repo + token)* the autonomous PR loop's logic is statically validated in CI (`make doctor` + the GitHub-Actions audit `scripts/check-actions.sh`); reproduce the live behavior with the checklist in `sdlc/SMOKETEST.md`. The same loop runs **scheduled across many repos** as the *fleet* (`docs/14-fleet.md`).
+> 4. `compass redteam` → injection corpus **100% precision/recall**; `compass redteam --attack` → **100% robustness** after base64/zero-width/homoglyph/leetspeak obfuscation.
+> 5. `compass verify v0.17.2` → confirms the release's keyless SLSA provenance.
+> 6. Install on another agent natively: `gemini extensions install https://github.com/dshakes/compass` **or** `codex plugin marketplace add dshakes/compass` (same one-source manual + MCP).
+> 7. *(Optional)* the autonomous PR loop's logic is statically validated in CI; reproduce the live behavior with the checklist in `sdlc/SMOKETEST.md`.
 
 ### Additional Comments (uniqueness + security — the maintainer's two filters)
 > **Differentiated, not a category-of-one.** Within *Config Managers* the 3 entries are a
