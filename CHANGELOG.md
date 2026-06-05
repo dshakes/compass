@@ -5,6 +5,31 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.17.0] — 2026-06-05
+
+Cross-vendor native installs + the skills system. One config, every agent — a one-line
+marketplace/extension install (no terminal) for every user type, or `make install`. Plugin
+manifests `0.17.0`.
+
+### Added
+
+- **Native Codex plugin marketplace** — `plugins/core/.codex-plugin/plugin.json` +
+  `.agents/plugins/marketplace.json`: `codex plugin marketplace add dshakes/compass` → `/plugin install`.
+- **Native Gemini CLI extension** — `gemini-extension.json` + `GEMINI.md`:
+  `gemini extensions install https://github.com/dshakes/compass` (wires context7/fetch/git MCP).
+- **`scripts/check-vendor.sh`** (doctor-gated) — keeps every vendor manifest wired to ONE source:
+  version == `plugins/core`, MCP == `mcp/servers.json`, component pointers + marketplace source path resolve.
+- **Skills system** — `using-compass` dispatcher (auto-reach), plus `verification-before-completion`
+  and `systematic-debugging` (trigger-first, enforceable). Plugin bundles 6 skills.
+- **README** per-agent native-install table (Claude · Codex · Gemini natively; Cursor/Copilot/OpenCode
+  via the AGENTS.md standard).
+
+### Notes
+
+- `CLAUDE.md` · `AGENTS.md` · `GEMINI.md` are one file (symlinks); `git pull` updates every agent.
+- Vendor manifests match each tool's **documented schema** and are structure-validated in CI; the
+  live `plugin marketplace add` / `extensions install` step needs that vendor's CLI (not run in our CI).
+
 ## [0.16.0] — 2026-06-05
 
 Red-team depth — closes the gaps from v0.15.0's first layer. Plugin manifests `0.16.0`.
