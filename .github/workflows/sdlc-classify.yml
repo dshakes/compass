@@ -28,9 +28,12 @@ jobs:
           fetch-depth: 0
       - name: Classify the change
         id: classify
-        uses: anthropics/claude-code-action@787c5a0ce96a9a6cfb050ea0c8f4c05f2447c251 # v1
+        uses: anthropics/claude-code-action@36a69b6a90b850823f86de06fdfd56264772ad98 # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # claude-code-action v1.0.134+ does an app-token exchange that requires a token
+          # (or a workflow matching the default branch); pass the built-in one explicitly.
+          github_token: ${{ github.token }}
           prompt: |
             You are **Classifier** (agent:classify). Look at this PR's diff
             (`git diff origin/${{ github.event.pull_request.base.ref }}...HEAD`) and pick the
