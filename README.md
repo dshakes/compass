@@ -60,7 +60,7 @@ compass route "fix a typo"                 # → haiku
 **🔏 Supply chain you can verify.** Releases carry keyless SLSA provenance, so a tampered or look-alike download is rejected. *(In human terms: you can prove the code you installed is the code I shipped.)*
 
 ```bash
-compass verify v0.14.0     # → ✓ provenance verified
+compass verify v0.15.0     # → ✓ provenance verified
 ```
 
 **🧪 Red-team resistance, measured.** Prompt-injection (direct/indirect/paste), CLAUDE.md poisoning, local safety-override, malware & insecure-code — scored against a labeled corpus that gates in CI, with optional escalation to a managed guardrails service (webhook · Bedrock · Azure). *(In human terms: a poisoned repo or web page can't quietly turn your agent against you.)*
@@ -138,7 +138,7 @@ compass quickstart                       # previews, asks, then wires it into ~/
 **📦 Git clone** — own & edit your config *(recommended)*
 ```bash
 git clone https://github.com/dshakes/compass ~/compass && cd ~/compass
-git checkout v0.14.0     # optional: pin to a release instead of main
+git checkout v0.15.0     # optional: pin to a release instead of main
 ./quickstart.sh          # previews every change, asks first, fully reversible
 ```
 
