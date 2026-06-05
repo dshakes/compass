@@ -25,6 +25,29 @@ Local testing from a clone:
 /plugin install core@compass
 ```
 
+## Other agents — native installs (one source)
+
+The operating manual and the version-pinned MCP servers are shared across agents, each
+in the format that tool expects — kept in sync by symlinks + `scripts/check-vendor.sh`:
+
+```bash
+# Gemini CLI — native extension (gemini-extension.json → GEMINI.md + context7/fetch/git MCP)
+gemini extensions install https://github.com/dshakes/compass
+
+# Codex — symlinks ~/.codex/AGENTS.md + config.toml profiles
+make install            # or ./install.sh --codex-only
+
+# Gemini global context instead of the extension: ~/.gemini/GEMINI.md
+./install.sh --gemini
+
+# Cursor · Copilot · OpenCode · Windsurf — read the repo's AGENTS.md (the agents.md standard)
+make install            # clone first; AGENTS.md is a symlink of the same manual
+```
+
+`GEMINI.md`, `AGENTS.md`, and `CLAUDE.md` are **one file** (symlinks). `gemini-extension.json`'s
+version + MCP servers are CI-checked against `plugins/core` and `mcp/servers.json` so a vendor
+manifest can never silently drift from the real config.
+
 ## What the plugin delivers
 10 subagents · 12 commands · 4 hooks (incl. the `protect-paths` guardrail) ·
 `bootstrap-agent-config` skill · "Concise" output style ·
