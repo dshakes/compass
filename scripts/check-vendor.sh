@@ -64,6 +64,9 @@ else no "missing plugins/core/.codex-plugin/plugin.json"; fi
 if [ -f "$MKT" ]; then
   jq empty "$MKT" 2>/dev/null && ok "codex marketplace.json is valid JSON" || no "codex marketplace.json invalid JSON"
   [ "$(jq -r '.plugins[0].name' "$MKT")" = "core" ] && ok "marketplace lists core" || no "marketplace must list plugin 'core'"
+  # policy.authentication must be a value Codex accepts (verified live: ON_INSTALL | ON_USE).
+  auth="$(jq -r '.plugins[0].policy.authentication' "$MKT")"
+  case "$auth" in ON_INSTALL|ON_USE) ok "marketplace authentication=$auth (valid Codex enum)" ;; *) no "marketplace authentication '$auth' invalid — must be ON_INSTALL or ON_USE" ;; esac
   sp="$(jq -r '.plugins[0].source.path' "$MKT")"
   if [ "$sp" = "./plugins/core" ] && [ -d "$ROOT/plugins/core" ]; then ok "marketplace source.path → ./plugins/core resolves"
   else no "marketplace source.path must be ./plugins/core and exist"; fi
