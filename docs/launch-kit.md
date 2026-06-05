@@ -126,8 +126,8 @@ Install path for all of them is already shipped: `/plugin marketplace add dshake
 > **compass — eval-gated guardrails + red-team hardening, a measured cost router, and signed
 > supply-chain for Claude Code, Codex & Gemini. Auditable config you own, not a service.**
 
-Do **not** lead with "turns your agent into a senior engineer" — that's Superpowers' owned
-position (~150k★). Lead with the three things the giants *don't* have: **measured safety**,
+Do **not** lead with "turns your agent into a senior engineer" — that's the crowded,
+well-owned skill-framework lane. Lead with the three things the giants *don't* have: **measured safety**,
 **red-team resistance you can reproduce**, and **provenance**. The self-fixing PR loop is the
 demo; the eval numbers (`compass bench`, `compass redteam`) and `compass verify` are the proof.
 
@@ -239,7 +239,7 @@ Link from README once live.
 
 | If they mention… | Lead with |
 |---|---|
-| **Superpowers** ("senior engineer" skills) | "Different aim — compass is the *measured safety + cost + provenance* layer; it composes with skill frameworks, doesn't replace them." |
+| **"senior engineer" skill frameworks** | "Different aim — compass is the *measured safety + cost + provenance* layer; it composes with skill frameworks, doesn't replace them." |
 | **spec-kit** | "compass has `/spec` and reads spec-kit's `spec.md`; it's a layer on top, not a competitor." |
 | **claude-router / cost tools** | "Ours is eval-scored + CI-gated with a reproducible cost-at-iso-quality number, **cache-aware** (ADR-0004), and a reusable module (`router/`)." |
 | **rulebricks / cloud guardrails** | "No service or cloud dependency — auditable files, `git pull` to update; the policy is a corpus-tested pure function." |
