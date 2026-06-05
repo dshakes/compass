@@ -1,0 +1,23 @@
+# .gitleaks.toml — compass scan config for external secret scanners.
+#
+# compass's OWN gate is the built-in detector in claude/hooks/lib/policy.sh (deterministic,
+# allowlist-aware). This file makes `gitleaks` agree with it: the only hits are deliberate
+# FAKE, structured secret-shaped strings in test fixtures / labeled corpora (which exercise
+# the guardrail's secret detectors and the memory store's secret-dropping) and prompt text
+# (the classifier's "api=API/SDK"). There are no real secrets in this repo.
+title = "compass"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Intentional fake secrets in tests/corpora + classifier prompt text"
+paths = [
+  '''scripts/test-protect-paths\.sh''',
+  '''scripts/test-cli\.sh''',
+  '''scripts/test-redteam\.sh''',
+  '''scripts/test-guardrail-remote\.sh''',
+  '''scripts/.*-corpus\.tsv''',
+  '''mcp/compass-memory/test_store\.py''',
+  '''(^|/)sdlc-classify\.yml$''',
+]
