@@ -18,7 +18,7 @@ Anyone can say "safe" and "cheap." compass hands you the number — and lets you
 </div>
 
 <p align="center">
-  <img src="assets/explainer.svg" alt="compass in three beats: ONE CONFIG (install once) → EVERY AGENT (Claude Code · Codex · Gemini · Cursor, one AGENTS.md, no drift) → AUTONOMOUS PRs (reviews · fixes itself · you merge). All opt-in: guardrails · red-team hardening · cost-tiered router · subagents/commands/MCP · scheduled fleet · human merge gate." width="900">
+  <a href="docs/01-architecture.md" title="placeholder link — repoint to a demo/video/landing"><img src="assets/explainer.svg" alt="compass in three beats: ONE CONFIG (install once) → EVERY AGENT (Claude Code · Codex · Gemini · Cursor, one AGENTS.md, no drift) → AUTONOMOUS PRs (reviews · fixes itself · you merge). All opt-in: guardrails · red-team hardening · cost-tiered router · subagents/commands/MCP · scheduled fleet · human merge gate." width="900"></a>
 </p>
 
 <p align="center">
@@ -70,7 +70,7 @@ compass redteam   # → injection corpus 100% P/R, then scans THIS repo's CLAUDE
 ```
 
 <p align="center">
-  <img src="assets/red-team.svg" alt="compass red-team layer: untrusted input (prompt/paste · web/MCP/tool output · CLAUDE.md/AGENTS.md · .claude/settings.json) → decode &amp; normalize (base64/zero-width/homoglyph/leet) → detectors (injection · context-poisoning · safety-override · malware · insecure-code · prompt-leak), eval-gated 100% P/R → warn+audit / block / optional webhook·Bedrock·Azure → human merge gate." width="900">
+  <a href="docs/17-red-team.md" title="placeholder link — repoint to a demo/video/landing"><img src="assets/red-team.svg" alt="compass red-team layer: untrusted input (prompt/paste · web/MCP/tool output · CLAUDE.md/AGENTS.md · .claude/settings.json) → decode &amp; normalize (base64/zero-width/homoglyph/leet) → detectors (injection · context-poisoning · safety-override · malware · insecure-code · prompt-leak), eval-gated 100% P/R → warn+audit / block / optional webhook·Bedrock·Azure → human merge gate." width="900"></a>
 </p>
 
 No service, no telemetry, no `--dangerously-skip-permissions`; `git pull` to update. The work it can't safely own, it hands back — **you keep the merge.**
@@ -84,19 +84,19 @@ Three views, smallest leap of faith first — **feel it**, then **see the proof*
 **1 · The day-to-day feel** — guardrails, the cost-aware status line, the loop, and the crew, in ~25 seconds:
 
 <p align="center">
-  <img src="demo/preview.gif" alt="Terminal demo: compass blocks 'rm -rf /' (red) while 'rm -rf ./build' is allowed (green), shows the cost-aware status line, then the autonomous PR loop — review · security · tests · Codex audit → BLOCKING auto-fixes on the branch and re-reviews → CLEAN → you merge." width="800">
+  <a href="docs/11-using-compass.md" title="placeholder link — repoint to a demo/video/landing"><img src="demo/preview.gif" alt="Terminal demo: compass blocks 'rm -rf /' (red) while 'rm -rf ./build' is allowed (green), shows the cost-aware status line, then the autonomous PR loop — review · security · tests · Codex audit → BLOCKING auto-fixes on the branch and re-reviews → CLEAN → you merge." width="800"></a>
 </p>
 
 **2 · The headline, on a real PR** — a Blocking bug and red tests, and it pushes its *own* fix until the PR is green (then waits for you):
 
 <p align="center">
-  <img src="assets/loop.gif" alt="The loop on a real PR: Reviewer flags a bug as Blocking + QA red → the Builder pushes a fix commit → re-review goes CLEAN, QA green → mergeable, awaiting your code-owner approval." width="820">
+  <a href="docs/09-sdlc.md" title="placeholder link — repoint to a demo/video/landing"><img src="assets/loop.gif" alt="The loop on a real PR: Reviewer flags a bug as Blocking + QA red → the Builder pushes a fix commit → re-review goes CLEAN, QA green → mergeable, awaiting your code-owner approval." width="820"></a>
 </p>
 
 **3 · How that loop works** — review · security · tests · Codex cross-audit run in parallel; Blocking findings get auto-fixed and re-reviewed (round-capped) until green, then it stops at you:
 
 <p align="center">
-  <img src="assets/sdlc-loop.svg" alt="Autonomous SDLC loop: push a PR → Reviewer, Auditor (Codex), Security, QA run in parallel → BLOCKING labels agent:needs-fix → the Builder fixes on the branch and pushes → re-review (round cap ×3) → CLEAN → checks green → human merge gate → you merge." width="860">
+  <a href="docs/09-sdlc.md" title="placeholder link — repoint to a demo/video/landing"><img src="assets/sdlc-loop.svg" alt="Autonomous SDLC loop: push a PR → Reviewer, Auditor (Codex), Security, QA run in parallel → BLOCKING labels agent:needs-fix → the Builder fixes on the branch and pushes → re-review (round cap ×3) → CLEAN → checks green → human merge gate → you merge." width="860"></a>
 </p>
 
 <p align="center"><sub>Run it locally in 30s with <code>~/compass/sdlc/orchestrate.sh "&lt;task&gt;"</code> (no tokens), or wire the GitHub loop for every PR. → <a href="docs/09-sdlc.md">how it works</a> · <a href="sdlc/SMOKETEST.md">reproduce it</a></sub></p>
@@ -123,7 +123,7 @@ Autonomy here isn't one big magic button — it's the *same closed loop* applied
 Every loop ends the same way — **you merge.** That gate never moves.
 
 <p align="center">
-  <img src="assets/fleet.svg" alt="The fleet: a scheduler fans governed agents across many repos in parallel; each runs the review → test → fix loop on its own branch, opens a PR, and waits at the human approval gate — approvable from your phone." width="860">
+  <a href="docs/14-fleet.md" title="placeholder link — repoint to a demo/video/landing"><img src="assets/fleet.svg" alt="The fleet: a scheduler fans governed agents across many repos in parallel; each runs the review → test → fix loop on its own branch, opens a PR, and waits at the human approval gate — approvable from your phone." width="860"></a>
 </p>
 
 ---
@@ -168,7 +168,7 @@ Then just open Claude Code as usual — the manual, guardrails, subagents, comma
 Everything below is **on after one install** or a single opt-in — the autonomous loops above sit on top of this. The README sells; the docs explain — each row links to the detail.
 
 <p align="center">
-  <img src="assets/hardening-frontier.svg" alt="The whole compass stack: a guarded base (manual · guardrail/secret/format/audit hooks · red-team injection scanners · cost-tiered router) under a frontier layer of closed loops — the autonomous SDLC pipeline, the scheduled fleet, and parallel dynamic workflows — all ending at a permanent human merge/deploy gate." width="900">
+  <a href="docs/16-hardening-and-frontier.md" title="placeholder link — repoint to a demo/video/landing"><img src="assets/hardening-frontier.svg" alt="The whole compass stack: a guarded base (manual · guardrail/secret/format/audit hooks · red-team injection scanners · cost-tiered router) under a frontier layer of closed loops — the autonomous SDLC pipeline, the scheduled fleet, and parallel dynamic workflows — all ending at a permanent human merge/deploy gate." width="900"></a>
 </p>
 
 | | Capability | One line | Deep dive |
