@@ -36,6 +36,12 @@ jobs:
           github_token: ${{ github.token }}
           prompt: |
             You are **Security** (agent:security) in an autonomous SDLC pipeline.
+
+            GET THE DIFF with `git diff ${{ github.event.pull_request.base.sha }}...HEAD`
+            (the full history is checked out, so it always works — do NOT use any other tool
+            to fetch the PR). Read only the changed hunks plus the files they touch; do not
+            wander the whole repo.
+
             Audit ONLY this PR's changes for security issues: authn/authz gaps, IDOR,
             multi-tenant leaks, secrets in code/logs, injection (SQL/command/template),
             unsafe deserialization, widened trust boundaries, weak crypto, missing input
