@@ -51,9 +51,14 @@ usage: compass <command> [args]
   sbom    [--no-audit|--gate|--json]
                            Dependency SBOM + native vuln audit (npm/pip/go/cargo/syft).
                            --gate exits non-zero on known vulns (CI/QA use).
-  scan    [--staged|--diff|--all] [PATH...]
+  scan    [--staged|--diff|--all] [--injection] [PATH...]
                            Find secrets before they're committed (pre-commit / CI).
                            Built-in detectors gate; uses gitleaks for depth if present.
+                           --injection also scans for prompt-injection / context poisoning.
+  redteam [--eval|--scan] [--json]
+                           Measure prompt-injection resistance: score the detectors
+                           against the corpus (CI-gated) + scan this repo's untrusted
+                           context (CLAUDE.md/AGENTS.md/READMEs · MCP · settings).
   verify  [vX.Y.Z|FILE]    Verify a release tarball's provenance (keyless SLSA
                            attestation built by release-sign.yml). Needs gh. No arg = latest.
   sandbox [--net allow] [--rw DIR] -- CMD...
@@ -93,6 +98,7 @@ case "$cmd" in
   policy-synth) run policy-synth "$@" ;;
   sbom)     run sbom "$@" ;;
   scan)     run scan "$@" ;;
+  redteam)  run redteam "$@" ;;
   verify)   exec "$SCRIPTS/verify-release.sh" "$@" ;;
   sandbox)  run sandbox "$@" ;;
   notify)   run notify "$@" ;;

@@ -67,6 +67,10 @@ else fail "MCP manifest audit failed — run: scripts/check-mcp.sh"; fi
 if "$REPO"/scripts/test-protect-paths.sh >/dev/null 2>&1; then pass "guardrail bypass corpus passes (protect-paths policy)"
 else fail "guardrail corpus failed — run: scripts/test-protect-paths.sh"; fi
 
+# Red-team policy: the prompt-injection / config-override / malware / insecure-code eval.
+if "$REPO"/scripts/test-redteam.sh >/dev/null 2>&1; then pass "red-team corpus passes (injection · override · malware · insecure-code)"
+else fail "red-team corpus failed — run: scripts/test-redteam.sh"; fi
+
 # Router module: spec schema + ReDoS lint must pass (the routing config is a copied asset).
 if [ -f "$REPO"/router/validate.sh ]; then
   if "$REPO"/router/validate.sh >/dev/null 2>&1; then pass "router spec valid (schema + ReDoS lint)"
