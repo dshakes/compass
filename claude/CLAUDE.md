@@ -98,6 +98,9 @@ rule isn't earning its place in the context window, cut it.
 - **Slash command** — a saved prompt I run often (`/ship`, `/review`, `/tdd`).
 - **Plan mode** — ambiguous or expensive-to-reverse work; agree on the approach
   first.
+- **At the start of a task in a compass repo** — reach for the `using-compass` skill: it
+  indexes the guardrails, red-team, router, commands, and subagents so I pick the right
+  one instead of working ad-hoc.
 
 ---
 
