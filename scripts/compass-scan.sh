@@ -176,9 +176,10 @@ esac
 # --- Optional gitleaks depth pass (best-effort; never fails the run) ----------
 gl_note=""
 if have gitleaks; then
+  GLCFG=""; [ -f "$ROOT/.gitleaks.toml" ] && GLCFG="--config=$ROOT/.gitleaks.toml"
   case "$mode" in
-    staged|diff) gl_out="$(gitleaks git --no-banner --redact -v 2>/dev/null || true)" ;;
-    *)           gl_out="$(gitleaks dir --no-banner --redact -v "${paths[0]:-.}" 2>/dev/null || true)" ;;
+    staged|diff) gl_out="$(gitleaks git $GLCFG --no-banner --redact -v 2>/dev/null || true)" ;;
+    *)           gl_out="$(gitleaks dir $GLCFG --no-banner --redact -v "${paths[0]:-.}" 2>/dev/null || true)" ;;
   esac
   if printf '%s' "$gl_out" | grep -qiE 'secret|finding|rule:'; then
     gl_note="$(printf '%s\n' "$gl_out" | grep -iE 'Finding|RuleID|File|Secret' | sed 's/^/  gitleaks: /' | head -40)"
