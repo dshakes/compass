@@ -67,7 +67,7 @@ Lead with the claim a reviewer can confirm in 30 seconds, not the loop.
 > 1. `git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && make install && make doctor` (expect `0 error`).
 > 2. In Claude Code, ask it to run `rm -rf $HOME` or write a `.env` → **blocked before it runs**; `rm -rf ./build` is allowed. (`compass audit-log` shows the block.)
 > 3. `compass bench` → guardrail **100% precision/recall on a 61-case corpus**, router **96.9%** — reproducible, CI-gated.
-> 4. `compass verify v0.16.0` → confirms the release's keyless SLSA provenance.
+> 4. `compass verify v0.17.0` → confirms the release's keyless SLSA provenance.
 > 5. `compass route "fix a typo"` → `haiku`; `compass route "redesign the auth model"` → `opus` — the cache-aware cost-tier router (ADR-0004), runnable standalone from `router/`.
 > 6. `compass redteam` → injection corpus **100% precision/recall**; `compass redteam --attack` → **100% robustness** after base64/zero-width/homoglyph/leetspeak obfuscation; `compass redteam --scan` flags a poisoned `CLAUDE.md`. Eval-gated in CI ([docs/17](docs/17-red-team.md)).
 > 7. *(Optional, needs a GitHub repo + token)* the autonomous PR loop's logic is statically validated in CI (`make doctor` + the GitHub-Actions audit `scripts/check-actions.sh`); reproduce the live behavior with the checklist in `sdlc/SMOKETEST.md`. The same loop runs **scheduled across many repos** as the *fleet* (`docs/14-fleet.md`).
@@ -80,7 +80,12 @@ Lead with the claim a reviewer can confirm in 30 seconds, not the loop.
 > safety layer with a published precision/recall number, **cost routing that's measured not
 > asserted**, and **SLSA supply-chain provenance** for the config itself — directly answering
 > the marketplace-plugin-hijack concerns of 2026.
-> **Newest (v0.16.0):** a **red-team hardening layer** ([ADR-0005](docs/adr/0005-red-team-hardening.md),
+> **Newest (v0.17.0):** **native installs across vendors** — compass is now a plugin in
+> Claude Code, Codex (`codex plugin marketplace add dshakes/compass`), and a Gemini CLI
+> extension (`gemini extensions install …`), all generated from one source and CI-checked
+> (`scripts/check-vendor.sh`); plus a skills system (`using-compass` dispatcher,
+> `verification-before-completion`, `systematic-debugging`). **(v0.16.0):** a **red-team
+> hardening layer** ([ADR-0005](docs/adr/0005-red-team-hardening.md),
 > [docs/17](docs/17-red-team.md)) that defends the agent itself — prompt-injection
 > (direct/indirect/paste), CLAUDE.md/AGENTS.md poisoning, local safety-override, malware, and
 > insecure code — with a **decode/normalize layer** (base64 · zero-width · homoglyph · leetspeak)
