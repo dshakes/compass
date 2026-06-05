@@ -107,6 +107,10 @@ jobs:
           # Subscription token (no API credits); for a pay-per-use key use:
           #   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # This job is triggered by the Reviewer's bot applying `agent:needs-fix`, so the
+          # actor is a Bot — claude-code-action refuses bot-initiated runs unless told to
+          # allow them. The trigger is our own gated label (same-repo only), so allow bots.
+          allowed_bots: "*"
           # PAT so the resulting push re-triggers sdlc-review.yml (closing the loop).
           github_token: ${{ steps.apptoken.outputs.token || secrets.SDLC_BOT_TOKEN || github.token }}
           prompt: |

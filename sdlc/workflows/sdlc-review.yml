@@ -69,14 +69,21 @@ jobs:
           github_token: ${{ steps.apptoken.outputs.token || github.token }}
           prompt: |
             You are **Reviewer** (agent:review) in an autonomous SDLC pipeline.
-            Review ONLY the changes in this pull request for correctness, security,
+
+            GET THE DIFF with these exact commands (the full history is checked out, so
+            they always work — do NOT use any other tool to fetch the PR or its metadata;
+            if a command prints nothing, treat the change set as empty and return CLEAN):
+              git diff --name-only ${{ github.event.pull_request.base.sha }}...HEAD
+              git diff ${{ github.event.pull_request.base.sha }}...HEAD
+
+            Review ONLY those changes for correctness, security,
             and adherence to the repo's CLAUDE.md / AGENTS.md conventions.
             Post a SINGLE summary comment grouped Blocking / Should-fix / Nit, each as
             `path:line — issue — fix`. Do NOT post per-line inline review comments
             (they are turn-expensive and can exhaust the turn budget) and do NOT modify files.
 
             SPEC CHECK (intent, not just implementation): if this PR is spec-driven — a
-            `specs/*.md` file appears in `git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD`,
+            `specs/*.md` file appears in `git diff --name-only ${{ github.event.pull_request.base.sha }}...HEAD`,
             or the PR description has a `Spec: <path>` line — READ that spec and verify the diff
             satisfies every Acceptance Criterion and respects its Non-goals. Treat an unmet
             criterion or an out-of-scope change as **Blocking**.
