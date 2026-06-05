@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.SDLC_BOT_TOKEN || github.token }}
       - name: Claude release prep
-        uses: anthropics/claude-code-action@787c5a0ce96a9a6cfb050ea0c8f4c05f2447c251 # v1
+        uses: anthropics/claude-code-action@36a69b6a90b850823f86de06fdfd56264772ad98 # v1
         with:
           # Subscription token (no API credits); for a pay-per-use key use:
           #   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
