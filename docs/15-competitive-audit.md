@@ -352,3 +352,24 @@ surface** — while hardening the one place perception outruns reality: the
 *evaluated, readable, self-hosted policy* — into a **self-improving, measured
 governance layer** that the funded SaaS players structurally cannot match,
 because their value is in the black box and compass's is in the daylight.
+
+---
+
+## Composing with Superpowers (obra/superpowers)
+
+Superpowers is the popular *methodology* layer — composable skills that teach an agent
+*how to work* (TDD, brainstorming, systematic debugging, code review, git worktrees). It is
+**complementary to compass, not a competitor**, and we say so plainly:
+
+- **compass governs** — eval-gated guardrails, red-team hardening, a measured cost router,
+  SLSA provenance, and a human-gated autonomous loop. *Is the agent safe, cheap, auditable?*
+- **Superpowers does methodology** — *how does the agent do the work well?*
+
+**Install both.** They share primitives (Claude-Code plugin, `SKILL.md`, subagents,
+AGENTS.md) and don't collide. What compass took from superpowers (credited): the
+**multi-vendor native-install** pattern (per-vendor manifests from one source — see the
+Gemini extension), the **`using-X` dispatcher** (`using-compass`), and the **trigger-first,
+enforceable `SKILL.md`** style (red-flags / verification checklists — see
+`verification-before-completion`, `systematic-debugging`). What we deliberately did **not**
+copy: the methodology framework itself — that's their owned position, and compass leads with
+measured safety + provenance instead.
