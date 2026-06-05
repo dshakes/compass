@@ -1,0 +1,20 @@
+{
+  "name": "core",
+  "version": "0.16.0",
+  "description": "Cost-tiered specialist subagents, workflow commands, guardrail + red-team + auto-quality hooks, repo-bootstrap and using-compass skills, and parity MCP servers — for serious polyglot software work.",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "hooks": "./hooks/hooks.json",
+  "author": {
+    "name": "Shekhar Mudarapu",
+    "url": "https://github.com/dshakes"
+  },
+  "homepage": "https://github.com/dshakes/compass#readme",
+  "repository": "https://github.com/dshakes/compass",
+  "license": "MIT",
+  "keywords": ["subagents", "hooks", "code-review", "security-review", "red-team", "cost-optimization", "mcp"],
+  "interface": {
+    "displayName": "Core",
+    "category": "Developer Tools"
+  }
+}

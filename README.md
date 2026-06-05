@@ -155,16 +155,18 @@ git checkout v0.16.0     # optional: pin to a release instead of main
 **🛠️ By hand:** `make dry-run` (preview) → `make install` → `make doctor`. Symlink install means `git pull`/`brew upgrade` updates everything; `make uninstall` removes only what it added. → [Team rollout](docs/05-plugin.md)
 
 ### One config, every agent — native installs
-The same operating manual + MCP servers, the way each tool expects them:
+For *every* kind of user: a one-line marketplace/extension install (no terminal), or `make install` if you'd rather own the files. Same operating manual + MCP servers, the way each tool expects them:
 
-| Agent | Install | Loads |
+| Agent | Native install (no terminal) | or own the files |
 |---|---|---|
-| **Claude Code** | `/plugin install core@compass` (or `make install`) | `~/.claude/CLAUDE.md` + hooks + agents + commands + MCP |
-| **Gemini CLI** | `gemini extensions install https://github.com/dshakes/compass` | `gemini-extension.json` → `GEMINI.md` + context7/fetch/git MCP |
-| **Codex** | `make install` (symlinks `~/.codex/AGENTS.md`) | `AGENTS.md` + `config.toml` profiles + MCP |
-| **Cursor · Copilot · OpenCode · Windsurf** | clone + `make install`; they read the repo's `AGENTS.md` | `AGENTS.md` (the [AGENTS.md](https://agents.md/) standard) |
+| **Claude Code** | `/plugin marketplace add dshakes/compass` → `/plugin install core@compass` | `make install` |
+| **Codex** | `codex plugin marketplace add dshakes/compass` → `/plugin install` | `make install` (`~/.codex/AGENTS.md` + `config.toml`) |
+| **Gemini CLI** | `gemini extensions install https://github.com/dshakes/compass` | `./install.sh --gemini` (`~/.gemini/GEMINI.md`) |
+| **Cursor · Copilot · OpenCode · Windsurf** | read the repo's `AGENTS.md` ([AGENTS.md](https://agents.md/) standard) | clone + `make install` |
 
-`AGENTS.md` and `GEMINI.md` are one file — symlinks of the same manual, so a `git pull` updates every agent at once.
+`CLAUDE.md` · `AGENTS.md` · `GEMINI.md` are **one file** (symlinks), and the Claude/Codex plugin manifests + Gemini extension are generated from one source and CI-checked (`scripts/check-vendor.sh`) — so a `git pull` updates every agent at once and a manifest can't drift.
+
+> The marketplace/extension manifests match each vendor's documented schema and are structure-validated in CI; the live `…/plugin install` / `extensions install` step needs that vendor's CLI, which isn't run in our CI.
 
 ### ✅ Verify → your first run
 ```bash

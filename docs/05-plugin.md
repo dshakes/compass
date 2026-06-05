@@ -31,10 +31,13 @@ The operating manual and the version-pinned MCP servers are shared across agents
 in the format that tool expects — kept in sync by symlinks + `scripts/check-vendor.sh`:
 
 ```bash
+# Codex — native plugin marketplace (.codex-plugin/plugin.json + .agents/plugins/marketplace.json)
+codex plugin marketplace add dshakes/compass   # then: /plugin install  (browse with /plugins)
+
 # Gemini CLI — native extension (gemini-extension.json → GEMINI.md + context7/fetch/git MCP)
 gemini extensions install https://github.com/dshakes/compass
 
-# Codex — symlinks ~/.codex/AGENTS.md + config.toml profiles
+# Codex (own the files instead) — symlinks ~/.codex/AGENTS.md + config.toml profiles
 make install            # or ./install.sh --codex-only
 
 # Gemini global context instead of the extension: ~/.gemini/GEMINI.md
