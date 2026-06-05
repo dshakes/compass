@@ -60,7 +60,7 @@ compass route "fix a typo"                 # → haiku
 **🔏 Supply chain you can verify.** Releases carry keyless SLSA provenance, so a tampered or look-alike download is rejected. *(In human terms: you can prove the code you installed is the code I shipped.)*
 
 ```bash
-compass verify v0.17.1     # → ✓ provenance verified
+compass verify v0.17.2     # → ✓ provenance verified
 ```
 
 **🧪 Red-team resistance, measured.** Prompt-injection (direct/indirect/paste), CLAUDE.md poisoning, local safety-override, malware & insecure-code — scored against a labeled corpus that gates in CI, with optional escalation to a managed guardrails service (webhook · Bedrock · Azure). *(In human terms: a poisoned repo or web page can't quietly turn your agent against you.)*
@@ -142,7 +142,7 @@ compass quickstart                       # previews, asks, then wires it into ~/
 **📦 Git clone** — own & edit your config *(recommended)*
 ```bash
 git clone https://github.com/dshakes/compass ~/compass && cd ~/compass
-git checkout v0.17.1     # optional: pin to a release instead of main
+git checkout v0.17.2     # optional: pin to a release instead of main
 ./quickstart.sh          # previews every change, asks first, fully reversible
 ```
 
@@ -166,7 +166,7 @@ For *every* kind of user: a one-line marketplace/extension install (no terminal)
 
 `CLAUDE.md` · `AGENTS.md` · `GEMINI.md` are **one file** (symlinks), and the Claude/Codex plugin manifests + Gemini extension are generated from one source and CI-checked (`scripts/check-vendor.sh`) — so a `git pull` updates every agent at once and a manifest can't drift.
 
-> The marketplace/extension manifests match each vendor's documented schema and are structure-validated in CI; the live `…/plugin install` / `extensions install` step needs that vendor's CLI, which isn't run in our CI.
+> The marketplace/extension manifests match each vendor's documented schema and are structure-validated in CI. The live install is **manually verified** — `gemini extensions install` (gemini 0.26.0) and `codex plugin marketplace add` (codex 0.130.0) both succeed against this repo — but isn't run in our CI (those CLIs aren't in the runner).
 
 ### ✅ Verify → your first run
 ```bash

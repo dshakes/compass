@@ -5,6 +5,15 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.17.2] — 2026-06-05
+
+### Changed
+
+- **Docs honesty:** the README vendor-install note now states the live install is **manually
+  verified** — `gemini extensions install` (gemini 0.26.0) and `codex plugin marketplace add`
+  (codex 0.130.0) both succeed against this repo — rather than implying it's only schema-checked.
+  Still not run in CI (those CLIs aren't in the runner).
+
 ## [0.17.1] — 2026-06-05
 
 ### Fixed
