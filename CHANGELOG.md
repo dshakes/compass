@@ -5,6 +5,33 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.16.0] — 2026-06-05
+
+Red-team depth — closes the gaps from v0.15.0's first layer. Plugin manifests `0.16.0`.
+
+### Added
+
+- **Decode/normalize layer** (`normalize_untrusted`) — detection now runs on raw text AND a
+  de-obfuscated rendering: base64 decode, zero-width/bidi strip, homoglyph + leetspeak fold.
+  `compass redteam --attack` adversarially fuzzes the corpus (5 transforms) and reports
+  detector robustness — **100% on the corpus's obfuscation transforms**.
+- **System-prompt-leakage** detector (OWASP LLM07) + negation-aware allowlist (precision).
+- **`compass redteam --attack`** (adversarial fuzz) and **`compass redteam --scan [DIR]`**
+  (scan any repo's context; git-or-find file discovery).
+- **Adapter contract tests** (`scripts/test-guardrail-remote.sh`, doctor-gated) — the
+  webhook/Bedrock/Azure response-parsing is now verified against fixtures. (Live cloud calls
+  remain unverified-in-CI — they need your creds; see docs/17.)
+- **SAST depth** — `compass scan --injection` runs `semgrep` if installed (advisory; gitleaks
+  for secrets). **MCP scan** now covers tool command/args/url, not just descriptions.
+- **Continuous fleet red-team** — `sdlc/routines/redteam-sweep.yml` (scheduled, token-free:
+  eval + context scan, opens an issue on findings).
+- **Docs** — `assets/red-team.svg` diagram; OWASP-LLM-Top-10 + MITRE-ATLAS mapping in docs/17.
+
+### Changed
+
+- **PostToolUse precision** — Bash output is scanned for indirect injection only when the
+  command actually fetched external content (curl/wget/http), not on every local command.
+
 ## [0.15.0] — 2026-06-05
 
 Red-team hardening — a measured, defense-in-depth layer that defends the agent itself

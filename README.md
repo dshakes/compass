@@ -60,7 +60,7 @@ compass route "fix a typo"                 # → haiku
 **🔏 Supply chain you can verify.** Releases carry keyless SLSA provenance, so a tampered or look-alike download is rejected. *(In human terms: you can prove the code you installed is the code I shipped.)*
 
 ```bash
-compass verify v0.15.0     # → ✓ provenance verified
+compass verify v0.16.0     # → ✓ provenance verified
 ```
 
 **🧪 Red-team resistance, measured.** Prompt-injection (direct/indirect/paste), CLAUDE.md poisoning, local safety-override, malware & insecure-code — scored against a labeled corpus that gates in CI, with optional escalation to a managed guardrails service (webhook · Bedrock · Azure). *(In human terms: a poisoned repo or web page can't quietly turn your agent against you.)*
@@ -68,6 +68,10 @@ compass verify v0.15.0     # → ✓ provenance verified
 ```bash
 compass redteam   # → injection corpus 100% P/R, then scans THIS repo's CLAUDE.md/MCP/settings
 ```
+
+<p align="center">
+  <img src="assets/red-team.svg" alt="compass red-team layer: untrusted input (prompt/paste · web/MCP/tool output · CLAUDE.md/AGENTS.md · .claude/settings.json) → decode &amp; normalize (base64/zero-width/homoglyph/leet) → detectors (injection · context-poisoning · safety-override · malware · insecure-code · prompt-leak), eval-gated 100% P/R → warn+audit / block / optional webhook·Bedrock·Azure → human merge gate." width="900">
+</p>
 
 No service, no telemetry, no `--dangerously-skip-permissions`; `git pull` to update. The work it can't safely own, it hands back — **you keep the merge.**
 
@@ -138,7 +142,7 @@ compass quickstart                       # previews, asks, then wires it into ~/
 **📦 Git clone** — own & edit your config *(recommended)*
 ```bash
 git clone https://github.com/dshakes/compass ~/compass && cd ~/compass
-git checkout v0.15.0     # optional: pin to a release instead of main
+git checkout v0.16.0     # optional: pin to a release instead of main
 ./quickstart.sh          # previews every change, asks first, fully reversible
 ```
 
@@ -193,7 +197,7 @@ Built to be **trusted before it's run** — and honest about its limits.
 - **What talks to the network.** compass phones home to nothing. The auto-registered MCP servers reach non-Anthropic endpoints — `context7` → Upstash (library docs), `fetch` → URLs you request; `git` is local. Hooks are short, commented shell scripts in `claude/hooks/`; disable any via `claude/settings.json`.
 - **Grounded, not invented.** Every capability maps to a documented Claude Code / Codex primitive — cited in [`docs/07-practices.md`](docs/07-practices.md).
 
-> **Status: alpha.** The core — manual, hooks, subagents, commands, MCP, plugin — is stable and dogfooded daily. The **SDLC pipeline** is newer: its logic is statically validated in CI and exercised via a smoke-test checklist you run on your own repo — treat it as early. The **red-team layer** is new: its detectors are eval-gated in CI (precision/recall on a labeled corpus), but pattern detection is best-effort defense-in-depth, not immunity — and the Bedrock/Azure backends ship to-spec but **unverified against live endpoints** (see [docs/17](docs/17-red-team.md)). **Dynamic workflows** are a Claude Code research preview. The human merge/deploy gate is permanent, by design.
+> **Status: alpha.** The core — manual, hooks, subagents, commands, MCP, plugin — is stable and dogfooded daily. The **SDLC pipeline** is newer: its logic is statically validated in CI and exercised via a smoke-test checklist you run on your own repo — treat it as early. The **red-team layer** is new: its detectors are eval-gated in CI (precision/recall on a labeled corpus) and resist obfuscation (`compass redteam --attack`), but pattern detection is best-effort defense-in-depth, not immunity — and the managed-guardrail adapters are response-parsing contract-tested, with the **live Bedrock/Azure calls unverified in CI** (need your creds) and no live third-party benchmark scores (see [docs/17](docs/17-red-team.md)). **Dynamic workflows** are a Claude Code research preview. The human merge/deploy gate is permanent, by design.
 
 ---
 

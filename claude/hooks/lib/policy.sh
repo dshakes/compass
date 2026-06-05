@@ -228,16 +228,50 @@ data-exfiltration|(send|post|upload|exfiltrate|transmit|e-?mail|forward|leak).{0
 covert-instruction|do not (tell|inform|warn|mention .{0,15}to|reveal .{0,15}to|notify|alert) (the )?(user|human|operator|developer|owner)
 fake-role-tag|</?(system|assistant)>|\[/?INST\]|<\|(im_start|im_end|system)\|>|(^|\n)#{2,3} *system *:
 markdown-exfil|!\[[^]]*\]\( *https?://[^)]*(\$\{|secret|token|api[_-]?key)
-hidden-html-comment|<!--[^>]*(ignore (previous|above|all|the)|you are now|system prompt|assistant *:|do the following|run this|execute the)[^>]*-->'
+hidden-html-comment|<!--[^>]*(ignore (previous|above|all|the)|you are now|system prompt|assistant *:|do the following|run this|execute the)[^>]*-->
+system-prompt-leak|((repeat|reveal|print|show me|disclose|output|dump|leak|give me) .{0,20}your (system |initial )?(prompt|instructions|rules|configuration|directive)|what (is|are) your (system |initial )?(prompt|instructions|rules|directive|configuration))'
 
 # Lines carrying one of these markers are NOT flagged — so the corpus, this file,
 # and docs/17 (which quote the patterns to explain them) don't self-trip a repo scan.
-POLICY_INJECTION_ALLOW='allowlist[ _-]?injection|redteam[ _-]?corpus|injection[ _-]?(example|sample|payload|pattern|test|detector)|POLICY_INJECTION'
+# Neutralisers: our own pragma, the corpus/docs that quote patterns, NEGATED mentions
+# ("never exfiltrate", "do not reveal" — an instruction NOT to do it, not an attack), and
+# the benign compound "safety-critical". Keeps precision high on security prose.
+POLICY_INJECTION_ALLOW='allowlist[ _-]?injection|redteam[ _-]?corpus|injection[ _-]?(example|sample|payload|pattern|test|detector)|POLICY_INJECTION|safety[- ]critical|(never|not|dont|do not|don.t|avoid|without|cannot|can.t|won.t|refuse to|must not|should not) +(exfiltrat|leak|disab|bypass|reveal|print|remov|send|email|forward|grant|comply)'
+
+# normalize_untrusted "<text>"  -> a de-obfuscated rendering for detection: strips
+# invisible chars, decodes base64 blobs, and folds leetspeak + homoglyph lookalikes,
+# so an encoded/disguised payload is scanned in its readable form too. Best-effort and
+# fail-safe (always echoes something; never errors). Output is the cleaned text plus
+# any decoded/folded variants appended — it is for MATCHING only, never shown to a user.
+normalize_untrusted() {
+  local text="$1" out extra tok dec folded
+  [ -n "$text" ] || return 0
+  # 1 · drop zero-width / bidi control chars so split/hidden words rejoin.
+  out="$(printf '%s' "$text" | LC_ALL=C sed 's/'$'\342\200''[\213-\217\252-\256]//g; s/'$'\342\201''[\246-\251]//g; s/'$'\357\273\277''//g' 2>/dev/null)"
+  [ -n "$out" ] || out="$text"
+  # 2 · decode base64-looking tokens (>=16 chars), append printable plaintext.
+  extra=""
+  while IFS= read -r tok; do
+    [ -n "$tok" ] || continue
+    dec="$(printf '%s' "$tok" | { base64 -d 2>/dev/null || base64 -D 2>/dev/null; } | LC_ALL=C tr -dc '\11\12\15\40-\176' 2>/dev/null)"
+    [ ${#dec} -ge 6 ] && extra="$extra
+$dec"
+  done <<EOF
+$(printf '%s' "$out" | grep -oE '[A-Za-z0-9+/]{16,}={0,2}' 2>/dev/null | head -20)
+EOF
+  # 3 · leetspeak fold + homoglyph fold (Cyrillic/Greek lookalikes -> Latin via perl).
+  folded="$(printf '%s' "$out" | LC_ALL=C tr '013457@$' 'oieastas' 2>/dev/null)"
+  if command -v perl >/dev/null 2>&1; then
+    folded="$(printf '%s' "$folded" | perl -CSAD -pe 'tr/\x{0430}\x{0435}\x{043e}\x{0440}\x{0441}\x{0445}\x{0443}\x{0456}\x{03bf}\x{03b1}\x{03b5}/aeopcxyioae/' 2>/dev/null || printf '%s' "$folded")"
+  fi
+  printf '%s%s\n%s' "$out" "$extra" "$folded"
+}
 
 # injection_findings "<text>"  -> one "rule: snippet…" line per likely injection
-# pattern (empty output = clean). Scans line-by-line; drops allowlisted lines.
+# pattern (empty output = clean). Scans the raw text AND its de-obfuscated rendering
+# (so base64/zero-width/homoglyph/leet evasions are caught); drops allowlisted lines.
 injection_findings() {
-  local text="$1" name re hit
+  local text="$1" name re hit scan
   [ -n "$text" ] || return 0
 
   # Invisible instructions: zero-width (U+200B–200F), bidi overrides (U+202A–202E,
@@ -247,9 +281,12 @@ injection_findings() {
     printf 'hidden-unicode: zero-width/bidirectional control character\n'
   fi
 
+  # scan raw + de-obfuscated rendering in one pass (a match in either fires the rule).
+  scan="$text
+$(normalize_untrusted "$text")"
   printf '%s\n' "$POLICY_INJECTION_DETECTORS" | while IFS='|' read -r name re; do
     [ -n "$name" ] || continue
-    hit="$(printf '%s\n' "$text" \
+    hit="$(printf '%s\n' "$scan" \
       | grep -Ei -- "$re" 2>/dev/null \
       | grep -Eiv -- "$POLICY_INJECTION_ALLOW" 2>/dev/null | head -1)"
     [ -n "$hit" ] && printf '%s: %s\n' "$name" "$(printf '%s' "$hit" | sed 's/^[[:space:]]*//' | cut -c1-72)"

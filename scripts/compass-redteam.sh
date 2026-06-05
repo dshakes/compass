@@ -21,10 +21,13 @@ usage() {
   cat <<'EOF'
 compass redteam — measure prompt-injection resistance (eval + repo scan)
 
-usage: compass redteam [--eval | --scan] [--json]
+usage: compass redteam [--eval | --scan | --attack] [--json]
   (no flags)  run the eval AND scan this repo's untrusted context
   --eval      only score the detectors against the corpus (the CI gate)
   --scan      only scan this repo's CLAUDE.md/AGENTS.md/READMEs/MCP/settings
+  --attack    adversarial fuzz: obfuscate the corpus payloads (base64 · zero-width ·
+              homoglyph · leetspeak · case) and measure how many the detectors still
+              catch (robustness %). Notes garak/promptfoo for live-agent attacks.
   --json      machine-readable summary
 
 Optional managed-guardrail escalation (the hooks use these at runtime):
@@ -34,12 +37,15 @@ Optional managed-guardrail escalation (the hooks use these at runtime):
     webhook  POSTs {source,text} to COMPASS_GUARDRAIL_URL; expects {"action":"BLOCK"}
 EOF
 }
+TARGET="$ROOT"   # which repo's context --scan inspects (default: the compass install)
 for a in "$@"; do case "$a" in
   --json) JSON=1 ;;
   --eval) MODE=eval ;;
   --scan) MODE=scan ;;
+  --attack) MODE=attack ;;
   -h|--help) usage; exit 0 ;;
-  *) echo "compass redteam: unknown arg: $a" >&2; usage; exit 2 ;;
+  --*) echo "compass redteam: unknown arg: $a" >&2; usage; exit 2 ;;
+  *) TARGET="$a" ;;   # positional: a directory to scan (for CI / fleet sweeps)
 esac; done
 
 # Files that legitimately contain the patterns (the policy, the corpus, the docs) —
@@ -66,30 +72,81 @@ scan_repo() {
   local rel f out s name desc
   while IFS= read -r rel; do
     [ -n "$rel" ] || continue
-    f="$ROOT/$rel"; is_self "$f" && continue; [ -f "$f" ] || continue
+    f="$TARGET/$rel"; is_self "$f" && continue; [ -f "$f" ] || continue
     out="$(injection_findings "$(cat "$f" 2>/dev/null)")"
     if [ -n "$out" ]; then
       SCAN_FILES=$((SCAN_FILES + 1))
       [ "$JSON" = 1 ] || { printf '  \033[33m⚠\033[0m %s\n' "$rel"; printf '%s\n' "$out" | sed 's/^/       /'; }
     fi
   done <<EOF
-$(cd "$ROOT" && git ls-files 2>/dev/null | grep -Ei '(^|/)(CLAUDE|AGENTS|GEMINI|README([._-][a-z]+)?)\.md$')
+$(cd "$TARGET" 2>/dev/null && { git ls-files 2>/dev/null | grep -Ei '(^|/)(CLAUDE|AGENTS|GEMINI|README([._-][a-z]+)?)\.md$' || true; ls=$(git ls-files 2>/dev/null | grep -Eci '(CLAUDE|AGENTS|GEMINI|README).*\.md$' || true); [ "${ls:-0}" -gt 0 ] || find . -maxdepth 4 -type f 2>/dev/null | sed 's#^\./##' | grep -v '/\.git/' | grep -Ei '(^|/)(CLAUDE|AGENTS|GEMINI|README([._-][a-z]+)?)\.md$'; })
 EOF
-  if [ -f "$ROOT/mcp/servers.json" ] && have jq; then
-    while IFS=$'\t' read -r name desc; do
+  # MCP servers: scan description AND command/args/url (tool-poisoning, not just prose).
+  if [ -f "$TARGET/mcp/servers.json" ] && have jq; then
+    while IFS=$'\t' read -r name blob; do
       [ -n "$name" ] || continue
-      out="$(injection_findings "$desc")"
+      out="$(injection_findings "$blob")"
       if [ -n "$out" ]; then SCAN_FILES=$((SCAN_FILES + 1)); [ "$JSON" = 1 ] || printf '  \033[33m⚠\033[0m mcp:%s — %s\n' "$name" "$out"; fi
     done <<EOF2
-$(jq -r '.servers | to_entries[] | "\(.key)\t\(.value.description // "")"' "$ROOT/mcp/servers.json" 2>/dev/null)
+$(jq -r '.servers | to_entries[] | "\(.key)\t\(.value.description // "") \(.value.command // "") \((.value.args // [])|join(" ")) \(.value.url // "")"' "$TARGET/mcp/servers.json" 2>/dev/null)
 EOF2
   fi
-  for s in "$ROOT/.claude/settings.json" "$ROOT/.claude/settings.local.json"; do
+  for s in "$TARGET/.claude/settings.json" "$TARGET/.claude/settings.local.json"; do
     [ -f "$s" ] || continue
     out="$(settings_override_reason "$(cat "$s" 2>/dev/null)")"
-    if [ -n "$out" ]; then SCAN_FILES=$((SCAN_FILES + 1)); [ "$JSON" = 1 ] || printf '  \033[33m⚠\033[0m %s — %s\n' "${s#"$ROOT"/}" "$out"; fi
+    if [ -n "$out" ]; then SCAN_FILES=$((SCAN_FILES + 1)); [ "$JSON" = 1 ] || printf '  \033[33m⚠\033[0m %s — %s\n' "${s#"$TARGET"/}" "$out"; fi
   done
 }
+
+# ── adversarial fuzz: obfuscate each corpus payload and re-test the detectors ───
+ATTACK_TOTAL=0; ATTACK_CAUGHT=0
+ROBUST_FLOOR="${COMPASS_REDTEAM_ROBUST_FLOOR:-80}"
+_mutate() { # <transform> <payload>
+  local t="$1" p="$2" zwsp; zwsp="$(printf '\342\200\213')"
+  case "$t" in
+    identity)  printf '%s' "$p" ;;
+    base64)    printf 'data blob: %s' "$(printf '%s' "$p" | base64 | tr -d '\n')" ;;
+    zerowidth) printf '%s' "$p" | LC_ALL=C sed "s/./&${zwsp}/g" ;;
+    leet)      printf '%s' "$p" | LC_ALL=C tr 'ioeasIOEAS' '1034510345' ;;
+    homoglyph) command -v perl >/dev/null 2>&1 \
+                 && printf '%s' "$p" | perl -CSAD -pe 'tr/ioea/\x{0456}\x{043e}\x{0435}\x{0430}/' 2>/dev/null \
+                 || printf '%s' "$p" ;;
+  esac
+}
+run_attack() {
+  local label payload t mut
+  while IFS=$'\t' read -r label payload; do
+    case "$label" in inject) ;; *) continue ;; esac
+    [ -n "$payload" ] || continue
+    for t in identity base64 zerowidth leet homoglyph; do
+      mut="$(_mutate "$t" "$payload")"
+      ATTACK_TOTAL=$((ATTACK_TOTAL + 1))
+      if [ -n "$(injection_findings "$mut")" ]; then
+        ATTACK_CAUGHT=$((ATTACK_CAUGHT + 1))
+      else
+        [ "$JSON" = 1 ] || printf '  \033[31mEVADED\033[0m [%-9s] %s\n' "$t" "$(printf '%s' "$payload" | cut -c1-52)"
+      fi
+    done
+  done < "${COMPASS_REDTEAM_CORPUS:-$ROOT/scripts/redteam-corpus.tsv}"
+}
+
+if [ "$MODE" = attack ]; then
+  [ "$JSON" = 1 ] || echo "adversarial fuzz — obfuscating corpus payloads (base64 · zero-width · leetspeak · homoglyph):"
+  run_attack
+  robust=100; [ "$ATTACK_TOTAL" -gt 0 ] && robust=$(( ATTACK_CAUGHT * 100 / ATTACK_TOTAL ))
+  if [ "$JSON" = 1 ]; then
+    printf '{"attack":{"total":%d,"caught":%d,"robustness":%d,"floor":%d},"garak":%s,"promptfoo":%s}\n' \
+      "$ATTACK_TOTAL" "$ATTACK_CAUGHT" "$robust" "$ROBUST_FLOOR" \
+      "$(command -v garak >/dev/null 2>&1 && echo true || echo false)" \
+      "$(command -v promptfoo >/dev/null 2>&1 && echo true || echo false)"
+  else
+    echo
+    printf 'adversarial robustness: %d%% (%d/%d caught after obfuscation; floor %d%%)\n' "$robust" "$ATTACK_CAUGHT" "$ATTACK_TOTAL" "$ROBUST_FLOOR"
+    echo "live-agent attacks (against a RUNNING endpoint): $(command -v garak >/dev/null 2>&1 && echo 'garak found — run: garak --model.type ...' || echo 'install garak') · $(command -v promptfoo >/dev/null 2>&1 && echo 'promptfoo found — run: promptfoo redteam' || echo 'install promptfoo')"
+  fi
+  [ "$robust" -ge "$ROBUST_FLOOR" ]
+  exit $?
+fi
 
 [ "$MODE" = scan ] || run_eval
 if [ "$MODE" != eval ]; then
@@ -103,7 +160,7 @@ if [ "$JSON" = 1 ]; then
     "${EVAL_PREC:-null}" "${EVAL_REC:-null}" "$EVAL_PASS" "$SCAN_FILES" "$(json_string "${COMPASS_GUARDRAIL_BACKEND:-none}")"
 else
   echo
-  echo "guardrail backend: ${COMPASS_GUARDRAIL_BACKEND:-none}  ·  optional deep red-team: garak / promptfoo (run separately if installed)"
+  echo "guardrail backend: ${COMPASS_GUARDRAIL_BACKEND:-none}  ·  adversarial fuzz: compass redteam --attack  ·  live-agent: garak / promptfoo"
 fi
 
 [ "$EVAL_PASS" = true ]

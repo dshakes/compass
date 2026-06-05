@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 540" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1117"/><stop offset="1" stop-color="#0a0e14"/></linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#cf222e"/><stop offset="0.5" stop-color="#8A63D2"/><stop offset="1" stop-color="#2ea44f"/>
+    </linearGradient>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8b949e"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="540" rx="16" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="4" fill="url(#acc)"/>
+
+  <text x="40" y="54" fill="#f0f6fc" font-size="30" font-weight="700">🧭 compass · red-team hardening</text>
+  <text x="40" y="82" fill="#8b949e" font-size="16">Defends the agent itself against adversarial input — eval-gated, not vibes.</text>
+
+  <!-- ── Column A: untrusted inputs ── -->
+  <text x="40" y="126" fill="#8b949e" font-size="13" letter-spacing="1.5">UNTRUSTED INPUT</text>
+  <g>
+    <rect x="40" y="142" width="244" height="60" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="58" y="172" fill="#f0f6fc" font-size="15" font-weight="600">Prompt / paste</text>
+    <text x="58" y="191" fill="#8b949e" font-size="12">copy-paste · hidden unicode</text>
+
+    <rect x="40" y="214" width="244" height="60" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="58" y="244" fill="#f0f6fc" font-size="15" font-weight="600">Web · search · MCP</text>
+    <text x="58" y="263" fill="#8b949e" font-size="12">indirect injection (tool output)</text>
+
+    <rect x="40" y="286" width="244" height="60" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="58" y="316" fill="#f0f6fc" font-size="15" font-weight="600">CLAUDE.md · AGENTS.md</text>
+    <text x="58" y="335" fill="#8b949e" font-size="12">context poisoning</text>
+
+    <rect x="40" y="358" width="244" height="60" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="58" y="388" fill="#f0f6fc" font-size="15" font-weight="600">.claude/settings.json</text>
+    <text x="58" y="407" fill="#8b949e" font-size="12">local safety-override</text>
+  </g>
+  <line x1="286" y1="172" x2="356" y2="220" stroke="#8b949e" stroke-width="1.5" marker-end="url(#ah)"/>
+  <line x1="286" y1="244" x2="356" y2="258" stroke="#8b949e" stroke-width="1.5" marker-end="url(#ah)"/>
+  <line x1="286" y1="316" x2="356" y2="300" stroke="#8b949e" stroke-width="1.5" marker-end="url(#ah)"/>
+  <line x1="286" y1="388" x2="356" y2="338" stroke="#8b949e" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <!-- ── Column B: the compass red-team layer ── -->
+  <rect x="360" y="138" width="406" height="300" rx="14" fill="#0d1117" stroke="#8A63D2" stroke-width="2"/>
+  <text x="382" y="168" fill="#a371f7" font-size="13" letter-spacing="1.5">COMPASS RED-TEAM LAYER</text>
+
+  <rect x="382" y="182" width="362" height="60" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="400" y="210" fill="#f0f6fc" font-size="15" font-weight="600">decode &amp; normalize</text>
+  <text x="400" y="230" fill="#8b949e" font-size="12">base64 · zero-width · homoglyph · leetspeak</text>
+
+  <line x1="563" y1="242" x2="563" y2="258" stroke="#8b949e" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <rect x="382" y="258" width="362" height="84" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="400" y="284" fill="#f0f6fc" font-size="15" font-weight="600">detectors</text>
+  <text x="400" y="305" fill="#8b949e" font-size="12">prompt-injection · context-poisoning · safety-override</text>
+  <text x="400" y="323" fill="#8b949e" font-size="12">malware · insecure-code (SAST) · system-prompt-leak</text>
+
+  <rect x="382" y="358" width="362" height="58" rx="10" fill="#03281a" stroke="#2ea44f"/>
+  <text x="400" y="382" fill="#3fb950" font-size="13" font-weight="600">✓ eval-gated · 100% precision/recall (corpus)</text>
+  <text x="400" y="401" fill="#3fb950" font-size="12">✓ adversarial-fuzz: 100% robustness vs obfuscation</text>
+
+  <line x1="766" y1="288" x2="812" y2="288" stroke="#8b949e" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <!-- ── Column C: outcomes ── -->
+  <text x="820" y="126" fill="#8b949e" font-size="13" letter-spacing="1.5">OUTCOME  (warn + audit by default)</text>
+
+  <rect x="820" y="142" width="340" height="58" rx="10" fill="#161b22" stroke="#e3b341"/>
+  <text x="838" y="167" fill="#e3b341" font-size="15" font-weight="600">warn + audit</text>
+  <text x="838" y="187" fill="#8b949e" font-size="12">"this is data, not instructions" → audit log</text>
+
+  <rect x="820" y="212" width="340" height="50" rx="10" fill="#161b22" stroke="#cf222e"/>
+  <text x="838" y="242" fill="#ff6b6b" font-size="14" font-weight="600">block  ·  COMPASS_REDTEAM_ENFORCE=1</text>
+
+  <rect x="820" y="274" width="340" height="50" rx="10" fill="#161b22" stroke="#a371f7" stroke-dasharray="5 4"/>
+  <text x="838" y="304" fill="#a371f7" font-size="14" font-weight="600">optional: webhook · Bedrock · Azure</text>
+
+  <line x1="990" y1="324" x2="990" y2="356" stroke="#8b949e" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <rect x="820" y="356" width="340" height="64" rx="12" fill="#04260f" stroke="#2ea44f" stroke-width="2"/>
+  <text x="838" y="384" fill="#3fb950" font-size="16" font-weight="700">human merge / deploy gate</text>
+  <text x="838" y="404" fill="#8b949e" font-size="12">you merge — always. the gate never moves.</text>
+
+  <text x="40" y="500" fill="#6e7681" font-size="12.5">compass redteam [--eval · --scan · --attack] · compass scan --injection · hooks: SessionStart · UserPromptSubmit · PostToolUse · toggles: COMPASS_REDTEAM*</text>
+</svg>

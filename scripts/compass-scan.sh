@@ -86,7 +86,13 @@ EOF
 
 # compass's own red-team machinery legitimately contains injection patterns — never
 # self-flag it when --injection scans the compass repo. (User repos are unaffected.)
-_inj_self() { case "${1##*/}" in redteam-corpus.tsv|policy.sh|guardrail-remote.sh|test-redteam.sh|compass-redteam.sh|scan-prompt.sh|scan-tool-output.sh|scan-untrusted-context.sh|17-red-team.md) return 0 ;; esac; return 1; }
+# Skip our own red-team machinery AND test fixtures/corpora — they deliberately carry
+# attack strings to exercise the detectors, so scanning them is noise, not signal.
+_inj_self() { case "${1##*/}" in \
+  redteam-corpus.tsv|guardrail-corpus.tsv|policy.sh|guardrail-remote.sh|\
+  test-redteam.sh|compass-redteam.sh|scan-prompt.sh|scan-tool-output.sh|scan-untrusted-context.sh|17-red-team.md|\
+  test-*.sh|test_*.py|*-corpus.tsv|*.fixture.*) return 0 ;;
+esac; return 1; }
 
 # All risky-content detectors in one pass: prompt-injection + insecure code + malware.
 _risk_findings() { printf '%s\n%s\n%s' "$(injection_findings "$1")" "$(insecure_code_findings "$1")" "$(malware_intent_findings "$1")" | grep -v '^$' || true; }
@@ -206,9 +212,17 @@ if [ "$inj" = 1 ]; then
       [ -n "${files:-}" ] && inj_out="$(IFS=$'\n'; inj_files $files)" || inj_out="" ;;
     *) inj_out="" ;;
   esac
+  # Optional SAST depth: semgrep adds real taint/dataflow rules beyond our built-in
+  # patterns. Advisory by default (built-in is the gate); --strict promotes it.
+  sg_note=""
+  if have semgrep; then
+    sg_out="$(semgrep --config auto --error --quiet ${paths[@]+"${paths[@]}"} 2>/dev/null || true)"
+    [ -n "$sg_out" ] && sg_note="$(printf '%s\n' "$sg_out" | grep -iE 'rule|finding|[0-9]+ finding' | sed 's/^/  semgrep: /' | head -30)"
+  fi
   if [ -n "$inj_out" ]; then
     printf '\033[31m✗ compass scan: risky-content pattern(s) found\033[0m  (mode: %s)\n' "$mode"
     printf '%s\n' "$inj_out" | sort -u
+    [ -n "$sg_note" ] && { echo "  — semgrep also flagged:"; printf '%s\n' "$sg_note"; }
     echo
     echo "  Prompt-injection / insecure-code / malware patterns. Treat untrusted content as"
     echo "  data, not instructions; fix insecure code. Mark a deliberate example with an"
@@ -216,6 +230,12 @@ if [ "$inj" = 1 ]; then
     compass_log_metric scan-block "risky content in $mode"
     compass_log_audit warn scan red-team "risky content in $mode: $(printf '%s' "$inj_out" | tr '\n' ';' | cut -c1-200)"
     exit 1
+  fi
+  if [ -n "$sg_note" ]; then
+    if [ "$strict" = 1 ]; then
+      printf '\033[31m✗ compass scan: semgrep flagged (--strict)\033[0m  (mode: %s)\n' "$mode"; printf '%s\n' "$sg_note"; exit 1
+    fi
+    printf '\033[33mℹ compass scan: built-in clean; semgrep flagged (advisory)\033[0m\n'; printf '%s\n' "$sg_note"
   fi
 fi
 
