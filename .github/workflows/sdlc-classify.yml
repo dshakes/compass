@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  issues: write          # labels are an issues resource — needed to apply domain:*
   pull-requests: write
   id-token: write
 
@@ -47,7 +48,9 @@ jobs:
             --json-schema '{"type":"object","properties":{"domain":{"type":"string","enum":["ui","api","infra","docs","core"]}},"required":["domain"]}'
       - name: Apply the domain label
         env:
-          GH_TOKEN: ${{ secrets.SDLC_BOT_TOKEN || github.token }}
+          # classify only LABELS (never pushes), so the built-in GITHUB_TOKEN is enough —
+          # no dependency on SDLC_BOT_TOKEN. Needs issues:write (granted above).
+          GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
           OUT: ${{ steps.classify.outputs.structured_output }}
         run: |
