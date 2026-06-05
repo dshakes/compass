@@ -90,6 +90,23 @@
             "type": "command",
             "command": "$HOME/.claude/hooks/inject-context.sh",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/scan-untrusted-context.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/scan-prompt.sh",
+            "timeout": 15
           }
         ]
       }
@@ -114,6 +131,16 @@
             "type": "command",
             "command": "$HOME/.claude/hooks/format-on-edit.sh",
             "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "WebFetch|WebSearch|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/scan-tool-output.sh",
+            "timeout": 15
           }
         ]
       }

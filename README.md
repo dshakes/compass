@@ -18,7 +18,7 @@ Anyone can say "safe" and "cheap." compass hands you the number — and lets you
 </div>
 
 <p align="center">
-  <img src="assets/explainer.svg" alt="compass in three beats: ONE CONFIG (install once) → EVERY AGENT (Claude Code · Codex · Gemini · Cursor, one AGENTS.md, no drift) → AUTONOMOUS PRs (reviews · fixes itself · you merge). All opt-in: guardrails · cost-tiered router · subagents/commands/MCP · scheduled fleet · human merge gate." width="900">
+  <img src="assets/explainer.svg" alt="compass in three beats: ONE CONFIG (install once) → EVERY AGENT (Claude Code · Codex · Gemini · Cursor, one AGENTS.md, no drift) → AUTONOMOUS PRs (reviews · fixes itself · you merge). All opt-in: guardrails · red-team hardening · cost-tiered router · subagents/commands/MCP · scheduled fleet · human merge gate." width="900">
 </p>
 
 <p align="center">
@@ -41,7 +41,7 @@ Open a pull request and compass **reviews it, security-checks it, runs the tests
 
 ## Why it's different — measured, not vibes
 
-Every AI-agent config claims "safe" and "cheap." compass is the one that hands you the **number** — and lets a skeptic reproduce it in 30 seconds. Everyone has the same models; the edge is *configuration you can trust*, not another feature list. Three claims, three commands:
+Every AI-agent config claims "safe" and "cheap." compass is the one that hands you the **number** — and lets a skeptic reproduce it in 30 seconds. Everyone has the same models; the edge is *configuration you can trust*, not another feature list. Four claims, four commands:
 
 **🛡 Guardrails with a score.** Catastrophic commands and secret writes are blocked *before they run* — and the policy is eval-gated, not asserted. *(In human terms: it won't let the agent delete your machine or leak your keys, and it can prove how well.)*
 
@@ -61,6 +61,12 @@ compass route "fix a typo"                 # → haiku
 
 ```bash
 compass verify v0.14.0     # → ✓ provenance verified
+```
+
+**🧪 Red-team resistance, measured.** Prompt-injection (direct/indirect/paste), CLAUDE.md poisoning, local safety-override, malware & insecure-code — scored against a labeled corpus that gates in CI, with optional escalation to a managed guardrails service (webhook · Bedrock · Azure). *(In human terms: a poisoned repo or web page can't quietly turn your agent against you.)*
+
+```bash
+compass redteam   # → injection corpus 100% P/R, then scans THIS repo's CLAUDE.md/MCP/settings
 ```
 
 No service, no telemetry, no `--dangerously-skip-permissions`; `git pull` to update. The work it can't safely own, it hands back — **you keep the merge.**
@@ -158,7 +164,7 @@ Then just open Claude Code as usual — the manual, guardrails, subagents, comma
 Everything below is **on after one install** or a single opt-in — the autonomous loops above sit on top of this. The README sells; the docs explain — each row links to the detail.
 
 <p align="center">
-  <img src="assets/hardening-frontier.svg" alt="The whole compass stack: a guarded base (manual · guardrail/secret/format/audit hooks · cost-tiered router) under a frontier layer of closed loops — the autonomous SDLC pipeline, the scheduled fleet, and parallel dynamic workflows — all ending at a permanent human merge/deploy gate." width="900">
+  <img src="assets/hardening-frontier.svg" alt="The whole compass stack: a guarded base (manual · guardrail/secret/format/audit hooks · red-team injection scanners · cost-tiered router) under a frontier layer of closed loops — the autonomous SDLC pipeline, the scheduled fleet, and parallel dynamic workflows — all ending at a permanent human merge/deploy gate." width="900">
 </p>
 
 | | Capability | One line | Deep dive |
@@ -167,8 +173,9 @@ Everything below is **on after one install** or a single opt-in — the autonomo
 | 🛰️ | **The fleet** | the loop, scheduled across *all* your repos through a test gate; approve from your phone | [14-fleet](docs/14-fleet.md) |
 | 👥 | **The crew + workflows** | 10 cost-tiered subagents · 12 slash-commands · 3 dynamic workflows that fact-check each other | [12](docs/12-every-agent.md) · [13](docs/13-workflows.md) |
 | 🛡 | **Guardrails & scanning** | 4 hooks block disasters, catch secrets (write-hook + `compass scan`), auto-format, keep a JSONL audit log | [16-hardening](docs/16-hardening-and-frontier.md) |
+| 🧪 | **Red-team hardening** | eval-gated defense vs prompt-injection (direct/indirect/paste), CLAUDE.md poisoning, local safety-override, malware & insecure code; optional webhook/Bedrock/Azure backend | [17-red-team](docs/17-red-team.md) |
 | 🧭 | **Cost-tier router** | a standalone, reusable module — keyword heuristic → optional classifier → Haiku judge cascade; eval-gated | [router/](router/) |
-| 🧰 | **The compass CLI** | `onboard · impact · drift · scan · sandbox · verify · audit-log · spend · dashboard` | [11-using](docs/11-using-compass.md) |
+| 🧰 | **The compass CLI** | `onboard · impact · drift · scan · redteam · sandbox · verify · audit-log · spend · dashboard` | [11-using](docs/11-using-compass.md) |
 | 🔌 | **MCP + LSP** | curated, **version-pinned** MCP servers (context7 · fetch · git) + opt-in language-server intelligence | [04](docs/04-mcp.md) · [06](docs/06-lsp.md) |
 | 🪪 | **Every agent, one source** | Claude Code · Codex · Gemini — plus Cursor/Windsurf/Copilot via the [`AGENTS.md`](https://agents.md/) standard | [12-every-agent](docs/12-every-agent.md) |
 | 💰 | **Cost discipline** | routing scored & CI-gated, per-step budget caps, `compass spend`/`impact` to see the $ | [02-cost](docs/02-cost-and-models.md) |
@@ -182,10 +189,11 @@ Built to be **trusted before it's run** — and honest about its limits.
 - **You own the irreversible.** Agents prepare; humans push, merge, deploy. Required checks + a code-owner approval enforce it — there's no "merge to prod" button.
 - **Readable & reversible.** No `curl | sh`. The installer backs up what it replaces, is idempotent, and `make uninstall` removes only what it added. Pin a tag, not `main`.
 - **Guardrails reduce footguns; they are not a security boundary.** Keep least-privilege credentials and review your diffs. (For untrusted code, `compass sandbox` is a real boundary.)
+- **Red-team hardening is defense-in-depth, not immunity.** It warns on prompt-injection (direct/indirect/paste), CLAUDE.md poisoning, and local safety-override, and refuses to grant project-level safety exceptions — but the cardinal rule (external content is data, not instructions) and the human gate are what actually hold. `compass redteam` measures it; see [`docs/17-red-team.md`](docs/17-red-team.md).
 - **What talks to the network.** compass phones home to nothing. The auto-registered MCP servers reach non-Anthropic endpoints — `context7` → Upstash (library docs), `fetch` → URLs you request; `git` is local. Hooks are short, commented shell scripts in `claude/hooks/`; disable any via `claude/settings.json`.
 - **Grounded, not invented.** Every capability maps to a documented Claude Code / Codex primitive — cited in [`docs/07-practices.md`](docs/07-practices.md).
 
-> **Status: alpha.** The core — manual, hooks, subagents, commands, MCP, plugin — is stable and dogfooded daily. The **SDLC pipeline** is newer: its logic is statically validated in CI and exercised via a smoke-test checklist you run on your own repo — treat it as early. **Dynamic workflows** are a Claude Code research preview. The human merge/deploy gate is permanent, by design.
+> **Status: alpha.** The core — manual, hooks, subagents, commands, MCP, plugin — is stable and dogfooded daily. The **SDLC pipeline** is newer: its logic is statically validated in CI and exercised via a smoke-test checklist you run on your own repo — treat it as early. The **red-team layer** is new: its detectors are eval-gated in CI (precision/recall on a labeled corpus), but pattern detection is best-effort defense-in-depth, not immunity — and the Bedrock/Azure backends ship to-spec but **unverified against live endpoints** (see [docs/17](docs/17-red-team.md)). **Dynamic workflows** are a Claude Code research preview. The human merge/deploy gate is permanent, by design.
 
 ---
 
@@ -193,6 +201,6 @@ Built to be **trusted before it's run** — and honest about its limits.
 
 **[Start here → Using compass](docs/11-using-compass.md)** — install, the pieces in plain language, the daily workflow.
 
-[Philosophy](docs/00-philosophy.md) · [Architecture](docs/01-architecture.md) · [Cost & models](docs/02-cost-and-models.md) · [Customize](docs/03-customize.md) · [MCP](docs/04-mcp.md) · [Plugin & team rollout](docs/05-plugin.md) · [LSP](docs/06-lsp.md) · [Practices](docs/07-practices.md) · [Defaults](docs/08-defaults.md) · [SDLC](docs/09-sdlc.md) · [Roadmap](docs/10-roadmap.md) · [Every agent](docs/12-every-agent.md) · [Dynamic workflows](docs/13-workflows.md) · [Fleet](docs/14-fleet.md) · [Competitive audit](docs/15-competitive-audit.md) · [Hardening + frontier](docs/16-hardening-and-frontier.md) · [Router module](router/README.md) · [ADRs](docs/adr/)
+[Philosophy](docs/00-philosophy.md) · [Architecture](docs/01-architecture.md) · [Cost & models](docs/02-cost-and-models.md) · [Customize](docs/03-customize.md) · [MCP](docs/04-mcp.md) · [Plugin & team rollout](docs/05-plugin.md) · [LSP](docs/06-lsp.md) · [Practices](docs/07-practices.md) · [Defaults](docs/08-defaults.md) · [SDLC](docs/09-sdlc.md) · [Roadmap](docs/10-roadmap.md) · [Every agent](docs/12-every-agent.md) · [Dynamic workflows](docs/13-workflows.md) · [Fleet](docs/14-fleet.md) · [Competitive audit](docs/15-competitive-audit.md) · [Hardening + frontier](docs/16-hardening-and-frontier.md) · [Red-team](docs/17-red-team.md) · [Router module](router/README.md) · [ADRs](docs/adr/)
 
 <div align="center"><br><sub>MIT · built to be shared · contributions welcome</sub></div>
