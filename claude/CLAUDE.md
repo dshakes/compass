@@ -2,9 +2,10 @@
 
 The shared constitution for AI coding assistants in my environment — how I work,
 what I optimize for, and the lines I don't cross. Loaded by Claude Code (as
-`CLAUDE.md`) and, via a symlinked `AGENTS.md`, by Codex and other AGENTS.md-aware
-tools — one source of truth for both. Project-level files add specifics and
-**override** anything here on conflict.
+`CLAUDE.md`), by Codex and other AGENTS.md-aware tools (via a symlinked `AGENTS.md`),
+and by Gemini CLI (as `GEMINI.md` / the compass Gemini extension) — one source of
+truth for all of them. Project-level files add specifics and **override** anything
+here on conflict.
 
 Keep this short. A bloated memory file dilutes the signal and gets ignored; if a
 rule isn't earning its place in the context window, cut it.

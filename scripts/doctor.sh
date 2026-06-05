@@ -63,6 +63,10 @@ else fail "actions audit failed — run: scripts/check-actions.sh"; fi
 if "$REPO"/scripts/check-mcp.sh >/dev/null 2>&1; then pass "MCP manifest clean (version-pinned · no injection markers)"
 else fail "MCP manifest audit failed — run: scripts/check-mcp.sh"; fi
 
+# Cross-vendor packaging: the Gemini extension stays wired to one source (version + MCP).
+if "$REPO"/scripts/check-vendor.sh >/dev/null 2>&1; then pass "vendor manifests in sync (gemini-extension.json ↔ version · MCP · manual)"
+else fail "vendor manifest drift — run: scripts/check-vendor.sh"; fi
+
 # Guardrail policy: the bypass corpus must pass (the safety-critical eval).
 if "$REPO"/scripts/test-protect-paths.sh >/dev/null 2>&1; then pass "guardrail bypass corpus passes (protect-paths policy)"
 else fail "guardrail corpus failed — run: scripts/test-protect-paths.sh"; fi

@@ -154,6 +154,18 @@ git checkout v0.16.0     # optional: pin to a release instead of main
 
 **🛠️ By hand:** `make dry-run` (preview) → `make install` → `make doctor`. Symlink install means `git pull`/`brew upgrade` updates everything; `make uninstall` removes only what it added. → [Team rollout](docs/05-plugin.md)
 
+### One config, every agent — native installs
+The same operating manual + MCP servers, the way each tool expects them:
+
+| Agent | Install | Loads |
+|---|---|---|
+| **Claude Code** | `/plugin install core@compass` (or `make install`) | `~/.claude/CLAUDE.md` + hooks + agents + commands + MCP |
+| **Gemini CLI** | `gemini extensions install https://github.com/dshakes/compass` | `gemini-extension.json` → `GEMINI.md` + context7/fetch/git MCP |
+| **Codex** | `make install` (symlinks `~/.codex/AGENTS.md`) | `AGENTS.md` + `config.toml` profiles + MCP |
+| **Cursor · Copilot · OpenCode · Windsurf** | clone + `make install`; they read the repo's `AGENTS.md` | `AGENTS.md` (the [AGENTS.md](https://agents.md/) standard) |
+
+`AGENTS.md` and `GEMINI.md` are one file — symlinks of the same manual, so a `git pull` updates every agent at once.
+
 ### ✅ Verify → your first run
 ```bash
 compass doctor      # validate the install — expect "0 error"
