@@ -46,4 +46,27 @@ IFS=','; for k in $want; do
   [ "$a" = "$b" ] && ok "mcp '$k' command+args match servers.json" || no "mcp '$k' drift: ext=$a src=$b"
 done; unset IFS
 
+# ── Codex plugin + marketplace (mirrors the Claude plugin; same single source) ──
+CXP="$ROOT/plugins/core/.codex-plugin/plugin.json"
+MKT="$ROOT/.agents/plugins/marketplace.json"
+if [ -f "$CXP" ]; then
+  jq empty "$CXP" 2>/dev/null && ok "codex plugin.json is valid JSON" || no "codex plugin.json invalid JSON"
+  [ "$(jq -r '.name' "$CXP")" = "core" ] && ok "codex plugin name = core" || no "codex plugin name must be 'core'"
+  [ "$(jq -r '.version' "$CXP")" = "$vplug" ] && ok "codex plugin version matches ($vplug)" || no "codex plugin version drift"
+  # component pointers must resolve inside the plugin dir
+  for ptr in skills mcpServers hooks; do
+    p="$(jq -r --arg k "$ptr" '.[$k] // empty' "$CXP")"
+    [ -n "$p" ] || continue
+    [ -e "$ROOT/plugins/core/${p#./}" ] && ok "codex pointer $ptr → $p resolves" || no "codex pointer $ptr → $p missing"
+  done
+else no "missing plugins/core/.codex-plugin/plugin.json"; fi
+
+if [ -f "$MKT" ]; then
+  jq empty "$MKT" 2>/dev/null && ok "codex marketplace.json is valid JSON" || no "codex marketplace.json invalid JSON"
+  [ "$(jq -r '.plugins[0].name' "$MKT")" = "core" ] && ok "marketplace lists core" || no "marketplace must list plugin 'core'"
+  sp="$(jq -r '.plugins[0].source.path' "$MKT")"
+  if [ "$sp" = "./plugins/core" ] && [ -d "$ROOT/plugins/core" ]; then ok "marketplace source.path → ./plugins/core resolves"
+  else no "marketplace source.path must be ./plugins/core and exist"; fi
+else no "missing .agents/plugins/marketplace.json"; fi
+
 [ "$fail" -eq 0 ]

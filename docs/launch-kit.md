@@ -110,7 +110,8 @@ Lead with the claim a reviewer can confirm in 30 seconds, not the loop.
 
 | Channel | How | Notes |
 |---|---|---|
-| **Gemini CLI extension** | `gemini extensions install https://github.com/dshakes/compass` works **now** (`gemini-extension.json` → `GEMINI.md` + context7/fetch/git MCP). | Cross-vendor reach beyond Claude; same one-source manual. |
+| **Gemini CLI extension** | `gemini extensions install https://github.com/dshakes/compass` (`gemini-extension.json` → `GEMINI.md` + context7/fetch/git MCP). | Cross-vendor reach; same one-source manual. |
+| **Codex plugin marketplace** | `codex plugin marketplace add dshakes/compass` → `/plugin install` (`.codex-plugin/plugin.json` + `.agents/plugins/marketplace.json`). | Native Codex plugin, mirrors the Claude marketplace. |
 | **claudemarketplaces.com** | Auto-crawls GitHub for a valid `.claude-plugin/marketplace.json` — **already valid** (name, owner, plugins[], pinned versions). Nothing to submit; optionally email `hi@claudemarketplaces.com`. | Discovery-based. |
 | **Chat2AnyLLM/awesome-claude-plugins** | PR-based awesome-list for plugins/marketplaces — add an entry. | Standard PR. |
 | **jeremylongshore/claude-code-plugins-plus-skills** (`ccpi`) | Submit repo link per its CONTRIBUTING / email `jeremy@intentsolutions.io`. | Accepted ones get featured. |
