@@ -355,21 +355,19 @@ because their value is in the black box and compass's is in the daylight.
 
 ---
 
-## Composing with Superpowers (obra/superpowers)
+## Composing with methodology / skill frameworks
 
-Superpowers is the popular *methodology* layer — composable skills that teach an agent
-*how to work* (TDD, brainstorming, systematic debugging, code review, git worktrees). It is
-**complementary to compass, not a competitor**, and we say so plainly:
+Skill-and-methodology frameworks teach an agent *how to work* (TDD, brainstorming, systematic
+debugging, code review, git worktrees). They are **complementary to compass, not competitors**:
 
 - **compass governs** — eval-gated guardrails, red-team hardening, a measured cost router,
   SLSA provenance, and a human-gated autonomous loop. *Is the agent safe, cheap, auditable?*
-- **Superpowers does methodology** — *how does the agent do the work well?*
+- **methodology frameworks** answer *how does the agent do the work well?*
 
-**Install both.** They share primitives (Claude-Code plugin, `SKILL.md`, subagents,
-AGENTS.md) and don't collide. What compass took from superpowers (credited): the
-**multi-vendor native-install** pattern (per-vendor manifests from one source — see the
-Gemini extension), the **`using-X` dispatcher** (`using-compass`), and the **trigger-first,
-enforceable `SKILL.md`** style (red-flags / verification checklists — see
-`verification-before-completion`, `systematic-debugging`). What we deliberately did **not**
-copy: the methodology framework itself — that's their owned position, and compass leads with
-measured safety + provenance instead.
+They share primitives (Claude-Code plugin, `SKILL.md`, subagents, AGENTS.md) and don't collide,
+so they compose. Patterns compass adopted from the broader ecosystem: **multi-vendor
+native-install** (per-vendor manifests from one source — see the Gemini extension), a
+**`using-compass` dispatcher** so the agent reaches for the right capability, and a
+**trigger-first, enforceable `SKILL.md`** style (red-flags / verification checklists — see
+`verification-before-completion`, `systematic-debugging`). What compass deliberately does **not**
+try to be: a methodology framework — it leads with measured safety + provenance instead.
