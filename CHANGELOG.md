@@ -5,6 +5,17 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.17.1] — 2026-06-05
+
+### Fixed
+
+- **Codex marketplace install** — `.agents/plugins/marketplace.json` used
+  `policy.authentication: "NONE"`, which Codex rejects (`unknown variant NONE, expected
+  ON_INSTALL or ON_USE`), breaking `codex plugin marketplace add`. Set to `ON_USE` (compass
+  needs no install-time auth). **Verified live** with `codex 0.130.0` (add now succeeds) and
+  `gemini 0.26.0` (extension installs as `compass 0.17.x`). `scripts/check-vendor.sh` now
+  gates the authentication enum so this can't regress.
+
 ## [0.17.0] — 2026-06-05
 
 Cross-vendor native installs + the skills system. One config, every agent — a one-line
