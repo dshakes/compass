@@ -4,7 +4,16 @@
       {
         "matcher": "*",
         "hooks": [
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-context.sh", "timeout": 10 }
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-context.sh", "timeout": 10 },
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scan-untrusted-context.sh", "timeout": 15 }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scan-prompt.sh", "timeout": 15 }
         ]
       }
     ],
@@ -21,6 +30,12 @@
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
           { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/format-on-edit.sh", "timeout": 30 }
+        ]
+      },
+      {
+        "matcher": "WebFetch|WebSearch|Bash",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scan-tool-output.sh", "timeout": 15 }
         ]
       }
     ],
