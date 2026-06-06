@@ -128,6 +128,19 @@ Every loop ends the same way — **you merge.** That gate never moves.
 
 ---
 
+## Prerequisites — what you need (and what you don't)
+
+| You want… | You need | Tokens? |
+|---|---|---|
+| **The config, guardrails, CLI, subagents** (local) | Claude Code (or Codex/Gemini) + `git` | **None** |
+| **The autonomous PR loop** (GitHub Actions) | A repo with Actions + `gh`, model auth (`CLAUDE_CODE_OAUTH_TOKEN` *or* `ANTHROPIC_API_KEY`), and `SDLC_BOT_TOKEN` (fine-grained PAT) so the loop can chain | **Yes** |
+| **Keyless loop** (self-hosted runner) | A runner labeled `compass` + `SDLC_BOT_TOKEN` | PAT only |
+| **The fleet** (every repo) | `FLEET_TOKEN` + `FLEET_MAINTAINER` | **Yes** |
+
+One command wires the GitHub loop: `~/compass/sdlc/setup.sh --all` (labels + workflows + CODEOWNERS + secrets + branch protection). Without `SDLC_BOT_TOKEN` the loop still runs — it just won't auto-re-fire after a fix. → [full SDLC setup](docs/09-sdlc.md)
+
+---
+
 ## Install
 
 **Pick the door that fits — all reversible, version-pinnable, no `curl | sh`.** You need an AI assistant ([Claude Code](https://code.claude.com); Codex/Gemini optional) + `git`. No API keys to get the manual, guardrails, crew, and CLI.
