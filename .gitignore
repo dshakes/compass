@@ -22,6 +22,9 @@ venv/
 # Backups created by the installer (these live under ~/.claude anyway)
 backups/
 
+# Marketing/launch drafts — kept locally, not part of the shipped repo
+docs/blog/
+
 # router module — generated model + per-app local overlay (never commit)
 router/classifier.model
 router/router.local.json
