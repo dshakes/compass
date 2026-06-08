@@ -102,7 +102,7 @@ jobs:
           echo "gathered $(wc -l < "$f") lines of feedback → $f"
       - name: Claude fix
         if: steps.cap.outputs.proceed == 'true'
-        uses: anthropics/claude-code-action@36a69b6a90b850823f86de06fdfd56264772ad98 # v1
+        uses: anthropics/claude-code-action@fbda2eb1bdc90d319b8d853f5deb53bca199a7c1 # v1
         with:
           # Subscription token (no API credits); for a pay-per-use key use:
           #   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
