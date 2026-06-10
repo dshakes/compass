@@ -206,6 +206,66 @@ reviewers only where they apply, and **round caps** bound spend.
 
 ---
 
+## Phase 5 — multi-agent safety, provenance, and identity
+
+### 12. Team/workflow-scale guardrails 🟡  *(policy enforcement across fan-outs)*
+Today the injection scanner and budget caps operate per-session (single agent,
+single loop). As fan-out multi-agent runs grow — parallel review teams, fleet
+sweeps, dynamic workflows — the same controls need to operate **across the
+fan-out**: injection scanning on inter-agent messages, budget enforcement across
+the whole orchestration (not just per-subagent cap), and policy propagation so a
+child agent can't exceed permissions the parent doesn't have.
+
+**Design.** Extend `orchestrate.sh` with an inter-agent message bus that pipes
+each outbound message through `injection_findings` before delivery; add an
+orchestration-level token budget that tracks spend across all subagents and hard-
+stops the fan-out when exceeded.
+**Maps to:** ASI07 (insecure inter-agent communication) + ASI08 (cascading
+failures) in the OWASP Agentic Top-10.
+**Status:** not built; design phase. Requires the agent-team primitive to stabilise. 🟡
+
+### 13. Eval-driven routing 🟡  *(feed scored eval outcomes back into routing weights)*
+The router currently scores on a fixed labeled set. Each scored eval run — from
+`compass bench`, CI gates, or a post-run analysis — is a signal: tasks that were
+routed to the wrong tier (or succeeded cheaply on a high tier) should shift the
+routing weights. Feeding outcomes back closes the loop between "what the corpus
+says" and "what the live workload rewards."
+**Design.** A lightweight feedback record (task description, assigned tier, outcome,
+cost) written by `orchestrate.sh` → periodic roll-up by `compass policy-synth` →
+proposed weight update to `router/spec.yml` for human review and CI re-gate.
+**Status:** designed, not built; depends on structured post-run cost records. 🟡
+
+### 14. Per-task/per-PR hard budget caps 🟢  *(wired into the autonomous loop)*
+Round caps exist today. Hard token/spend caps are documented but not wired into
+the autonomous convergence loop as a first-class exit condition — a long-running
+run can exceed intent. **Design.** Add a `SDLC_BUDGET_USD` env to `orchestrate.sh`
+that reads the running cost from the per-step `total_cost_usd` field and halts
+(with a summary PR comment) when the cap is reached, before any more turns.
+**Status:** primitive is available (cost tracking exists); wiring is the work. 🟢
+
+### 15. Agent identity / attestation 🔵  *(SPIFFE-style identity for SDLC roles)*
+Today there is no cryptographic assertion of *which* agent produced a given output.
+A Reviewer verdict and a Builder commit are distinguished only by convention. With
+SPIFFE-style workload identity, each compass SDLC role (Builder, Reviewer, Security,
+QA) carries a short-lived, verifiable identity certificate — so a downstream gate
+can verify "this commit was authored by the Builder role" rather than trusting the
+commit author field.
+**Maps to:** ASI03 (agent identity & privilege abuse) in the OWASP Agentic Top-10.
+**Status:** design only; requires external identity infrastructure. ADR required
+before building. 🔵
+
+### 16. Provenance — signed Agent Trace records 🟡  *(landing now)*
+`compass trace` is being implemented in a parallel branch. It will produce
+**Agent Trace** records (the open [Agent Trace spec](https://github.com/cursor/agent-trace))
+for AI-assisted commits: a structured, signable artifact that captures which
+agent, which model, which prompts, and which tool calls produced a given change —
+analogous to SLSA provenance for source, but for the agent turn that wrote it.
+Combined with SLSA build provenance (already on every compass release), this
+closes the chain from "AI wrote this" to "here is the verifiable record."
+**Status:** `compass trace` implementation in progress; spec is stable. 🟡
+
+---
+
 ## Deliberately NOT on the roadmap (honesty)
 - **A fully unattended merge-to-prod swarm.** The human merge/deploy gate is the product's
   spine, not a limitation. Agents open PRs; humans ship.

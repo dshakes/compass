@@ -5,6 +5,29 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+
+- **`compass trace` — provenance for AI-assisted commits.** Emits records in the open
+  [Agent Trace](https://github.com/cursor/agent-trace) format (tool, model, session, changed
+  line ranges), stores them as git notes (`refs/notes/agent-trace`), and optionally signs them
+  with cosign (`--sign` / `COMPASS_TRACE_SIGN=1`). `emit` / `attach` / `show` / `verify`
+  subcommands; deterministic and idempotent (re-`emit` is byte-identical). CI-gated by
+  `scripts/test-trace.sh` (35 cases, no network). **Honest limit:** the cosign signing path is
+  contract-tested with a stub; live Sigstore signing is not verified in CI. ADR-0006 +
+  `docs/19-provenance.md`.
+- **`compass spend --max-usd N` — hard budget gate.** Exits 2 with a greppable
+  `OVER_BUDGET total=$X cap=$Y` line when spend exceeds the cap (env: `COMPASS_MAX_USD`,
+  flag wins); `--json` gains `max_usd` / `remaining` / `over_budget`. Use as a kill-switch in
+  CI or loops. Covered in `scripts/test-cli.sh`.
+- **`docs/18-benchmark.md` — the guardrail benchmark, opened up.** Documents the corpus format
+  and scoring so any tool can run the same eval, how to reproduce compass's numbers in ~30s,
+  and how to contribute cases — a bypass that beats the guardrail is a prized contribution.
+- **OWASP Agentic Top-10 (ASI 2026) mapping** in `docs/17-red-team.md` — each ASI ID mapped to
+  the compass control that covers it, with honest Partial/Roadmap ratings (ASI03 agent
+  identity and ASI07 inter-agent comms are roadmap, not claimed).
+- **Roadmap Phase 5** — team/workflow-scale guardrails, eval-driven routing, per-task hard
+  budget caps in the autonomous loop, agent identity/attestation.
+
 ## [0.17.2] — 2026-06-05
 
 ### Changed

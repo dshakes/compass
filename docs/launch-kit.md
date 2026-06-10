@@ -14,7 +14,7 @@ awesome-claude-code rejects (and cooldown-bans) on these. Verify each at submiss
 | Gate | Requirement | Status |
 |---|---|---|
 | **Repo public age** | ≥ 7 days since first commit | ✅ first commit 2026-05-24 → met on/after 2026-05-31 |
-| **Stars** | **≥ 5 stars** | ⚠️ **GATE — get to ≥ 5 before submitting** (share with a few colleagues first) |
+| **Stars** | **≥ 5 stars** | ✅ met (8★ as of 2026-06-09) — re-confirm at submit time |
 | **Account age** | GitHub account ≥ 14 days | ✅ (existing account) |
 | **No other open issues** by you in their repo | 0 | ✅ confirm at submit time |
 | **Human, web UI** | issue **form** in a browser — **not** `gh`, **not** an agent, **not** a PR | ⚠️ you do this by hand |
@@ -31,6 +31,14 @@ GitHub **issue form** in the browser; a bot validates it; the maintainer's bot t
 approved issue into the PR. Read `docs/CONTRIBUTING.md` + `docs/CODE_OF_CONDUCT.md` first
 (the form makes you attest you did).
 
+**Framing (decided 2026-06-10): submit ONE focused capability, not the toolkit.** The
+maintainer's guidance is explicit — "select one, or a small subset" even from a marketplace
+of plugins, and the form warns against "complex systems that require long onboarding" and
+general-purpose marketplaces. So the submission is **the eval-gated guardrail + red-team
+hooks**; the router, SDLC loop, and cross-vendor layer get one "also in the box" line, no
+more. *(Submit after the open-benchmark doc `docs/18-benchmark.md` is on main — it's cited
+in the claims.)*
+
 **Pre-flight rubric:** run their own reviewer prompt on compass before submitting —
 `.claude/commands/evaluate-repository.md` in their repo (scores Code Quality, Security,
 Docs/Transparency, Functionality, Hygiene). compass should score well; fix anything it flags.
@@ -43,64 +51,52 @@ Docs/Transparency, Functionality, Hygiene). compass should score well; fix anyth
 | Field | Value |
 |---|---|
 | Display Name | `compass` |
-| Category | `Tooling` — sub-category **`Tooling: Config Managers`** *(if the form routes plugins to `Agent Skills` / `General`, accept it; the maintainer recategorizes — don't fight the dropdown)* |
+| Category | **`Hooks`** — the focused capability is the guardrail/red-team hook layer *(if the form routes plugins to `Agent Skills` / `Tooling`, accept it; the maintainer recategorizes — don't fight the dropdown)* |
 | Primary Link | `https://github.com/dshakes/compass` |
 | Author Name | `Shekhar Mudarapu` |
 | Author Link | `https://github.com/dshakes` |
 | License | `MIT` |
 
 ### Description (1–3 sentences, no emojis, descriptive not promotional, third-person)
-> compass is a single-source configuration and safety layer for Claude Code, Codex, and
-> Gemini: one operating manual, guardrail hooks that block catastrophic actions and secret
-> writes before they run, a red-team layer that detects prompt injection and context
-> poisoning, a measured cost-tier model router, and an optional human-gated autonomous PR
-> loop. Its guardrail, router, and red-team detectors are eval-gated — `compass bench` and
-> `compass redteam` report precision/recall in CI — and releases carry verifiable SLSA
-> provenance. Everything is auditable config files installed locally; there is no service
-> and no `curl | sh`.
+> compass provides eval-gated guardrail hooks for Claude Code: catastrophic commands and
+> secret writes are blocked before they run, and the blocking policy is scored in CI —
+> `compass bench` reports 100% precision and recall on a published 61-case corpus that any
+> other tool can run. A companion red-team layer scans prompts, fetched content, and project
+> config for injection and context poisoning (100% precision/recall on a labeled corpus,
+> robust to base64/zero-width/homoglyph obfuscation). The hooks are short commented shell
+> scripts installed locally — no service, no telemetry — and ship inside a broader auditable
+> config layer (measured cost router, SLSA-signed releases, Codex/Gemini parity).
 
 ### Validate Claims / Specific Task(s) / Specific Prompt(s) — *mandatory for plugins*
-A reviewer can confirm these in ~2 minutes (lead with the claim, not the loop):
+A reviewer can confirm these in ~2 minutes (guardrail claim first — it IS the submission):
 
 > 1. `git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && make install && make doctor` → expect `0 error`.
-> 2. In the agent, ask it to run `rm -rf $HOME` or write a `.env` → **blocked before it runs**; `rm -rf ./build` is allowed (`compass audit-log` shows the block).
-> 3. `compass bench` → guardrail **100% precision/recall on a 61-case corpus**, router **96.9%** — reproducible, CI-gated.
+> 2. In Claude Code, ask it to run `rm -rf $HOME` or write a `.env` → **blocked before it runs**; ask for `rm -rf ./build` → allowed (`compass audit-log` shows the block and why).
+> 3. `compass bench` → guardrail **100% precision / 100% recall on the 61-case corpus** — reproducible, CI-gated; the corpus format is documented in `docs/18-benchmark.md` so the same eval can be run against any other guardrail.
 > 4. `compass redteam` → injection corpus **100% precision/recall**; `compass redteam --attack` → **100% robustness** after base64/zero-width/homoglyph/leetspeak obfuscation.
-> 5. `compass verify v0.17.2` → confirms the release's keyless SLSA provenance.
-> 6. Install on another agent natively: `gemini extensions install https://github.com/dshakes/compass` **or** `codex plugin marketplace add dshakes/compass` (same one-source manual + MCP).
-> 7. *(Optional)* the autonomous PR loop's logic is statically validated in CI; reproduce the live behavior with the checklist in `sdlc/SMOKETEST.md`.
+> 5. *(Optional)* `compass verify <latest tag>` → keyless SLSA provenance for the release you installed.
 
 ### Additional Comments (uniqueness + security — the maintainer's two filters)
-> **Differentiated, not a category-of-one.** Within *Config Managers* the 3 entries are a
-> linter (agnix), a dead-rule detector (claude-rules-doctor), and a config-switcher (ClaudeCTX);
-> none is an opinionated single source for **Claude Code + Codex**. compass's real wedge is
-> what the broad config frameworks (SuperClaude, Everything Claude Code) lack: an **eval-gated**
-> safety layer with a published precision/recall number, **cost routing that's measured not
-> asserted**, and **SLSA supply-chain provenance** for the config itself — directly answering
-> the marketplace-plugin-hijack concerns of 2026.
-> **Newest (v0.17.2):** **native installs across vendors** — compass is now a plugin in
-> Claude Code, Codex (`codex plugin marketplace add dshakes/compass`), and a Gemini CLI
-> extension (`gemini extensions install …`), all generated from one source and CI-checked
-> (`scripts/check-vendor.sh`); plus a skills system (`using-compass` dispatcher,
-> `verification-before-completion`, `systematic-debugging`). **(v0.16.0):** a **red-team
-> hardening layer** ([ADR-0005](docs/adr/0005-red-team-hardening.md),
-> [docs/17](docs/17-red-team.md)) that defends the agent itself — prompt-injection
-> (direct/indirect/paste), CLAUDE.md/AGENTS.md poisoning, local safety-override, malware, and
-> insecure code — with a **decode/normalize layer** (base64 · zero-width · homoglyph · leetspeak)
-> so obfuscated payloads are caught too. It's measured: `compass redteam` is **100% P/R** on a
-> labeled corpus and `compass redteam --attack` is **100% robust** against the obfuscation
-> transforms, both CI-gated; optional escalation to a managed guardrails service (webhook ·
-> Bedrock · Azure). *Stated honestly in the docs:* pattern detection is best-effort (corpus
-> recall ≠ real-world), and the Bedrock/Azure **live** calls are response-parsing-tested but not
-> verified against live endpoints in CI. Also (v0.14.0): the router is a **reusable, cache-aware
-> module** (`router/`, ADR-0004); and the autonomous loop scales from one PR to a **scheduled
-> fleet across every repo you own**. No comparable plugin does measured safety + red-team +
-> provenance + a governed multi-repo loop in one auditable, no-service package.
+> **What this submission is (and isn't).** This recommends the **guardrail + red-team hook
+> layer** specifically: ~13 short, commented shell hooks in `claude/hooks/` whose blocking
+> policy and injection detectors are scored against published, labeled corpora in CI
+> (`compass bench`, `compass redteam` — precision/recall with hard floors, not assertions).
+> The corpus and scoring are documented in `docs/18-benchmark.md` so any other guardrail
+> tool can run the same eval — to my knowledge no entry in the Hooks category publishes
+> precision/recall for its blocking policy. The same repo also contains a measured cost-tier
+> router, SLSA-signed releases, and an optional human-gated PR loop; those are in the box
+> but are *not* this submission.
+> *Stated honestly in the docs:* pattern detection is best-effort defense-in-depth (corpus
+> recall ≠ real-world recall); the optional managed-guardrail adapters (webhook · Bedrock ·
+> Azure) are response-parsing-tested but not verified against live endpoints in CI
+> ([docs/17](docs/17-red-team.md), [ADR-0005](docs/adr/0005-red-team-hardening.md)).
 > **Security (your #1 filter):** no telemetry; **no `--dangerously-skip-permissions`** anywhere;
 > no auto-update (you `git pull`); install is reversible (`make uninstall`). **Network beyond
 > Anthropic only via opt-in MCP:** `context7` → Upstash (library docs), `fetch` → URLs you
-> request; everything else is local. Hooks are short, commented shell scripts in `claude/hooks/`,
-> disabled by editing `claude/settings.json`. Egress table in `SECURITY.md`. MIT.
+> request; everything else is local. The hooks themselves make no network calls except the
+> optional, off-by-default managed-guardrail escalation. Hooks are short, commented shell
+> scripts in `claude/hooks/`, disabled by editing `claude/settings.json`. Egress table in
+> `SECURITY.md`. MIT.
 
 ### After acceptance — add the badge to README
 ```markdown

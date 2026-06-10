@@ -55,6 +55,33 @@ has "budget set"   "$JB" '"budget":0.10'
 EMPTY="$(COMPASS_HOME="$(mktemp -d)" "$COMPASS" spend --json)"
 has "empty ledger" "$EMPTY" 'no spend logged yet'
 
+echo "spend --max-usd — hard budget gate:"
+# under-budget: total=0.35, cap=1.00 → exit 0, remaining reported
+JU="$("$COMPASS" spend --all --json --max-usd 1.00)"; JURC=$?
+eq  "under-budget exits 0"              "$JURC" 0
+has "under-budget json has max_usd"     "$JU" '"max_usd":'
+has "under-budget json over_budget=false" "$JU" '"over_budget":false'
+has "under-budget json has remaining"   "$JU" '"remaining":'
+# over-budget: total=0.35, cap=0.10 → exit 2, OVER_BUDGET in human output
+JO="$("$COMPASS" spend --all --json --max-usd 0.10)"; JORC=$?
+eq  "over-budget exits 2"              "$JORC" 2
+has "over-budget json over_budget=true" "$JO" '"over_budget":true'
+# env var: COMPASS_MAX_USD triggers the gate too
+JOENV="$(COMPASS_MAX_USD=0.10 "$COMPASS" spend --all --json)"; JOENVRC=$?
+eq  "COMPASS_MAX_USD env also gates"   "$JOENVRC" 2
+has "COMPASS_MAX_USD json over_budget" "$JOENV" '"over_budget":true'
+# flag wins over env: flag says 1.00 (under), env says 0.10 (over) → under wins
+JFLAG="$(COMPASS_MAX_USD=0.10 "$COMPASS" spend --all --json --max-usd 1.00)"; JFLAGRC=$?
+eq  "flag wins over env (under-budget)" "$JFLAGRC" 0
+# human mode: over-budget prints OVER_BUDGET line, exits 2
+HO="$("$COMPASS" spend --all --max-usd 0.10)"; HORC=$?
+eq  "human over-budget exits 2"        "$HORC" 2
+has "human output has OVER_BUDGET"     "$HO" 'OVER_BUDGET'
+# human mode: under-budget shows remaining, exits 0
+HU="$("$COMPASS" spend --all --max-usd 1.00)"; HURC=$?
+eq  "human under-budget exits 0"       "$HURC" 0
+has "human output has remaining"       "$HU" 'remaining'
+
 echo "impact — benefit dashboard:"
 printf '%s\tblock\trepoA\tcatastrophic delete\n%s\tblock\trepoA\tprotected branch\n%s\tformat\trepoA\tgo\n' "$TS" "$TS" "$TS" > "$TMP/metrics.tsv"
 I="$("$COMPASS" impact --json)"

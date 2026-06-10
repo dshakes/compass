@@ -5,23 +5,37 @@
 #   Ledger:  ${COMPASS_HOME:-~/.compass}/spend.tsv
 #   Columns: timestamp_iso8601<TAB>repo<TAB>task<TAB>model<TAB>cost_usd
 #
-# Usage:  compass spend [--week|--month|--all] [--json]   (default: --month)
+# Usage:  compass spend [--week|--month|--all] [--json] [--max-usd N]  (default: --month)
 # Budget: env COMPASS_BUDGET_USD, else `budget_usd=<n>` in ${COMPASS_HOME}/config.
+# Gate:   env COMPASS_MAX_USD (or --max-usd N): exit 2 with OVER_BUDGET if total exceeds cap.
 set -euo pipefail
 
 COMPASS_HOME="${COMPASS_HOME:-$HOME/.compass}"
 LEDGER="$COMPASS_HOME/spend.tsv"
 CONFIG="$COMPASS_HOME/config"
 
-WINDOW="month"; JSON=0
-for a in "$@"; do
-  case "$a" in
-    --week) WINDOW="week" ;; --month) WINDOW="month" ;; --all) WINDOW="all" ;;
-    --json) JSON=1 ;;
-    -h|--help) printf 'usage: compass spend [--week|--month|--all] [--json]\n'; exit 0 ;;
-    *) printf 'unknown option: %s\n' "$a" >&2; exit 2 ;;
+WINDOW="month"; JSON=0; MAX_USD=""
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --week)  WINDOW="week"  ;;
+    --month) WINDOW="month" ;;
+    --all)   WINDOW="all"   ;;
+    --json)  JSON=1 ;;
+    --max-usd)
+      if [ "$#" -lt 2 ]; then printf '--max-usd requires a value\n' >&2; exit 2; fi
+      MAX_USD="$2"; shift
+      ;;
+    --max-usd=*) MAX_USD="${1#--max-usd=}" ;;
+    -h|--help) printf 'usage: compass spend [--week|--month|--all] [--json] [--max-usd N]\n'; exit 0 ;;
+    *) printf 'unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
+  shift
 done
+
+# --max-usd flag wins over env var; env var wins over empty.
+if [ -z "$MAX_USD" ]; then
+  MAX_USD="${COMPASS_MAX_USD:-}"
+fi
 
 if [ ! -s "$LEDGER" ]; then
   if [ "$JSON" = 1 ]; then printf '{"note":"no spend logged yet"}\n'
@@ -52,8 +66,10 @@ if [ -t 1 ] && [ "$JSON" = 0 ]; then
 else BOLD=""; DIM=""; RST=""; GRN=""; AMB=""; RED=""; fi
 
 # Single awk pass: filter → aggregate → format. No shell values interpolated into the program.
+# Exit status: 0 = ok (or no cap set), 2 = OVER_BUDGET (cap set and total exceeds it).
 awk -F'\t' \
   -v window="$WINDOW" -v cutoff="$CUTOFF" -v budget="$BUDGET" -v json="$JSON" \
+  -v max_usd="$MAX_USD" \
   -v bold="$BOLD" -v dim="$DIM" -v rst="$RST" -v grn="$GRN" -v amb="$AMB" -v red="$RED" '
   NF >= 5 && $0 !~ /^#/ {
     ts = $1; repo = $2; model = tolower($4); cost = $5 + 0
@@ -63,13 +79,19 @@ awk -F'\t' \
     total += cost; mc[m] += cost; rc[repo] += cost; runs++
   }
   END {
+    cap = (max_usd != "" ? max_usd + 0 : 0)
+    over = (cap > 0 && total > cap)
     if (json == 1) {
       printf "{\"window\":\"%s\",\"total\":%.6f,\"runs\":%d,\"by_model\":{", window, total, runs
       sep = ""; for (k in mc) { printf "%s\"%s\":%.6f", sep, k, mc[k]; sep = "," }
       printf "},\"by_repo\":{"; sep = ""
       for (k in rc) { rk = k; gsub(/\\/, "\\\\", rk); gsub(/"/, "\\\"", rk); printf "%s\"%s\":%.6f", sep, rk, rc[k]; sep = "," }
-      printf "},\"budget\":%s}\n", (budget == "" ? "null" : budget)
-      exit
+      printf "},\"budget\":%s", (budget == "" ? "null" : budget)
+      if (cap > 0) {
+        printf ",\"max_usd\":%.6f,\"remaining\":%.6f,\"over_budget\":%s", cap, cap - total, (over ? "true" : "false")
+      }
+      printf "}\n"
+      exit (over ? 2 : 0)
     }
     printf "\n  %scompass · spend%s  %s(%s)%s\n", bold, rst, dim, window, rst
     printf "  %s────────────────────────────────%s\n", dim, rst
@@ -88,6 +110,15 @@ awk -F'\t' \
       if (ratio > 1) { col = red; tag = "over budget" } else if (ratio > 0.8) { col = amb; tag = "over 80%" }
       printf "$%.2f / $%.2f  %s%s (%.0f%%)%s\n", total, budget, col, tag, ratio * 100, rst
     }
+    if (cap > 0) {
+      printf "\n  %sMax-USD gate%s  ", bold, rst
+      if (over) {
+        printf "%sOVER_BUDGET total=$%.4f cap=$%.4f%s\n", red, total, cap, rst
+      } else {
+        printf "%sunder cap  remaining=$%.4f (cap=$%.4f)%s\n", grn, cap - total, cap, rst
+      }
+    }
     print ""
+    if (over) exit 2
   }
 ' "$LEDGER"
