@@ -176,6 +176,26 @@ For deeper, periodic red-teaming, point **[garak](https://github.com/NVIDIA/gara
 
 ---
 
+## OWASP Agentic Top-10 mapping (ASI — 2026)
+
+The OWASP Top 10 for Agentic Applications 2026 maps onto compass controls as follows.
+Honest: several items are partial or roadmap only — marked accordingly.
+
+| ASI ID | Risk | compass coverage | Status |
+|---|---|---|---|
+| ASI01 | Goal Hijack | `injection_findings` (instruction-override, persona-jailbreak, disable-safety) + `scan-untrusted-context.sh` | **Strong** |
+| ASI02 | Tool Misuse | `protect-paths` (guardrail) blocks catastrophic commands; `settings_override_reason` blocks blanket tool allowlists | **Partial** — scoped to the footgun set, not arbitrary misuse |
+| ASI03 | Agent Identity & Privilege Abuse | no agent-identity attestation today | **Roadmap** — SPIFFE-style identity for SDLC roles planned |
+| ASI04 | Agentic Supply Chain Compromise | MCP servers version-pinned; `check-mcp.sh` enforces pins + manifest integrity; SLSA build-provenance on every release; `compass verify` for download validation | **Strong** |
+| ASI05 | Unexpected Code Execution | `protect-paths` blocks `curl\|sh` + fork-bomb + raw disk writes; `compass sandbox` confines untrusted code (bwrap/firejail/sandbox-exec, no network) | **Partial** — covers known footguns; novel code paths pass |
+| ASI06 | Memory/Context Poisoning | `scan-untrusted-context.sh` (SessionStart) scans `CLAUDE.md`/`AGENTS.md`/settings; `injection_findings` decodes base64/zero-width/homoglyph before matching | **Strong** |
+| ASI07 | Insecure Inter-Agent Communication | no inter-agent message scanning today | **Roadmap** — multi-agent fan-out policy planned |
+| ASI08 | Cascading Failures | budget caps + round caps in `orchestrate.sh`; fork-bomb guard; `SDLC_CONVERGE` convergence gate | **Partial** — local loop only; no cross-agent blast-radius limit |
+| ASI09 | Human-Agent Trust Exploitation | human merge/deploy gate is permanent; `settings_override_reason` blocks project configs that try to disarm it; no approval carries over silently | **Strong** |
+| ASI10 | Rogue Agents | `compass sandbox` for code isolation; audit log (`compass audit-log`) records every block; scheduled agents can't merge (they open PRs only) | **Partial** — rogue-agent detection is audit trail + human review, not automated containment |
+
+---
+
 ## Standards mapping
 
 **OWASP Top-10 for LLM Applications (2025)** — honest coverage, not a checkbox:

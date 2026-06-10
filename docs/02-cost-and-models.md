@@ -104,6 +104,14 @@ Cross-provider *smart routing* as a first-class compass layer is roadmapped (`do
   `~/.compass/spend.tsv`. `compass spend [--week|--month|--all]` rolls it up by model and repo;
   set a ceiling with `COMPASS_BUDGET_USD` (or `budget_usd=` in `~/.compass/config`) and it shows
   OK / over-80% / over.
+- **Hard budget gate (CI/loops):** `--max-usd N` (or `COMPASS_BUDGET_USD` for soft warnings vs
+  `COMPASS_MAX_USD` for hard gates) exits 2 with a machine-greppable `OVER_BUDGET` line when total
+  exceeds the cap — use it as a kill-switch in CI or scheduled loops:
+  ```bash
+  compass spend --max-usd 5          # exits 2 + prints OVER_BUDGET total=$X cap=$Y if over
+  compass spend --all --json --max-usd 5   # adds over_budget/remaining fields to JSON
+  ```
+  Flag wins over `COMPASS_MAX_USD` env var, so scripts can override without env surgery.
 - **Is it worth it?** `compass impact` answers "how is compass benefiting me" — footguns blocked,
   files auto-formatted, spend by model, and an **estimated `$` saved** vs running everything on
   Opus (a rough multiple-based estimate, labelled as such).

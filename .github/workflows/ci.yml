@@ -59,6 +59,9 @@ jobs:
       - name: compass CLI tests (route · spend · impact · notify · listen parser)
         run: bash scripts/test-cli.sh
 
+      - name: Agent Trace provenance (emit · attach · verify round-trip)
+        run: bash scripts/test-trace.sh
+
       - name: Listener command parser (compass listen)
         run: node scripts/test-listen.mjs
 
