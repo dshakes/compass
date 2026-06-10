@@ -36,7 +36,7 @@ compass itself phones home to nothing. Network calls happen only through tools y
 | **OpenRouter** | `codex --profile router` (cost router) | opt-in, off by default |
 | **Local model — Ollama/LM Studio** | `codex --profile local` | opt-in; **local only**, no egress |
 
-No telemetry. The `compass-memory` MCP is **local-only** (SQLite over stdio, no network). compass modifies shared files only by symlinking config into `~/.claude`, `~/.codex`, and (with `--gemini`) `~/.gemini` (backed up; `make uninstall` reverts all three). No feature uses `--dangerously-skip-permissions`.
+No telemetry. The `compass-memory` MCP is **local-only** (SQLite over stdio, no network). compass modifies shared files only by symlinking config into `~/.claude`, `~/.codex`, and (with `--gemini`) `~/.gemini`, plus a `compass` CLI symlink in `~/.local/bin` and — if that dir isn't on your PATH — one marker-tagged `export PATH` line appended to your shell rc (all backed up; `make uninstall` reverts every one, including the PATH line). No feature uses `--dangerously-skip-permissions`.
 
 ## Audit trail
 Every blocked/gated action is appended to `${COMPASS_HOME:-~/.compass}/audit.jsonl`
