@@ -5,6 +5,8 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.18.0] — 2026-06-10
+
 ### Added
 
 - **`compass trace` — provenance for AI-assisted commits.** Emits records in the open
@@ -27,6 +29,21 @@ All notable changes to this project are documented here. Format loosely follows
   identity and ASI07 inter-agent comms are roadmap, not claimed).
 - **Roadmap Phase 5** — team/workflow-scale guardrails, eval-driven routing, per-task hard
   budget caps in the autonomous loop, agent identity/attestation.
+
+### Fixed
+
+- **`claude plugin validate` now passes on `plugins/core`.** The `test-architect` agent's
+  frontmatter description contained an unquoted `merged: no` — YAML parsing failed and the
+  agent silently loaded with empty metadata. Description quoted; plugin re-synced.
+- **`docs/18-benchmark.md`** stated 68 guardrail cases; `compass bench` reports **61** —
+  corrected to match the eval output.
+
+### Changed
+
+- **`SECURITY.md` side-effects sentence** now also discloses the `~/.local/bin` CLI symlink
+  and the marker-tagged shell-rc `PATH` line `install.sh` appends (both always reverted by
+  `make uninstall`). Surfaced by self-running the awesome-claude-code repository-evaluation
+  rubric (overall 8/10, "recommend with caveats" — both caveats addressed).
 
 ## [0.17.2] — 2026-06-05
 
