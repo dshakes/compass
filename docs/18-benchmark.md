@@ -20,7 +20,7 @@ model calls, no network.
 ### 1. Guardrail corpus — `scripts/guardrail-corpus.tsv`
 
 Tests the `danger_reason` policy function (catastrophic-command + secret-write
-blocking). **68 labeled cases.**
+blocking). **61 labeled cases.**
 
 ```
 # Columns (TAB-separated):

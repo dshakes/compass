@@ -1,6 +1,6 @@
 ---
 name: test-architect
-description: Generates and hardens the test suite — unit AND end-to-end — for a change, runs it, and validates the behavior actually works (not just that assertions pass). Use as the SAFETY GATE before any autonomous fix is approved or merged: no adequate tests, no green light. The thing that makes the autonomous loops safe.
+description: "Generates and hardens the test suite — unit AND end-to-end — for a change, runs it, and validates the behavior actually works (not just that assertions pass). Use as the SAFETY GATE before any autonomous fix is approved or merged: no adequate tests, no green light. The thing that makes the autonomous loops safe."
 tools: Read, Edit, Write, Grep, Glob, Bash
 model: claude-sonnet-4-6
 ---
