@@ -255,19 +255,14 @@ Render on GitHub straight from the repo: the animated **explainer** (`assets/exp
 the **router cascade** hero (`assets/router-cascade.svg`), the **self-fixing loop diagram**
 (`assets/sdlc-loop.svg`), the **red-team layer** diagram (`assets/red-team.svg`), the **fleet**
 diagram (`assets/fleet.svg`), the **hardening/frontier** map (`assets/hardening-frontier.svg`),
-and a terminal demo (`demo/preview.gif`). `assets/loop.gif` is a **scripted replay** of the loop's behavior on PR #4
-(label it as such — it is a VHS reenactment, not a screen recording). The highest-value asset to
-add is a real screen capture of the loop in a PR's Checks tab — turnkey steps below.
-
-<details><summary>Record the real loop (turnkey)</summary>
-
-1. Stage a clean BLOCKING→fix→green PR on the smoke-test repo (workflows + `SDLC_BOT_TOKEN` set):
-   write code that violates a `specs/*.md` acceptance criterion, push, `gh pr create --fill`.
-2. Record the three beats (⌘⇧5 / Kap): checks → `review` red + `agent:needs-fix`; the Builder's
-   fix commit lands; re-review green ✓ (pending your merge).
-3. `ffmpeg -i loop.mov -vf "setpts=0.2*PTS,fps=12,scale=1000:-1:flags=lanczos" -loop 0 assets/loop.gif`
-   (5× speed → ~20–30s). Replace the scripted `loop.gif` and relabel it a real recording.
-</details>
+and a terminal demo (`demo/preview.gif`). `assets/loop.gif` is a **real screen recording**
+(2026-06-10) of the loop closing itself on a live, public PR —
+<https://github.com/dshakes/compass-loop-demo/pull/1> — captured headless (Playwright
+screencast of the PR timeline → ffmpeg GIF). The README image links to that PR so a skeptic
+can click through and inspect every event: Blocking review + `agent:needs-fix` → the
+Builder's fix commit on the PR's own branch → re-review clean + `agent:reviewed-clean`.
+Keep the demo repo public; re-record with the same harness (`/tmp` scripts archived in the
+session, or re-run `scripts/smoketest-scaffold.sh` + a fresh PR) if the loop's UX changes.
 
 ---
 

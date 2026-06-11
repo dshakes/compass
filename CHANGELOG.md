@@ -5,6 +5,17 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+
+- **`assets/loop.gif` is now a real recording, not a reenactment.** Headless screencast of
+  the loop closing itself on a live public PR
+  ([compass-loop-demo#1](https://github.com/dshakes/compass-loop-demo/pull/1)): Blocking
+  review + `agent:needs-fix` → Builder fix commit on the PR branch → re-review clean +
+  `agent:reviewed-clean`, ~3 minutes wall clock, zero human touches. The README image now
+  links to the PR itself so the timeline can be inspected.
+- **`PRIVACY.md`** added (no telemetry, local-only processing, opt-in egress) — required by
+  the plugin-directory submission and true since day one.
+
 ## [0.18.0] — 2026-06-10
 
 ### Added

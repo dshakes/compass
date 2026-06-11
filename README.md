@@ -90,7 +90,7 @@ Three views, smallest leap of faith first — **feel it**, then **see the proof*
 **2 · The headline, on a real PR** — a Blocking bug and red tests, and it pushes its *own* fix until the PR is green (then waits for you):
 
 <p align="center">
-  <a href="docs/09-sdlc.md" title="placeholder link — repoint to a demo/video/landing"><img src="assets/loop.gif" alt="The loop on a real PR: Reviewer flags a bug as Blocking + QA red → the Builder pushes a fix commit → re-review goes CLEAN, QA green → mergeable, awaiting your code-owner approval." width="820"></a>
+  <a href="https://github.com/dshakes/compass-loop-demo/pull/1" title="this is the actual PR in the recording — click through and inspect every event"><img src="assets/loop.gif" alt="Real screen recording of the loop on a live PR: the Reviewer posts Blocking findings and labels agent:needs-fix → the Builder pushes 'fix: correct off-by-one' to the PR's own branch → re-review goes clean and agent:reviewed-clean replaces agent:needs-fix. No human touched it; the merge stays yours." width="820"></a>
 </p>
 
 **3 · How that loop works** — review · security · tests · Codex cross-audit run in parallel; Blocking findings get auto-fixed and re-reviewed (round-capped) until green, then it stops at you:
