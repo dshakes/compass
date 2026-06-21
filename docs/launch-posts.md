@@ -25,7 +25,41 @@ Show HN: Compass – guardrails and a hard budget cap for AI coding agents
 https://github.com/dshakes/compass
 ```
 
-**First comment (body)**
+**First comment (body) — use this one.** Understated/technical register; HN flags
+new-account posts that read like marketing. Limitations stated before claims; the
+corpus is framed as "help me find what I missed," not a 100% boast.
+```
+I kept hitting two annoyances running Claude Code and Codex: there's no hard stop
+on spend (an agent stuck in a loop can run up a real bill before you look), and no
+easy way to tell whether a "safe command" policy actually holds. So I wrote compass
+— a set of hooks plus a small config layer that runs locally.
+
+The budget piece is a PreToolUse hook. It reads the session's running cost from the
+data Claude Code hands the status line, and denies the next tool call once you're
+over COMPASS_MAX_USD. It's deliberately dumb: accurate only to the last status-line
+render, and it fails open if it can't read the cost — I'd rather it occasionally
+let a call through than wedge a session on missing data.
+
+The guardrail piece blocks the usual footguns before they run (rm -rf of $HOME,
+force-push to a protected branch, writing a file that looks like a live secret).
+The part I cared about is that the policy is a pure function with a labeled corpus,
+so `compass bench` reports precision/recall instead of me asserting it's safe —
+which also means any bypass I haven't thought of is just a missing test case. That's
+mostly why I'm posting.
+
+It's shell scripts you can read, makes no network calls of its own, MIT, alpha. To
+be clear, pattern-matching guardrails aren't a security boundary — they catch
+accidents, not a determined process.
+
+Two things I'd genuinely like input on: command bypasses my corpus misses, and
+whether a per-session cap is the right unit or it should be per-task.
+
+https://github.com/dshakes/compass
+```
+
+<details>
+<summary>Old promo version (v1) — flagged on the first attempt; kept for reference, don't reuse</summary>
+
 ```
 I use Claude Code and Codex daily and got tired of two things: hoping the agent
 wouldn't run something destructive, and watching an autonomous loop quietly burn
@@ -56,6 +90,13 @@ Repo: https://github.com/dshakes/compass
 Feedback very welcome — especially: what command bypasses is my guardrail corpus
 missing, and does the budget gate fit how you actually run agents?
 ```
+</details>
+
+> **Note (lesson from attempt #1):** a brand-new HN account posting a Show HN +
+> promo-styled comment gets flagged fast. Before relaunching: build some account
+> history (thoughtful comments on other posts over a couple weeks), then repost
+> with the understated v2 comment above. Reposting a genuine project that got no
+> traction is allowed on HN.
 
 ---
 
