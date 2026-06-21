@@ -25,7 +25,7 @@ mkdir -p "$COMPASS_HOME/sessions"
 
 # input <session_id> — a minimal PreToolUse payload.
 input() { printf '{"session_id":"%s","tool_name":"Bash","tool_input":{"command":"echo hi"}}' "${1:-$SID}"; }
-# set_spent <cents> / clear_spent — write or remove the statusline breadcrumb.
+# set_spent <usd> / clear_spent — write or remove the statusline breadcrumb (dollars).
 set_spent() { printf '%s' "$1" > "$COMPASS_HOME/sessions/$SID.cost"; }
 clear_spent() { rm -f "$COMPASS_HOME/sessions/$SID.cost"; }
 
@@ -52,22 +52,22 @@ allow "cap=5, no breadcrumb"
 
 echo "env ceiling (COMPASS_MAX_USD):"
 export COMPASS_MAX_USD=5
-set_spent 350; allow "spent \$3.50 < \$5 cap"
-set_spent 499; allow "spent \$4.99 < \$5 cap"
-set_spent 500; block "spent \$5.00 == \$5 cap (at ceiling)"
-set_spent 520; block "spent \$5.20 > \$5 cap"
+set_spent 3.50; allow "spent \$3.50 < \$5 cap"
+set_spent 4.99; allow "spent \$4.99 < \$5 cap"
+set_spent 5.00; block "spent \$5.00 == \$5 cap (at ceiling)"
+set_spent 5.20; block "spent \$5.20 > \$5 cap"
 
 echo "config-file ceiling (max_usd=), env unset:"
 unset COMPASS_MAX_USD
 printf 'max_usd=4\n' > "$COMPASS_HOME/config"
-set_spent 399; allow "spent \$3.99 < \$4 cap"
-set_spent 400; block "spent \$4.00 == \$4 cap"
+set_spent 3.99; allow "spent \$3.99 < \$4 cap"
+set_spent 4.00; block "spent \$4.00 == \$4 cap"
 rm -f "$COMPASS_HOME/config"
 
 echo "env wins over config:"
 printf 'max_usd=100\n' > "$COMPASS_HOME/config"   # generous config…
 export COMPASS_MAX_USD=2                            # …tighter env should win
-set_spent 250; block "env cap \$2 beats config \$100"
+set_spent 2.50; block "env cap \$2 beats config \$100"
 rm -f "$COMPASS_HOME/config"
 
 echo "robustness: malformed / non-positive caps are ignored (no gate):"

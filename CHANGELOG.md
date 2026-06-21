@@ -5,7 +5,18 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
-## [0.19.1] — 2026-06-21
+## [0.19.2] — 2026-06-21
+
+### Fixed
+
+- **Status line cost/context segments and the live budget gate were reading non-existent JSON
+  fields.** The status line consumed `.cost.estimated_cost_cents` and `.cost.total_input_tokens`,
+  but Claude Code sends `.cost.total_cost_usd` (dollars) and `.context_window.total_input_tokens`
+  (the latter moved in v2.1.132). As a result the `$` cost and `ctx` segments rendered blank
+  **and** the budget-ceiling breadcrumb (`~/.compass/sessions/<id>.cost`) was never written — so
+  `budget-gate.sh` always failed open and never enforced `COMPASS_MAX_USD`. Now reads the correct
+  fields; the breadcrumb stores USD and the gate compares dollars directly. Verified end-to-end
+  (`scripts/test-budget-gate.sh`, 12 cases). The budget ceiling now actually stops a session.
 
 ### Changed
 

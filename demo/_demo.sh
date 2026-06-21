@@ -13,10 +13,10 @@ guard() {  # guard '<command>' -> red BLOCKED / green allowed (no JSON)
 # Live budget ceiling — drives the REAL budget-gate.sh hook against a throwaway
 # COMPASS_HOME, so the HALT you see is the actual gate firing, not a mockup.
 BG="claude/hooks/budget-gate.sh"
-budget() {  # budget <cents-spent> <cap-usd> -> green running / red HALTED at the cap
-  local cents="$1" cap="$2" sid="demo" home rc spent
-  home="$(mktemp -d)"; mkdir -p "$home/sessions"; printf '%s' "$cents" >"$home/sessions/$sid.cost"
-  spent="$(awk -v c="$cents" 'BEGIN{printf "%.2f", c/100}')"
+budget() {  # budget <usd-spent> <cap-usd> -> green running / red HALTED at the cap
+  local usd="$1" cap="$2" sid="demo" home rc spent
+  home="$(mktemp -d)"; mkdir -p "$home/sessions"; printf '%s' "$usd" >"$home/sessions/$sid.cost"
+  spent="$(awk -v c="$usd" 'BEGIN{printf "%.2f", c}')"
   printf '{"session_id":"%s","tool_name":"Bash","tool_input":{"command":"x"}}' "$sid" \
     | COMPASS_HOME="$home" COMPASS_MAX_USD="$cap" "$BG" >/dev/null 2>&1
   rc=$?; rm -rf "$home"

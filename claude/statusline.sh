@@ -55,27 +55,29 @@ if git -C "${dir:-$PWD}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   fi
 fi
 
-# Cost segment (cents -> dollars).
-cents="$(json_get "$INPUT" '.cost.estimated_cost_cents')"
+# Cost segment (USD, computed client-side by the runtime). Field is .cost.total_cost_usd
+# (per the Claude Code statusline schema) — already in dollars, no conversion.
+usd="$(json_get "$INPUT" '.cost.total_cost_usd')"
 cost_seg=""
-if [ -n "$cents" ] && [ "$cents" != "0" ]; then
-  dollars="$(awk "BEGIN{printf \"%.2f\", $cents/100}" 2>/dev/null)"
+if [ -n "$usd" ] && [ "$usd" != "0" ]; then
+  dollars="$(awk "BEGIN{printf \"%.2f\", $usd}" 2>/dev/null)"
   cost_seg="${C_COST}\$${dollars}${C_RST}"
 fi
 
-# Live budget breadcrumb: drop this session's spend (cents) where budget-gate.sh
+# Live budget breadcrumb: drop this session's spend (USD) where budget-gate.sh
 # reads it. The statusline is the only place the runtime hands us live session
 # cost, so it is the oracle the PreToolUse budget ceiling consults. Best-effort,
 # never fails the render; with no ceiling set the gate ignores it (zero cost).
 sid="$(json_get "$INPUT" '.session_id')"
-if [ -n "$sid" ] && [ -n "$cents" ]; then
+if [ -n "$sid" ] && [ -n "$usd" ]; then
   sdir="${COMPASS_HOME:-$HOME/.compass}/sessions"
-  { mkdir -p "$sdir" 2>/dev/null && printf '%s' "$cents" >"$sdir/${sid}.cost"; } 2>/dev/null || true
+  { mkdir -p "$sdir" 2>/dev/null && printf '%s' "$usd" >"$sdir/${sid}.cost"; } 2>/dev/null || true
 fi
 
-# Context-used segment, if the runtime provides token counts.
+# Context-used segment, if the runtime provides token counts. Field moved to
+# .context_window.total_input_tokens (was .cost.* before Claude Code v2.1.132).
 ctx_seg=""
-in_tok="$(json_get "$INPUT" '.cost.total_input_tokens')"
+in_tok="$(json_get "$INPUT" '.context_window.total_input_tokens')"
 if [ -n "$in_tok" ] && [ "$in_tok" -gt 0 ] 2>/dev/null; then
   k="$(awk "BEGIN{printf \"%.0f\", $in_tok/1000}" 2>/dev/null)"
   ctx_seg="${C_CTX}${k}k ctx${C_RST}"

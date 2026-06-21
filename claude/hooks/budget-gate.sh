@@ -41,17 +41,17 @@ case "$CAP" in
 esac
 awk -v c="$CAP" 'BEGIN{exit !(c+0>0)}' || exit 0
 
-# --- Read this session's spend breadcrumb (cents) written by statusline.sh.
+# --- Read this session's spend breadcrumb (USD) written by statusline.sh.
 SID="$(json_get "$INPUT" '.session_id')"
 [ -z "$SID" ] && exit 0   # can't attribute spend to a session → don't block
 BREADCRUMB="${COMPASS_HOME:-$HOME/.compass}/sessions/${SID}.cost"
 [ -s "$BREADCRUMB" ] || exit 0   # no render yet → unknown spend → fail open
-CENTS="$(tr -cd '0-9.' < "$BREADCRUMB" 2>/dev/null)"
-[ -z "$CENTS" ] && exit 0
+USD="$(tr -cd '0-9.' < "$BREADCRUMB" 2>/dev/null)"
+[ -z "$USD" ] && exit 0
 
-# --- Over the ceiling? (compare in dollars; one awk, no float surprises in shell)
-SPENT="$(awk -v c="$CENTS" 'BEGIN{printf "%.2f", c/100}')"
-if awk -v s="$CENTS" -v cap="$CAP" 'BEGIN{exit !((s/100) >= (cap+0))}'; then
+# --- Over the ceiling? (breadcrumb is already in dollars; one awk, no float surprises)
+SPENT="$(awk -v c="$USD" 'BEGIN{printf "%.2f", c}')"
+if awk -v s="$USD" -v cap="$CAP" 'BEGIN{exit !((s+0) >= (cap+0))}'; then
   COMPASS_AUDIT_TOOL="$(json_get "$INPUT" '.tool_name')"
   COMPASS_AUDIT_RULE="budget-ceiling"
   deny "Budget ceiling reached: this session has spent ~\$$SPENT, at or over your \$$CAP cap (COMPASS_MAX_USD / max_usd). Stopping before it spends more. To continue, raise the cap (e.g. export COMPASS_MAX_USD=$(awk -v c="$CAP" 'BEGIN{printf "%g", c*2}')) or start a fresh session; set it to 0/unset to remove the gate."

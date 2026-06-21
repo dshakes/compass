@@ -31,13 +31,13 @@ Sleep 1400ms
 Type "# the agent works… each action checked against the cap, live"
 Enter
 Sleep 900ms
-Type "budget 180 5"
+Type "budget 1.80 5"
 Enter
 Sleep 1100ms
-Type "budget 410 5"
+Type "budget 4.10 5"
 Enter
 Sleep 1100ms
-Type "budget 500 5"
+Type "budget 5.00 5"
 Enter
 Sleep 2200ms
 
