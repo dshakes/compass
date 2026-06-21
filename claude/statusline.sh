@@ -63,6 +63,16 @@ if [ -n "$cents" ] && [ "$cents" != "0" ]; then
   cost_seg="${C_COST}\$${dollars}${C_RST}"
 fi
 
+# Live budget breadcrumb: drop this session's spend (cents) where budget-gate.sh
+# reads it. The statusline is the only place the runtime hands us live session
+# cost, so it is the oracle the PreToolUse budget ceiling consults. Best-effort,
+# never fails the render; with no ceiling set the gate ignores it (zero cost).
+sid="$(json_get "$INPUT" '.session_id')"
+if [ -n "$sid" ] && [ -n "$cents" ]; then
+  sdir="${COMPASS_HOME:-$HOME/.compass}/sessions"
+  { mkdir -p "$sdir" 2>/dev/null && printf '%s' "$cents" >"$sdir/${sid}.cost"; } 2>/dev/null || true
+fi
+
 # Context-used segment, if the runtime provides token counts.
 ctx_seg=""
 in_tok="$(json_get "$INPUT" '.cost.total_input_tokens')"

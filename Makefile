@@ -36,6 +36,10 @@ demo: ## Render the terminal demo GIF -> demo/preview.gif (needs vhs)
 	@command -v vhs >/dev/null || { echo "install vhs first:  brew install vhs"; exit 1; }
 	@vhs demo/demo.tape && echo "wrote demo/preview.gif"
 
+demo-budget: ## Render the live budget-ceiling GIF -> assets/budget.gif (needs vhs)
+	@command -v vhs >/dev/null || { echo "install vhs first:  brew install vhs"; exit 1; }
+	@vhs demo/budget.tape && echo "wrote assets/budget.gif"
+
 new-repo: ## Scaffold agent config into DIR (usage: make new-repo DIR=./path [TEAM=1])
 	@./scripts/new-repo.sh $(DIR) $(if $(TEAM),--team,)
 
@@ -45,4 +49,4 @@ apply-many: ## Apply per-repo config to many repos at once (usage: make apply-ma
 update: ## Pull latest and re-run install (for symlink installs this is just a pull)
 	@git pull --ff-only && ./install.sh
 
-.PHONY: help quickstart install install-copy dry-run uninstall doctor demo new-repo update mcp mcp-dry sync-plugin
+.PHONY: help quickstart install install-copy dry-run uninstall doctor demo demo-budget new-repo update mcp mcp-dry sync-plugin
