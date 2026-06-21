@@ -11,12 +11,12 @@
     {
       "name": "core",
       "source": "./plugins/core",
-      "description": "10 specialist subagents; 12 commands (/ship /review /tdd /pr /adr /triage /scaffold /cost /onboard /spec /sdlc /team-review); guardrail + red-team + format-on-edit + notify hooks; using-compass, bootstrap-agent-config, harden, route, verification-before-completion, and systematic-debugging skills; a Concise output style; and version-pinned context7/fetch/git MCP servers (context7 reaches Upstash; fetch makes outbound HTTP).",
+      "description": "10 specialist subagents; 12 commands (/ship /review /tdd /pr /adr /triage /scaffold /cost /onboard /spec /sdlc /team-review); guardrail + red-team + live-budget-ceiling + format-on-edit + notify hooks (a per-session dollar cap that hard-stops the agent, not just warns); using-compass, bootstrap-agent-config, harden, route, verification-before-completion, and systematic-debugging skills; a Concise output style; and version-pinned context7/fetch/git MCP servers (context7 reaches Upstash; fetch makes outbound HTTP).",
       "homepage": "https://github.com/dshakes/compass/tree/main/plugins/core",
       "repository": "https://github.com/dshakes/compass",
       "author": { "name": "Shekhar Mudarapu", "url": "https://github.com/dshakes" },
       "category": "workflow",
-      "keywords": ["subagents", "hooks", "code-review", "security", "cost-optimization", "mcp", "polyglot"],
+      "keywords": ["subagents", "hooks", "code-review", "security", "cost-optimization", "budget-control", "mcp", "polyglot"],
       "license": "MIT"
     },
     {

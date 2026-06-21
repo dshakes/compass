@@ -85,3 +85,22 @@ make doctor          # warns if the plugin has drifted from claude/
 ```
 Authored, plugin-only files (`hooks/hooks.json`, `.mcp.json`, `plugin.json`) are
 preserved by the sync. Bump `version` in `plugin.json` when you cut a release.
+
+## Submitting to the official plugin directory
+The in-tool `/plugin > Discover` directory is the highest-leverage distribution
+channel — it's where most users browse, with near-zero install friction. Listing
+is by review, via the submission form (a web form; not a PR or `gh` action), and
+clears a quality + security bar. Before submitting, confirm the readiness gate:
+
+- [ ] `make doctor` is **0 error** and `scripts/sync-plugin.sh --check` says *in sync*.
+- [ ] `.claude-plugin/marketplace.json` and `plugins/core/.claude-plugin/plugin.json`
+      both validate and carry `name`, `owner`/`author`, `homepage`, `repository`,
+      `license`, `description`, `keywords`, `category` (they do — CI-checked).
+- [ ] `plugin.json` `version` matches the latest release tag (CI gate: `check-vendor.sh`).
+- [ ] The README leads with the one differentiator and a reproducible-in-30s demo;
+      the network-egress table (which servers phone where) is honest and visible —
+      undisclosed network calls are a common rejection reason.
+- [ ] A short demo (GIF/clip) of the governance moment is linked from the README.
+
+Then submit the marketplace at the directory form and link the repo. Re-run the
+sync + doctor gate after every release so the listed plugin never ships stale files.

@@ -4,9 +4,9 @@
 
 ### The trust layer for Claude Code, Codex & Gemini — measured, not vibes.
 
-Anyone can say "safe" and "cheap." compass hands you the number — and lets you reproduce it in 30 seconds: guardrails **100/100** on a 61-case bypass corpus, a router measured **~61% cheaper** than all-Opus at ~98% quality, **signed releases you verify** in one command. One config you own for every agent, in every repo — not a service. No `curl | sh`, no telemetry. **You always merge.**
+**compass governs your coding agent — what it can spend, what it can run, and what counts as "done" — and hands you the receipts.** Every claim is reproducible in 30 seconds, not asserted: a live **budget ceiling** that halts a session before it overspends, guardrails scored **100/100** on a bypass corpus, a router measured **~61% cheaper** than all-Opus at ~98% quality, **signed releases you verify** in one command. One config you own for every agent, in every repo — not a service. No `curl | sh`, no telemetry. **You always merge.**
 
-*In plain terms: a tireless senior teammate for your AI coding agents — it reviews and fixes its own work, spends your money wisely, refuses the dangerous stuff, and still can't ship anything without your yes.*
+*In plain terms: a control layer for your AI coding agents — it caps the spend, blocks the dangerous stuff, verifies the work before it counts as done, and still can't ship anything without your yes.*
 
 [![ci](https://github.com/dshakes/compass/actions/workflows/ci.yml/badge.svg)](https://github.com/dshakes/compass/actions/workflows/ci.yml)
 [![release](https://img.shields.io/github/v/release/dshakes/compass?color=8A63D2)](https://github.com/dshakes/compass/releases)
@@ -57,6 +57,13 @@ compass route "redesign the auth model"   # → opus
 compass route "fix a typo"                 # → haiku
 ```
 
+**💸 A budget ceiling that actually stops it.** Usage trackers *report* spend; compass *enforces* it — set a dollar cap and the session is **halted before the next tool call** once it's reached, live. *(In human terms: an agent can't quietly run up a $40 bill while you're away — it stops at your number.)*
+
+```bash
+export COMPASS_MAX_USD=5     # this session hard-stops at $5 — the agent is blocked, not just warned
+compass spend --max-usd 5    # the same ceiling on the ledger, for scheduled / fleet runs
+```
+
 **🔏 Supply chain you can verify.** Releases carry keyless SLSA provenance, so a tampered or look-alike download is rejected. *(In human terms: you can prove the code you installed is the code I shipped.)*
 
 ```bash
@@ -79,7 +86,13 @@ No service, no telemetry, no `--dangerously-skip-permissions`; `git pull` to upd
 
 ## See it work
 
-Three views, smallest leap of faith first — **feel it**, then **see the proof**, then **see how it works.**
+Smallest leap of faith first — **the governance moment**, then **feel it**, then **see the proof**, then **see how it works.**
+
+**0 · The agent stops at your number** — set a dollar cap and the session hard-stops before it overspends. No service, no wiring, no tokens to watch it:
+
+<p align="center">
+  <a href="docs/02-cost-and-models.md" title="Live budget ceiling — docs/02-cost-and-models.md"><img src="assets/budget.gif" alt="Terminal demo: with COMPASS_MAX_USD=5, the agent's actions are checked against the cap live — $1.80 allowed, $4.10 allowed, then at $5.00 the next action is HALTED (red) before it spends more. Usage trackers report spend; compass enforces it." width="800"></a>
+</p>
 
 **1 · The day-to-day feel** — guardrails, the cost-aware status line, the loop, and the crew, in ~25 seconds:
 
@@ -209,6 +222,7 @@ Everything below is **on after one install** or a single opt-in — the autonomo
 | 🧰 | **The compass CLI** | `onboard · impact · drift · scan · redteam · sandbox · verify · audit-log · spend · dashboard` | [11-using](docs/11-using-compass.md) |
 | 🔌 | **MCP + LSP** | curated, **version-pinned** MCP servers (context7 · fetch · git) + opt-in language-server intelligence | [04](docs/04-mcp.md) · [06](docs/06-lsp.md) |
 | 🪪 | **Every agent, one source** | Claude Code · Codex · Gemini — plus Cursor/Windsurf/Copilot via the [`AGENTS.md`](https://agents.md/) standard | [12-every-agent](docs/12-every-agent.md) |
+| 💸 | **Live budget ceiling** | a hard spend cap that halts the session before the next tool call (`COMPASS_MAX_USD`) — enforced, not just reported | [02-cost](docs/02-cost-and-models.md) |
 | 💰 | **Cost discipline** | routing scored & CI-gated, per-step budget caps, `compass spend`/`impact` to see the $ | [02-cost](docs/02-cost-and-models.md) |
 
 ---

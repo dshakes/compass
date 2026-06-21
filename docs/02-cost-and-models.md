@@ -92,6 +92,21 @@ Cross-provider *smart routing* as a first-class compass layer is roadmapped (`do
 ## Watching spend (pre/post budgeting)
 - **Live (interactive):** the status line shows estimated session cost (`$x.xx`) and context
   size, so you notice a runaway before it's expensive. `/cost` is the deliberate pre-plan.
+- **Live budget ceiling (interactive hard-stop):** set a per-session cap and compass *enforces*
+  it — the `budget-gate.sh` PreToolUse hook **blocks the next tool call** once estimated session
+  spend meets/exceeds the cap, so an agent can't quietly run up the bill while you're away. It's
+  off by default (zero overhead); turn it on per-shell or persistently:
+  ```bash
+  export COMPASS_MAX_USD=5             # this session hard-stops at $5
+  echo 'max_usd=5' >> ~/.compass/config   # persistent default for every session
+  ```
+  How it reads spend: the status line is the only place the runtime hands us live session cost, so
+  it drops a per-session breadcrumb (`~/.compass/sessions/<id>.cost`) that the gate consults — so
+  the ceiling is accurate **to the last status-line render**, not to the cent. **Honest limit:** it
+  *fails open* — if the cap is unset, or no render has happened yet (spend unknown), it never
+  blocks; a budget ceiling must not wedge a session on missing data. It's a cost guardrail, not a
+  security boundary, and (today) depends on the compass status line being active. To continue past
+  a stop, raise `COMPASS_MAX_USD` or start a fresh session.
 - **Per-run budget cap:** every autonomous step is hard-capped — `--max-budget-usd` on each
   cloud workflow step and on each `orchestrate.sh` Claude step (`SDLC_BUDGET`/4 by default).
 - **Pre-run estimate:** `orchestrate.sh` prints the per-step cap and total budget hint before

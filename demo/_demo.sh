@@ -10,6 +10,23 @@ guard() {  # guard '<command>' -> red BLOCKED / green allowed (no JSON)
   else printf "  %b%-18s%b  %b●  allowed%b\n" "$B" "$1" "$X" "$G" "$X"; fi
 }
 
+# Live budget ceiling — drives the REAL budget-gate.sh hook against a throwaway
+# COMPASS_HOME, so the HALT you see is the actual gate firing, not a mockup.
+BG="claude/hooks/budget-gate.sh"
+budget() {  # budget <cents-spent> <cap-usd> -> green running / red HALTED at the cap
+  local cents="$1" cap="$2" sid="demo" home rc spent
+  home="$(mktemp -d)"; mkdir -p "$home/sessions"; printf '%s' "$cents" >"$home/sessions/$sid.cost"
+  spent="$(awk -v c="$cents" 'BEGIN{printf "%.2f", c/100}')"
+  printf '{"session_id":"%s","tool_name":"Bash","tool_input":{"command":"x"}}' "$sid" \
+    | COMPASS_HOME="$home" COMPASS_MAX_USD="$cap" "$BG" >/dev/null 2>&1
+  rc=$?; rm -rf "$home"
+  if [ "$rc" -eq 2 ]; then
+    printf "  next action @ %b\$%s%b / \$%s cap   %b●  HALTED — agent stopped%b\n" "$B" "$spent" "$X" "$cap" "$R$B" "$X"
+  else
+    printf "  next action @ %b\$%s%b / \$%s cap   %b●  allowed%b\n" "$B" "$spent" "$X" "$cap" "$G" "$X"
+  fi
+}
+
 statusline() {
   printf '{"model":{"display_name":"Claude Opus 4.7"},"workspace":{"current_dir":"/Users/you/myrepo"},"permission_mode":"acceptEdits","cost":{"estimated_cost_cents":37,"total_input_tokens":42000}}' \
     | claude/statusline.sh; echo
