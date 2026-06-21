@@ -63,9 +63,11 @@ Docs/Transparency, Functionality, Hygiene). compass should score well; fix anyth
 > `compass bench` reports 100% precision and recall on a published 61-case corpus that any
 > other tool can run. A companion red-team layer scans prompts, fetched content, and project
 > config for injection and context poisoning (100% precision/recall on a labeled corpus,
-> robust to base64/zero-width/homoglyph obfuscation). The hooks are short commented shell
-> scripts installed locally — no service, no telemetry — and ship inside a broader auditable
-> config layer (measured cost router, SLSA-signed releases, Codex/Gemini parity).
+> robust to base64/zero-width/homoglyph obfuscation). A live budget-ceiling hook halts a
+> session before the next tool call once spend hits a cap you set (`COMPASS_MAX_USD`) — it
+> enforces a dollar limit rather than only reporting spend. The hooks are short commented
+> shell scripts installed locally — no service, no telemetry — and ship inside a broader
+> auditable config layer (measured cost router, SLSA-signed releases, Codex/Gemini parity).
 
 ### Validate Claims / Specific Task(s) / Specific Prompt(s) — *mandatory for plugins*
 A reviewer can confirm these in ~2 minutes (guardrail claim first — it IS the submission):
@@ -74,13 +76,16 @@ A reviewer can confirm these in ~2 minutes (guardrail claim first — it IS the 
 > 2. In Claude Code, ask it to run `rm -rf $HOME` or write a `.env` → **blocked before it runs**; ask for `rm -rf ./build` → allowed (`compass audit-log` shows the block and why).
 > 3. `compass bench` → guardrail **100% precision / 100% recall on the 61-case corpus** — reproducible, CI-gated; the corpus format is documented in `docs/18-benchmark.md` so the same eval can be run against any other guardrail.
 > 4. `compass redteam` → injection corpus **100% precision/recall**; `compass redteam --attack` → **100% robustness** after base64/zero-width/homoglyph/leetspeak obfuscation.
-> 5. *(Optional)* `compass verify <latest tag>` → keyless SLSA provenance for the release you installed.
+> 5. `export COMPASS_MAX_USD=5` then keep working in Claude Code → once the session's estimated spend reaches $5 the **next tool call is blocked** (not just warned), with a message to raise the cap or start fresh. Off by default; `scripts/test-budget-gate.sh` (12 cases) gates it in CI.
+> 6. *(Optional)* `compass verify <latest tag>` → keyless SLSA provenance for the release you installed.
 
 ### Additional Comments (uniqueness + security — the maintainer's two filters)
 > **What this submission is (and isn't).** This recommends the **guardrail + red-team hook
-> layer** specifically: ~13 short, commented shell hooks in `claude/hooks/` whose blocking
+> layer** specifically: short, commented shell hooks in `claude/hooks/` whose blocking
 > policy and injection detectors are scored against published, labeled corpora in CI
-> (`compass bench`, `compass redteam` — precision/recall with hard floors, not assertions).
+> (`compass bench`, `compass redteam` — precision/recall with hard floors, not assertions),
+> plus a live budget-ceiling hook that *enforces* a per-session dollar cap (halts before the
+> next tool call) rather than only reporting spend — a gap most usage trackers leave open.
 > The corpus and scoring are documented in `docs/18-benchmark.md` so any other guardrail
 > tool can run the same eval — to my knowledge no entry in the Hooks category publishes
 > precision/recall for its blocking policy. The same repo also contains a measured cost-tier
@@ -123,13 +128,16 @@ Install path for all of them is already shipped: `/plugin marketplace add dshake
 
 ## 3. Positioning — the one line everything leads with
 
-> **compass — eval-gated guardrails + red-team hardening, a measured cost router, and signed
-> supply-chain for Claude Code, Codex & Gemini. Auditable config you own, not a service.**
+> **compass — eval-gated guardrails + red-team hardening, an enforced budget ceiling, a
+> measured cost router, and signed supply-chain for Claude Code, Codex & Gemini. Auditable
+> config you own, not a service.**
 
 Do **not** lead with "turns your agent into a senior engineer" — that's the crowded,
-well-owned skill-framework lane. Lead with the three things the giants *don't* have: **measured safety**,
-**red-team resistance you can reproduce**, and **provenance**. The self-fixing PR loop is the
-demo; the eval numbers (`compass bench`, `compass redteam`) and `compass verify` are the proof.
+well-owned skill-framework lane. Lead with the four things the giants *don't* have: **measured
+safety**, **red-team resistance you can reproduce**, **a budget cap that actually stops the
+agent** (not just a usage report), and **provenance**. The self-fixing PR loop is the demo; the
+eval numbers (`compass bench`, `compass redteam`), the live halt (`COMPASS_MAX_USD`), and
+`compass verify` are the proof.
 
 ---
 
@@ -242,6 +250,7 @@ Link from README once live.
 | **"senior engineer" skill frameworks** | "Different aim — compass is the *measured safety + cost + provenance* layer; it composes with skill frameworks, doesn't replace them." |
 | **spec-kit** | "compass has `/spec` and reads spec-kit's `spec.md`; it's a layer on top, not a competitor." |
 | **claude-router / cost tools** | "Ours is eval-scored + CI-gated with a reproducible cost-at-iso-quality number, **cache-aware** (ADR-0004), and a reusable module (`router/`)." |
+| **ccusage / cost trackers (report-only)** | "Those *report* spend; compass also *enforces* it — a live budget-ceiling hook (`COMPASS_MAX_USD`) halts the session before the next tool call at your cap, so an agent can't run up a bill while you're away." |
 | **rulebricks / cloud guardrails** | "No service or cloud dependency — auditable files, `git pull` to update; the policy is a corpus-tested pure function." |
 | **amtiYo/agents, agent-kit (config sync)** | "Those sync config; compass *is* opinionated config plus guardrails, routing, provenance, and a governed loop." |
 | **CI bots / Dependabot-style automation** | "compass's *fleet* runs the full review→fix→test loop across all your repos on a schedule, governed and human-gated — not single-purpose, and it fixes its own findings." |
