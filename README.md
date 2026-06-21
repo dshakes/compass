@@ -2,27 +2,36 @@
 
 # 🧭 compass
 
-### The trust layer for Claude Code, Codex & Gemini — measured, not vibes.
+### Guardrails and a hard budget cap for your AI coding agent.
 
-**compass governs your coding agent — what it can spend, what it can run, and what counts as "done" — and hands you the receipts.** Every claim is reproducible in 30 seconds, not asserted: a live **budget ceiling** that halts a session before it overspends, guardrails scored **100/100** on a bypass corpus, a router measured **~61% cheaper** than all-Opus at ~98% quality, **signed releases you verify** in one command. One config you own for every agent, in every repo — not a service. No `curl | sh`, no telemetry. **You always merge.**
-
-*In plain terms: a control layer for your AI coding agents — it caps the spend, blocks the dangerous stuff, verifies the work before it counts as done, and still can't ship anything without your yes.*
+`budget gate` · `guardrails 100/100` · `~61% cheaper routing` · `signed releases` · `100% local` · `no telemetry` · `you always merge`
 
 [![ci](https://github.com/dshakes/compass/actions/workflows/ci.yml/badge.svg)](https://github.com/dshakes/compass/actions/workflows/ci.yml)
 [![release](https://img.shields.io/github/v/release/dshakes/compass?color=8A63D2)](https://github.com/dshakes/compass/releases)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-8A63D2.svg)](docs/05-plugin.md)
-[![AGENTS.md](https://img.shields.io/badge/AGENTS.md-compatible-2ea44f.svg)](https://agents.md/)
+[![Codex](https://img.shields.io/badge/Codex-plugin-111111.svg)](docs/05-plugin.md)
+[![Gemini](https://img.shields.io/badge/Gemini-extension-4285F4.svg)](docs/05-plugin.md)
 [![status: alpha](https://img.shields.io/badge/status-alpha-orange.svg)](#safety-honesty--status)
 
 </div>
 
 <p align="center">
-  <a href="docs/01-architecture.md" title="placeholder link — repoint to a demo/video/landing"><img src="assets/explainer.svg" alt="compass in three beats: ONE CONFIG (install once) → EVERY AGENT (Claude Code · Codex · Gemini · Cursor, one AGENTS.md, no drift) → AUTONOMOUS PRs (reviews · fixes itself · you merge). All opt-in: guardrails · red-team hardening · cost-tiered router · subagents/commands/MCP · scheduled fleet · human merge gate." width="900"></a>
+  <a href="docs/02-cost-and-models.md" title="Live budget ceiling — docs/02-cost-and-models.md"><img src="assets/budget-real.gif" alt="Real Claude Code session with COMPASS_MAX_USD=0.05: 'run ls' executes while session cost climbs $0.09 → $0.35, then 'run git log' is BLOCKED — 'Budget ceiling reached: this session has spent ~$0.35, at or over your $0.05 cap. Stopping before it spends more.'" width="820"></a>
 </p>
 
+<p align="center"><sub><b>Real session, no edits:</b> the cost climbs to $0.35, then the next action is <b>HALTED</b> at the $0.05 cap — before it spends more.</sub></p>
+
+**compass is a local-first config layer for Claude Code, Codex & Gemini that stops your agent from doing three things it shouldn't** — burning your budget, running unsafe commands, and merging unverified code. Set `COMPASS_MAX_USD=5` and the session hard-stops at the cap; catastrophic commands are blocked before they run, and the guardrail policy is scored **100/100** in CI — not asserted. You install it once, and **you always merge.**
+
+```bash
+# no curl|sh, fully reversible — then just open any repo in your agent
+git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && ./quickstart.sh
+# or, inside Claude Code:   /plugin marketplace add dshakes/compass
+```
+
 <p align="center">
-  <a href="#-the-part-people-screenshot-it-fixes-its-own-prs">▶ Watch it fix its own PR</a> &nbsp;·&nbsp; <a href="#why-its-different--measured-not-vibes">Why it's different</a> &nbsp;·&nbsp; <a href="#loops-all-the-way-up">The loops</a> &nbsp;·&nbsp; <b><a href="#install">Install</a></b> &nbsp;·&nbsp; <a href="#whats-in-the-box">What's in the box</a> &nbsp;·&nbsp; <a href="docs/11-using-compass.md">📚 Docs</a>
+  <a href="#see-it-work">▶ See it work</a> &nbsp;·&nbsp; <a href="#why-its-different--measured-not-vibes">Why it's different</a> &nbsp;·&nbsp; <a href="#-the-part-people-screenshot-it-fixes-its-own-prs">The self-fixing PR loop</a> &nbsp;·&nbsp; <b><a href="#install">Install</a></b> &nbsp;·&nbsp; <a href="#whats-in-the-box">What's in the box</a> &nbsp;·&nbsp; <a href="docs/11-using-compass.md">📚 Docs</a>
 </p>
 
 ---
@@ -88,10 +97,10 @@ No service, no telemetry, no `--dangerously-skip-permissions`; `git pull` to upd
 
 Smallest leap of faith first — **the governance moment**, then **feel it**, then **see the proof**, then **see how it works.**
 
-**0 · The agent stops at your number** — set a dollar cap and the session hard-stops before it overspends. Real session, no edits:
+**0 · The budget ceiling, annotated** — the same hard-stop as the hero clip, as a clean walkthrough ($1.80 ✓ → $4.10 ✓ → $5.00 HALTED). Usage trackers report spend; compass enforces it:
 
 <p align="center">
-  <a href="docs/02-cost-and-models.md" title="Live budget ceiling — docs/02-cost-and-models.md"><img src="assets/budget-real.gif" alt="Real Claude Code session with COMPASS_MAX_USD=0.05: 'run ls' executes fine while session cost climbs ($0.09 → $0.25), then 'run git log' is BLOCKED — 'Budget ceiling reached: this session has spent ~$0.35, at or over your $0.05 cap. Stopping before it spends more.' Usage trackers report spend; compass enforces it." width="820"></a>
+  <a href="docs/02-cost-and-models.md" title="Live budget ceiling — docs/02-cost-and-models.md"><img src="assets/budget.gif" alt="Terminal demo: with COMPASS_MAX_USD=5, the agent's actions are checked against the cap live — $1.80 allowed, $4.10 allowed, then at $5.00 the next action is HALTED (red) before it spends more. Usage trackers report spend; compass enforces it." width="800"></a>
 </p>
 
 **1 · The day-to-day feel** — guardrails, the cost-aware status line, the loop, and the crew, in ~25 seconds:
