@@ -88,10 +88,10 @@ No service, no telemetry, no `--dangerously-skip-permissions`; `git pull` to upd
 
 Smallest leap of faith first — **the governance moment**, then **feel it**, then **see the proof**, then **see how it works.**
 
-**0 · The agent stops at your number** — set a dollar cap and the session hard-stops before it overspends. No service, no wiring, no tokens to watch it:
+**0 · The agent stops at your number** — set a dollar cap and the session hard-stops before it overspends. Real session, no edits:
 
 <p align="center">
-  <a href="docs/02-cost-and-models.md" title="Live budget ceiling — docs/02-cost-and-models.md"><img src="assets/budget.gif" alt="Terminal demo: with COMPASS_MAX_USD=5, the agent's actions are checked against the cap live — $1.80 allowed, $4.10 allowed, then at $5.00 the next action is HALTED (red) before it spends more. Usage trackers report spend; compass enforces it." width="800"></a>
+  <a href="docs/02-cost-and-models.md" title="Live budget ceiling — docs/02-cost-and-models.md"><img src="assets/budget-real.gif" alt="Real Claude Code session with COMPASS_MAX_USD=0.05: 'run ls' executes fine while session cost climbs ($0.09 → $0.25), then 'run git log' is BLOCKED — 'Budget ceiling reached: this session has spent ~$0.35, at or over your $0.05 cap. Stopping before it spends more.' Usage trackers report spend; compass enforces it." width="820"></a>
 </p>
 
 **1 · The day-to-day feel** — guardrails, the cost-aware status line, the loop, and the crew, in ~25 seconds:
