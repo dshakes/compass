@@ -5,8 +5,32 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.19.0] — 2026-06-21
+
+### Added
+
+- **Live in-session budget hard-gate.** New `claude/hooks/budget-gate.sh` (PreToolUse) halts a
+  session *before the next tool call* once estimated spend meets/exceeds a ceiling you set
+  (`COMPASS_MAX_USD`, or `max_usd=` in `~/.compass/config`). Usage trackers report spend; this
+  enforces it — an agent can't quietly run up a bill while you're away. The status line drops a
+  per-session cost breadcrumb (`~/.compass/sessions/<id>.cost`) that the gate reads, so the
+  ceiling is accurate to the last render. Off by default and **fails open** (no cap / no render
+  yet → never blocks): a cost guardrail, not a security boundary. Wired in both
+  `claude/settings.json` and `plugins/core/hooks/hooks.json`; CI-gated by
+  `scripts/test-budget-gate.sh` (12 cases). The live counterpart to the existing
+  `compass spend --max-usd` ledger gate (unchanged). `docs/02-cost-and-models.md`.
+- **`assets/budget.gif`** — a reproducible demo of the budget ceiling (via `demo/budget.tape` /
+  `make demo-budget`) that drives the real hook, so the HALT shown is honest.
+- **Plugin-directory submission checklist** in `docs/05-plugin.md`.
+
 ### Changed
 
+- **README re-cut to lead with governance** — "what your coding agent can spend, run, and call
+  done, plus the receipts." The budget ceiling is a featured claim and a no-wiring "See it work"
+  beat; the off-positioning "senior teammate" framing was dropped. No capability removed.
+- Plugin manifests surface `budget-control`.
+- **`anthropics/claude-code-action` bumped to v1.0.148** across the `.github/workflows/` mirrors
+  and `sdlc/workflows/` templates in lockstep (drift gate stays green).
 - **`assets/loop.gif` is now a real recording, not a reenactment.** Headless screencast of
   the loop closing itself on a live public PR
   ([compass-loop-demo#1](https://github.com/dshakes/compass-loop-demo/pull/1)): Blocking

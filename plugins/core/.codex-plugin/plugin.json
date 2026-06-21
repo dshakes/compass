@@ -1,6 +1,6 @@
 {
   "name": "core",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "Cost-tiered specialist subagents, workflow commands, guardrail + red-team + auto-quality hooks, repo-bootstrap and using-compass skills, and parity MCP servers — for serious polyglot software work.",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
