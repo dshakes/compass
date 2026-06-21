@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin.json",
   "name": "core-lsp",
   "displayName": "compass — LSP",
-  "version": "0.19.0",
+  "version": "0.19.1",
   "description": "Language-server intelligence (diagnostics, navigation) for Go, Rust, TypeScript, and Python. Opt-in companion to core — requires the language servers installed on PATH.",
   "author": {
     "name": "Shekhar Mudarapu",

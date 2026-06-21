@@ -5,6 +5,18 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.19.1] — 2026-06-21
+
+### Changed
+
+- **Plugin display names rebranded** to `compass` (was `Core`) and `compass — LSP` (was
+  `Core — LSP`) so directory/marketplace listings carry the brand instead of a generic
+  "Core". Cosmetic — the install ids (`core` / `core-lsp`) are unchanged, so
+  `/plugin install core@compass` and existing installs are unaffected. Cut as a patch
+  release because clients resolve the marketplace to the latest release tag, and the rename
+  landed just after v0.19.0.
+- `docs/launch-kit.md` submission copy updated to feature the live budget hard-gate.
+
 ## [0.19.0] — 2026-06-21
 
 ### Added
