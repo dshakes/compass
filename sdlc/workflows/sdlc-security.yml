@@ -26,7 +26,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Claude security review
-        uses: anthropics/claude-code-action@36a69b6a90b850823f86de06fdfd56264772ad98 # v1
+        uses: anthropics/claude-code-action@d5726de019ec4498aa667642bc3a80fca83aa102 # v1
         with:
           # Subscription token (no API credits); for a pay-per-use key use:
           #   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
