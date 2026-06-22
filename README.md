@@ -40,9 +40,17 @@ git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && ./quic
 
 ### ⭐ The part people screenshot: it fixes its own PRs.
 
-Open a pull request and compass **reviews it, security-checks it, runs the tests, cross-audits it with a second model — then pushes its own fixes until it's green.** You just merge.
+</div>
 
-**The idea in one line: the loop is the unit of work.** A one-shot agent stops at its first wrong answer. compass *loops* — **generate → test → critique → fix → repeat against a gate** — so quality comes from iteration, not one lucky prompt. The same closed loop runs a single PR, or your whole fleet of repos overnight. *(Try it locally in 30s, no tokens — [watch it ↓](#see-it-work).)*
+<p align="center">
+  <a href="https://github.com/dshakes/compass-loop-demo/pull/1" title="The actual PR in this recording — click through and inspect every event"><img src="assets/loop.gif" alt="Real screen recording of the loop on a live PR: the Reviewer posts Blocking findings and labels agent:needs-fix → the Builder pushes 'fix: correct off-by-one' to the PR's own branch → re-review goes clean and agent:reviewed-clean replaces agent:needs-fix. No human touched it; the merge stays yours." width="820"></a>
+</p>
+
+<div align="center">
+
+Open a PR and compass **reviews it, security-checks it, runs the tests, cross-audits it with a second model — then pushes its own fixes until it's green.** You merge. **☝ That's a real PR** — every event above is inspectable.
+
+**The idea in one line: the loop is the unit of work.** A one-shot agent stops at its first wrong answer. compass *loops* — **generate → test → critique → fix → repeat against a gate** — so quality comes from iteration, not one lucky prompt. The same closed loop drives a single PR, or your whole fleet of repos overnight. → [how the loop works](docs/09-sdlc.md) · [the thesis](docs/loop-engineering.md)
 
 </div>
 
@@ -109,11 +117,7 @@ Smallest leap of faith first — **the governance moment**, then **feel it**, th
   <a href="docs/11-using-compass.md" title="placeholder link — repoint to a demo/video/landing"><img src="demo/preview.gif" alt="Terminal demo: compass blocks 'rm -rf /' (red) while 'rm -rf ./build' is allowed (green), shows the cost-aware status line, then the autonomous PR loop — review · security · tests · Codex audit → BLOCKING auto-fixes on the branch and re-reviews → CLEAN → you merge." width="800"></a>
 </p>
 
-**2 · The headline, on a real PR** — a Blocking bug and red tests, and it pushes its *own* fix until the PR is green (then waits for you):
-
-<p align="center">
-  <a href="https://github.com/dshakes/compass-loop-demo/pull/1" title="this is the actual PR in the recording — click through and inspect every event"><img src="assets/loop.gif" alt="Real screen recording of the loop on a live PR: the Reviewer posts Blocking findings and labels agent:needs-fix → the Builder pushes 'fix: correct off-by-one' to the PR's own branch → re-review goes clean and agent:reviewed-clean replaces agent:needs-fix. No human touched it; the merge stays yours." width="820"></a>
-</p>
+**2 · The headline, on a real PR** — the loop recording at the top is a real session; [**open the actual PR**](https://github.com/dshakes/compass-loop-demo/pull/1) and inspect every event yourself: Blocking review → `agent:needs-fix` → Builder fix commit on the branch → re-review clean → `agent:reviewed-clean`. No human touched it; the merge stayed theirs.
 
 **3 · How that loop works** — review · security · tests · Codex cross-audit run in parallel; Blocking findings get auto-fixed and re-reviewed (round-capped) until green, then it stops at you:
 
@@ -254,6 +258,7 @@ Built to be **trusted before it's run** — and honest about its limits.
 ## Docs
 
 **[Start here → Using compass](docs/11-using-compass.md)** — install, the pieces in plain language, the daily workflow.
+**[The thesis → Loop engineering](docs/loop-engineering.md)** — why iteration-under-a-gate beats a one-shot guess (the idea compass is built on).
 
 [Philosophy](docs/00-philosophy.md) · [Architecture](docs/01-architecture.md) · [Cost & models](docs/02-cost-and-models.md) · [Customize](docs/03-customize.md) · [MCP](docs/04-mcp.md) · [Plugin & team rollout](docs/05-plugin.md) · [LSP](docs/06-lsp.md) · [Practices](docs/07-practices.md) · [Defaults](docs/08-defaults.md) · [SDLC](docs/09-sdlc.md) · [Roadmap](docs/10-roadmap.md) · [Every agent](docs/12-every-agent.md) · [Dynamic workflows](docs/13-workflows.md) · [Fleet](docs/14-fleet.md) · [Competitive audit](docs/15-competitive-audit.md) · [Hardening + frontier](docs/16-hardening-and-frontier.md) · [Red-team](docs/17-red-team.md) · [Open benchmark](docs/18-benchmark.md) · [Provenance](docs/19-provenance.md) · [Router module](router/README.md) · [ADRs](docs/adr/)
 
