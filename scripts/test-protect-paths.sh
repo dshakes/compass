@@ -105,6 +105,13 @@ must_allow 'git push origin feature/login'
 must_allow 'git push -u origin my-branch'
 must_allow 'git push --force origin my-feature-branch'      # force is fine off protected branches
 POLICY_CURRENT_BRANCH=feature/x must_allow 'git push --force'
+# A stray -f / --force from an UNRELATED token must not flag a CLEAN push to a protected
+# branch (regression: `[ -f file ]`, `grep -f`, `tail -f` sharing a command with git push).
+POLICY_CURRENT_BRANCH=main must_allow '[ -f docs/x.md ] && git commit -m msg && git push origin main'
+POLICY_CURRENT_BRANCH=main must_allow 'tail -f build.log
+git push origin main'
+POLICY_CURRENT_BRANCH=main must_allow 'grep -f patterns.txt src && git push origin main'
+POLICY_CURRENT_BRANCH=main must_allow 'git push origin main && tail -f /var/log/app.log'
 POLICY_CURRENT_BRANCH=feature/x must_allow 'git reset --hard HEAD~1'
 must_allow 'git reset --soft HEAD~1'
 must_allow 'chmod 777 ./scratch.sh'

@@ -163,7 +163,12 @@ danger_reason() {
   # 4 · Force-push / plus-refspec push to a protected branch (handles `git -c … push`).
   if printf '%s' "$norm" | grep -Eq -- '(^| )git( |$)' && printf '%s' "$norm" | grep -Eq -- '(^| )push( |$)'; then
     local forced=0
-    printf '%s' "$norm" | grep -Eq -- '(--force-with-lease|--force|(^| )-f( |$)| -[a-zA-Z]*f([^a-z]|$))' && forced=1
+    # Force flags must belong to the push invocation itself — after "push", on the same
+    # line, before the next separator (| ; &). Matching a bare -f/--force anywhere in the
+    # command false-positives when a CLEAN push merely shares a command with an unrelated
+    # token like `[ -f file ]`, `grep -f`, or `tail -f`. (grep is line-oriented.)
+    printf '%s' "$norm" | grep -Eq -- 'push[^|;&]* --force(-with-lease)?([^a-z]|$)' && forced=1
+    printf '%s' "$norm" | grep -Eq -- 'push[^|;&]* -[a-zA-Z]*f([^a-z]|$)' && forced=1   # -f / -vf etc.
     printf '%s' "$norm" | grep -Eq -- 'push[^|;&]* \+[A-Za-z0-9_./-]+' && forced=1   # +refspec (force)
     if [ "$forced" = 1 ]; then
       local hit=0

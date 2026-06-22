@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin.json",
   "name": "core",
   "displayName": "compass",
-  "version": "0.19.2",
+  "version": "0.19.3",
   "description": "Cost-tiered specialist subagents, workflow commands, guardrail + live-budget-ceiling + auto-quality hooks, a repo-bootstrap skill, a terse output style, and parity MCP servers — for serious polyglot software work.",
   "author": {
     "name": "Shekhar Mudarapu",

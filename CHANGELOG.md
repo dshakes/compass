@@ -5,7 +5,19 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
-## [0.19.2] — 2026-06-21
+## [0.19.3] — 2026-06-22
+
+### Fixed
+
+- **Guardrail false-positive: a clean `git push` to a protected branch was blocked as a
+  "force-push" when the command merely contained an unrelated `-f` token** — e.g.
+  `[ -f file ] && … && git push origin main`, `tail -f log; git push origin main`, or
+  `grep -f patterns … && git push origin main`. The force-flag check scanned the whole
+  command instead of the push invocation; it's now scoped to flags that follow `push` on
+  the same line (`claude/hooks/lib/policy.sh`). Real force-pushes (`--force`,
+  `--force-with-lease`, `-f`, `+refspec`, `git -c … push --force`, force-push of the
+  current protected branch) still block. Four regression cases added to the bypass corpus
+  (`scripts/test-protect-paths.sh`, now 111).
 
 ### Fixed
 
