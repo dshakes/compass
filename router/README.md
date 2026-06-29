@@ -14,6 +14,10 @@ agent loop: microsecond, offline, deterministic, auditable. Per RouterBench, tra
 only modestly beat trivial baselines on a realistic mix — so a good keyword+length heuristic
 captures most of the savings with none of the latency/cost/dependency.
 
+> **Prior art, far end:** the opposite extreme is a *learned* orchestrator sold as a single model —
+> an LLM trained (via RL) to delegate across an agent pool, even recursively. Powerful, but opaque
+> and vendor-coupled; the opposite trade from this router's spec-you-can-read determinism.
+
 ```mermaid
 flowchart LR
     T(["📝 task"]) --> H
