@@ -1,6 +1,6 @@
 {
   "name": "compass",
-  "version": "0.19.3",
+  "version": "0.20.0",
   "description": "compass — one operating manual + eval-gated guardrails, red-team hardening, a cost-tier router and signed config for your coding agent. Loads the manual as GEMINI.md and wires the same version-pinned MCP servers (context7 · fetch · git) compass uses for Claude Code and Codex.",
   "contextFileName": "GEMINI.md",
   "mcpServers": {

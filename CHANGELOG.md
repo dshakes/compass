@@ -5,6 +5,49 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.20.0] — 2026-06-28
+
+Loop-engineering expansion: the five moves of a self-running loop, each wired to a compass
+primitive, plus a guard for each of the four silent costs. See [`docs/20-loops.md`](docs/20-loops.md).
+
+### Added
+
+- **Discovery — `morning-triage` skill + cloud routine.** The loop's discovery move: reads
+  failed CI, issues opened in the last 24h, and merged commits, judges what's actionable, and
+  reconciles a durable pinned "triage state" issue. Hand-off into the SDLC loop is opt-in
+  (`TRIAGE_AUTO_HANDOFF=on`); read-only on code, never merges
+  (`claude/skills/morning-triage/`, `sdlc/routines/morning-triage.yml`).
+- **Comprehension-rot guard — `compass digest`.** Deterministic (git/gh, no model) sampler of
+  recently-merged changes you didn't hand-write: explain each, then check against the recorded
+  rationale; a ledger tracks what you've reviewed and reports how far your map has fallen behind
+  (`scripts/compass-digest.sh`, `scripts/test-digest.sh`).
+- **Daily budget ceiling — the unattended-loop circuit breaker.** `COMPASS_MAX_USD_DAY` (or
+  `max_usd_day=` in config) halts once *today's* total across this session + every loop/routine
+  that logged to the ledger meets the cap; `compass spend --today` gates a routine on the day's
+  cumulative spend. Independent of and complementary to the per-session `COMPASS_MAX_USD`
+  (`claude/hooks/budget-gate.sh`).
+- **Run-until-condition — the SDLC goal-gate.** `SDLC_GOAL="<stop condition>"` lets a fresh,
+  cheap, independent model (the `goal-judge` role; `SDLC_GOAL_MODEL`, default haiku) decide
+  whether the work is done by *running* the tests/lint each round — maker/checker, completion
+  decided by a different model than the one writing the code. The converge loop runs until the
+  review is CLEAN *and* the goal is MET (default-to-doubt), bounded by `SDLC_MAX_FIX_ROUNDS`; the
+  verdict lands in the PR body (`sdlc/orchestrate.sh`, `sdlc/roles/goal-judge.md`).
+- **Docs + diagrams.** [`docs/20-loops.md`](docs/20-loops.md) (five moves × primitives, four
+  costs → guards, the deterministic-gate and connector principles, scheduling local-vs-cloud, the
+  local tier, a first-loop recipe); two new animated SVGs (`assets/loop-turn.svg`,
+  `assets/loop-costs.svg`); a README "five moves / four costs" section.
+
+### Changed
+
+- **Evaluator now *acts*, not just reads.** The SDLC `reviewer` role and the `code-reviewer`
+  subagent default to doubt (assume broken until proven), run the checks, and judge behavior;
+  the SDLC review step's tool allowlist gains test/lint execution so that's real, not advisory.
+- **Router local-first tier.** Refreshed the `local` hybrid profile (zero-marginal-cost
+  open-weight tier for mechanical/private work, cloud opus kept as the escape hatch) and added a
+  harness-security-audit checklist to the docs (`router/router.json`, `docs/20-loops.md`).
+- **Router prior-art note** contrasting the deterministic spend-dial with the learned-orchestrator
+  extreme (`router/README.md`).
+
 ## [0.19.3] — 2026-06-22
 
 ### Fixed
