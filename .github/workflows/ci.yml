@@ -47,6 +47,9 @@ jobs:
       - name: Comprehension-rot guard (compass digest sampling + ledger)
         run: bash scripts/test-digest.sh
 
+      - name: RTK command-rewrite hook (no-op safety + rewrite shape, stubbed)
+        run: bash scripts/test-rtk-hook.sh
+
       - name: Secret self-scan (no credential lands in the repo)
         run: bash scripts/compass-scan.sh --all
 

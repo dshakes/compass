@@ -139,3 +139,5 @@ Project `CLAUDE.md` wins over anything here.
   trust boundary) get an ADR first, not a hidden comment. Use `/adr`.
 - **Multi-tenant / security boundaries are sacred** — don't widen an allowlist,
   cross a trust boundary, or relax encryption "to make it work." Flag it instead.
+
+@RTK.md
