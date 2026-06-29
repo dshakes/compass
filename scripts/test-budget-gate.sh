@@ -80,6 +80,38 @@ export COMPASS_MAX_USD=1; set_spent 9999
 out="$(printf '{"tool_name":"Bash","tool_input":{"command":"x"}}' | bash "$HOOK" 2>/dev/null)"; rc=$?
 { [ "$rc" = 0 ] && ! printf '%s' "$out" | grep -q deny; } && ok "ALLOW  no session_id" || no "should ALLOW: no session_id ($rc)"
 
+# ── Daily ceiling (COMPASS_MAX_USD_DAY): today's ledger rows + this session's breadcrumb. ──
+unset COMPASS_MAX_USD; rm -f "$COMPASS_HOME/config"
+LEDGER="$COMPASS_HOME/spend.tsv"; TODAY="$(date -u +%Y-%m-%d)"
+day_row() { printf '%sT09:00:00Z\tmyrepo\ttask\tsonnet\t%s\n' "$TODAY" "$1" >> "$LEDGER"; }   # today's spend
+old_row() { printf '2000-01-01T09:00:00Z\tmyrepo\ttask\tsonnet\t%s\n' "$1" >> "$LEDGER"; }    # a prior day
+
+echo "daily cap: ledger-today + session summed against the ceiling:"
+export COMPASS_MAX_USD_DAY=20
+: > "$LEDGER"; day_row 8.00;  clear_spent;    allow "ledger \$8 < \$20 day cap (no session render)"
+: > "$LEDGER"; day_row 8.00;  set_spent 5.00; allow "ledger \$8 + session \$5 = \$13 < \$20"
+: > "$LEDGER"; day_row 18.00; set_spent 2.00; block "ledger \$18 + session \$2 = \$20 == day cap"
+: > "$LEDGER"; day_row 25.00; clear_spent;    block "ledger today \$25 > \$20 (ledger alone, no session)"
+
+echo "daily cap counts only TODAY's rows:"
+: > "$LEDGER"; old_row 999;   clear_spent;    allow "a \$999 row from another day is not counted"
+
+echo "daily cap fail-open when nothing is known:"
+: > "$LEDGER"; clear_spent;                   allow "empty ledger, no session → under day cap"
+rm -f "$LEDGER"; clear_spent;                 allow "no ledger file at all → under day cap"
+unset COMPASS_MAX_USD_DAY
+
+echo "daily cap via config (max_usd_day=), env unset:"
+printf 'max_usd_day=10\n' > "$COMPASS_HOME/config"
+: > "$LEDGER"; day_row 12.00; clear_spent;    block "ledger \$12 > \$10 config day cap"
+: > "$LEDGER"; day_row 9.00;  clear_spent;    allow "ledger \$9 < \$10 config day cap"
+rm -f "$COMPASS_HOME/config" "$LEDGER"
+
+echo "session + daily are independent (session under, day over → blocks):"
+export COMPASS_MAX_USD=100 COMPASS_MAX_USD_DAY=15
+: > "$LEDGER"; day_row 14.00; set_spent 2.00; block "session \$2<\$100 cap but day \$16>\$15 cap"
+unset COMPASS_MAX_USD COMPASS_MAX_USD_DAY; rm -f "$LEDGER"
+
 echo
 printf 'budget-gate tests: %d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

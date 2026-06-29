@@ -154,6 +154,31 @@ Every loop ends the same way — **you merge.** That gate never moves.
 
 ---
 
+## The five moves of a loop — and the four costs it hides
+
+A loop that runs while you sleep is five moves on a timer: **discovery → handoff → verification → persistence → scheduling.** compass ships a primitive for each — so you assemble a *loop*, not a one-off script you forget to re-run.
+
+<p align="center">
+  <a href="docs/20-loops.md" title="The five moves, mapped to every compass primitive — docs/20-loops.md"><img src="assets/loop-turn.svg" alt="The five moves of one loop turn — discovery (morning-triage skill), handoff (git worktree), verification (evaluator subagent that assumes broken and runs it), persistence (state file + memory), scheduling (cloud routine) — arranged as a cycle that ends at a permanent human gate." width="860"></a>
+</p>
+
+The danger was never the loop — it's the four costs it runs up *silently*, where no alarm sounds while it's running. Most autonomous-agent demos guard none of them. compass guards all four:
+
+| Silent cost | What it is | The compass guard |
+|---|---|---|
+| **Verification debt** | unverified output piles up between "runs" and "right" | an independent **evaluator** that assumes broken and *runs* it — not self-review |
+| **Comprehension rot** | code you didn't write outpaces your understanding | **`compass digest`** — samples merged changes and makes you explain each |
+| **Cognitive surrender** | you stop having an opinion, take whatever it hands back | the permanent **human merge gate** — the loop executes, you decide |
+| **Token blowout** | a bug spins all night into a surprise bill | **per-day + live session budget caps** that halt the spend before it runs away |
+
+<p align="center">
+  <a href="docs/20-loops.md" title="Four silent costs, four guards — docs/20-loops.md"><img src="assets/loop-costs.svg" alt="The four silent costs of a self-running loop — verification debt, comprehension rot, cognitive surrender, token blowout — each paired with its compass guard, with a reinforcing-cycle motif showing they compound on each other." width="860"></a>
+</p>
+
+<p align="center"><sub>The whole playbook, each move mapped to the primitive that builds it → <a href="docs/20-loops.md"><b>docs/20-loops.md</b></a> · <a href="docs/loop-engineering.md">the thesis</a></sub></p>
+
+---
+
 ## Prerequisites — what you need (and what you don't)
 
 | You want… | You need | Tokens? |
@@ -227,6 +252,7 @@ Everything below is **on after one install** or a single opt-in — the autonomo
 | | Capability | One line | Deep dive |
 |---|---|---|---|
 | 🔁 | **Autonomous SDLC** | the review → security → tests → Codex audit → **auto-fix → re-review** loop; you merge | [09-sdlc](docs/09-sdlc.md) |
+| 🔄 | **Loop engineering** | the five moves wired up: `morning-triage` discovery · an acting/skeptic evaluator · `compass digest` (comprehension guard) · per-day budget cap | [20-loops](docs/20-loops.md) |
 | 🛰️ | **The fleet** | the loop, scheduled across *all* your repos through a test gate; approve from your phone | [14-fleet](docs/14-fleet.md) |
 | 👥 | **The crew + workflows** | 10 cost-tiered subagents · 12 slash-commands · 3 dynamic workflows that fact-check each other | [12](docs/12-every-agent.md) · [13](docs/13-workflows.md) |
 | 🛡 | **Guardrails & scanning** | 4 hooks block disasters, catch secrets (write-hook + `compass scan`), auto-format, keep a JSONL audit log | [16-hardening](docs/16-hardening-and-frontier.md) |
@@ -235,7 +261,7 @@ Everything below is **on after one install** or a single opt-in — the autonomo
 | 🧰 | **The compass CLI** | `onboard · impact · drift · scan · redteam · sandbox · verify · audit-log · spend · dashboard` | [11-using](docs/11-using-compass.md) |
 | 🔌 | **MCP + LSP** | curated, **version-pinned** MCP servers (context7 · fetch · git) + opt-in language-server intelligence | [04](docs/04-mcp.md) · [06](docs/06-lsp.md) |
 | 🪪 | **Every agent, one source** | Claude Code · Codex · Gemini — plus Cursor/Windsurf/Copilot via the [`AGENTS.md`](https://agents.md/) standard | [12-every-agent](docs/12-every-agent.md) |
-| 💸 | **Live budget ceiling** | a hard spend cap that halts the session before the next tool call (`COMPASS_MAX_USD`) — enforced, not just reported | [02-cost](docs/02-cost-and-models.md) |
+| 💸 | **Live budget ceiling** | a hard spend cap that halts the session before the next tool call (`COMPASS_MAX_USD`) — plus a per-day cap (`COMPASS_MAX_USD_DAY`) for unattended loops — enforced, not just reported | [02-cost](docs/02-cost-and-models.md) |
 | 💰 | **Cost discipline** | routing scored & CI-gated, per-step budget caps, `compass spend`/`impact` to see the $ | [02-cost](docs/02-cost-and-models.md) |
 
 ---
@@ -259,7 +285,8 @@ Built to be **trusted before it's run** — and honest about its limits.
 
 **[Start here → Using compass](docs/11-using-compass.md)** — install, the pieces in plain language, the daily workflow.
 **[The thesis → Loop engineering](docs/loop-engineering.md)** — why iteration-under-a-gate beats a one-shot guess (the idea compass is built on).
+**[In practice → The five moves](docs/20-loops.md)** — each move of a self-running loop, mapped to the compass primitive that builds it, and the guard for each silent cost.
 
-[Philosophy](docs/00-philosophy.md) · [Architecture](docs/01-architecture.md) · [Cost & models](docs/02-cost-and-models.md) · [Customize](docs/03-customize.md) · [MCP](docs/04-mcp.md) · [Plugin & team rollout](docs/05-plugin.md) · [LSP](docs/06-lsp.md) · [Practices](docs/07-practices.md) · [Defaults](docs/08-defaults.md) · [SDLC](docs/09-sdlc.md) · [Roadmap](docs/10-roadmap.md) · [Every agent](docs/12-every-agent.md) · [Dynamic workflows](docs/13-workflows.md) · [Fleet](docs/14-fleet.md) · [Competitive audit](docs/15-competitive-audit.md) · [Hardening + frontier](docs/16-hardening-and-frontier.md) · [Red-team](docs/17-red-team.md) · [Open benchmark](docs/18-benchmark.md) · [Provenance](docs/19-provenance.md) · [Router module](router/README.md) · [ADRs](docs/adr/)
+[Philosophy](docs/00-philosophy.md) · [Architecture](docs/01-architecture.md) · [Cost & models](docs/02-cost-and-models.md) · [Customize](docs/03-customize.md) · [MCP](docs/04-mcp.md) · [Plugin & team rollout](docs/05-plugin.md) · [LSP](docs/06-lsp.md) · [Practices](docs/07-practices.md) · [Defaults](docs/08-defaults.md) · [SDLC](docs/09-sdlc.md) · [Roadmap](docs/10-roadmap.md) · [Every agent](docs/12-every-agent.md) · [Dynamic workflows](docs/13-workflows.md) · [Fleet](docs/14-fleet.md) · [Competitive audit](docs/15-competitive-audit.md) · [Hardening + frontier](docs/16-hardening-and-frontier.md) · [Red-team](docs/17-red-team.md) · [Open benchmark](docs/18-benchmark.md) · [Provenance](docs/19-provenance.md) · [Loops in practice](docs/20-loops.md) · [Router module](router/README.md) · [ADRs](docs/adr/)
 
 <div align="center"><br><sub>MIT · built to be shared · contributions welcome</sub></div>

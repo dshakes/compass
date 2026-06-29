@@ -1,6 +1,6 @@
 # Loop engineering: iteration under a gate beats one confident guess
 
-*The thesis behind compass. Also a standalone read — you don't need to use compass to take the idea.*
+*The thesis behind compass. Also a standalone read — you don't need to use compass to take the idea. For the operational companion — the five moves of a loop turn, each mapped to the compass primitive that builds it — see [20-loops.md](20-loops.md).*
 
 ## The one-shot problem
 

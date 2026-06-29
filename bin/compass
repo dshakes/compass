@@ -37,10 +37,16 @@ usage: compass <command> [args]
                            spend by model, estimated \$ saved vs all-Opus.
   dashboard [--json|--html] Mission control: impact + spend + live fleet PR state in one
                            panel (reads ~/.compass + gh, read-only). --html writes a page.
-  spend   [--week|--month|--all] [--json] [--max-usd N]
+  spend   [--week|--month|--today|--all] [--json] [--max-usd N]
                            Agent cost dashboard + budget gate. Set COMPASS_BUDGET_USD
                            for a soft warning ceiling; --max-usd N (or COMPASS_MAX_USD)
                            exits 2 with OVER_BUDGET when total exceeds N (CI/loop gate).
+                           --today is the per-day circuit breaker for unattended loops.
+  digest  [-n N] [--since D] [--all] [--json] [--mark REF] [--reset] [DIR]
+                           Comprehension-rot guard: sample recently-merged changes you
+                           didn't hand-write and explain each before reading the rationale.
+                           Tracks what you've reviewed; reports how far your map has fallen
+                           behind. Deterministic, local, read-only on the repo.
   schedule add|list|remove|run <routine>
                            Local scheduled agents (cron + claude -p): dep-refresh,
                            flaky-triage, doc-freshness, pr-babysit.
@@ -99,6 +105,7 @@ case "$cmd" in
   impact)   run impact "$@" ;;
   dashboard) run dashboard "$@" ;;
   spend)    run spend "$@" ;;
+  digest)   run digest "$@" ;;
   schedule) run schedule "$@" ;;
   route)    run route "$@" ;;
   bench)    run bench "$@" ;;

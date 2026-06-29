@@ -149,7 +149,21 @@ outputs from `.sdlc/run-*`, then opens a PR and stops. The **closed label-loop i
 GitHub-native only** — the local runner does not simulate label-triggered re-runs.
 
 Knobs: `SDLC_NO_PR=1` (don't open the PR), `SDLC_YOLO=1` (Builder unattended),
-`SDLC_BUDGET=8` (USD hint), `SDLC_BASE=main`. Built on `claude -p` + `codex exec`.
+`SDLC_BUDGET=8` (USD hint), `SDLC_BASE=main`, `SDLC_CONVERGE=1` (loop fix→re-review until clean).
+Built on `claude -p` + `codex exec`.
+
+**Run until a condition (`SDLC_GOAL`).** Instead of stopping at "the reviewer says clean," give
+the loop an explicit stop condition and let a **fresh, independent model judge it** — completion
+decided by a different model than the one writing the code (maker/checker):
+```bash
+SDLC_GOAL="all tests in test/auth pass and the lint step is clean" \
+  ~/compass/sdlc/orchestrate.sh "harden the auth flow"
+```
+After each round a cheap judge ([`sdlc/roles/goal-judge.md`](../sdlc/roles/goal-judge.md), haiku by
+default; `SDLC_GOAL_MODEL` to override) **runs the tests/lint** and emits `SDLC-GOAL: MET|UNMET`;
+the loop continues until the review is CLEAN *and* the goal is MET, bounded by `SDLC_MAX_FIX_ROUNDS`
+(default 3). It defaults to doubt — anything but a clear MET keeps it going — and the verdict lands
+in the PR body. Setting `SDLC_GOAL` implies the converge loop. → [the five moves](20-loops.md#run-until-a-condition-not-just-n-rounds)
 
 ### B · GitHub-native — agents on your PRs
 

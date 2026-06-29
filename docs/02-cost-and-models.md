@@ -50,6 +50,14 @@ rate rather than fight it:
 - Keep your project `CLAUDE.md` lean (philosophy §3): a smaller stable prefix is both
   cheaper to cache and higher-signal. Building on the API directly? The `claude-api`
   skill bakes in `cache_control` so apps cache by default.
+- **Prefix-stability discipline (append, don't insert).** The fastest way to *lose* the
+  cache is to change something *early* in the prompt: loading a skill or tool mid-run, or
+  editing a role file's preamble, relocates the cache boundary and busts everything after it.
+  So when authoring roles/subagents/skills — keep the shared preamble byte-identical, put
+  volatile content (task args, dates, freshly-loaded memory) at the **tail**, and load the
+  *union* of likely skills up front rather than lazily mid-conversation. A later edit then
+  costs a partial re-write of the tail, not a full cache miss. (This is the load-bearing
+  lesson behind the two bullets above; it generalizes to any agent loop, not just compass's.)
 
 ### 1-hour cache TTL (extended)
 The default cache lives **5 minutes**; the extended TTL is **1 hour** (GA). 1h costs ~2× on
@@ -68,6 +76,12 @@ no CLI flag, no `settings.json` field. compass applies it where it pays:
   day is long, context-heavy sessions (the common case); skip it for short, bursty ones.
 - It does **not** apply to the raw-API path in `router/fallback-llm.sh` — that prompt is below
   the 1,024-token cache minimum, so caching is a no-op there regardless of TTL.
+- **Bedrock caveat:** on the Claude-via-Bedrock path (`CLAUDE_CODE_USE_BEDROCK`) this env var may
+  be silently ignored — Claude Code has historically pinned the Bedrock cache TTL to 5m
+  ([anthropics/claude-code#32671](https://github.com/anthropics/claude-code/issues/32671)).
+  Bedrock *itself* supports 1h on the 4.5 models (a `cachePoint` with `"ttl":"1h"` in the Converse
+  API), but that's the raw API, not the harness path. Treat 1h as a no-op on Bedrock until that's
+  fixed; the default 5m cache still works, and reads still drop to 0.1×.
 
 ## Bring your own model — local LLMs & cost routers (Codex side)
 The cheapest token is one you don't pay for. Codex talks to **any OpenAI-compatible endpoint**,
@@ -107,6 +121,17 @@ Cross-provider *smart routing* as a first-class compass layer is roadmapped (`do
   blocks; a budget ceiling must not wedge a session on missing data. It's a cost guardrail, not a
   security boundary, and (today) depends on the compass status line being active. To continue past
   a stop, raise `COMPASS_MAX_USD` or start a fresh session.
+- **Daily ceiling (the unattended-loop circuit breaker):** a per-day cap across *every* run, not
+  just one session — set it **before** you let loops run unattended, on the assumption something
+  will spin idle overnight. The same `budget-gate.sh` hook blocks once **today's total** (this
+  session's breadcrumb + every loop/routine that logged to `~/.compass/spend.tsv`) meets/exceeds it:
+  ```bash
+  export COMPASS_MAX_USD_DAY=20            # halt once today's combined spend hits $20
+  echo 'max_usd_day=20' >> ~/.compass/config   # persistent daily ceiling
+  compass spend --today --max-usd 20      # gate a routine on the day's cumulative spend (exit 2 = over)
+  ```
+  Like the session cap it fails open (unknown spend never blocks) and is independent of it — a day
+  of many cheap sessions can't blow the daily budget even if no single one trips the session cap.
 - **Per-run budget cap:** every autonomous step is hard-capped — `--max-budget-usd` on each
   cloud workflow step and on each `orchestrate.sh` Claude step (`SDLC_BUDGET`/4 by default).
 - **Pre-run estimate:** `orchestrate.sh` prints the per-step cap and total budget hint before
@@ -116,7 +141,7 @@ Cross-provider *smart routing* as a first-class compass layer is roadmapped (`do
   per-step breakdown + total, and includes a **Spend** line in the PR body. (QA is free; the
   Codex audit isn't tallied.)
 - **Aggregate across runs/repos:** each step's cost is also appended to a global ledger
-  `~/.compass/spend.tsv`. `compass spend [--week|--month|--all]` rolls it up by model and repo;
+  `~/.compass/spend.tsv`. `compass spend [--today|--week|--month|--all]` rolls it up by model and repo;
   set a ceiling with `COMPASS_BUDGET_USD` (or `budget_usd=` in `~/.compass/config`) and it shows
   OK / over-80% / over.
 - **Hard budget gate (CI/loops):** `--max-usd N` (or `COMPASS_BUDGET_USD` for soft warnings vs

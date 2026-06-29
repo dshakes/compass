@@ -130,7 +130,14 @@ compass onboard             # detect stack → install deps → build+test green
 ```
 Or `/onboard` inside a Claude session. The full `compass` CLI: `status` (is it enabled here?),
 `onboard` (+ `--all <glob>` for many repos), `impact` (benefit dashboard), `spend` (cost +
-budget), `schedule` (local cron routines), `route` (model tier). Run `compass help` for the list.
+budget, `--today` for the per-day loop cap), `digest` (comprehension guard — sample merged
+changes you didn't hand-write and explain them), `schedule` (local cron routines), `route`
+(model tier). Run `compass help` for the list.
+
+> **Running loops while you sleep?** See [the five moves of a loop](20-loops.md): wire
+> `morning-triage` for discovery, keep the acting evaluator gating each change, set
+> `COMPASS_MAX_USD_DAY` before the first unattended run, and make `compass digest` a daily habit
+> so the code the loop merges never outruns your understanding of it.
 
 ---
 

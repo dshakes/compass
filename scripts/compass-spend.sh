@@ -5,7 +5,8 @@
 #   Ledger:  ${COMPASS_HOME:-~/.compass}/spend.tsv
 #   Columns: timestamp_iso8601<TAB>repo<TAB>task<TAB>model<TAB>cost_usd
 #
-# Usage:  compass spend [--week|--month|--all] [--json] [--max-usd N]  (default: --month)
+# Usage:  compass spend [--today|--week|--month|--all] [--json] [--max-usd N]  (default: --month)
+#         --today is the per-day circuit breaker for unattended loops (gate today's spend).
 # Budget: env COMPASS_BUDGET_USD, else `budget_usd=<n>` in ${COMPASS_HOME}/config.
 # Gate:   env COMPASS_MAX_USD (or --max-usd N): exit 2 with OVER_BUDGET if total exceeds cap.
 set -euo pipefail
@@ -17,6 +18,7 @@ CONFIG="$COMPASS_HOME/config"
 WINDOW="month"; JSON=0; MAX_USD=""
 while [ "$#" -gt 0 ]; do
   case "$1" in
+    --today) WINDOW="today" ;;
     --week)  WINDOW="week"  ;;
     --month) WINDOW="month" ;;
     --all)   WINDOW="all"   ;;
@@ -26,7 +28,7 @@ while [ "$#" -gt 0 ]; do
       MAX_USD="$2"; shift
       ;;
     --max-usd=*) MAX_USD="${1#--max-usd=}" ;;
-    -h|--help) printf 'usage: compass spend [--week|--month|--all] [--json] [--max-usd N]\n'; exit 0 ;;
+    -h|--help) printf 'usage: compass spend [--today|--week|--month|--all] [--json] [--max-usd N]\n'; exit 0 ;;
     *) printf 'unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
   shift
@@ -54,7 +56,9 @@ fi
 
 # Window cutoff (ISO date prefix; ISO timestamps sort lexicographically).
 CUTOFF=""
-if [ "$WINDOW" = week ]; then
+if [ "$WINDOW" = today ]; then
+  CUTOFF="$(date -u +%Y-%m-%d)"
+elif [ "$WINDOW" = week ]; then
   CUTOFF="$(date -v-7d +%Y-%m-%d 2>/dev/null || date -d '7 days ago' +%Y-%m-%d 2>/dev/null || echo 0000-00-00)"
 elif [ "$WINDOW" = month ]; then
   CUTOFF="$(date +%Y-%m)"

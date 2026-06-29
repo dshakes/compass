@@ -23,9 +23,9 @@
   "profiles": {
     "default": {},
     "anthropic": { "haiku": { "cost": 1 }, "sonnet": { "cost": 4 }, "opus": { "cost": 20 } },
-    "local":    { "haiku": { "cost": 0, "model": "ollama/qwen2.5-coder" }, "sonnet": { "cost": 0, "model": "ollama/qwen2.5-coder:32b" }, "opus": { "cost": 4, "model": "claude-opus-4-8" } }
+    "local":    { "haiku": { "cost": 0, "model": "ollama/qwen3-coder" }, "sonnet": { "cost": 0, "model": "ollama/qwen3-coder:30b" }, "opus": { "cost": 4, "model": "claude-opus-4-8" } }
   },
-  "_profiles_note": "select with --profile NAME; a profile overrides per-tier cost/model. Use it so bench.sh savings reflect YOUR prices and so each app (lantern/kage) maps tiers to its own models.",
+  "_profiles_note": "select with --profile NAME; a profile overrides per-tier cost/model. Use it so bench.sh savings reflect YOUR prices and so each app (lantern/kage) maps tiers to its own models. The `local` profile is a local-first HYBRID example: haiku/sonnet map to a zero-marginal-cost open-weight coder model served over an OpenAI-compatible endpoint (Ollama, http://127.0.0.1:11434/v1), while opus STAYS on the cloud as the escape hatch for work beyond local hardware — cheap/mechanical/private work runs local for free, only the hard high-stakes minority escalates. Audit the harness before pointing it at a local endpoint (see docs/20-loops.md).",
 
   "clamps": { "floor": "haiku", "ceiling": "opus", "allow": [] },
   "_clamps_note": "hard bounds applied LAST. floor = never route below; ceiling = never above (cost cap). allow = explicit allowlist (overrides floor/ceiling when non-empty). Override per run: --floor/--ceiling/--allow.",

@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#0a0e14"/>
+    </linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"   stop-color="#cf222e"/>
+      <stop offset="0.5" stop-color="#8A63D2"/>
+      <stop offset="1"   stop-color="#2ea44f"/>
+      <animateTransform attributeName="gradientTransform" type="translate" values="-0.3 0;0.3 0;-0.3 0" dur="6s" repeatCount="indefinite"/>
+    </linearGradient>
+    <marker id="ar"  viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8b949e"/></marker>
+    <marker id="arp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8A63D2"/></marker>
+    <marker id="arg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2ea44f"/></marker>
+    <marker id="arb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#58a6ff"/></marker>
+    <filter id="g" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <g id="ic-human" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="0" cy="-4.4" r="3"/><path d="M-5.6,7.4 C-5.6,1.2 5.6,1.2 5.6,7.4"/>
+    </g>
+  </defs>
+
+  <rect x="1" y="1" width="1198" height="558" rx="20" fill="url(#bg)" stroke="#30363d" stroke-width="2"/>
+  <rect x="1" y="556" width="1198" height="4" fill="url(#acc)"/>
+
+  <!-- header -->
+  <g transform="translate(56,46)">
+    <circle r="20" fill="#161b22" stroke="#8A63D2" stroke-width="2.5"/>
+    <g>
+      <path d="M0,-12 A12,12 0 1 1 -10.4,6" fill="none" stroke="#58a6ff" stroke-width="3" stroke-linecap="round"/>
+      <polygon points="-13,2 -7,9 -16,11" fill="#58a6ff"/>
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="4s" repeatCount="indefinite"/>
+    </g>
+    <text x="36" y="2"  font-size="25" font-weight="800" fill="#f0f6fc">The loop turn</text>
+    <text x="37" y="22" font-size="14" fill="#8b949e">five moves · each realized by a compass primitive</text>
+  </g>
+
+  <!-- ============ the five move boxes (left → right) ============ -->
+  <!-- 1 · Discovery -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="0.2s" dur="0.6s" fill="freeze"/>
+    <rect x="62" y="132" width="195" height="84" rx="13" fill="#161b22" stroke="#8A63D2" stroke-width="2"/>
+    <text x="159" y="160" text-anchor="middle" font-size="14" font-weight="800" fill="#a371f7">1 · Discovery</text>
+    <text x="159" y="181" text-anchor="middle" font-size="10.5" fill="#8b949e">find this turn's work</text>
+    <text x="159" y="201" text-anchor="middle" font-size="11" font-weight="700" fill="#adbac7">morning-triage skill</text>
+  </g>
+  <!-- 2 · Handoff -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="0.45s" dur="0.6s" fill="freeze"/>
+    <rect x="293" y="132" width="195" height="84" rx="13" fill="#161b22" stroke="#e3b341" stroke-width="2"/>
+    <text x="390" y="160" text-anchor="middle" font-size="14" font-weight="800" fill="#e3b341">2 · Handoff</text>
+    <text x="390" y="181" text-anchor="middle" font-size="10.5" fill="#8b949e">isolate each task</text>
+    <text x="390" y="201" text-anchor="middle" font-size="11" font-weight="700" fill="#adbac7">a git worktree</text>
+  </g>
+  <!-- 3 · Verification (highlighted — the move that says no) -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="0.7s" dur="0.6s" fill="freeze"/>
+    <rect x="524" y="132" width="195" height="84" rx="13" fill="#161b22" stroke="#cf222e" stroke-width="2.4" filter="url(#g)">
+      <animate attributeName="stroke" values="#cf222e;#cf222e;#2ea44f;#2ea44f;#cf222e" keyTimes="0;0.4;0.5;0.9;1" dur="5s" repeatCount="indefinite"/>
+    </rect>
+    <text x="621" y="160" text-anchor="middle" font-size="14" font-weight="800" fill="#f0f6fc">3 · Verification</text>
+    <text x="621" y="181" text-anchor="middle" font-size="10.5" fill="#8b949e">the move that says <tspan fill="#f0596b" font-weight="700">NO</tspan></text>
+    <text x="621" y="201" text-anchor="middle" font-size="11" font-weight="700" fill="#adbac7">evaluator subagent</text>
+  </g>
+  <!-- 4 · Persistence -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="0.95s" dur="0.6s" fill="freeze"/>
+    <rect x="755" y="132" width="195" height="84" rx="13" fill="#161b22" stroke="#58a6ff" stroke-width="2"/>
+    <text x="852" y="160" text-anchor="middle" font-size="14" font-weight="800" fill="#58a6ff">4 · Persistence</text>
+    <text x="852" y="181" text-anchor="middle" font-size="10.5" fill="#8b949e">state outlives the chat</text>
+    <text x="852" y="201" text-anchor="middle" font-size="11" font-weight="700" fill="#adbac7">state file + memory</text>
+  </g>
+  <!-- 5 · Scheduling -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="1.2s" dur="0.6s" fill="freeze"/>
+    <rect x="986" y="132" width="195" height="84" rx="13" fill="#161b22" stroke="#2ea44f" stroke-width="2"/>
+    <text x="1083" y="160" text-anchor="middle" font-size="14" font-weight="800" fill="#3fb950">5 · Scheduling</text>
+    <text x="1083" y="181" text-anchor="middle" font-size="10.5" fill="#8b949e">make it turn again</text>
+    <text x="1083" y="201" text-anchor="middle" font-size="11" font-weight="700" fill="#adbac7">cloud routine · cron</text>
+  </g>
+
+  <!-- inter-box arrows + flowing tokens -->
+  <line x1="257" y1="174" x2="291" y2="174" stroke="#8b949e" stroke-width="2.5" marker-end="url(#ar)"/>
+  <line x1="488" y1="174" x2="522" y2="174" stroke="#8b949e" stroke-width="2.5" marker-end="url(#ar)"/>
+  <line x1="719" y1="174" x2="753" y2="174" stroke="#8b949e" stroke-width="2.5" marker-end="url(#ar)"/>
+  <line x1="950" y1="174" x2="984" y2="174" stroke="#8b949e" stroke-width="2.5" marker-end="url(#ar)"/>
+  <circle r="3" fill="#a371f7" filter="url(#g)"><animateMotion path="M257,174 L289,174" dur="1.5s" repeatCount="indefinite"/></circle>
+  <circle r="3" fill="#e3b341" filter="url(#g)"><animateMotion path="M488,174 L520,174" dur="1.5s" begin="0.3s" repeatCount="indefinite"/></circle>
+  <circle r="3" fill="#f0596b" filter="url(#g)"><animateMotion path="M719,174 L751,174" dur="1.5s" begin="0.6s" repeatCount="indefinite"/></circle>
+  <circle r="3" fill="#58a6ff" filter="url(#g)"><animateMotion path="M950,174 L982,174" dur="1.5s" begin="0.9s" repeatCount="indefinite"/></circle>
+
+  <!-- ===== Verification inset: generator vs evaluator ===== -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="1.5s" dur="0.6s" fill="freeze"/>
+    <path d="M621,216 V236" fill="none" stroke="#6e7681" stroke-width="2" marker-end="url(#ar)"/>
+    <rect x="408" y="240" width="426" height="86" rx="12" fill="#0d1117" stroke="#30363d" stroke-width="1.6"/>
+    <text x="621" y="259" text-anchor="middle" font-size="10.5" letter-spacing="1" fill="#8b949e">SEPARATE THE WRITER FROM THE JUDGE</text>
+    <rect x="424" y="270" width="174" height="42" rx="9" fill="#161b22" stroke="#8A63D2" stroke-width="1.6"/>
+    <text x="511" y="289" text-anchor="middle" font-size="12" font-weight="700" fill="#a371f7">Generator</text>
+    <text x="511" y="304" text-anchor="middle" font-size="10" fill="#8b949e">writes the code</text>
+    <line x1="600" y1="291" x2="642" y2="291" stroke="#8b949e" stroke-width="2.2" marker-end="url(#ar)"/>
+    <rect x="644" y="270" width="174" height="42" rx="9" fill="#161b22" stroke="#2ea44f" stroke-width="1.6"/>
+    <text x="731" y="289" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">Evaluator</text>
+    <text x="731" y="304" text-anchor="middle" font-size="10" fill="#8b949e">assumes broken · runs it</text>
+    <text x="849" y="284" font-size="11" fill="#adbac7">fresh model —</text>
+    <text x="849" y="300" font-size="11" fill="#adbac7">acts, doesn't</text>
+    <text x="849" y="316" font-size="11" fill="#adbac7">just read</text>
+  </g>
+
+  <!-- ===== the loop-back: scheduling feeds discovery (yesterday's state → today) ===== -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="1.8s" dur="0.6s" fill="freeze"/>
+    <path d="M1083,216 C 1150,320 1150,402 600,402 C 60,402 50,320 159,216"
+          fill="none" stroke="#8A63D2" stroke-width="2.4" stroke-dasharray="8 6" marker-end="url(#arp)">
+      <animate attributeName="stroke-dashoffset" from="56" to="0" dur="1.1s" repeatCount="indefinite"/>
+    </path>
+    <text x="975" y="368" text-anchor="middle" font-size="12" font-weight="700" fill="#a371f7">↻ it loops</text>
+    <text x="600" y="358" text-anchor="middle" font-size="11.5" fill="#8b949e">the state file carries yesterday's unfinished work into today's run — what makes it a loop, not a one-off</text>
+  </g>
+  <circle r="3.5" fill="#a371f7" filter="url(#g)"><animateMotion path="M1083,216 C 1150,320 1150,402 600,402 C 60,402 50,320 159,216" dur="3.2s" repeatCount="indefinite"/></circle>
+
+  <!-- ===== the human gate (the open door) ===== -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="2.1s" dur="0.6s" fill="freeze"/>
+    <path d="M600,402 V428" fill="none" stroke="#58a6ff" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arb)"/>
+    <rect x="452" y="430" width="296" height="64" rx="13" fill="#13261a" stroke="#3fb950" stroke-width="2.2"/>
+    <g color="#58a6ff" transform="translate(486,462)"><use href="#ic-human" x="0" y="0"/></g>
+    <text x="600" y="456" text-anchor="middle" font-size="13.5" font-weight="800" fill="#3fb950">the open door — you merge</text>
+    <text x="600" y="478" text-anchor="middle" font-size="11" fill="#adbac7">agents prepare · you own the irreversible</text>
+  </g>
+
+  <!-- footer -->
+  <text x="600" y="540" text-anchor="middle" font-size="13" fill="#8b949e">find → hand off → <tspan fill="#f0596b" font-weight="700">verify</tspan> → persist → schedule → <tspan fill="#a371f7" font-weight="700">it loops</tspan> — and <tspan fill="#3fb950" font-weight="700">you stay the engineer</tspan></text>
+</svg>

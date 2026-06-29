@@ -41,8 +41,11 @@ jobs:
       - name: Guardrail bypass corpus (protect-paths policy eval)
         run: bash scripts/test-protect-paths.sh
 
-      - name: Budget ceiling (live spend hard-gate eval)
+      - name: Budget ceiling (live spend hard-gate eval — session + daily)
         run: bash scripts/test-budget-gate.sh
+
+      - name: Comprehension-rot guard (compass digest sampling + ledger)
+        run: bash scripts/test-digest.sh
 
       - name: Secret self-scan (no credential lands in the repo)
         run: bash scripts/compass-scan.sh --all

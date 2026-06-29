@@ -143,6 +143,36 @@ eq "CLEAN verdict → 0 rounds (never enters)" "$(converge_stops_on_clean 3)" "0
 MAXR_DEFAULT="${SDLC_MAX_FIX_ROUNDS:-3}"
 eq "SDLC_MAX_FIX_ROUNDS default is 3" "$MAXR_DEFAULT" "3"
 
+# ── 8b · GOAL-GATE — fresh-model stop condition (mirror of orchestrate.sh goal_check) ─────────
+# A run-until-condition primitive: a fresh model judges an explicit stop condition by RUNNING
+# the checks, and its verdict (with the reviewer's) drives the converge loop. Default-to-doubt:
+# anything but a clear MET is UNMET, so the loop keeps going (bounded by the cap) until proven done.
+goal_verdict() { # goal-judge text on stdin → MET | UNMET
+  local v; v="$(grep -oE 'SDLC-GOAL: (MET|UNMET)' | tail -1 | awk '{print $2}')"
+  case "${v:-}" in MET) echo MET ;; *) echo UNMET ;; esac
+}
+echo "goal-gate verdict (default-to-doubt):"
+eq "ends MET → MET"           "$(printf 'ran tests, all green\nSDLC-GOAL: MET\n'   | goal_verdict)" "MET"
+eq "ends UNMET → UNMET"       "$(printf 'a test failed\nSDLC-GOAL: UNMET\n'        | goal_verdict)" "UNMET"
+eq "no line → UNMET (doubt)"  "$(printf 'judge said nothing useful\n'             | goal_verdict)" "UNMET"
+eq "last wins (MET→UNMET)"    "$(printf 'SDLC-GOAL: MET\nSDLC-GOAL: UNMET\n'        | goal_verdict)" "UNMET"
+eq "garbage → UNMET"          "$(printf 'SDLC-GOAL: maybe\n'                       | goal_verdict)" "UNMET"
+
+# Combined converge condition: continue while (review BLOCKING) OR (goal set AND not MET), capped.
+converge_rounds_combined() { # args: <review B|C> <goal-set 0|1> <goal MET|UNMET> <maxr> → rounds run
+  local rv="$1" gset="$2" gv="$3" maxr="$4" r=1 rounds=0
+  while { [ "$rv" = BLOCKING ] || { [ "$gset" = 1 ] && [ "$gv" != MET ]; }; } && [ "$r" -le "$maxr" ]; do
+    rounds=$((rounds + 1)); r=$((r + 1))
+  done
+  echo "$rounds"
+}
+echo "goal-gated converge loop:"
+eq "CLEAN review but goal UNMET → loops to cap (3)" "$(converge_rounds_combined CLEAN 1 UNMET 3)" "3"
+eq "CLEAN review and goal MET → 0 rounds (done)"    "$(converge_rounds_combined CLEAN 1 MET 3)"   "0"
+eq "CLEAN review, no goal set → 0 rounds"           "$(converge_rounds_combined CLEAN 0 UNMET 3)" "0"
+eq "BLOCKING review, goal MET → still loops (cap 2)" "$(converge_rounds_combined BLOCKING 1 MET 2)" "2"
+eq "BLOCKING + goal UNMET → loops to cap 3"         "$(converge_rounds_combined BLOCKING 1 UNMET 3)" "3"
+
 # ── 9 · Spec-kit discovery candidate paths ───────────────────────────────────────
 # orchestrate.sh iterates: .specify/specs/*/spec.md specs/*/spec.md specs/spec.md
 # spec.md SPEC.md docs/spec.md — first match wins. We test first-match priority.
@@ -196,6 +226,13 @@ src_has "tiny diff routes review to haiku"          'REVIEW_MODEL="haiku"'
 src_has "SDLC_LITE note text matches"               'SDLC_LITE — skipping Codex audit + security pass (review + QA + human gate remain).'
 src_has "spec-kit discovery order matches"          '.specify/specs/*/spec.md specs/*/spec.md specs/spec.md spec.md SPEC.md docs/spec.md'
 src_has "1h prompt-cache TTL wired (opt-out)"       'ENABLE_PROMPT_CACHING_1H=1'
+src_has "goal-gate uses a fresh judge role"         'goal-judge.md'
+src_has "goal-judge model defaults to haiku"        'SDLC_GOAL_MODEL:-haiku'
+src_has "goal-judge emits the MET/UNMET contract"   'SDLC-GOAL: MET'
+src_has "goal verdict defaults to doubt (UNMET)"    'MET) echo MET ;; *) echo UNMET'
+src_has "off by default (no goal → MET, no call)"   '[ -n "$GOAL" ] || { echo MET; return; }'
+src_has "converge gates on the goal verdict"        '[ "$GOAL_V" != MET ]'
+src_has "goal implies the converge loop"            '[ -n "$GOAL" ]; then'
 
 echo
 printf 'selftest: %d passed, %d failed\n' "$PASS" "$FAIL"

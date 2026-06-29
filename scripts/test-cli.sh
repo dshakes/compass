@@ -82,6 +82,16 @@ HU="$("$COMPASS" spend --all --max-usd 1.00)"; HURC=$?
 eq  "human under-budget exits 0"       "$HURC" 0
 has "human output has remaining"       "$HU" 'remaining'
 
+echo "spend --today — per-day window (the unattended-loop circuit breaker):"
+TODAY_D="$(date -u +%Y-%m-%d)"
+printf '%sT09:00:00Z\trepoA\tt\tsonnet\t0.50\n2000-01-01T09:00:00Z\trepoA\tt\topus\t9.00\n' "$TODAY_D" > "$TMP/spend.tsv"
+JT="$("$COMPASS" spend --today --json)"
+has "today total counts only today's row" "$JT" '"total":0.5'
+has "today window labelled"               "$JT" '"window":"today"'
+JTG="$("$COMPASS" spend --today --json --max-usd 0.25)"; JTGRC=$?
+eq  "today over per-day cap exits 2"       "$JTGRC" 2
+has "today over_budget=true"              "$JTG" '"over_budget":true'
+
 echo "impact — benefit dashboard:"
 printf '%s\tblock\trepoA\tcatastrophic delete\n%s\tblock\trepoA\tprotected branch\n%s\tformat\trepoA\tgo\n' "$TS" "$TS" "$TS" > "$TMP/metrics.tsv"
 I="$("$COMPASS" impact --json)"

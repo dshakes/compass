@@ -9,6 +9,7 @@ they're not installed by `setup.sh --all`.
 | `babysit-prs.yml` | every 6h | nudge PRs stuck in `sdlc:needs-human` / red checks | comments | — |
 | `dep-refresh.yml` | weekly (Mon) | bump deps, test, summarize | a branch | a PR |
 | `flaky-triage.yml` | nightly | cluster recent CI failures into flakes | — | an issue |
+| `morning-triage.yml` | daily (06:00 UTC) | the loop's **discovery** move: read failed CI + new issues + merged commits, judge what's worth doing, reconcile one pinned "triage state" issue (durable memory); hand-off to the SDLC loop is opt-in (`TRIAGE_AUTO_HANDOFF=on`) | — | an issue (state) + findings |
 | `doc-freshness.yml` | weekly (Mon) | fix docs that drifted from code | a branch | a PR |
 | `vuln-remediate.yml` | nightly (04:00 UTC) | scan deps (govulncheck/npm audit/pip-audit/cargo audit) + Dependabot/code-scanning alerts; auto-fix SAFE ones into a test-gated PR on `routine/security-*`; file one de-duped issue for the rest | a branch | a PR + an issue |
 | `mission-digest.yml` | `*/30` best-effort | maintain ONE pinned "fleet panel" issue of every open PR's state; @mention `FLEET_MAINTAINER` only on a NEW `needs-human` transition; gh-only (no model) | — | an issue (once; updates it each run) |

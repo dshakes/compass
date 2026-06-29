@@ -15,6 +15,10 @@
 #   SDLC_BUDGET=8    total USD budget hint; per-Claude-step cap is BUDGET/4
 #   SDLC_BASE=main   base branch for the PR (default: current branch)
 #   SDLC_CONVERGE=1  after review, loop fix→re-review until CLEAN or SDLC_MAX_FIX_ROUNDS (default 3)
+#   SDLC_GOAL="..."  run-until-condition: a FRESH, cheap model (maker/checker) judges this explicit
+#                    stop condition by RUNNING the tests/lint each round; loop continues until it
+#                    reports MET (or the round cap). Implies the converge loop. SDLC_GOAL_MODEL
+#                    overrides the judge model (default haiku). Default-to-doubt: only a clear MET stops it.
 #   SDLC_SPEC=path   spec-driven: plan/build to this spec; review verifies vs its acceptance criteria
 #   SDLC_LITE=1      fast/cheap: skip Codex audit + opus security (keep review + QA + human gate)
 set -uo pipefail
@@ -113,6 +117,7 @@ note "run:    $RUN   (build perm: $BUILD_PERM)"
 # Pre-run estimate (budgeting): each Claude step is hard-capped at $STEP_BUDGET; the run
 # can't exceed roughly that × the number of steps. QA is free; the Codex audit isn't tallied.
 note "spend:  ceiling ~\$$STEP_BUDGET per Claude step (cap), ~\$$BUDGET total budget hint$([ "$HAVE_JQ" = 1 ] && echo '' || echo '  · install jq for per-step spend analysis')"
+[ -n "$GOAL" ] && note "goal:   run until a fresh $GOAL_MODEL judges → \"$GOAL\" (≤ ${SDLC_MAX_FIX_ROUNDS:-3} rounds)"
 git checkout -b "$BRANCH" >/dev/null 2>&1 || { echo "could not create branch $BRANCH"; exit 2; }
 
 # 1 · PLAN (read-only)
@@ -123,8 +128,27 @@ Produce a concrete, minimal implementation plan for this repo. Write nothing but
 
 # tools the Builder may use (reused by the converge loop below)
 BUILD_TOOLS="Read,Edit,Write,Grep,Glob,Bash(git add:*),Bash(git commit:*),Bash(go build:*),Bash(go test:*),Bash(go vet:*),Bash(cargo build:*),Bash(cargo test:*),Bash(npm:*),Bash(pnpm:*),Bash(npx tsc:*),Bash(pytest:*),Bash(ruff:*),Bash(make:*)"
-REVIEW_TOOLS="Read,Grep,Glob,Bash(git diff:*),Bash(git log:*)"
+# Reviewer + goal-judge run in plan mode (read-only intent) but may EXECUTE these allow-listed
+# tools so the evaluator can ACT — run the tests/lint and judge behavior, not just read the diff.
+REVIEW_TOOLS="Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),Bash(go test:*),Bash(go vet:*),Bash(cargo test:*),Bash(npm test:*),Bash(pnpm test:*),Bash(npx tsc:*),Bash(pytest:*),Bash(ruff:*),Bash(make test:*)"
 REVIEW_PROMPT="Review the diff of branch $BRANCH against $BASE: run 'git diff $BASE...HEAD'. Report findings grouped Blocking / Should-fix / Nit. ${SDLC_SPEC:+Also read the spec at $SDLC_SPEC and verify the diff satisfies its Acceptance Criteria — treat any unmet criterion or out-of-scope change as Blocking. }End with EXACTLY one line: 'SDLC-VERDICT: BLOCKING' if there is any Blocking finding, else 'SDLC-VERDICT: CLEAN'."
+
+# Goal-gate (opt-in via SDLC_GOAL): a FRESH, independent, cheap model (maker/checker) judges
+# whether an explicit stop condition holds by RUNNING the tests/lint — completion is decided by a
+# different model than the one doing the work, not by the worker declaring victory.
+GOAL="${SDLC_GOAL:-}"
+GOAL_MODEL="${SDLC_GOAL_MODEL:-haiku}"
+GOAL_TOOLS="$REVIEW_TOOLS"
+# goal_check → writes $RUN/goal.md, echoes MET|UNMET (default-to-doubt: anything but a clear MET).
+# No goal set → echoes MET with no model call (zero overhead when the gate is off).
+goal_check(){
+  [ -n "$GOAL" ] || { echo MET; return; }
+  claude_step goal goal-judge.md "$GOAL_MODEL" plan "$GOAL_TOOLS" \
+    "The stop condition for branch $BRANCH is: $GOAL
+Verify it BY ACTING — run the relevant tests/lint and read the real output; inspect 'git diff $BASE...HEAD' as needed. Assume it is NOT met until proven. End with EXACTLY one line: 'SDLC-GOAL: MET' if the whole condition holds, else 'SDLC-GOAL: UNMET'." >/dev/null
+  local v; v="$(grep -oE 'SDLC-GOAL: (MET|UNMET)' "$RUN/goal.md" 2>/dev/null | tail -1 | awk '{print $2}')"
+  case "$v" in MET) echo MET ;; *) echo UNMET ;; esac
+}
 
 # 2 · BUILD (edits + commits on the feature branch)
 claude_step build builder.md "$BUILD_MODEL" "$BUILD_PERM" "$BUILD_TOOLS" \
@@ -150,26 +174,36 @@ fi
 # 3 · REVIEW (Claude, read-only)
 claude_step review reviewer.md "$REVIEW_MODEL" plan "$REVIEW_TOOLS" "$REVIEW_PROMPT"
 
-# 3b · CONVERGE (opt-in: SDLC_CONVERGE=1) — address findings and re-review until clean or cap.
-# The local mirror of the cloud loop's "review ⇄ fix until green." Humans still merge.
-if [ "${SDLC_CONVERGE:-0}" = 1 ]; then
+# 3b · CONVERGE (opt-in: SDLC_CONVERGE=1, or implied by SDLC_GOAL) — address findings and
+# re-review until done or cap. The local mirror of the cloud loop's "review ⇄ fix until green,"
+# now with a run-until-condition gate: a fresh model judges an explicit stop condition each round
+# (maker/checker — completion decided by a different model than the worker). Humans still merge.
+GOAL_V="MET"
+if [ "${SDLC_CONVERGE:-0}" = 1 ] || [ -n "$GOAL" ]; then
   MAXR="${SDLC_MAX_FIX_ROUNDS:-3}"; r=1
-  while grep -qiE '^SDLC-VERDICT: BLOCKING' "$RUN/review.md" 2>/dev/null && [ "$r" -le "$MAXR" ]; do
-    log "converge round $r/$MAXR  (fix → re-review)"
+  [ -n "$GOAL" ] && note "run-until-condition: a fresh $GOAL_MODEL will judge \"$GOAL\" each round (default-to-doubt)."
+  GOAL_V="$(goal_check)"   # fresh judge's first read of the stop condition (writes $RUN/goal.md)
+  # Continue while the review is BLOCKING OR (a goal is set and not yet MET), bounded by the cap.
+  while { grep -qiE '^SDLC-VERDICT: BLOCKING' "$RUN/review.md" 2>/dev/null \
+          || { [ -n "$GOAL" ] && [ "$GOAL_V" != MET ]; }; } && [ "$r" -le "$MAXR" ]; do
+    log "converge round $r/$MAXR  (fix → re-review${GOAL:+ → goal-check})"
     claude_step "fix-$r" builder.md "$BUILD_MODEL" "$BUILD_PERM" "$BUILD_TOOLS" \
-      "Address every Blocking and Should-fix item in .sdlc/run-$TS/review.md on branch $BRANCH for task: $TASK.
+      "Address every Blocking and Should-fix item in .sdlc/run-$TS/review.md on branch $BRANCH for task: $TASK.${GOAL:+ The run must also satisfy this stop condition: $GOAL — make it true.}
 Edit the code, add/adjust tests, build/test what you touch, commit. Do not push or merge."
     if ! git diff --quiet || ! git diff --cached --quiet; then
       # shellcheck disable=SC2086  # SIGN_FLAG is intentionally word-split (empty or -S)
       git add -u && git commit -q $SIGN_FLAG -m "sdlc(converge $r): $TASK"
     fi
     claude_step review reviewer.md "$REVIEW_MODEL" plan "$REVIEW_TOOLS" "$REVIEW_PROMPT"
+    GOAL_V="$(goal_check)"
     r=$((r + 1))
   done
   if grep -qiE '^SDLC-VERDICT: BLOCKING' "$RUN/review.md" 2>/dev/null; then
     note "converge hit cap ($MAXR) — review still BLOCKING; a human is needed."
+  elif [ -n "$GOAL" ] && [ "$GOAL_V" != MET ]; then
+    note "converge hit cap ($MAXR) — stop condition still UNMET; a human is needed."
   else
-    note "converge: review is CLEAN."
+    note "converge: review is CLEAN${GOAL:+ and the stop condition is MET}."
   fi
 fi
 
@@ -304,6 +338,7 @@ elif command -v gh >/dev/null; then
     echo; echo "Pipeline: Plan → Build → Review → Codex audit → Security → QA. **Human merge gate.**"
     echo; echo "### QA"; echo '```'; tail -15 "$RUN/qa.log"; echo '```'
     echo; echo "### Review (Claude)"; sed -n '1,40p' "$RUN/review.md" 2>/dev/null
+    [ -n "$GOAL" ] && { echo; echo "### Stop condition (fresh-model judge)"; echo "Goal: \`$GOAL\` — verdict: **$GOAL_V**"; echo '```'; sed -n '1,20p' "$RUN/goal.md" 2>/dev/null; echo '```'; }
     echo; echo "### Cross-audit (Codex)"; sed -n '1,40p' "$RUN/audit.md" 2>/dev/null || echo "_skipped_"
     echo; echo "### Security"; sed -n '1,40p' "$RUN/security.md" 2>/dev/null
     echo; echo "### Spend"; echo "$SPEND_LINE"
