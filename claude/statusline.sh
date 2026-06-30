@@ -118,12 +118,18 @@ if [ -f "$sfile" ]; then
 fi
 [ -n "$seg" ] && compass_seg="${C_MODEL}🧭${C_RST} ${seg}"
 
+# Distil savings segment — full labeled output from the local ledger. Empty if
+# distil isn't installed, so the line degrades cleanly.
+# ponytail: PATH-only; add uvx fallback if you run distil via uvx only.
+distil_seg="$(distil statusline 2>/dev/null || true)"
+
 # Assemble, skipping empty segments.
 out="${C_MODEL}${model:-Claude}${C_RST}${SEP}${C_DIR}${dir_short}${C_RST}"
 [ -n "$git_seg" ]  && out="${out}${SEP}${git_seg}"
 [ -n "$ctx_seg" ]  && out="${out}${SEP}${ctx_seg}"
 [ -n "$cost_seg" ] && out="${out}${SEP}${cost_seg}"
 [ -n "$compass_seg" ] && out="${out}${SEP}${compass_seg}"
+[ -n "$distil_seg" ] && out="${out}${SEP}${distil_seg}"
 [ -n "$mode_seg" ] && out="${out} ${mode_seg}"
 
 printf '%s' "$out"
