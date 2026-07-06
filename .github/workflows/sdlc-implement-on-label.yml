@@ -80,7 +80,7 @@ jobs:
           echo "path=$f" >> "$GITHUB_OUTPUT"
           echo "captured issue #$ISSUE → $f"
       - name: Claude implement → open PR
-        uses: anthropics/claude-code-action@d5726de019ec4498aa667642bc3a80fca83aa102 # v1
+        uses: anthropics/claude-code-action@558b1d6cab4085c7753fe402c10bef0fbb92ac7a # v1
         with:
           # Subscription token (no API credits); for a pay-per-use key use:
           #   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
