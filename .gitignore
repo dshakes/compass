@@ -13,6 +13,7 @@ claude/settings.merged.json
 *.swp
 .idea/
 .vscode/
+.serena/
 
 # Python / tooling caches (compass-memory reference server)
 __pycache__/
