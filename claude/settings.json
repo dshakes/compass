@@ -79,7 +79,6 @@
     "defaultMode": "acceptEdits",
     "additionalDirectories": []
   },
-  "model": "claude-opus-4-8",
   "enableAllProjectMcpServers": false,
   "hooks": {
     "SessionStart": [
@@ -184,7 +183,5 @@
     "type": "command",
     "command": "$HOME/.claude/statusline.sh",
     "padding": 0
-  },
-  "effortLevel": "high",
-  "agentPushNotifEnabled": true
+  }
 }

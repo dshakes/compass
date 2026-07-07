@@ -20,8 +20,9 @@ CODEX_SRC="$REPO/codex"
 CLAUDE_DST="$HOME/.claude"
 CODEX_DST="$HOME/.codex"
 GEMINI_DST="$HOME/.gemini"
-STAMP="$(date +%Y%m%d-%H%M%S)"
+STAMP="$(date +%Y%m%d-%H%M%S)-$$"   # PID suffix: same-second re-runs get distinct backup dirs
 BACKUP="$HOME/.claude/backups/compass-$STAMP"
+trap 'printf "\ninstall aborted midway — nothing is lost: anything replaced is in %s\nre-run ./install.sh to finish (idempotent).\n" "$BACKUP" >&2' ERR
 
 MODE="symlink"; DRY=0; DO_CLAUDE=1; DO_CODEX=1; DO_GEMINI=0; DO_CLI=1
 for arg in "$@"; do
@@ -38,22 +39,45 @@ for arg in "$@"; do
 done
 
 say()  { printf '  %s\n' "$*"; }
-head() { printf '\n\033[1m%s\033[0m\n' "$*"; }
-run()  { if [ "$DRY" = 1 ]; then say "[dry-run] $*"; else eval "$*"; fi; }
+hdr()  { printf '\n\033[1m%s\033[0m\n' "$*"; }
+run()  { if [ "$DRY" = 1 ]; then say "[dry-run] $*"; else "$@"; fi; }
 
 # Link or copy SRC -> DST, backing up an existing real DST first.
+# Only removes symlinks that point into this repo; anything else — a real
+# file, a dir, or a symlink owned by the user's own setup — is backed up.
 place() {
   local src="$1" dst="$2"
   [ -e "$src" ] || { say "skip (missing): $src"; return; }
-  if [ -L "$dst" ]; then run "rm -f '$dst'"; fi          # replace stale symlink
-  if [ -e "$dst" ]; then
-    run "mkdir -p '$BACKUP/$(dirname "${dst#$HOME/}")'"
-    run "mv '$dst' '$BACKUP/${dst#$HOME/}'"
+  if [ -L "$dst" ] && readlink "$dst" | grep -qF "$REPO"; then
+    run rm -f "$dst"                                     # ours from a previous run — replace
+  elif [ -e "$dst" ] || [ -L "$dst" ]; then              # -L: preserve foreign symlinks too
+    run mkdir -p "$BACKUP/$(dirname "${dst#$HOME/}")"
+    run mv "$dst" "$BACKUP/${dst#$HOME/}"
     say "backed up: ${dst#$HOME/}"
   fi
-  run "mkdir -p '$(dirname "$dst")'"
-  if [ "$MODE" = "symlink" ]; then run "ln -s '$src' '$dst'"; say "linked: ${dst#$HOME/} -> ${src#$REPO/}"
-  else run "cp -R '$src' '$dst'"; say "copied: ${dst#$HOME/}"; fi
+  run mkdir -p "$(dirname "$dst")"
+  if [ "$MODE" = "symlink" ]; then run ln -s "$src" "$dst"; say "linked: ${dst#$HOME/} -> ${src#$REPO/}"
+  else run cp -R "$src" "$dst"; say "copied: ${dst#$HOME/}"; fi
+}
+
+# Shipped settings + optional personal overlay (claude/settings.local.json,
+# gitignored). Overlay present → deep-merge into settings.merged.json (also
+# gitignored) and place that; absent → place the shipped file untouched.
+place_settings() {
+  local shipped="$CLAUDE_SRC/settings.json" overlay="$CLAUDE_SRC/settings.local.json"
+  local merged="$CLAUDE_SRC/settings.merged.json"
+  if [ ! -f "$overlay" ]; then place "$shipped" "$CLAUDE_DST/settings.json"; return; fi
+  if ! command -v jq >/dev/null 2>&1; then
+    say "warn: settings.local.json present but jq missing — installing shipped defaults only"
+    place "$shipped" "$CLAUDE_DST/settings.json"; return
+  fi
+  if [ "$DRY" = 1 ]; then
+    say "[dry-run] merge settings.json + settings.local.json -> settings.merged.json, then link it"
+    return
+  fi
+  jq -s '.[0] * .[1]' "$shipped" "$overlay" >"$merged"
+  say "merged personal overlay: settings.local.json"
+  place "$merged" "$CLAUDE_DST/settings.json"
 }
 
 chmodx() { [ "$DRY" = 1 ] && return; find "$1" -name '*.sh' -exec chmod +x {} + 2>/dev/null || true; }
@@ -63,19 +87,23 @@ chmodx() { [ "$DRY" = 1 ] && return; find "$1" -name '*.sh' -exec chmod +x {} + 
 install_cli() {
   local bindir="$HOME/.local/bin" src="$REPO/bin/compass" dst
   dst="$bindir/compass"
-  head "compass CLI  →  $dst"
-  run "mkdir -p '$bindir'"
+  hdr "compass CLI  →  $dst"
+  run mkdir -p "$bindir"
   chmodx "$REPO/scripts"; [ "$DRY" = 1 ] || chmod +x "$src" 2>/dev/null || true
-  if [ -L "$dst" ]; then run "rm -f '$dst'"; fi
-  if [ -e "$dst" ]; then run "mkdir -p '$BACKUP'"; run "mv '$dst' '$BACKUP/compass'"; say "backed up: ~/.local/bin/compass"; fi
-  run "ln -s '$src' '$dst'"; say "linked: ~/.local/bin/compass -> ${src#$REPO/}"
+  if [ -L "$dst" ] && readlink "$dst" | grep -qF "$REPO"; then run rm -f "$dst"
+  elif [ -e "$dst" ] || [ -L "$dst" ]; then run mkdir -p "$BACKUP"; run mv "$dst" "$BACKUP/compass"; say "backed up: ~/.local/bin/compass"; fi
+  run ln -s "$src" "$dst"; say "linked: ~/.local/bin/compass -> ${src#$REPO/}"
   case ":$PATH:" in
     *":$bindir:"*) say "~/.local/bin already on PATH ✓  — try: compass impact" ;;
     *)
       local rc=""
       case "${SHELL##*/}" in
         zsh)  rc="$HOME/.zshrc" ;;
-        bash) rc="$HOME/.bash_profile"; [ -f "$HOME/.bashrc" ] && rc="$HOME/.bashrc" ;;
+        bash) # first rc bash actually sources: .bashrc, else .bash_profile, else .profile (Ubuntu default)
+          for f in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
+            [ -f "$f" ] && { rc="$f"; break; }
+          done
+          [ -n "$rc" ] || rc="$HOME/.profile" ;;
       esac
       if [ -n "$rc" ] && [ "$DRY" = 0 ]; then
         if grep -q 'compass CLI on PATH' "$rc" 2>/dev/null; then say "PATH line already in ${rc#$HOME/}"
@@ -116,13 +144,16 @@ $MARK_END
 TOML
 }
 
-head "compass installer  (mode: $MODE$( [ "$DRY" = 1 ] && printf ', dry-run' ))"
+hdr "compass installer  (mode: $MODE$( [ "$DRY" = 1 ] && printf ', dry-run' ))"
 say "repo:   $REPO"
 
 if [ "$DO_CLAUDE" = 1 ]; then
-  head "Claude Code  →  $CLAUDE_DST"
-  run "mkdir -p '$CLAUDE_DST'"
-  place "$CLAUDE_SRC/settings.json"   "$CLAUDE_DST/settings.json"
+  hdr "Claude Code  →  $CLAUDE_DST"
+  say "note: replaces your global ~/.claude config (settings, CLAUDE.md, agents, skills, hooks…)"
+  say "      with links into this repo. Originals are backed up; --copy avoids symlinks;"
+  say "      personal overrides go in claude/settings.local.json (kept out of git)."
+  run mkdir -p "$CLAUDE_DST"
+  place_settings
   place "$CLAUDE_SRC/CLAUDE.md"       "$CLAUDE_DST/CLAUDE.md"
   place "$CLAUDE_SRC/statusline.sh"   "$CLAUDE_DST/statusline.sh"
   place "$CLAUDE_SRC/agents"          "$CLAUDE_DST/agents"
@@ -136,15 +167,15 @@ if [ "$DO_CLAUDE" = 1 ]; then
 fi
 
 if [ "$DO_CODEX" = 1 ]; then
-  head "Codex  →  $CODEX_DST"
-  run "mkdir -p '$CODEX_DST'"
+  hdr "Codex  →  $CODEX_DST"
+  run mkdir -p "$CODEX_DST"
   merge_codex_profiles "$CODEX_DST/config.toml"   # never clobbers an existing config
   place "$CODEX_SRC/AGENTS.md" "$CODEX_DST/AGENTS.md"
 fi
 
 if [ "$DO_GEMINI" = 1 ]; then
-  head "Gemini CLI  →  $GEMINI_DST"
-  run "mkdir -p '$GEMINI_DST'"
+  hdr "Gemini CLI  →  $GEMINI_DST"
+  run mkdir -p "$GEMINI_DST"
   # Same operating manual, one source. Gemini CLI reads ~/.gemini/GEMINI.md by default.
   place "$CLAUDE_SRC/CLAUDE.md" "$GEMINI_DST/GEMINI.md"
   say "tip: to also use per-repo AGENTS.md in Gemini, set context.fileName in ~/.gemini/settings.json:"
@@ -153,7 +184,7 @@ fi
 
 [ "$DO_CLI" = 1 ] && install_cli
 
-head "Done."
+hdr "Done."
 [ -d "$BACKUP" ] && say "Backups of anything replaced: $BACKUP"
 say "Next: open Claude Code and run /agents, /status, and /doctor to confirm."
 say "      Validate config anytime with:  make doctor"
