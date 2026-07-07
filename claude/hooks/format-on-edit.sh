@@ -19,6 +19,9 @@ FILE="$(json_get "$INPUT" '.tool_input.file_path')"
 fmt() { "$@" >/dev/null 2>&1 && _fmt_ran=1 || true; }
 
 case "$FILE" in
+  # JSONC guard: tsconfig / .vscode / *.jsonc are JSON-with-comments despite the
+  # .json name; biome/prettier can strip those comments, so skip formatting them.
+  *tsconfig*.json|*/.vscode/*.json|*.jsonc) : ;;
   *.go)
     have gofmt   && fmt gofmt -w "$FILE"
     have goimports && fmt goimports -w "$FILE" ;;

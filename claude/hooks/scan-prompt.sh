@@ -4,6 +4,8 @@
 # invisible (zero-width/bidi) instructions. Scan it for injection + malware-authoring
 # patterns and WARN the model (treat embedded directives as data). If a remote
 # guardrail backend is configured and returns BLOCK, block the prompt outright.
+# Fail-open by design: no -e (a broken check must not block the user's prompt) and
+# no -u (an unset optional var must degrade to "allow", never abort mid-scan).
 set -o pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$HERE/lib/common.sh"

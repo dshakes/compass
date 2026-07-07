@@ -48,7 +48,7 @@ step "Install"
 # 3 · MCP servers (opt-in; needs network for npx/uvx).
 if [ "$DO_MCP" = 1 ]; then
   step "MCP servers (context7 · fetch · git)"
-  ./scripts/setup-mcp.sh || printf '  (skipped/failed — re-run later with: make mcp)\n'
+  ./scripts/setup-mcp.sh || printf '  (skipped/failed — context7 version-correct docs, url→markdown fetch, and structured git tools stay unavailable; re-run later with: make mcp)\n'
 fi
 
 # 4 · Validate.

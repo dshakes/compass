@@ -11,6 +11,8 @@
 # larger ruleset); its findings are folded in but its absence never fails the run.
 #
 # Exit status: 0 = clean, 1 = secret(s) found, 2 = usage error. Designed to gate.
+# Intentionally no -e: this is an aggregator that must run every check and fold all
+# findings into one verdict; an individual command failing must not abort the scan.
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

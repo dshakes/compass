@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # doctor.sh — validate the config repo and the installed result.
+# Intentionally no -e (and no trap ERR): every check runs `if cmd; then pass; else
+# fail; fi`, so non-zero exits are expected and tallied by ok/warn/err. -e or an ERR
+# trap would abort on the first failing check and defeat the whole-repo report.
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ok=0; warn=0; err=0
@@ -38,7 +41,9 @@ if command -v shellcheck >/dev/null 2>&1; then
   if find "$REPO/claude/hooks" -name '*.sh' -exec shellcheck -S warning {} + >/dev/null 2>&1; then
     pass "shellcheck clean (hooks)"
   else note "shellcheck reported issues — run: shellcheck claude/hooks/*.sh"; fi
-else note "shellcheck not installed — skipping lint"; fi
+# note (not fail): shellcheck isn't a formula dependency, so a hard fail would break
+# brew users who don't have it. Name what goes unchecked instead.
+else note "shellcheck not installed — hook scripts (claude/hooks/*.sh) unlinted; brew install shellcheck to cover them"; fi
 
 # Frontmatter sanity for agents/commands/skills
 for d in agents commands; do

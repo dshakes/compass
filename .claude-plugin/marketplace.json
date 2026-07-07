@@ -5,7 +5,6 @@
     "name": "dshakes",
     "url": "https://github.com/dshakes"
   },
-  "homepage": "https://github.com/dshakes/compass",
   "description": "Production-grade Claude Code configuration: cost-tiered specialist subagents, workflow commands, guardrail + auto-quality hooks, a bootstrap skill, a terse output style, and parity MCP servers.",
   "plugins": [
     {

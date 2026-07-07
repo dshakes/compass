@@ -44,11 +44,13 @@ dir="$(json_get "$INPUT" '.workspace.current_dir')"
 dir_short="$(basename "${dir:-$PWD}")"
 mode="$(json_get "$INPUT" '.permission_mode')"
 
-# Git segment.
+# Git segment. One `git status` yields branch + dirty state: porcelain=v2 emits
+# `# branch.head <name>` plus one non-# line per changed/untracked path. Failing
+# the call (not a work tree) leaves the segment empty.
 git_seg=""
-if git -C "${dir:-$PWD}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  branch="$(git -C "${dir:-$PWD}" rev-parse --abbrev-ref HEAD 2>/dev/null)"
-  if [ -n "$(git -C "${dir:-$PWD}" status --porcelain 2>/dev/null)" ]; then
+if gs="$(git -C "${dir:-$PWD}" status --branch --porcelain=v2 2>/dev/null)"; then
+  branch="$(printf '%s\n' "$gs" | awk '$1=="#"&&$2=="branch.head"{print $3; exit}')"
+  if printf '%s\n' "$gs" | grep -q '^[^#]'; then
     git_seg="${C_GIT}${branch}${C_DIRTY}*${C_RST}"
   else
     git_seg="${C_GIT}${branch}${C_RST}"
@@ -121,7 +123,13 @@ fi
 # Distil savings segment — full labeled output from the local ledger. Empty if
 # distil isn't installed, so the line degrades cleanly.
 # ponytail: PATH-only; add uvx fallback if you run distil via uvx only.
-distil_seg="$(distil statusline 2>/dev/null || true)"
+# 2s cap so a hung `distil` never freezes the prompt. `timeout` is absent on stock
+# macOS, so fall back to gtimeout (coreutils), then perl's alarm (survives exec).
+if   command -v timeout  >/dev/null 2>&1; then _cap() { timeout 2s "$@"; }
+elif command -v gtimeout >/dev/null 2>&1; then _cap() { gtimeout 2s "$@"; }
+else _cap() { perl -e 'alarm shift; exec @ARGV' 2 "$@"; }
+fi
+distil_seg="$(_cap distil statusline 2>/dev/null || true)"
 
 # Assemble, skipping empty segments.
 out="${C_MODEL}${model:-Claude}${C_RST}${SEP}${C_DIR}${dir_short}${C_RST}"

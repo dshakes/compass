@@ -26,7 +26,7 @@ have gh || skip "GitHub CLI (gh) not installed — https://cli.github.com, then 
 gh attestation --help >/dev/null 2>&1 || skip "this gh is too old for 'gh attestation' — upgrade gh (>= 2.49)"
 
 # Resolve the tarball to verify: a local file, or download the tag archive.
-cleanup=""; trap '[ -n "$cleanup" ] && rm -f "$cleanup"' EXIT
+cleanup=""; trap '[ -n "$cleanup" ] && rm -rf "$cleanup"' EXIT
 tarball=""
 case "$arg" in
   "" )
@@ -43,7 +43,9 @@ esac
 if [ -z "$tarball" ]; then
   have curl || skip "curl not installed — cannot download the tarball to verify"
   url="https://github.com/$REPO_SLUG/archive/refs/tags/$tag.tar.gz"
-  tarball="$(mktemp -t "compass-$tag.XXXXXX").tar.gz"; cleanup="$tarball"
+  # mktemp -d so the tarball lives inside a dir we own — no leaked extensionless
+  # temp file, and the trap's rm -rf reclaims everything.
+  cleanup="$(mktemp -d -t "compass-$tag.XXXXXX")"; tarball="$cleanup/src.tar.gz"
   note "downloading $url"
   curl -fsSL "$url" -o "$tarball" || skip "could not download $url"
 fi

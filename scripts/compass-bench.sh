@@ -67,7 +67,7 @@ if [ "$WHAT" = sdlc ]; then
     [ -d "$fx" ] || continue; tot=$((tot+1))
     echo "fixture: $fx"
     ( cd "$fx" && SDLC_NO_PR=1 SDLC_LITE=1 "$ROOT/sdlc/orchestrate.sh" "Fix the failing test" >/dev/null 2>&1 || true )
-    if ( cd "$fx" && { [ -f go.mod ] && go test ./... || [ -f package.json ] && npm test --silent || pytest -q; } >/dev/null 2>&1 ); then
+    if ( cd "$fx" && { if [ -f go.mod ]; then go test ./...; elif [ -f package.json ]; then npm test --silent; else pytest -q; fi; } >/dev/null 2>&1 ); then
       pass=$((pass+1)); echo "  → GREEN"
     else echo "  → still red"; fi
   done

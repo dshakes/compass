@@ -35,6 +35,9 @@ class Compass < Formula
   end
 
   test do
-    assert_match "local engineering tools", shell_output("#{bin}/compass help")
+    # Assert on stable exit codes, not help copy (which edits often): `help` must
+    # succeed, and an unknown subcommand must exit 2 (bin/compass's `*)` arm).
+    system bin/"compass", "help"
+    shell_output("#{bin}/compass __no_such_cmd__ 2>&1", 2)
   end
 end

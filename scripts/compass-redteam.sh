@@ -9,6 +9,8 @@
 # Defense-in-depth + honest: pattern detection is the offline floor, NOT model-level
 # immunity. For a model-grade ceiling, set COMPASS_GUARDRAIL_BACKEND (see below) and
 # the hooks escalate to your guardrails service.
+# Intentionally no -e: this aggregator must run every red-team case and tally the
+# results; a single case's non-zero exit must not abort the run mid-corpus.
 set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=../claude/hooks/lib/common.sh
