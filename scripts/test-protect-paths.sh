@@ -27,6 +27,9 @@ must_allow() { local r; r="$(danger_reason "$1")"; [ -z "$r" ] && ok "allow  $1"
 # secret_blocked / secret_allowed for the file-write path.
 secret_blocked() { local r; r="$(secret_file_reason "$1")"; [ -n "$r" ] && ok "SECRET $1" || no "should block secret: $1"; }
 secret_allowed() { local r; r="$(secret_file_reason "$1")"; [ -z "$r" ] && ok "ok-file $1" || no "should allow file: $1"; }
+# config_blocked / config_allowed for the agent self-protection file-write path.
+config_blocked() { local r; r="$(agent_config_reason "$1")"; [ -n "$r" ] && ok "CONFIG $1" || no "should block config: $1"; }
+config_allowed() { local r; r="$(agent_config_reason "$1")"; [ -z "$r" ] && ok "ok-file $1" || no "should allow file: $1"; }
 # content_blocked / content_allowed for the inline-secret scanner (the write-content path).
 content_blocked() { local r; r="$(secret_content_findings "$1")"; [ -n "$r" ] && ok "INLINE $1" || no "should detect secret in: $1"; }
 content_allowed() { local r; r="$(secret_content_findings "$1")"; [ -z "$r" ] && ok "ok-text $1" || no "should NOT flag: $1  (flagged: $r)"; }
@@ -186,6 +189,47 @@ e2e deny  "$(printf '{"tool_name":"Edit","tool_input":{"file_path":"/repo/app.js
 e2e allow '{"tool_name":"Bash","tool_input":{"command":"rm -rf ./build"}}'
 e2e allow '{"tool_name":"Write","tool_input":{"file_path":"/repo/src/main.go"}}'
 e2e allow '{"tool_name":"Write","tool_input":{"file_path":"/repo/src/main.go","content":"package main\nfunc main(){}"}}'
+
+echo "agent self-protection — the LIVE installed config is frozen (Edit/Write path):"
+config_blocked "$HOME/.claude/settings.json"          # resolved absolute
+config_blocked '~/.claude/settings.json'              # tilde form
+config_blocked '$HOME/.claude/settings.local.json'    # literal $HOME
+config_blocked '${HOME}/.claude/CLAUDE.md'            # ${HOME} form
+config_blocked "$HOME/.claude/hooks/protect-paths.sh" # a guardrail hook itself
+config_blocked "$HOME/.claude/hooks/lib/policy.sh"    # nested under hooks/
+config_blocked '~/.codex/AGENTS.md'                   # codex equivalent
+config_blocked "$HOME/.codex/config.toml"
+config_blocked '~/.gemini/GEMINI.md'                  # gemini equivalent
+config_blocked "$HOME/.gemini/settings.json"
+echo "  …and still ALLOWED: repo working copies (ride the merge gate), reads, non-config files:"
+config_allowed "$HOME/workspace/compass/claude/settings.json"  # the compass repo's own copy
+config_allowed "$HOME/projects/foo/.claude/settings.json"      # a project's checked-in .claude/
+config_allowed '.claude/settings.json'                # repo-relative, no home anchor
+config_allowed './claude/settings.json'               # repo-relative, no home anchor
+config_allowed "$HOME/.claude/README.md"              # not a guardrail file
+config_allowed "$HOME/.gitconfig"                     # unrelated dotfile
+
+echo "agent self-protection — shell mutations of live config are blocked, reads pass:"
+must_block 'echo stub > ~/.claude/settings.json'      # redirect stub over settings
+must_block 'sed -i s/deny/allow/ $HOME/.claude/hooks/protect-paths.sh'  # in-place edit
+must_block 'rm ~/.claude/hooks/protect-paths.sh'      # delete a hook
+must_block 'rm -rf $HOME/.claude/hooks'               # nuke the hooks dir
+must_block 'cp /tmp/evil.json ~/.claude/settings.json'  # copy onto config
+must_block 'mv /tmp/x ~/.gemini/settings.json'        # move onto config
+must_block 'rm "$HOME/.claude/settings.json"'         # quoted single-token path still matches
+must_block "sed -i 's/deny/allow/' ~/.claude/hooks/protect-paths.sh"  # quoted sed script
+must_allow 'cat ~/.claude/settings.json'              # reading it is fine
+must_allow 'grep -n deny ~/.claude/hooks/protect-paths.sh'  # reading is fine
+must_allow 'cp ~/.claude/settings.json /tmp/backup.json'    # copying FROM it is a read
+must_allow 'sed -i s/x/y/ ./claude/settings.json'     # repo-relative edit, not live config
+# prose is data: quoted strings with spaces carry no write signal, even naming verbs + paths
+must_allow 'git commit -m "feat(install): merge at install into settings.merged.json, which ~/.claude/settings.json links to"'
+must_allow 'echo "to reset, rm ~/.claude/hooks/protect-paths.sh and re-run install"'
+must_allow 'git commit -m "fix: tee output onto $HOME/.claude/settings.json was the bug"'
+
+e2e deny  "$(printf '{"tool_name":"Write","tool_input":{"file_path":"%s/.claude/settings.json"}}' "$HOME")"
+e2e deny  '{"tool_name":"Bash","tool_input":{"command":"echo x > ~/.claude/settings.json"}}'
+e2e allow "$(printf '{"tool_name":"Write","tool_input":{"file_path":"%s/workspace/compass/claude/settings.json"}}' "$HOME")"
 
 echo
 printf 'guardrail corpus: %d passed, %d failed\n' "$pass" "$fail"

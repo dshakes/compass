@@ -18,6 +18,9 @@
 # accidents, not a determined attacker or a cleverly-obfuscated command. Keep least-privilege
 # credentials and review diffs. (See SECURITY.md.)
 
+# Fail-open by design: deliberately no `set -euo pipefail`. This hook must never
+# abort the user's tool call on its own error — an unset var or failed command
+# degrades to "defer to normal rules" (exit 0), never a spurious block.
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/common.sh
 . "$DIR/lib/common.sh"
@@ -36,6 +39,9 @@ case "$TOOL" in
     [ -z "$FILE" ] && exit 0
     reason="$(secret_file_reason "$FILE")"
     [ -n "$reason" ] && { COMPASS_AUDIT_RULE="secret-file-write"; deny "$reason"; }
+    # Self-protection: never let the agent edit its own installed guardrails/config.
+    reason="$(agent_config_reason "$FILE")"
+    [ -n "$reason" ] && { COMPASS_AUDIT_RULE="agent-config-write"; deny "$reason"; }
     # Inline-secret scan of the content being written (high-precision). Pulls the
     # real author text (Write.content / Edit.new_string / MultiEdit.edits) with true
     # newlines, so the per-line allowlist is honest: a placeholder line ('allowlist

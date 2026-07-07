@@ -29,6 +29,7 @@ a labeled corpus that gates in CI, the same way `compass bench` gates the guardr
 | **Indirect injection** | a web page / fetched doc / MCP tool result / command output smuggles instructions | `scan-tool-output.sh` (PostToolUse) | runtime hook |
 | **Copy/paste injection** | poisoned text (incl. invisible unicode) pasted into the prompt | `scan-prompt.sh` (UserPromptSubmit) | runtime hook |
 | **Local safety override** | a project `.claude/settings.json` granting blanket allow / `bypassPermissions` / disabling hooks | `settings_override_reason` | scan + hook |
+| **Live-config self-modification** | an agent (or injected instruction) editing its OWN installed `~/.claude/settings.json`, `hooks/**`, or `CLAUDE.md` (or the `~/.codex`, `~/.gemini` equivalents) to swap the guardrails for an auto-approve stub | `agent_config_reason` / `agent_config_cmd_reason` | hook |
 | **Malware authoring** | the agent steered into writing reverse shells, ransomware, stealers, C2 | `malware_intent_findings` (awareness + audit) | hook + scan |
 | **Insecure code** | the agent introduces command injection, unsafe deserialization, disabled TLS, weak crypto | `insecure_code_findings` (SAST-lite) | scan + PR review |
 | **Catastrophic commands / secrets / supply-chain** | `rm -rf /`, secret writes, unpinned actions/MCP | the guardrail layer (docs/16) | hooks + CI |
@@ -71,9 +72,46 @@ data) and **log** to the audit trail (`compass audit-log`). They never silently 
 detectors and gates in CI via `compass doctor`:
 
 ```
-redteam corpus: 60 cases — TP=33 FP=0 TN=27 FN=0
+redteam corpus: 68 cases — TP=38 FP=0 TN=30 FN=0
 precision=100% (floor 100%)  recall=100% (floor 90%)
 ```
+
+---
+
+## Self-protection: the guardrails can't be edited away
+
+A guardrail only binds while it's installed. The sharpest attack isn't tripping a rule —
+it's disabling the rules: an agent (or an injected instruction) rewrites its own
+**live** `~/.claude/settings.json` to swap the guardrail hooks for an auto-approve stub,
+or `rm`s a hook, and every later check silently passes. We've seen this exact drift land
+on a real machine.
+
+So the installed config is frozen. `protect-paths.sh` refuses any **Write/Edit**
+(`agent_config_reason`) or **shell mutation** (`agent_config_cmd_reason`) that targets a
+live agent-config path:
+
+- `~/.claude/settings.json`, `~/.claude/settings.local.json`, `~/.claude/CLAUDE.md`, `~/.claude/hooks/**`
+- the Codex equivalents `~/.codex/AGENTS.md`, `~/.codex/config.toml`
+- the Gemini equivalents `~/.gemini/GEMINI.md`, `~/.gemini/settings.json`
+
+The deny reason points the way out: **config changes belong in your compass repo + re-run
+`install.sh`.** Dev work on the config still happens — in the repo working copy, where it
+rides the human merge gate — it just can't be done by editing the installed files directly.
+
+**Limits (read these):**
+
+- **Matching is HOME-anchored on purpose.** A repo working copy (`…/compass/claude/settings.json`,
+  a project's checked-in `./.claude/settings.json`) is *not* under `$HOME/.claude`, so it stays
+  editable; reads of the live files stay allowed; a bare repo-relative path never matches.
+- **A human editing these files in a terminal is untouched.** The hook only sees the agent's
+  *tool calls*; `install.sh` copying files during setup is a terminal command, not a tool call.
+- **Not covered:** live `~/.claude/agents/**`, `commands/**`, `skills/**` are content, not the
+  guardrail surface, so they're not frozen (change them via repo + re-install like everything else);
+  the shell layer is defense-in-depth behind the Edit/Write gate, so exotic obfuscated command
+  forms may slip it — the primary vector (the Edit/Write tool) is the precise one.
+
+Corpus: `scripts/test-protect-paths.sh` pins both the deny cases and the repo-copy/read
+allow cases.
 
 ---
 

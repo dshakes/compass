@@ -113,12 +113,83 @@ credentials|credentials.*|.npmrc|.pypirc|.netrc|_netrc|.htpasswd|secrets.yaml|se
   return 0
 }
 
+# ── agent self-protection ──────────────────────────────────────────────────────
+# The guardrails only bind while they're installed. A Write/Edit (or a shell mutation)
+# of the agent's OWN LIVE config can swap the guardrail hooks for an auto-approve stub
+# and silently disable everything — a failure we've seen drift onto a real machine. So
+# the live install is frozen: repo working copies stay editable (dev rides the human
+# merge gate + re-install), only the files under ~/.claude, ~/.codex, ~/.gemini are.
+#
+# Matching is HOME-anchored on purpose: a repo copy at …/compass/claude/settings.json
+# or a project's own ./.claude/settings.json is NOT under $HOME/.claude, so it never
+# matches; a bare repo-relative path (no home prefix) never matches either.
+
+# _policy_live_config_rest "<path>" — echo the home-relative form (e.g. ~/.claude/…)
+# when <path> is a LIVE agent-config file, else echo nothing. Accepts the path written
+# as $HOME/…, ~/…, $HOME/…, ${HOME}/…, or fully resolved.
+_policy_live_config_rest() {
+  local t="$1" rest=
+  t="${t//\"/}"; t="${t//\'/}"   # drop every quote char (mirror _policy_norm_target)
+  case "$t" in
+    "$HOME"/*)   rest="${t#"$HOME"/}" ;;
+    '~'/*)       rest="${t#'~'/}" ;;
+    '$HOME'/*)   rest="${t#'$HOME'/}" ;;
+    '${HOME}'/*) rest="${t#'${HOME}'/}" ;;
+    *) return 0 ;;
+  esac
+  case "$rest" in
+    .claude/settings.json|.claude/settings.local.json|.claude/CLAUDE.md|.claude/hooks/*|\
+.codex/AGENTS.md|.codex/config.toml|\
+.gemini/GEMINI.md|.gemini/settings.json|.gemini/settings.local.json)
+      printf '%s' "$rest" ;;
+  esac
+}
+
+# agent_config_reason "<path>" — deny reason if a Write/Edit targets live agent config
+# (empty = allow). The primary vector: this is how a drifted settings.json got its
+# guardrail hooks replaced by an echo stub.
+agent_config_reason() {
+  local hit; hit="$(_policy_live_config_rest "$1")"
+  [ -n "$hit" ] || return 0
+  printf "Refusing to modify live agent config '%s' — config changes belong in your compass repo + re-run install; direct live-config edits are how guardrails get silently disabled." "$1"
+}
+
+# agent_config_cmd_reason "<normalized cmd>" — deny reason if a shell command MUTATES
+# live agent config: redirect onto it, or rm/sed -i/tee/truncate/install/dd/ln/cp/mv
+# naming it. Reads (cat/grep/diff/less …) carry no write signal, so they stay allowed.
+# Defense-in-depth behind agent_config_reason (the Edit/Write path is the primary gate).
+agent_config_cmd_reason() {
+  local cmd="$1" mut=0
+  # Quote handling, span-aware: a single-token quoted arg ("$HOME/.claude/…") is a real
+  # path argument — unwrap it so it matches. A quoted string WITH spaces is data (a commit
+  # message, an echo body) — drop the whole span, else prose like
+  # `git commit -m "… install … ~/.claude/settings.json …"` false-positives as a mutation.
+  cmd="$(printf '%s' "$cmd" \
+    | sed -E 's/"([^"[:space:]]*)"/\1/g'"; s/'([^'[:space:]]*)'/\1/g" \
+    | sed -E 's/"[^"]*"/ /g'"; s/'[^']*'/ /g")"
+  local cfg='(~|\$HOME|\$\{HOME\}|'"$HOME"')/\.(claude/(settings\.json|settings\.local\.json|CLAUDE\.md|hooks(/[^ ;&|]*)?)|codex/(AGENTS\.md|config\.toml)|gemini/(GEMINI\.md|settings\.(local\.)?json))'
+  # redirect onto it:  > ~/.claude/settings.json   /   >>$HOME/.gemini/settings.json
+  printf '%s' "$cmd" | grep -Eq -- ">>?[[:space:]]*$cfg" && mut=1
+  # a destructive/in-place verb naming it (path appears as an argument of the verb)
+  printf '%s' "$cmd" | grep -Eq -- "(^|[ ;&|])(rm|sed +-[a-zA-Z.]*i[a-zA-Z.]*|tee|truncate|install|ln)( +[^;&|]*)? +$cfg" && mut=1
+  # cp / mv with the live-config path as the final (destination) token
+  printf '%s' "$cmd" | grep -Eq -- "(^|[ ;&|])(cp|mv) +[^;&|]* +${cfg}[[:space:]]*([;&|]|\$)" && mut=1
+  [ "$mut" = 1 ] || return 0
+  printf 'Refusing to mutate live agent config via shell — config changes belong in your compass repo + re-run install; direct live-config edits are how guardrails get silently disabled.'
+}
+
 # ── dangerous shell commands ───────────────────────────────────────────────────
 # danger_reason "<command>"  -> reason if the command is a footgun (empty = allow).
 # Reads optional POLICY_CURRENT_BRANCH for the "force-push the branch I'm on" case.
 danger_reason() {
   local cmd="$1" norm tok
   norm="$(printf '%s' "$cmd" | tr -s '[:space:]' ' ')"
+
+  # 0 · Self-protection: block a shell command that mutates the agent's OWN live config
+  #     (settings.json / hooks/** / CLAUDE.md, plus the codex/gemini equivalents) — the
+  #     shell twin of the Edit/Write gate in agent_config_reason.
+  local self; self="$(agent_config_cmd_reason "$norm")"
+  [ -n "$self" ] && { printf '%s' "$self"; return 0; }
 
   # 1 · Recursive delete of root / home / a system dir (any flag ordering or form).
   if printf '%s' "$norm" | grep -Eq -- '(^| )rm( |$)' && _policy_has_recursive_flag "$norm"; then
