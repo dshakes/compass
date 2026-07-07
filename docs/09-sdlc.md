@@ -167,11 +167,13 @@ in the PR body. Setting `SDLC_GOAL` implies the converge loop. → [the five mov
 
 ### B · GitHub-native — agents on your PRs
 
-Ten workflows, all in `.github/workflows/` after `setup.sh`:
+Thirteen workflows, all in `.github/workflows/` after `setup.sh`:
 
 | Workflow | Trigger | Agent | Role in loop |
 |---|---|---|---|
 | `sdlc-review.yml` | every PR push | **Reviewer** (Claude · sonnet) | Sets `agent:needs-fix` or `agent:reviewed-clean`; required check |
+| `sdlc-classify.yml` | PR open/reopen | **Classifier** (Claude · haiku) | Labels the diff `domain:*` so routed reviewers can gate; cheap |
+| `sdlc-design-review.yml` | `domain:ui` label | **Design reviewer** (Claude · sonnet) | Routed UI design pass; advisory comment |
 | `sdlc-fix.yml` | `agent:needs-fix` label | **Builder** (Claude · sonnet) | Fixes on branch + pushes; enforces round cap |
 | `sdlc-audit.yml` | PR open/reopen + `agent:audit` label | **Auditor** (Codex · gpt-5.5) | Independent second opinion; advisory |
 | `sdlc-security.yml` | PR open/reopen | **Security** (Claude · opus) | Deep security pass; advisory |
@@ -181,6 +183,7 @@ Ten workflows, all in `.github/workflows/` after `setup.sh`:
 | `sdlc-implement-on-label.yml` | `agent:build` label on issue | **Implementer** (Claude · sonnet) | **Zero-touch intake**: builds a labeled issue into a PR (maintainer-gated), then the loop above runs |
 | `sdlc-release.yml` | `agent:release` label on PR | **Releaser** (Claude · sonnet) | CHANGELOG + version bump on branch; never tags/publishes |
 | `sdlc-control.yml` | `/revise` `/hold` `/resume` `/approve` PR comment | **you** (human-in-the-loop) | Steer the loop from the PR; keeps a sticky status panel current |
+| `sdlc-autoapprove.yml` | `agent:reviewed-clean` label | **Auto-approve** (policy-gated) | Marks `agent:approve-eligible` if an allowlist holds; never approves or merges |
 
 Setup (one command):
 ```bash

@@ -1,5 +1,7 @@
 # Distributing as a plugin + marketplace
 
+*Install the subagents, commands, skills, and guardrail hooks with two slash commands — and know what only the full install carries.*
+
 This repo is **also a Claude Code plugin marketplace**, so teammates can install
 the machinery with two commands instead of cloning + `make install`.
 
@@ -52,7 +54,7 @@ version + MCP servers are CI-checked against `plugins/core` and `mcp/servers.jso
 manifest can never silently drift from the real config.
 
 ## What the plugin delivers
-10 subagents · 12 commands · 4 hooks (incl. the `protect-paths` guardrail) ·
+15 subagents · 12 commands · 5 hooks (guardrail, red-team, budget-ceiling, format-on-edit, notify) ·
 `bootstrap-agent-config` skill · "Concise" output style ·
 3 MCP servers. Validated via `claude plugin details core@compass`
 (≈1,165 always-on tokens; agents/commands cost only when invoked).

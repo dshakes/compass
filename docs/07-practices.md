@@ -26,7 +26,7 @@ and cites them. Read the sources; don't take our word for it.
 | **Lean, committed instructions file with build/test/style/etiquette** (Anthropic, agents.md) | `CLAUDE.md`/`AGENTS.md`; `bootstrap-agent-config` skill; `templates/CLAUDE.md.tmpl` |
 | **`/clear` between tasks; reset after 2 failed corrections** (Anthropic) | `CLAUDE.md` "Context hygiene" |
 | **Self-improving memory — write a rule after each correction** (Anthropic team) | `CLAUDE.md` "Teach me once" (+ native `#`) |
-| **Subagents for file-heavy investigation in a separate context** (Anthropic) | 10 subagents in `claude/agents/` |
+| **Subagents for file-heavy investigation in a separate context** (Anthropic) | 15 subagents in `claude/agents/` |
 | **Writer/Reviewer with fresh context** (Anthropic) | `/ship` (writer) → `code-reviewer`/`security-auditor` (reviewer) |
 | **Deterministic hooks for must-happen-every-time actions** (Anthropic, awesome-claude-code) | `claude/hooks/` (protect-paths, format-on-edit, …) |
 | **Headless `claude -p` for CI / pre-commit / fan-out** (Anthropic) | documented below |

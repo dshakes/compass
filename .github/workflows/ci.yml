@@ -21,6 +21,17 @@ jobs:
       - name: doctor (JSON, frontmatter, plugin sync, executability)
         run: make doctor
 
+      - name: Docs stay version-agnostic (no pinned release in install/checkout commands)
+        run: |
+          # Install/checkout commands must not hardcode a release — use
+          # `git checkout $(git describe --tags --abbrev=0)` so docs don't rot each release.
+          # Illustrative version mentions in prose are fine; only clone/checkout command
+          # context is gated. docs/internal/ is excluded (not product docs) by the glob.
+          if grep -rnE '(git (clone|checkout)|checkout )[^`]*v0\.[0-9]+\.[0-9]+' README.md docs/*.md; then
+            echo "::error::hardcoded release version in an install/checkout command above — make it version-agnostic"
+            exit 1
+          fi
+
       - name: shellcheck (errors fail the build)
         run: shellcheck -S error claude/hooks/*.sh claude/hooks/lib/*.sh claude/statusline.sh scripts/*.sh bin/compass install.sh quickstart.sh claude/skills/*/*.sh sdlc/*.sh router/*.sh
 

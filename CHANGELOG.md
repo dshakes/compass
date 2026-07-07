@@ -62,6 +62,8 @@ primitive, plus a guard for each of the four silent costs. See [`docs/20-loops.m
   current protected branch) still block. Four regression cases added to the bypass corpus
   (`scripts/test-protect-paths.sh`, now 111).
 
+## [0.19.2] — 2026-06-21
+
 ### Fixed
 
 - **Status line cost/context segments and the live budget gate were reading non-existent JSON
@@ -72,6 +74,8 @@ primitive, plus a guard for each of the four silent costs. See [`docs/20-loops.m
   `budget-gate.sh` always failed open and never enforced `COMPASS_MAX_USD`. Now reads the correct
   fields; the breadcrumb stores USD and the gate compares dollars directly. Verified end-to-end
   (`scripts/test-budget-gate.sh`, 12 cases). The budget ceiling now actually stops a session.
+
+## [0.19.1] — 2026-06-21
 
 ### Changed
 

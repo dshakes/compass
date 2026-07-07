@@ -18,7 +18,7 @@ once:
 
 | Layer | What compass ships | The category it competes in |
 |---|---|---|
-| **Config / constitution** | `CLAUDE.md` ≙ `AGENTS.md`, 10 subagents, 12 commands, 4+3 hooks, MCP manifest | SuperClaude, gstack, spec-kit "constitution", awesome-claude-code configs |
+| **Config / constitution** | `CLAUDE.md` ≙ `AGENTS.md`, 15 subagents, 12 commands, 5 hooks, MCP manifest | SuperClaude, gstack, spec-kit "constitution", awesome-claude-code configs |
 | **Local orchestration** | `orchestrate.sh` pipeline, 3 dynamic workflows, `compass route` | BMAD-METHOD, claude-flow, Conductor/Vibe-Kanban |
 | **Autonomous SDLC (cloud)** | self-fixing PR loop in GitHub Actions, Reviewer⇄Builder converge | Devin, Factory Droids, Cursor background agents, Codex cloud, GitHub Copilot coding agent |
 | **Fleet + review** | scheduled cross-repo agents, mission-digest, cross-model audit, mobile control | Greptile/CodeRabbit/Qodo (review), Charlie, Sweep |

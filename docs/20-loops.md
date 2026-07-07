@@ -141,6 +141,10 @@ Per-run caps already live on every routine (`--max-budget-usd`, `--max-turns`); 
 is the new cross-run circuit breaker — a day of loops can't run away even if no single run does.
 These aren't about saving money; they convert an open-ended risk into a bounded one. → [02-cost](02-cost-and-models.md)
 
+Under the hood: the live gate drops a per-session breadcrumb at `${COMPASS_HOME:-~/.compass}/sessions/<session_id>.cost`,
+and the daily cap adds today's rows of the shared ledger `${COMPASS_HOME}/spend.tsv` — useful when you want a
+routine (or your own script) to read the same numbers the gate enforces.
+
 ## Reliability comes from the constraints, not the model
 
 The most reliable production loops aren't built on a stronger model — they're built on stronger
