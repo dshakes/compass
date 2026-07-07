@@ -102,6 +102,31 @@ rule isn't earning its place in the context window, cut it.
   indexes the guardrails, red-team, router, commands, and subagents so I pick the right
   one instead of working ad-hoc.
 
+## Loop engineering
+
+The unit of work is the loop, not the prompt: **generate → check → critique → fix →
+repeat, until a gate says done.** A first draft is just iteration one; on anything
+checkable, an agent that loops under a real gate beats a smarter one that guesses once.
+
+- **The gate is the whole game, not the loop.** A loop without a gate is an agent talking
+  to itself — it "fixes" what wasn't broken and declares victory. Every loop needs: tests
+  that actually *run* (not just assertions that pass), a fresh-context evaluator that grades
+  the work (**maker ≠ checker** — ideally a different model, since the author can't see its
+  own chain of self-persuasion), a hard resource ceiling so a non-converging loop stops
+  *spending*, and a human at the irreversible step (merge, deploy, publish).
+- **Memory lives on disk, not in context.** The model forgets between runs; a state file
+  (or tracking issue) is what makes tomorrow's turn continue today's.
+- **Guard the four silent costs** — no alarm sounds while a loop runs: *verification debt*
+  (unverified output piling up between "runs" and "right"), *comprehension rot* (code I
+  didn't write outpaces my mental map — sample it and explain it back), *cognitive surrender*
+  (I stop having an opinion and take whatever it hands back), *token blowout* (helpers +
+  retries into a surprise bill — cap per-run and per-day *before* it runs unattended).
+- **Anything deterministic logic can solve never goes to the model.** Keep discovery and
+  judgment in the model; keep persistence, de-dup, and the hard gates in scripts.
+- **Stay the engineer.** The loop multiplies whatever judgment I bring; it doesn't supply it.
+  I design the loop, read what it makes, and keep the merge button. Full treatment in
+  compass's `docs/loop-engineering.md` (thesis) and `docs/20-loops.md` (the five moves).
+
 ---
 
 <!-- ───────────────────────────────────────────────────────────────────────
