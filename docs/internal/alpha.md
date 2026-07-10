@@ -1,7 +1,8 @@
 # For alpha users
 
-Thanks for trying **compass** — a config that makes Claude Code + Codex behave like a
-senior engineer in every repo, with an optional governed, autonomous SDLC pipeline.
+Thanks for trying **compass** — a config that gives Claude Code + Codex measured
+guardrails, a budget cap, and a self-fixing loop in every repo, with an optional
+governed, autonomous SDLC pipeline.
 It's **alpha**: the core is dogfooded and stable; the SDLC pipeline is newer. Expect
 rough edges, and please file them.
 

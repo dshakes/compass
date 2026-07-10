@@ -27,7 +27,7 @@ done
 step() { printf '\n\033[1;36m▶ %s\033[0m\n' "$*"; }
 ok()   { printf '  \033[32m✓\033[0m %s\n' "$*"; }
 
-printf '\033[1m🧭 compass quickstart\033[0m  —  one config, every repo, senior-engineer defaults\n'
+printf '\033[1m🧭 compass quickstart\033[0m  —  one config, every repo, measured-safety defaults\n'
 printf '   repo: %s\n' "$REPO"
 
 # 1 · Preview, unless waved through. Honesty first: show exactly what will change.
