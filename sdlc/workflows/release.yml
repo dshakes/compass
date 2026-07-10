@@ -110,5 +110,42 @@ jobs:
           git push -f origin "$branch"
           gh pr create --base main --head "$branch" \
             --title "chore(release): Homebrew formula -> $VERSION" \
-            --body "Automated formula bump for **$VERSION** (url + tarball \`sha256 $sha\`). Merge to point \`brew install\` at the new release." \
+            --body "Automated formula bump for **$VERSION** (url + tarball \`sha256 $sha\`). Auto-merges once checks pass, so \`brew install\` never lags a release." \
             || gh pr edit "$branch" --body "Automated formula bump for $VERSION (sha256 $sha)." || true
+          # Close the loop: land the bump automatically once required checks pass, so a
+          # forgotten manual merge can't leave brew on a stale release (the reason we
+          # were pinned to v0.20.0). Tolerant — if the repo hasn't enabled auto-merge,
+          # the CI drift guard on main still flags the staleness loudly.
+          # NOTE: if branch protection requires the `ci` check, that check must be able
+          # to run on this bot-authored PR — pushes made with the default GITHUB_TOKEN
+          # don't trigger `on: pull_request`, so use a PAT (secrets.RELEASE_PAT) for the
+          # push above if auto-merge stalls waiting on checks.
+          gh pr merge --auto --squash "$branch" \
+            || echo "::warning::could not enable auto-merge — enable 'Allow auto-merge' in repo settings (+ required checks), or merge the formula PR by hand"
+
+      - name: Sync formula into the shared tap (dshakes/homebrew-tap)
+        env:
+          TAP_PAT: ${{ secrets.HOMEBREW_TAP_PAT }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          # Users install via `brew install dshakes/tap/compass`, which reads the shared
+          # tap repo — so each release must push the bumped formula there too. Cross-repo
+          # write needs a PAT (the default GITHUB_TOKEN is scoped to this repo only).
+          formula="$(ls Formula/*.rb 2>/dev/null | head -1 || true)"
+          [ -n "$formula" ] || exit 0
+          if [ -z "${TAP_PAT:-}" ]; then
+            echo "::warning::HOMEBREW_TAP_PAT not set — skipping tap sync. Add a fine-grained PAT with contents:write on dshakes/homebrew-tap so the tap tracks releases automatically."
+            exit 0
+          fi
+          tmp="$(mktemp -d)"
+          git clone --depth 1 "https://x-access-token:${TAP_PAT}@github.com/dshakes/homebrew-tap.git" "$tmp/tap" 2>/dev/null
+          mkdir -p "$tmp/tap/Formula"
+          cp "$formula" "$tmp/tap/Formula/compass.rb"
+          cd "$tmp/tap"
+          if git diff --quiet; then echo "tap already current for $VERSION"; exit 0; fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -aqm "compass $VERSION"
+          git push
+          echo "synced compass $VERSION into dshakes/homebrew-tap"
