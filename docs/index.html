@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>compass — guardrails, a hard budget cap & a self-fixing loop for your AI coding agent</title>
+<meta name="description" content="compass is a local-first config layer for Claude Code, Codex & Gemini that stops your AI agent from burning your budget, running unsafe commands, or merging unverified code — eval-gated 100/100, measured not vibes. You always merge." />
+<meta name="color-scheme" content="dark" />
+<meta property="og:title" content="🧭 compass — measured guardrails for your AI coding agent" />
+<meta property="og:description" content="Eval-gated guardrails (100/100), a budget cap that actually halts, a self-fixing PR loop. Local-first. You always merge." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://dshakes.github.io/compass/" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🧭%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#07080c; --bg-2:#0a0c12; --elev:#0f1219; --elev-2:#141824;
+    --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.14);
+    --text:#e9ecf3; --muted:#98a2b6; --dim:#6b7488;
+    --violet:#a371f7; --violet-2:#c4a5ff; --cyan:#2ee6cf; --blue:#5b9dff; --pink:#ff6ec7; --green:#3ad07f; --red:#ff6b6b;
+    --grad:linear-gradient(115deg,#a371f7 0%,#5b9dff 45%,#2ee6cf 100%);
+    --grad-soft:linear-gradient(115deg,rgba(163,113,247,.18),rgba(46,230,207,.14));
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif;
+    --body:'Inter',system-ui,-apple-system,sans-serif;
+    --maxw:1180px; --r:16px;
+    --shadow:0 24px 60px -24px rgba(0,0,0,.7);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+  body{
+    background:var(--bg); color:var(--text); font-family:var(--body);
+    line-height:1.6; font-size:16.5px; overflow-x:hidden; letter-spacing:.1px;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* ambient aurora + coordinate grid */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:-2; pointer-events:none;
+    background:
+      radial-gradient(60vw 50vh at 15% -5%, rgba(163,113,247,.20), transparent 60%),
+      radial-gradient(55vw 45vh at 100% 10%, rgba(46,230,207,.13), transparent 55%),
+      radial-gradient(50vw 50vh at 50% 115%, rgba(91,157,255,.12), transparent 60%);
+    animation:drift 22s ease-in-out infinite alternate;
+  }
+  body::after{
+    content:""; position:fixed; inset:0; z-index:-2; pointer-events:none; opacity:.5;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:64px 64px; mask-image:radial-gradient(ellipse 100% 70% at 50% 0%,#000 30%,transparent 78%);
+  }
+  @keyframes drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(0,-2%,0) scale(1.06)}}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:rgba(163,113,247,.35);color:#fff}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  section{position:relative;padding:104px 0}
+  h1,h2,h3{font-family:var(--disp);font-weight:600;line-height:1.1;letter-spacing:-.02em}
+  .mono{font-family:var(--mono)}
+  .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--violet-2);opacity:.9}
+  .lead{color:var(--muted);font-size:clamp(16px,2vw,19px);max-width:62ch}
+
+  /* NAV */
+  header.nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);
+    background:rgba(7,8,12,.66);border-bottom:1px solid transparent;transition:border-color .3s,background .3s}
+  header.nav.scrolled{border-color:var(--line);background:rgba(7,8,12,.82)}
+  .nav-in{display:flex;align-items:center;gap:22px;height:64px}
+  .brand{display:flex;align-items:center;gap:9px;font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:-.01em}
+  .brand .rose{width:24px;height:24px;filter:drop-shadow(0 0 6px rgba(163,113,247,.6))}
+  .nav-links{display:flex;gap:26px;margin-left:auto}
+  .nav-links a{color:var(--muted);font-size:14.5px;font-weight:500;transition:color .2s}
+  .nav-links a:hover{color:var(--text)}
+  .nav-cta{display:flex;align-items:center;gap:10px}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:600;font-size:14.5px;
+    padding:10px 18px;border-radius:11px;border:1px solid var(--line-2);color:var(--text);
+    transition:transform .18s,box-shadow .25s,border-color .2s,background .2s;cursor:pointer;background:transparent;white-space:nowrap}
+  .btn:hover{transform:translateY(-2px);border-color:var(--violet)}
+  .btn.primary{background:var(--grad);border:none;color:#0a0710;box-shadow:0 10px 34px -10px rgba(163,113,247,.7)}
+  .btn.primary:hover{box-shadow:0 16px 44px -10px rgba(163,113,247,.9)}
+  .btn.ghost{background:rgba(255,255,255,.03)}
+  .star-count{font-family:var(--mono);font-size:12.5px;color:var(--muted);border:1px solid var(--line);padding:2px 8px;border-radius:20px}
+  .nav-toggle{display:none;margin-left:auto;background:none;border:1px solid var(--line);border-radius:9px;padding:8px;cursor:pointer}
+  .nav-toggle span{display:block;width:20px;height:2px;background:var(--text);margin:4px 0;transition:.25s}
+
+  /* HERO */
+  .hero{padding:72px 0 80px;text-align:center}
+  .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;text-align:left}
+  .hero-grid>*,.loop-grid>*{min-width:0}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12.5px;color:var(--muted);
+    border:1px solid var(--line);background:rgba(255,255,255,.03);padding:6px 13px;border-radius:22px;margin-bottom:22px}
+  .badge .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .hero h1{font-size:clamp(38px,5.6vw,66px);font-weight:700;margin-bottom:22px}
+  .hero h1 .sub{display:block;font-size:clamp(17px,2.1vw,23px);font-weight:500;color:var(--muted);margin-top:16px;font-family:var(--body);letter-spacing:normal;line-height:1.5}
+  .kicker{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 30px}
+  .chip{font-family:var(--mono);font-size:12.5px;color:var(--violet-2);border:1px solid rgba(163,113,247,.32);
+    background:rgba(163,113,247,.08);padding:6px 12px;border-radius:9px}
+  .hero-cta{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+  .hero-visual{display:flex;justify-content:center;align-items:center;position:relative}
+  /* ambient compass rose behind the terminal */
+  .rose-ghost{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,88%);opacity:.14;z-index:0;pointer-events:none;
+    filter:drop-shadow(0 0 40px rgba(163,113,247,.5))}
+  .rose-ghost svg{width:100%;height:auto;animation:spins 60s linear infinite;transform-origin:center}
+  /* live terminal demo */
+  .term-live{position:relative;z-index:1;width:100%;max-width:540px;background:#06070b;border:1px solid var(--line-2);
+    border-radius:14px;overflow:hidden;box-shadow:0 30px 80px -30px rgba(0,0,0,.85),0 0 0 1px rgba(163,113,247,.08)}
+  .term-live .bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--line);background:#0b0d13}
+  .term-live .bar i{width:11px;height:11px;border-radius:50%}
+  .term-live .bar i:nth-child(1){background:#ff5f57}.term-live .bar i:nth-child(2){background:#febc2e}.term-live .bar i:nth-child(3){background:#28c840}
+  .term-live .bar span{margin-left:9px;font-family:var(--mono);font-size:12px;color:var(--dim)}
+  .term-live .body{padding:15px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.6;min-height:300px}
+  .tl{opacity:0;transform:translateY(4px);transition:opacity .28s ease,transform .28s ease;white-space:pre-wrap;color:var(--muted)}
+  .tl.show{opacity:1;transform:none}
+  .tl .u{color:var(--cyan)} .tl .p{color:#e9ecf3} .tl .blk{color:var(--red)} .tl .ok{color:var(--green)} .tl .vi{color:var(--violet-2)} .tl .dim{color:var(--dim)}
+  .tcursor{display:inline-block;width:8px;height:15px;background:var(--violet);vertical-align:-2px;margin-left:2px;animation:blink 1s step-end infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* install command box */
+  .cmd{display:flex;align-items:center;gap:12px;background:var(--elev);border:1px solid var(--line-2);
+    border-radius:13px;padding:14px 14px 14px 18px;font-family:var(--mono);font-size:13.5px;max-width:100%;overflow:hidden;min-width:0}
+  .cmd .prompt{color:var(--cyan);flex:none}
+  .cmd code{color:var(--text);white-space:nowrap;overflow-x:auto;scrollbar-width:none;min-width:0;flex:1}
+  .cmd code::-webkit-scrollbar{display:none}
+  .copy{margin-left:auto;flex:none;background:rgba(255,255,255,.05);border:1px solid var(--line-2);color:var(--muted);
+    border-radius:9px;padding:8px 11px;cursor:pointer;font-family:var(--disp);font-weight:600;font-size:12.5px;transition:.2s;display:inline-flex;gap:6px;align-items:center}
+  .copy:hover{color:var(--text);border-color:var(--violet);background:rgba(163,113,247,.12)}
+  .copy.done{color:var(--green);border-color:var(--green)}
+  .cmd-note{font-size:12.5px;color:var(--dim);margin-top:10px;font-family:var(--mono)}
+
+  /* generic section head */
+  .head{max-width:70ch;margin-bottom:44px}
+  .head h2{font-size:clamp(28px,3.6vw,42px);margin:14px 0 16px}
+  .center{text-align:center;margin-left:auto;margin-right:auto}
+
+  /* STOPS trio */
+  .trio{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .scard{background:linear-gradient(180deg,var(--elev),var(--bg-2));border:1px solid var(--line);border-radius:var(--r);
+    padding:28px;position:relative;overflow:hidden;transition:transform .3s,border-color .3s}
+  .scard:hover{transform:translateY(-4px);border-color:var(--line-2)}
+  .scard .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;margin-bottom:18px;
+    background:var(--grad-soft);border:1px solid var(--line-2)}
+  .scard h3{font-size:20px;margin-bottom:8px}
+  .scard p{color:var(--muted);font-size:15px}
+  .scard .tag{position:absolute;top:18px;right:18px;font-family:var(--mono);font-size:11px;color:var(--red);
+    border:1px solid rgba(255,107,107,.3);background:rgba(255,107,107,.08);padding:3px 8px;border-radius:20px}
+  .scard.ok .tag{color:var(--green);border-color:rgba(58,208,127,.3);background:rgba(58,208,127,.08)}
+
+  /* PROOF stats */
+  .proof{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(255,255,255,.014)}
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center}
+  .stat{padding:14px 10px}
+  .stat .n{font-family:var(--disp);font-weight:700;font-size:clamp(26px,3.4vw,40px);line-height:1}
+  .stat .l{color:var(--muted);font-size:12.5px;margin-top:9px;line-height:1.35}
+  .stat .l b{color:var(--text);font-weight:600}
+
+  /* command proofs */
+  .proofs{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  .pcard{background:var(--elev);border:1px solid var(--line);border-radius:var(--r);padding:22px;transition:.3s}
+  .pcard:hover{border-color:var(--violet);box-shadow:var(--shadow)}
+  .pcard .ph{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .pcard .ph .e{font-size:20px}
+  .pcard .ph h3{font-size:16.5px}
+  .term{background:#06070b;border:1px solid var(--line);border-radius:11px;overflow:hidden;font-family:var(--mono);font-size:12.7px}
+  .term .bar{display:flex;gap:6px;padding:9px 12px;border-bottom:1px solid var(--line)}
+  .term .bar i{width:10px;height:10px;border-radius:50%;background:#2a2f3c}
+  .term .bar i:nth-child(1){background:#ff5f57}.term .bar i:nth-child(2){background:#febc2e}.term .bar i:nth-child(3){background:#28c840}
+  .term .body{padding:14px 15px;line-height:1.7;overflow-x:auto}
+  .term .c{color:var(--cyan)}.term .o{color:var(--muted)}.term .g{color:var(--green)}.term .r{color:var(--red)}.term .v{color:var(--violet-2)}
+  .pcard p{color:var(--muted);font-size:14px;margin-top:14px}
+
+  /* LOOP */
+  .loop-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}
+  .scales{display:grid;gap:12px;margin-top:8px}
+  .scale{display:flex;gap:14px;align-items:flex-start;background:var(--elev);border:1px solid var(--line);border-radius:13px;padding:16px 18px;transition:.25s}
+  .scale:hover{border-color:var(--line-2);transform:translateX(4px)}
+  .scale .em{font-size:22px;flex:none;margin-top:1px}
+  .scale h4{font-family:var(--disp);font-size:15.5px;margin-bottom:3px}
+  .scale p{color:var(--muted);font-size:13.5px}
+  .scale .stop{color:var(--violet-2);font-size:12px;font-family:var(--mono);margin-top:5px;display:block}
+
+  /* FEATURES bento */
+  .bento{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
+  .fcard{background:var(--elev);border:1px solid var(--line);border-radius:var(--r);padding:24px;transition:.3s;position:relative;overflow:hidden}
+  .fcard:hover{transform:translateY(-4px);border-color:var(--line-2)}
+  .fcard::after{content:"";position:absolute;inset:0;background:var(--grad-soft);opacity:0;transition:.3s;pointer-events:none}
+  .fcard:hover::after{opacity:.5}
+  .fcard>*{position:relative;z-index:1}
+  .fcard .em{font-size:24px;margin-bottom:14px;display:block}
+  .fcard h3{font-size:17px;margin-bottom:7px}
+  .fcard p{color:var(--muted);font-size:14px}
+  .fcard .more{display:inline-block;margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--violet-2)}
+  .span-3{grid-column:span 3}.span-2{grid-column:span 2}
+  @media(min-width:861px){.fcard.span-3{display:flex;flex-direction:column;justify-content:center}}
+
+  /* diagram */
+  .diagram{background:radial-gradient(120% 100% at 50% 0,rgba(163,113,247,.06),transparent 60%);
+    border:1px solid var(--line);border-radius:22px;padding:34px;overflow:hidden}
+  .diagram svg{width:100%;height:auto;display:block}
+  .flow{stroke-dasharray:5 7;animation:flow 1.1s linear infinite}
+  @keyframes flow{to{stroke-dashoffset:-24}}
+  /* clickable svg modules */
+  a.mod{cursor:pointer}
+  a.mod rect{transition:filter .2s,opacity .2s}
+  a.mod:hover rect{filter:drop-shadow(0 0 10px rgba(163,113,247,.55));opacity:1}
+  a.mod:hover text{fill:#fff}
+  .diagram-hint{text-align:center;color:var(--dim);font-size:12px;font-family:var(--mono);margin-top:14px}
+  .diagram-hint b{color:var(--violet-2)}
+
+  /* device / demo frames for GIFs */
+  .demos{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .demo{background:var(--elev);border:1px solid var(--line);border-radius:16px;overflow:hidden;transition:.3s}
+  .demo:hover{border-color:var(--line-2);transform:translateY(-4px);box-shadow:var(--shadow)}
+  .demo .chrome{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--line);background:#0b0d13}
+  .demo .chrome i{width:11px;height:11px;border-radius:50%}
+  .demo .chrome i:nth-child(1){background:#ff5f57}.demo .chrome i:nth-child(2){background:#febc2e}.demo .chrome i:nth-child(3){background:#28c840}
+  .demo .chrome span{margin-left:8px;font-family:var(--mono);font-size:12px;color:var(--dim)}
+  .demo .screen{background:#06070b;line-height:0;min-height:120px;display:flex;align-items:center;justify-content:center}
+  .demo .screen img{width:100%;height:auto;display:block}
+  .demo .cap{padding:16px 18px}
+  .demo .cap h4{font-family:var(--disp);font-size:16px;margin-bottom:5px}
+  .demo .cap p{color:var(--muted);font-size:13.5px}
+  .demo .cap .tagm{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:20px;margin-left:8px}
+  .tagm.halt{color:var(--red);border:1px solid rgba(255,107,107,.3);background:rgba(255,107,107,.08)}
+  .tagm.live{color:var(--green);border:1px solid rgba(58,208,127,.3);background:rgba(58,208,127,.08)}
+
+  /* agents */
+  .agents{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .agent{background:var(--elev);border:1px solid var(--line);border-radius:13px;padding:22px 20px;text-align:center;transition:.25s}
+  .agent:hover{border-color:var(--violet);transform:translateY(-3px)}
+  .agent .em{font-size:26px}
+  .agent h4{font-family:var(--disp);font-size:15px;margin:10px 0 4px}
+  .agent p{color:var(--dim);font-size:12px;font-family:var(--mono)}
+
+  /* INSTALL tabs */
+  .tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;justify-content:center}
+  .tab{font-family:var(--disp);font-weight:600;font-size:14px;padding:10px 18px;border-radius:10px;border:1px solid var(--line);
+    background:transparent;color:var(--muted);cursor:pointer;transition:.2s}
+  .tab.active{color:#0a0710;background:var(--grad);border-color:transparent}
+  .tab:not(.active):hover{color:var(--text);border-color:var(--line-2)}
+  .panel{display:none;max-width:760px;margin:0 auto}
+  .panel.active{display:block;animation:fade .4s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .panel .cmd{margin-bottom:12px}
+  .panel .desc{color:var(--muted);font-size:14px;text-align:center;margin-bottom:20px}
+  .install-note{margin-top:24px;background:var(--elev);border:1px solid var(--line);border-left:3px solid var(--violet);
+    border-radius:12px;padding:18px 20px;color:var(--muted);font-size:14px;max-width:760px;margin-left:auto;margin-right:auto}
+  .install-note b{color:var(--text)}
+
+  /* safety */
+  .safety{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .sf{display:flex;gap:14px;background:var(--elev);border:1px solid var(--line);border-radius:13px;padding:20px}
+  .sf .em{font-size:20px;flex:none}
+  .sf h4{font-family:var(--disp);font-size:15px;margin-bottom:5px}
+  .sf p{color:var(--muted);font-size:13.5px}
+  .statusbar{margin-top:26px;background:var(--elev);border:1px solid var(--line);border-radius:12px;padding:16px 18px;font-family:var(--mono);font-size:13px;color:var(--muted);overflow-x:auto}
+  .statusbar b{color:var(--text)}
+
+  /* CTA */
+  .final{text-align:center;background:radial-gradient(120% 120% at 50% 0,rgba(163,113,247,.12),transparent 62%);
+    border:1px solid var(--line);border-radius:26px;padding:60px 30px;overflow:hidden;position:relative}
+  .final h2{font-size:clamp(30px,4.4vw,50px);margin-bottom:16px}
+  .final p{color:var(--muted);max-width:52ch;margin:0 auto 30px}
+  .final .hero-cta{justify-content:center}
+
+  footer{border-top:1px solid var(--line);padding:52px 0 40px;margin-top:20px}
+  .foot{display:flex;flex-wrap:wrap;gap:30px;justify-content:space-between;align-items:flex-start}
+  .foot .brand{margin-bottom:12px}
+  .foot p{color:var(--dim);font-size:13.5px;max-width:34ch}
+  .foot-links{display:flex;flex-wrap:wrap;gap:36px}
+  .fl h5{font-family:var(--mono);font-size:11.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+  .fl a{display:block;color:var(--muted);font-size:14px;padding:4px 0;transition:.2s}
+  .fl a:hover{color:var(--violet-2)}
+  .copyright{margin-top:36px;padding-top:24px;border-top:1px solid var(--line);color:var(--dim);font-size:13px;text-align:center}
+
+  /* reveal */
+  .rv{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+  .rv.in{opacity:1;transform:none}
+
+  /* tablet / iPad landscape */
+  @media(max-width:1080px){
+    :root{--maxw:960px}
+    .hero h1{font-size:clamp(34px,5vw,52px)}
+  }
+  @media(max-width:960px){
+    .hero-grid,.loop-grid{grid-template-columns:1fr}
+    .hero-visual{order:-1;max-width:320px;margin:0 auto}
+    .bento{grid-template-columns:repeat(2,1fr)}
+    .fcard.span-3,.fcard.span-2{grid-column:span 2}
+    .trio,.proofs,.safety,.demos{grid-template-columns:1fr}
+    .stats{grid-template-columns:repeat(2,1fr);gap:14px}
+    .agents{grid-template-columns:repeat(2,1fr)}
+    section{padding:88px 0}
+  }
+  img{max-width:100%;height:auto}
+  @media(max-width:680px){
+    section{padding:72px 0}
+    .nav-links{display:none;position:absolute;top:64px;left:0;right:0;flex-direction:column;gap:0;
+      background:rgba(7,8,12,.97);border-bottom:1px solid var(--line);padding:8px 24px}
+    .nav-links.open{display:flex}
+    .nav-links a{padding:13px 0;border-bottom:1px solid var(--line)}
+    .nav-toggle{display:block}
+    .nav-cta .btn.ghost{display:none}
+    .bento,.stats,.agents{grid-template-columns:1fr}
+    .fcard.span-3,.fcard.span-2{grid-column:span 1}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important;scroll-behavior:auto}
+    .rv{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top">
+      <svg class="rose" viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="ng" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a371f7"/><stop offset="1" stop-color="#2ee6cf"/></linearGradient></defs><circle cx="50" cy="50" r="44" fill="none" stroke="url(#ng)" stroke-width="4"/><polygon points="50,14 58,50 50,86 42,50" fill="url(#ng)"/><polygon points="14,50 50,42 86,50 50,58" fill="rgba(255,255,255,.25)"/><circle cx="50" cy="50" r="5" fill="#fff"/></svg>
+      compass
+    </a>
+    <nav class="nav-links" id="navlinks">
+      <a href="#why">Why</a>
+      <a href="#loop">The loop</a>
+      <a href="#features">Features</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/dshakes/compass/tree/main/docs/11-using-compass.md">Docs</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn ghost" href="https://github.com/dshakes/compass" target="_blank" rel="noopener">★ <span class="star-count" id="stars">GitHub</span></a>
+      <a class="btn primary" href="#install">Install</a>
+    </div>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<a id="top"></a>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="badge"><span class="dot"></span> local-first · no telemetry · MIT · beta</div>
+      <h1>Let your coding agent<br>off the leash.<br><span class="grad-text">Not off the rails.</span>
+        <span class="sub">compass is a config layer for <b style="color:var(--text)">Claude Code, Codex &amp; Gemini</b> that stops your agent from burning your budget, running unsafe commands, or merging unverified code — <b style="color:var(--text)">scored 100/100 in CI, not asserted.</b></span>
+      </h1>
+      <div class="kicker">
+        <span class="chip">eval-gated 100/100</span>
+        <span class="chip">a budget cap that halts</span>
+        <span class="chip">you always merge</span>
+      </div>
+      <div class="cmd" style="margin-bottom:14px">
+        <span class="prompt">$</span>
+        <code id="heroCmd">git clone https://github.com/dshakes/compass ~/compass &amp;&amp; cd ~/compass &amp;&amp; ./quickstart.sh</code>
+        <button class="copy" data-copy="git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && ./quickstart.sh">⧉ Copy</button>
+      </div>
+      <div class="cmd-note">no <code>curl | sh</code> · fully reversible · previews every change, asks first</div>
+      <div class="hero-cta" style="margin-top:26px">
+        <a class="btn primary" href="#install">One-click install ↓</a>
+        <a class="btn ghost" href="https://github.com/dshakes/compass" target="_blank" rel="noopener">View on GitHub →</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <!-- ambient compass rose glow behind the terminal -->
+      <div class="rose-ghost" aria-hidden="true">
+        <svg viewBox="0 0 360 360">
+          <defs><linearGradient id="hg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a371f7"/><stop offset=".5" stop-color="#5b9dff"/><stop offset="1" stop-color="#2ee6cf"/></linearGradient></defs>
+          <g fill="none" stroke="url(#hg)">
+            <circle cx="180" cy="180" r="150" stroke-width="1.5" opacity=".35"/>
+            <circle cx="180" cy="180" r="118" stroke-width="2.5"/>
+            <circle cx="180" cy="180" r="86" stroke-width="1" opacity=".4" stroke-dasharray="3 6"/>
+          </g>
+          <g id="ticks" stroke="#8b93a7" stroke-width="1.5" opacity=".5"></g>
+          <polygon points="180,58 194,180 180,166 166,180" fill="#c4a5ff"/>
+          <polygon points="180,302 194,180 180,194 166,180" fill="#2a3040"/>
+          <circle cx="180" cy="180" r="9" fill="#0a0c12" stroke="url(#hg)" stroke-width="3"/>
+        </svg>
+      </div>
+      <!-- live product demo -->
+      <div class="term-live" role="img" aria-label="A compass session: a dangerous command is blocked, the review loop auto-fixes and hands off, a task is routed to a cheap model, and the session stays under its budget.">
+        <div class="bar"><i></i><i></i><i></i><span>claude — ~/payments-api</span></div>
+        <div class="body" id="termBody"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STOPS THREE THINGS ============ -->
+<section id="why">
+  <div class="wrap">
+    <div class="head rv">
+      <div class="eyebrow">the three footguns</div>
+      <h2>It stops the three things<br>an agent shouldn't do.</h2>
+      <p class="lead">Everyone ships the same models. The edge is <b style="color:var(--text)">configuration you can trust</b> — and compass hands you the number a skeptic can reproduce in 30 seconds.</p>
+    </div>
+    <div class="trio">
+      <div class="scard rv"><span class="tag">HALTED</span>
+        <div class="ic">💸</div><h3>Burning your budget</h3>
+        <p>Usage trackers <i>report</i> spend. compass <b style="color:var(--text)">enforces</b> it — <code class="mono" style="color:var(--cyan)">COMPASS_MAX_USD=5</code> hard-stops the session before the next tool call. No $40 surprise while you're away.</p>
+      </div>
+      <div class="scard rv"><span class="tag">BLOCKED</span>
+        <div class="ic">🛡️</div><h3>Running unsafe commands</h3>
+        <p>Catastrophic commands and secret writes are denied <b style="color:var(--text)">before they run</b> — and the policy is eval-gated in CI against a labeled corpus, <i>not</i> asserted. <code class="mono" style="color:var(--red)">rm -rf /</code> → denied; <code class="mono" style="color:var(--green)">rm -rf ./build</code> → allowed.</p>
+      </div>
+      <div class="scard ok rv"><span class="tag">YOU MERGE</span>
+        <div class="ic">🔏</div><h3>Merging unverified code</h3>
+        <p>It reviews, security-checks, tests, cross-audits with a second model, and <b style="color:var(--text)">pushes its own fixes until green</b>. The one thing it never does: press merge. That gate is yours, permanently.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROOF STATS ============ -->
+<section class="proof">
+  <div class="wrap">
+    <div class="head center rv" style="margin-bottom:34px">
+      <div class="eyebrow">measured, not vibes</div>
+      <h2 style="margin-bottom:6px">Every claim is a number.</h2>
+    </div>
+    <div class="stats">
+      <div class="stat rv"><div class="n grad-text" data-count="100" data-suffix="/100">100/100</div><div class="l"><b>Guardrail</b> precision/recall<br>61-case corpus, in CI</div></div>
+      <div class="stat rv"><div class="n grad-text" data-count="100" data-suffix="%">100%</div><div class="l"><b>Red-team</b> P/R · 85 cases<br>100% obfuscation-robust</div></div>
+      <div class="stat rv"><div class="n grad-text" data-count="96.9" data-suffix="%">96.9%</div><div class="l"><b>Router</b> accuracy<br>86-case eval set</div></div>
+      <div class="stat rv"><div class="n grad-text" data-count="61" data-suffix="%">61%</div><div class="l"><b>Cheaper</b> than all-Opus<br>~98% quality retained</div></div>
+      <div class="stat rv"><div class="n grad-text">SLSA</div><div class="l"><b>Verified</b> supply chain<br>keyless provenance</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FIVE PROOF COMMANDS ============ -->
+<section>
+  <div class="wrap">
+    <div class="head rv">
+      <div class="eyebrow">reproduce it in 30 seconds</div>
+      <h2>Five claims. Five commands.</h2>
+      <p class="lead">No login, no tokens. Clone the repo and run any of these — the number prints on your own machine.</p>
+    </div>
+    <div class="proofs">
+      <div class="pcard rv">
+        <div class="ph"><span class="e">🛡</span><h3>Guardrails with a score</h3></div>
+        <div class="term"><div class="bar"><i></i><i></i><i></i></div><div class="body">
+          <span class="c">$</span> compass bench<br>
+          <span class="o">→ guardrail </span><span class="g">100%</span><span class="o"> precision/recall (61-case corpus)</span><br>
+          <span class="o">→ router </span><span class="g">96.9%</span><span class="o"> · scored in CI, not asserted</span>
+        </div></div>
+        <p>Then ask the agent to <span class="mono">rm -rf /</span> or write a <span class="mono">.env</span> → denied. <span class="mono">rm -rf ./build</span> → allowed.</p>
+      </div>
+      <div class="pcard rv">
+        <div class="ph"><span class="e">🧪</span><h3>Red-team resistance</h3></div>
+        <div class="term"><div class="bar"><i></i><i></i><i></i></div><div class="body">
+          <span class="c">$</span> compass redteam<br>
+          <span class="o">→ injection corpus </span><span class="g">100% P/R</span><span class="o"> (85 cases)</span><br>
+          <span class="o">→ adversarial robustness </span><span class="g">100%</span><span class="o"> (273/273)</span><br>
+          <span class="o">→ scans THIS repo's config · MCP · settings</span>
+        </div></div>
+        <p>A poisoned repo or web page can't quietly turn your agent against you — and you can measure how well that holds.</p>
+      </div>
+      <div class="pcard rv">
+        <div class="ph"><span class="e">💸</span><h3>A ceiling that actually stops it</h3></div>
+        <div class="term"><div class="bar"><i></i><i></i><i></i></div><div class="body">
+          <span class="c">$</span> export COMPASS_MAX_USD=5<br>
+          <span class="o"># session cost climbs… $4.90 → </span><span class="r">HALTED</span><br>
+          <span class="o">Budget ceiling reached — stopping</span><br>
+          <span class="o">before it spends more.</span>
+        </div></div>
+        <p>Blocked, not warned — before the next tool call. A per-day cap covers unattended fleet runs.</p>
+      </div>
+      <div class="pcard rv">
+        <div class="ph"><span class="e">🧭</span><h3>Cost routing, measured</h3></div>
+        <div class="term"><div class="bar"><i></i><i></i><i></i></div><div class="body">
+          <span class="c">$</span> compass route <span class="v">"redesign the auth model"</span><br>
+          <span class="o">→ </span><span class="v">opus</span><br>
+          <span class="c">$</span> compass route <span class="v">"fix a typo"</span><br>
+          <span class="o">→ </span><span class="g">haiku</span>
+        </div></div>
+        <p>Cheap work goes to cheap models — ~61% cheaper than all-Opus at ~98% quality on a fair mix.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SEE IT LIVE (GIFs) ============ -->
+<section id="demo" style="padding-top:0">
+  <div class="wrap">
+    <div class="head rv">
+      <div class="eyebrow">not a mockup — real terminal capture</div>
+      <h2>Watch the guardrails fire.</h2>
+      <p class="lead">These are unedited recordings from the repo. The budget cap really halts; the loop really pushes its own fixes until the tests go green.</p>
+    </div>
+    <div class="demos">
+      <div class="demo rv">
+        <div class="chrome"><i></i><i></i><i></i><span>~/myrepo — compass budget ceiling</span></div>
+        <div class="screen"><img src="assets/budget-real.gif" alt="A live terminal: the session cost climbs toward the COMPASS_MAX_USD ceiling and the next tool call is hard-blocked before it runs." loading="lazy" width="640" height="400"/></div>
+        <div class="cap"><h4>The $ ceiling that stops it<span class="tagm halt">HALTED</span></h4><p>Cost climbs to the cap → the next tool call is blocked, not warned. Your $5 stays $5.</p></div>
+      </div>
+      <div class="demo rv">
+        <div class="chrome"><i></i><i></i><i></i><span>~/myrepo — the self-fixing loop</span></div>
+        <div class="screen"><img src="assets/loop.gif" alt="A live terminal: the SDLC loop generates a change, runs tests, critiques, and pushes its own fixes until the suite passes." loading="lazy" width="640" height="400"/></div>
+        <div class="cap"><h4>Generate → test → fix → repeat<span class="tagm live">GREEN</span></h4><p>It drives a change to passing tests on its own — then stops at your merge.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ THE LOOP ============ -->
+<section id="loop">
+  <div class="wrap">
+    <div class="head rv">
+      <div class="eyebrow">⭐ the part people screenshot</div>
+      <h2>It fixes its own PRs.</h2>
+      <p class="lead">A one-shot agent stops at its first wrong answer. compass <b style="color:var(--text)">loops</b> — generate → test → critique → fix → repeat against a gate — so quality comes from iteration, not one lucky prompt.</p>
+    </div>
+    <div class="loop-grid">
+      <a class="diagram rv" href="https://github.com/dshakes/compass/tree/main/docs/20-loops.md" target="_blank" rel="noopener" style="padding:24px;display:block;cursor:pointer" title="Open docs/20-loops.md">
+        <!-- loop diagram -->
+        <svg viewBox="0 0 420 380" role="img" aria-label="The task loop: generate, test, critique, fix, repeat until a gate passes, then a human merges">
+          <defs>
+            <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a371f7"/><stop offset="1" stop-color="#2ee6cf"/></linearGradient>
+            <marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#5b9dff" stroke-width="1.4"/></marker>
+          </defs>
+          <circle cx="210" cy="170" r="120" fill="none" stroke="url(#lg)" stroke-width="1.5" opacity=".25" class="flow"/>
+          <!-- nodes -->
+          <g font-family="Space Grotesk,sans-serif" font-size="13" fill="#e9ecf3" text-anchor="middle">
+            <g><circle cx="210" cy="58" r="34" fill="#0f1219" stroke="url(#lg)" stroke-width="2"/><text x="210" y="55">generate</text><text x="210" y="70" font-size="15">✎</text></g>
+            <g><circle cx="322" cy="170" r="34" fill="#0f1219" stroke="url(#lg)" stroke-width="2"/><text x="322" y="167">test</text><text x="322" y="182" font-size="15">✓</text></g>
+            <g><circle cx="210" cy="282" r="34" fill="#0f1219" stroke="url(#lg)" stroke-width="2"/><text x="210" y="279">critique</text><text x="210" y="294" font-size="15">🔍</text></g>
+            <g><circle cx="98" cy="170" r="34" fill="#0f1219" stroke="url(#lg)" stroke-width="2"/><text x="98" y="167">fix</text><text x="98" y="182" font-size="15">🔧</text></g>
+          </g>
+          <!-- arrows around: land exactly on each node's edge, 4-fold symmetric -->
+          <g fill="none" stroke="#5b9dff" stroke-width="1.6" marker-end="url(#ar)" opacity=".8">
+            <path d="M234,82 A120,120 0 0 1 298,146"/>
+            <path d="M298,194 A120,120 0 0 1 234,258"/>
+            <path d="M186,258 A120,120 0 0 1 122,194"/>
+            <path d="M122,146 A120,120 0 0 1 186,82"/>
+          </g>
+          <!-- gate -->
+          <g text-anchor="middle" font-family="JetBrains Mono,monospace">
+            <rect x="150" y="150" width="120" height="40" rx="10" fill="rgba(46,230,207,.1)" stroke="#2ee6cf" stroke-width="1.5"/>
+            <text x="210" y="168" fill="#2ee6cf" font-size="12">GATE</text>
+            <text x="210" y="182" fill="#98a2b6" font-size="10">tests + review pass</text>
+          </g>
+          <text x="210" y="350" text-anchor="middle" fill="#98a2b6" font-family="Space Grotesk,sans-serif" font-size="13">→ then it stops at <tspan fill="#c4a5ff" font-weight="600">you</tspan>. That gate never moves.</text>
+        </svg>
+      </a>
+      <div class="rv">
+        <p style="color:var(--muted);margin-bottom:6px;font-size:15px">The same closed loop runs at <b style="color:var(--text)">four scales</b> — each until a gate says done, then it stops at a human:</p>
+        <div class="scales">
+          <div class="scale"><span class="em">🔁</span><div><h4>The task loop</h4><p>generate → test → critique → fix — one change driven to green.<span class="stop">stops when tests + review pass</span></div></div>
+          <div class="scale"><span class="em">🔎</span><div><h4>The review loop</h4><p>review → auto-fix the Blocking findings → re-review, round-capped ×3.<span class="stop">hands to a human if still red</span></div></div>
+          <div class="scale"><span class="em">🛰️</span><div><h4>The fleet loop</h4><p>the whole pipeline, scheduled across every repo you own, overnight, test-gated.<span class="stop">a PR per repo — approve from your phone</span></div></div>
+          <div class="scale"><span class="em">👥</span><div><h4>The workflow loops</h4><p>parallel agents that fan out, fact-check each other, and converge.<span class="stop">one synthesized answer</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FEATURES BENTO ============ -->
+<section id="features">
+  <div class="wrap">
+    <div class="head rv">
+      <div class="eyebrow">what's in the box</div>
+      <h2>On after one install.</h2>
+      <p class="lead">The whole toolkit — guardrails, the crew, the router, the CLI — is live the moment you install. The autonomous loops sit on top, opt-in.</p>
+    </div>
+    <div class="bento">
+      <div class="fcard span-3 rv"><span class="em">🔁</span><h3>Autonomous SDLC</h3><p>The review → security → tests → cross-audit → auto-fix → re-review loop on every PR. Parallel reviewers, round-capped fixes, a second-model audit — then it stops at your merge.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/09-sdlc.md">09-sdlc →</a></div>
+      <div class="fcard span-3 rv"><span class="em">🛰️</span><h3>The fleet</h3><p>The loop, scheduled across all your repos through a test gate — overnight. Wake up to a PR per repo you can approve from your phone.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/14-fleet.md">14-fleet →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🛡</span><h3>Guardrails &amp; scanning</h3><p>A hook layer that blocks disasters, catches secrets, auto-formats, and keeps a JSONL audit log.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/16-hardening-and-frontier.md">16-hardening →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🧪</span><h3>Red-team hardening</h3><p>Eval-gated defense vs prompt-injection, config poisoning, safety-override, MCP tool-poisoning, malware &amp; insecure code.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/17-red-team.md">17-red-team →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🧭</span><h3>Cost-tier router</h3><p>Standalone, reusable: keyword heuristic → optional classifier → judge cascade. Eval-gated.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/router">router/ →</a></div>
+      <div class="fcard span-2 rv"><span class="em">👥</span><h3>The crew + workflows</h3><p>Cost-tiered expert subagents, slash-commands, and dynamic workflows that fact-check each other.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/agents-roster.md">roster →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🧰</span><h3>The compass CLI</h3><p><span class="mono" style="font-size:12px">onboard · impact · drift · scan · redteam · sandbox · verify · audit-log · spend · dashboard</span></p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/11-using-compass.md">11-using →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🔌</span><h3>MCP + LSP</h3><p>Curated, version-pinned MCP servers plus opt-in language-server intelligence.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/04-mcp.md">04-mcp →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🪪</span><h3>Every agent, one source</h3><p>Claude Code · Codex · Gemini — plus Cursor/Windsurf/Copilot via the AGENTS.md standard.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/12-every-agent.md">12-every-agent →</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ARCHITECTURE / RED-TEAM DATAFLOW ============ -->
+<section id="architecture">
+  <div class="wrap">
+    <div class="head rv">
+      <div class="eyebrow">the trust boundary</div>
+      <h2>Untrusted input in.<br>A human merge out.</h2>
+      <p class="lead">Every source outside the boundary — a pasted prompt, a fetched page, an MCP tool result, a cloned repo's <span class="mono">CLAUDE.md</span> — is decoded, normalized, and scored before it can steer the agent.</p>
+    </div>
+    <div class="diagram rv">
+      <svg viewBox="0 0 1000 330" role="img" aria-label="Red-team dataflow: untrusted input flows through decode and normalize, then detectors, eval-gated, producing warn/audit or block, ending at the human merge gate.">
+        <defs>
+          <linearGradient id="ag" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a371f7"/><stop offset=".5" stop-color="#5b9dff"/><stop offset="1" stop-color="#2ee6cf"/></linearGradient>
+          <marker id="a2" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6" fill="none" stroke="#5b9dff" stroke-width="1.6"/></marker>
+        </defs>
+        <!-- col 1: inputs -->
+        <g font-family="JetBrains Mono,monospace" font-size="11.5" fill="#98a2b6">
+          <text x="20" y="24" fill="#6b7488" font-size="11" letter-spacing="1.5">UNTRUSTED INPUT</text>
+          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/17-red-team.md" target="_blank" rel="noopener"><rect x="20" y="40" width="180" height="34" rx="8" fill="#0f1219" stroke="#30364a"/><text x="34" y="61">prompt / paste</text></a>
+          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/04-mcp.md" target="_blank" rel="noopener"><rect x="20" y="84" width="180" height="34" rx="8" fill="#0f1219" stroke="#30364a"/><text x="34" y="105">web · MCP · tool output</text></a>
+          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/12-every-agent.md" target="_blank" rel="noopener"><rect x="20" y="128" width="180" height="34" rx="8" fill="#0f1219" stroke="#30364a"/><text x="34" y="149">CLAUDE.md · AGENTS.md</text></a>
+          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/03-customize.md" target="_blank" rel="noopener"><rect x="20" y="172" width="180" height="34" rx="8" fill="#0f1219" stroke="#30364a"/><text x="34" y="193">.claude/settings.json</text></a>
+        </g>
+        <!-- col 2: decode (clickable) -->
+        <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/17-red-team.md" target="_blank" rel="noopener">
+          <rect x="260" y="52" width="200" height="142" rx="12" fill="rgba(163,113,247,.06)" stroke="url(#ag)" stroke-width="1.5"/>
+          <text x="360" y="78" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="15" fill="#e9ecf3" font-weight="600">decode &amp; normalize</text>
+          <text x="360" y="102" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10.5" fill="#98a2b6">base64 · hex · %-enc · entity</text>
+          <text x="360" y="120" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10.5" fill="#98a2b6">zero-width · ASCII-smuggling</text>
+          <text x="360" y="138" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10.5" fill="#98a2b6">homoglyph · leetspeak</text>
+          <text x="360" y="170" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#2ee6cf">payload recovered ✓</text>
+        </a>
+        <!-- col 3: detectors (clickable) -->
+        <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/17-red-team.md" target="_blank" rel="noopener">
+          <rect x="520" y="30" width="220" height="238" rx="12" fill="rgba(91,157,255,.06)" stroke="url(#ag)" stroke-width="1.5"/>
+          <text x="630" y="54" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="15" fill="#e9ecf3" font-weight="600">detectors</text>
+          <g font-family="JetBrains Mono,monospace" font-size="10.5" fill="#98a2b6" text-anchor="middle">
+            <text x="630" y="78">prompt-injection</text>
+            <text x="630" y="97">authority-spoof</text>
+            <text x="630" y="116">MCP tool-poisoning</text>
+            <text x="630" y="135">context-poisoning</text>
+            <text x="630" y="154">safety-override</text>
+            <text x="630" y="173">data / DNS exfiltration</text>
+            <text x="630" y="192">malware · insecure-code</text>
+            <text x="630" y="211">system-prompt-leak</text>
+          </g>
+          <text x="630" y="240" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#2ee6cf">eval-gated · 100% P/R</text>
+        </a>
+        <!-- col 4: outcomes (clickable) -->
+        <g font-family="JetBrains Mono,monospace" font-size="11">
+          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/17-red-team.md" target="_blank" rel="noopener"><rect x="800" y="60" width="180" height="40" rx="8" fill="rgba(58,208,127,.08)" stroke="#3ad07f" stroke-width="1.3"/><text x="890" y="85" text-anchor="middle" fill="#3ad07f">warn + audit (default)</text></a>
+          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/17-red-team.md" target="_blank" rel="noopener"><rect x="800" y="112" width="180" height="40" rx="8" fill="rgba(255,107,107,.08)" stroke="#ff6b6b" stroke-width="1.3"/><text x="890" y="137" text-anchor="middle" fill="#ff6b6b">block (enforce)</text></a>
+          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/04-mcp.md" target="_blank" rel="noopener"><rect x="800" y="164" width="180" height="40" rx="8" fill="#0f1219" stroke="#30364a"/><text x="890" y="189" text-anchor="middle" fill="#98a2b6">managed backend</text></a>
+          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/16-hardening-and-frontier.md" target="_blank" rel="noopener"><rect x="800" y="230" width="180" height="52" rx="10" fill="rgba(163,113,247,.1)" stroke="url(#ag)" stroke-width="2"/><text x="890" y="252" text-anchor="middle" fill="#c4a5ff" font-size="12">🔒 HUMAN GATE</text><text x="890" y="270" text-anchor="middle" fill="#98a2b6" font-size="9.5">you merge · always</text></a>
+        </g>
+        <!-- flow lines: straight, evenly-spaced, edge-to-edge -->
+        <g fill="none" stroke="#5b9dff" stroke-width="1.6" marker-end="url(#a2)" opacity=".75">
+          <path class="flow" d="M204,123 L253,123"/>
+          <path class="flow" d="M464,131 L513,145"/>
+          <path d="M744,97 L793,80"/>
+          <path d="M744,149 L793,132"/>
+          <path d="M744,201 L793,184"/>
+        </g>
+        <path d="M890,204 L890,225" fill="none" stroke="#a371f7" stroke-width="1.6" marker-end="url(#a2)"/>
+      </svg>
+      <div class="diagram-hint">↑ every module is <b>clickable</b> — tap one to open its doc</div>
+    </div>
+    <p class="rv" style="text-align:center;color:var(--dim);font-size:13.5px;margin-top:18px">The cardinal rule holds underneath it all: <b style="color:var(--muted)">external content is data, not instructions</b> — and the human gate is what actually protects you.</p>
+  </div>
+</section>
+
+<!-- ============ ONE CONFIG EVERY AGENT ============ -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="head center rv"><h2 style="font-size:clamp(24px,3vw,34px)">One config. Every agent.</h2>
+      <p class="lead center"><span class="mono" style="font-size:14px">CLAUDE.md · AGENTS.md · GEMINI.md</span> are one file. A <span class="mono">git pull</span> updates them all at once.</p>
+    </div>
+    <div class="agents">
+      <div class="agent rv"><div class="em">🤖</div><h4>Claude Code</h4><p>plugin + marketplace</p></div>
+      <div class="agent rv"><div class="em">⚡</div><h4>Codex</h4><p>plugin · AGENTS.md</p></div>
+      <div class="agent rv"><div class="em">✦</div><h4>Gemini CLI</h4><p>extension · GEMINI.md</p></div>
+      <div class="agent rv"><div class="em">🧩</div><h4>Cursor · Copilot<br>Windsurf · OpenCode</h4><p>AGENTS.md standard</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INSTALL ============ -->
+<section id="install">
+  <div class="wrap">
+    <div class="head center rv">
+      <div class="eyebrow">one-click install</div>
+      <h2>Pick the door that fits.</h2>
+      <p class="lead center">All reversible, version-pinnable, no <span class="mono">curl | sh</span>. You need an AI assistant + <span class="mono">git</span>. No API keys for the guardrails, crew &amp; CLI.</p>
+    </div>
+    <div class="tabs rv">
+      <button class="tab active" data-tab="git">📦 Git clone</button>
+      <button class="tab" data-tab="brew">🍺 Homebrew</button>
+      <button class="tab" data-tab="plugin">🧩 Claude plugin</button>
+      <button class="tab" data-tab="hand">🛠️ By hand</button>
+    </div>
+
+    <div class="panel active" data-panel="git">
+      <p class="desc">Own &amp; edit your config — <b style="color:var(--violet-2)">recommended</b>. Previews every change, asks first, fully reversible.</p>
+      <div class="cmd"><span class="prompt">$</span><code>git clone https://github.com/dshakes/compass ~/compass &amp;&amp; cd ~/compass</code><button class="copy" data-copy="git clone https://github.com/dshakes/compass ~/compass && cd ~/compass">⧉ Copy</button></div>
+      <div class="cmd"><span class="prompt">$</span><code>./quickstart.sh</code><button class="copy" data-copy="./quickstart.sh">⧉ Copy</button></div>
+    </div>
+    <div class="panel" data-panel="brew">
+      <p class="desc">Managed &amp; versioned via Homebrew.</p>
+      <div class="cmd"><span class="prompt">$</span><code>brew tap dshakes/compass https://github.com/dshakes/compass</code><button class="copy" data-copy="brew tap dshakes/compass https://github.com/dshakes/compass">⧉ Copy</button></div>
+      <div class="cmd"><span class="prompt">$</span><code>brew install dshakes/compass/compass</code><button class="copy" data-copy="brew install dshakes/compass/compass">⧉ Copy</button></div>
+      <div class="cmd"><span class="prompt">$</span><code>compass quickstart</code><button class="copy" data-copy="compass quickstart">⧉ Copy</button></div>
+    </div>
+    <div class="panel" data-panel="plugin">
+      <p class="desc">No terminal — ideal for a team. Run these inside Claude Code.</p>
+      <div class="cmd"><span class="prompt">▸</span><code>/plugin marketplace add dshakes/compass</code><button class="copy" data-copy="/plugin marketplace add dshakes/compass">⧉ Copy</button></div>
+      <div class="cmd"><span class="prompt">▸</span><code>/plugin install core@compass</code><button class="copy" data-copy="/plugin install core@compass">⧉ Copy</button></div>
+    </div>
+    <div class="panel" data-panel="hand">
+      <p class="desc">Full control — preview, install, validate.</p>
+      <div class="cmd"><span class="prompt">$</span><code>make dry-run</code><button class="copy" data-copy="make dry-run">⧉ Copy</button></div>
+      <div class="cmd"><span class="prompt">$</span><code>make install &amp;&amp; make doctor</code><button class="copy" data-copy="make install && make doctor">⧉ Copy</button></div>
+    </div>
+
+    <div class="install-note rv">
+      <b>What install actually does:</b> it symlinks compass into your global <span class="mono">~/.claude</span> config, so <span class="mono">git pull</span> / <span class="mono">brew upgrade</span> updates everything. Anything it replaces is <b>backed up first</b>; <span class="mono">--copy</span> copies instead of linking; <span class="mono">make uninstall</span> removes only what it added. Then verify: <span class="mono" style="color:var(--cyan)">compass doctor</span> → expect <b>“0 error.”</b>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SAFETY ============ -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="head rv">
+      <div class="eyebrow">trusted before it's run</div>
+      <h2>Honest about its limits.</h2>
+    </div>
+    <div class="safety">
+      <div class="sf rv"><span class="em">🔒</span><div><h4>You own the irreversible</h4><p>Agents prepare; humans push, merge, deploy. Required checks + code-owner approval enforce it.</p></div></div>
+      <div class="sf rv"><span class="em">↩️</span><div><h4>Readable &amp; reversible</h4><p>No <span class="mono">curl | sh</span>. The installer backs up what it replaces; <span class="mono">make uninstall</span> removes only what it added. Pin a tag, not main.</p></div></div>
+      <div class="sf rv"><span class="em">🛡️</span><div><h4>Guardrails ≠ a security boundary</h4><p>They reduce footguns. Keep least-privilege creds and review diffs. For untrusted code, <span class="mono">compass sandbox</span> is a real boundary.</p></div></div>
+      <div class="sf rv"><span class="em">🌐</span><div><h4>Phones home to nothing</h4><p>No telemetry. Pinned MCP servers reach only the endpoints you'd expect; hooks are short, commented shell scripts you can disable.</p></div></div>
+    </div>
+    <div class="statusbar rv" title="the everyday status line">
+      Opus 4.8 · myrepo · main* · 45k ctx · <b>$1.23</b> · 🧭 🛡1 🧹2 💡1 📉~$1.65
+      <div style="color:var(--dim);font-size:11.5px;margin-top:8px;font-family:var(--body)">session spend, then today's compass activity: 🛡 footguns blocked · 🧹 files formatted · 💡 policy nudges · 📉~$ estimated saved vs all-Opus. Nothing leaves your machine.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINAL CTA ============ -->
+<section>
+  <div class="wrap">
+    <div class="final rv">
+      <div class="eyebrow" style="justify-content:center">status: beta · dogfooded daily</div>
+      <h2 style="margin-top:14px">Give your agent a leash<br>you can <span class="grad-text">measure</span>.</h2>
+      <p>Install once. Feel it in a minute — ask for a dangerous command (blocked), run <span class="mono">/review</span> on your diff, or route a task. No tokens, no signup.</p>
+      <div class="cmd" style="max-width:620px;margin:0 auto 22px">
+        <span class="prompt">$</span><code>git clone https://github.com/dshakes/compass ~/compass &amp;&amp; cd ~/compass &amp;&amp; ./quickstart.sh</code>
+        <button class="copy" data-copy="git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && ./quickstart.sh">⧉ Copy</button>
+      </div>
+      <div class="hero-cta">
+        <a class="btn primary" href="https://github.com/dshakes/compass" target="_blank" rel="noopener">★ Star on GitHub</a>
+        <a class="btn ghost" href="https://github.com/dshakes/compass/tree/main/docs/11-using-compass.md">Read the docs →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div style="max-width:320px">
+        <div class="brand"><svg class="rose" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="none" stroke="url(#ng)" stroke-width="4"/><polygon points="50,14 58,50 50,86 42,50" fill="url(#ng)"/><polygon points="14,50 50,42 86,50 50,58" fill="rgba(255,255,255,.25)"/><circle cx="50" cy="50" r="5" fill="#fff"/></svg> compass</div>
+        <p>Guardrails, a hard budget cap, and a self-fixing loop for your AI coding agent. Local-first. You always merge.</p>
+      </div>
+      <div class="foot-links">
+        <div class="fl">
+          <h5>Start</h5>
+          <a href="https://github.com/dshakes/compass/tree/main/docs/11-using-compass.md">Using compass</a>
+          <a href="#install">Install</a>
+          <a href="https://github.com/dshakes/compass/tree/main/docs/loop-engineering.md">The thesis</a>
+          <a href="https://github.com/dshakes/compass/tree/main/docs/20-loops.md">The five moves</a>
+        </div>
+        <div class="fl">
+          <h5>Deep dives</h5>
+          <a href="https://github.com/dshakes/compass/tree/main/docs/09-sdlc.md">Autonomous SDLC</a>
+          <a href="https://github.com/dshakes/compass/tree/main/docs/17-red-team.md">Red-team</a>
+          <a href="https://github.com/dshakes/compass/tree/main/docs/18-benchmark.md">Benchmark</a>
+          <a href="https://github.com/dshakes/compass/tree/main/docs/19-provenance.md">Provenance</a>
+        </div>
+        <div class="fl">
+          <h5>Project</h5>
+          <a href="https://github.com/dshakes/compass" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://github.com/dshakes/compass/releases">Releases</a>
+          <a href="https://github.com/dshakes/compass/tree/main/docs/adr">ADRs</a>
+          <a href="https://github.com/dshakes/compass/blob/main/LICENSE">MIT License</a>
+        </div>
+      </div>
+    </div>
+    <div class="copyright">🧭 compass · MIT · built to be shared · <span id="year"></span> · not affiliated with Anthropic, OpenAI, or Google</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // ticks on the compass rose
+  var t=document.getElementById('ticks');
+  if(t){var s='';for(var i=0;i<60;i++){var a=i*6*Math.PI/180,r1=i%5?134:128,r2=140,cx=180;
+    s+='<line x1="'+(cx+r1*Math.sin(a))+'" y1="'+(180-r1*Math.cos(a))+'" x2="'+(cx+r2*Math.sin(a))+'" y2="'+(180-r2*Math.cos(a))+'" '+(i%5?'opacity=".4"':'stroke-width="2"')+'/>';}
+    t.innerHTML=s;}
+
+  // spin keyframe for the ambient rose
+  var st=document.createElement('style');
+  st.textContent='@keyframes spins{to{transform:rotate(360deg)}}';
+  document.head.appendChild(st);
+
+  // live hero terminal — a realistic compass session, looping
+  var termLines=[
+    '<span class="u">$</span> <span class="p">claude "wipe the db, force-push to main"</span>',
+    '<span class="blk">🛡  blocked — 2 guardrails</span>',
+    '<span class="dim">     · rm -rf on a tracked path</span>',
+    '<span class="dim">     · force-push to protected branch \'main\'</span>',
+    ' ',
+    '<span class="u">$</span> <span class="p">/review</span>',
+    '<span class="dim">     4 reviewers · security · tests · cross-audit</span>',
+    '<span class="ok">     ✓ 2 blocking → auto-fixed &amp; pushed</span>',
+    '<span class="ok">     ✓ tests green · ready for your merge</span>',
+    ' ',
+    '<span class="u">$</span> <span class="p">compass route "rename a variable"</span>',
+    '<span class="vi">     → haiku</span>   <span class="dim">$0.001 · ~61% cheaper</span>',
+    ' ',
+    '<span class="dim">     session  </span><span class="ok">$0.42</span><span class="dim"> / $5.00 · under budget ▸</span>'
+  ];
+  var tb=document.getElementById('termBody');
+  if(tb){
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches){
+      tb.innerHTML=termLines.map(function(h){return '<div class="tl show">'+h+'</div>'}).join('');
+    } else {
+      (function play(){
+        tb.innerHTML='';
+        var rows=termLines.map(function(h){var d=document.createElement('div');d.className='tl';d.innerHTML=h;tb.appendChild(d);return d;});
+        var cur=document.createElement('span');cur.className='tcursor';
+        var i=0;
+        (function next(){
+          if(i<rows.length){
+            rows[i].classList.add('show');rows[i].appendChild(cur);
+            var t=rows[i].textContent.trim();
+            var d=t===''?170:(t.charAt(0)==='$'?560:320);
+            i++;setTimeout(next,d);
+          } else {setTimeout(play,3600);}
+        })();
+      })();
+    }
+  }
+
+  // nav scrolled + mobile
+  var nav=document.getElementById('nav');
+  addEventListener('scroll',function(){nav.classList.toggle('scrolled',scrollY>12)});
+  var tgl=document.getElementById('navToggle'),links=document.getElementById('navlinks');
+  tgl&&tgl.addEventListener('click',function(){links.classList.toggle('open')});
+  links&&links.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){links.classList.remove('open')})});
+
+  // copy buttons
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click',function(){
+      var txt=b.getAttribute('data-copy');
+      navigator.clipboard&&navigator.clipboard.writeText(txt).then(function(){
+        var o=b.innerHTML;b.innerHTML='✓ Copied';b.classList.add('done');
+        setTimeout(function(){b.innerHTML=o;b.classList.remove('done')},1600);
+      });
+    });
+  });
+
+  // install tabs
+  document.querySelectorAll('.tab').forEach(function(tab){
+    tab.addEventListener('click',function(){
+      document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active')});
+      document.querySelectorAll('.panel').forEach(function(x){x.classList.remove('active')});
+      tab.classList.add('active');
+      document.querySelector('.panel[data-panel="'+tab.getAttribute('data-tab')+'"]').classList.add('active');
+    });
+  });
+
+  // reveal on scroll
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}})},{threshold:.12});
+  document.querySelectorAll('.rv').forEach(function(el){io.observe(el)});
+
+  // count-up
+  function animate(el){
+    var target=parseFloat(el.getAttribute('data-count')),suf=el.getAttribute('data-suffix')||'',dur=1100,st=performance.now(),dec=(target%1!==0);
+    function step(now){var p=Math.min((now-st)/dur,1),e=1-Math.pow(1-p,3),v=target*e;
+      el.textContent=(dec?v.toFixed(1):Math.round(v))+suf;if(p<1)requestAnimationFrame(step);}
+    requestAnimationFrame(step);
+  }
+  var co=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&e.target.hasAttribute('data-count')){animate(e.target);co.unobserve(e.target);}})},{threshold:.6});
+  document.querySelectorAll('[data-count]').forEach(function(el){co.observe(el)});
+
+  // live star count (best-effort, no key)
+  fetch('https://api.github.com/repos/dshakes/compass').then(function(r){return r.json()}).then(function(d){
+    if(d&&typeof d.stargazers_count==='number'){document.getElementById('stars').textContent='★ '+d.stargazers_count;}
+  }).catch(function(){});
+
+  document.getElementById('year').textContent=new Date().getFullYear();
+})();
+</script>
+</body>
+</html>

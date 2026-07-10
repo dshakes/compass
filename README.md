@@ -2,8 +2,9 @@
 
 # 🧭 compass
 
-### Guardrails and a hard budget cap for your AI coding agent.
+### Let your coding agent off the leash — not off the rails.
 
+Guardrails, a hard budget cap, and a self-fixing PR loop for your AI coding agent.
 `eval-gated guardrails 100/100` · `a budget cap that actually halts` · `you always merge`
 
 [![ci](https://github.com/dshakes/compass/actions/workflows/ci.yml/badge.svg)](https://github.com/dshakes/compass/actions/workflows/ci.yml)
@@ -13,6 +14,10 @@
 [![Codex](https://img.shields.io/badge/Codex-plugin-111111.svg)](docs/05-plugin.md)
 [![Gemini](https://img.shields.io/badge/Gemini-extension-4285F4.svg)](docs/05-plugin.md)
 [![status: beta](https://img.shields.io/badge/status-beta-8A63D2.svg)](#safety-honesty--status)
+
+### 🧭 &nbsp;[**Explore the interactive site →**](https://dshakes.github.io/compass/)
+
+<sub>the guided tour — live demos, clickable architecture, one-click install</sub>
 
 </div>
 
@@ -31,7 +36,7 @@ git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && ./quic
 ```
 
 <p align="center">
-  <a href="#why-its-different--measured-not-vibes">Why it's different</a> &nbsp;·&nbsp; <a href="#-the-part-people-screenshot-it-fixes-its-own-prs">The self-fixing PR loop</a> &nbsp;·&nbsp; <a href="#loops-all-the-way-up">Loops</a> &nbsp;·&nbsp; <b><a href="#install">Install</a></b> &nbsp;·&nbsp; <a href="#whats-in-the-box">What's in the box</a> &nbsp;·&nbsp; <a href="docs/11-using-compass.md">📚 Docs</a>
+  <a href="https://dshakes.github.io/compass/">🌐 Site</a> &nbsp;·&nbsp; <a href="#why-its-different--measured-not-vibes">Why it's different</a> &nbsp;·&nbsp; <a href="#-the-part-people-screenshot-it-fixes-its-own-prs">The self-fixing PR loop</a> &nbsp;·&nbsp; <a href="#loops-all-the-way-up">Loops</a> &nbsp;·&nbsp; <b><a href="#install">Install</a></b> &nbsp;·&nbsp; <a href="#whats-in-the-box">What's in the box</a> &nbsp;·&nbsp; <a href="docs/11-using-compass.md">📚 Docs</a>
 </p>
 
 ---
@@ -70,7 +75,7 @@ compass bench     # → guardrail 100% precision/recall (61-case corpus), router
 **🧪 Red-team resistance, measured.** Prompt-injection (direct/indirect/paste), agent-config poisoning, local safety-override, malware & insecure-code — scored against a labeled corpus that gates CI, obfuscation-resistant (`--attack`), with optional escalation to a managed guardrails backend. *A poisoned repo or web page can't quietly turn your agent against you — and you can measure how well that holds.*
 
 ```bash
-compass redteam   # → injection corpus 100% P/R, then scans THIS repo's config/MCP/settings
+compass redteam   # → injection corpus 100% P/R (85 cases) + 100% obfuscation-robust, then scans THIS repo's config/MCP/settings
 ```
 
 **💸 A budget ceiling that actually stops it.** Usage trackers *report* spend; compass *enforces* it — the session is **halted before the next tool call** once your dollar cap is reached. An agent can't quietly run up a $40 bill while you're away.
