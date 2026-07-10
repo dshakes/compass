@@ -159,6 +159,7 @@
   <nav class="toc" id="toc" aria-label="On this page"></nav>
 </main>
 
+<script src="content.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script>
@@ -286,6 +287,15 @@
   function load(slug){
     if(!SET[slug]) slug='overview';
     if(slug==='overview'){docEl.innerHTML=OVERVIEW;rewrite();finish('overview');return;}
+    // prefer concise authored content; the raw .md stays the linked source of truth
+    var authored=window.COMPASS_DOCS&&window.COMPASS_DOCS[slug];
+    if(authored){
+      docEl.innerHTML='<div class="crumbs"><a href="index.html">compass</a> / docs / '+TITLE[slug]+'</div>'+marked.parse(authored);
+      rewrite();
+      docEl.querySelectorAll('pre code').forEach(function(b){try{hljs.highlightElement(b);}catch(e){}});
+      docEl.insertAdjacentHTML('beforeend','<a class="edit" href="'+REPO+slug+'.md" target="_blank" rel="noopener">📖 Full reference for this page on GitHub →</a>');
+      finish(slug);return;
+    }
     docEl.innerHTML='<div class="loading">Loading '+TITLE[slug]+'…</div>';
     fetch(slug+'.md',{cache:'no-cache'}).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(md){
       docEl.innerHTML='<div class="crumbs"><a href="index.html">compass</a> / docs / '+TITLE[slug]+'</div>'+marked.parse(md);

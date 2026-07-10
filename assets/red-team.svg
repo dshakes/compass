@@ -1,85 +1,45 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 540" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 320" width="920" font-family="'Space Grotesk',system-ui,sans-serif" role="img" aria-label="compass red-team pipeline: untrusted input travels a rail through decode/normalize, eval-gated detectors, and a warn-or-block decision, ending at the human merge gate.">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1117"/><stop offset="1" stop-color="#0a0e14"/></linearGradient>
-    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#cf222e"/><stop offset="0.5" stop-color="#8A63D2"/><stop offset="1" stop-color="#2ea44f"/>
-    </linearGradient>
-    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="#8b949e"/>
-    </marker>
+    <linearGradient id="rail" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a371f7"/><stop offset=".5" stop-color="#5b9dff"/><stop offset="1" stop-color="#2ee6cf"/></linearGradient>
+    <radialGradient id="pulse" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="rgba(196,165,255,.7)"/><stop offset="1" stop-color="rgba(91,157,255,0)"/></radialGradient>
+    <radialGradient id="gateGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="rgba(163,113,247,.28)"/><stop offset="1" stop-color="rgba(163,113,247,0)"/></radialGradient>
+    <style>text{fill:#e9ecf3}.m{font-family:ui-monospace,'JetBrains Mono',monospace}.mut{fill:#98a2b6}.dim{fill:#6b7488}</style>
   </defs>
 
-  <rect x="0" y="0" width="1200" height="540" rx="16" fill="url(#bg)"/>
-  <rect x="0" y="0" width="1200" height="4" fill="url(#acc)"/>
+  <rect x="1" y="1" width="918" height="318" rx="18" fill="#0b0d13" stroke="rgba(255,255,255,.09)"/>
+  <text x="30" y="42" font-size="17" font-weight="700">🧭 compass · red-team pipeline</text>
+  <text x="30" y="63" class="m mut" font-size="12">defends the agent itself — decode → detect → decide, eval-gated, then a human merges</text>
 
-  <text x="40" y="54" fill="#f0f6fc" font-size="30" font-weight="700">🧭 compass · red-team hardening</text>
-  <text x="40" y="82" fill="#8b949e" font-size="16">Defends the agent itself against adversarial input — eval-gated, not vibes.</text>
+  <!-- rail -->
+  <line x1="110" y1="205" x2="830" y2="205" stroke="url(#rail)" stroke-width="3" opacity=".45"/>
+  <line x1="110" y1="205" x2="830" y2="205" stroke="url(#rail)" stroke-width="3" stroke-dasharray="1.5 11" opacity=".9"/>
+  <circle r="15" fill="url(#pulse)"><animateMotion dur="3.4s" repeatCount="indefinite" path="M110,205 H830"/></circle>
+  <circle r="3.5" fill="#fff"><animateMotion dur="3.4s" repeatCount="indefinite" path="M110,205 H830"/></circle>
 
-  <!-- ── Column A: untrusted inputs ── -->
-  <text x="40" y="126" fill="#8b949e" font-size="13" letter-spacing="1.5">UNTRUSTED INPUT</text>
-  <g>
-    <rect x="40" y="142" width="244" height="60" rx="10" fill="#161b22" stroke="#30363d"/>
-    <text x="58" y="172" fill="#f0f6fc" font-size="15" font-weight="600">Prompt / paste</text>
-    <text x="58" y="191" fill="#8b949e" font-size="12">copy-paste · hidden unicode</text>
-
-    <rect x="40" y="214" width="244" height="60" rx="10" fill="#161b22" stroke="#30363d"/>
-    <text x="58" y="244" fill="#f0f6fc" font-size="15" font-weight="600">Web · search · MCP</text>
-    <text x="58" y="263" fill="#8b949e" font-size="12">indirect injection (tool output)</text>
-
-    <rect x="40" y="286" width="244" height="60" rx="10" fill="#161b22" stroke="#30363d"/>
-    <text x="58" y="316" fill="#f0f6fc" font-size="15" font-weight="600">CLAUDE.md · AGENTS.md</text>
-    <text x="58" y="335" fill="#8b949e" font-size="12">context poisoning</text>
-
-    <rect x="40" y="358" width="244" height="60" rx="10" fill="#161b22" stroke="#30363d"/>
-    <text x="58" y="388" fill="#f0f6fc" font-size="15" font-weight="600">.claude/settings.json</text>
-    <text x="58" y="407" fill="#8b949e" font-size="12">local safety-override</text>
+  <!-- input sources -->
+  <g class="m mut" font-size="10.5" text-anchor="middle">
+    <text x="110" y="104" class="dim" font-size="10" letter-spacing="1.5">UNTRUSTED INPUT</text>
+    <text x="110" y="126">prompt · paste</text>
+    <text x="110" y="143">web · MCP · tools</text>
+    <text x="110" y="160">CLAUDE.md · settings</text>
   </g>
-  <line x1="286" y1="172" x2="356" y2="220" stroke="#8b949e" stroke-width="1.5" marker-end="url(#ah)"/>
-  <line x1="286" y1="244" x2="356" y2="258" stroke="#8b949e" stroke-width="1.5" marker-end="url(#ah)"/>
-  <line x1="286" y1="316" x2="356" y2="300" stroke="#8b949e" stroke-width="1.5" marker-end="url(#ah)"/>
-  <line x1="286" y1="388" x2="356" y2="338" stroke="#8b949e" stroke-width="1.5" marker-end="url(#ah)"/>
+  <path d="M110,168 L110,177" stroke="#5b9dff" stroke-width="1.3" opacity=".5"/>
 
-  <!-- ── Column B: the compass red-team layer ── -->
-  <rect x="360" y="138" width="406" height="300" rx="14" fill="#0d1117" stroke="#8A63D2" stroke-width="2"/>
-  <text x="382" y="168" fill="#a371f7" font-size="13" letter-spacing="1.5">COMPASS RED-TEAM LAYER</text>
+  <!-- decision branches -->
+  <path d="M650,175 L650,120" stroke="#3ad07f" stroke-width="1.4" fill="none" opacity=".7"/>
+  <path d="M650,235 L650,268" stroke="#ff6b6b" stroke-width="1.4" fill="none" opacity=".7"/>
+  <g><rect x="558" y="86" width="184" height="34" rx="9" fill="rgba(58,208,127,.10)" stroke="#3ad07f" stroke-width="1.3"/><text x="650" y="108" text-anchor="middle" class="m" font-size="11.5" fill="#3ad07f">warn + audit · default</text></g>
+  <g><rect x="558" y="270" width="184" height="34" rx="9" fill="rgba(255,107,107,.10)" stroke="#ff6b6b" stroke-width="1.3"/><text x="650" y="292" text-anchor="middle" class="m" font-size="11.5" fill="#ff6b6b">block · enforce</text></g>
 
-  <rect x="382" y="182" width="362" height="60" rx="10" fill="#161b22" stroke="#30363d"/>
-  <text x="400" y="203" fill="#f0f6fc" font-size="14" font-weight="600">decode &amp; normalize</text>
-  <text x="400" y="220" fill="#8b949e" font-size="10.5">base64 · hex · percent · HTML-entity</text>
-  <text x="400" y="234" fill="#8b949e" font-size="10.5">zero-width · ASCII-smuggling (Unicode Tags) · homoglyph · leet</text>
+  <!-- gate glow -->
+  <circle cx="830" cy="205" r="52" fill="url(#gateGlow)"/>
 
-  <line x1="563" y1="242" x2="563" y2="258" stroke="#8b949e" stroke-width="1.5" marker-end="url(#ah)"/>
-
-  <rect x="382" y="258" width="362" height="84" rx="10" fill="#161b22" stroke="#30363d"/>
-  <text x="400" y="280" fill="#f0f6fc" font-size="14" font-weight="600">detectors</text>
-  <text x="400" y="298" fill="#8b949e" font-size="11">prompt-injection · authority-spoof · MCP tool-poisoning</text>
-  <text x="400" y="314" fill="#8b949e" font-size="11">context-poisoning · safety-override · data/DNS exfiltration</text>
-  <text x="400" y="330" fill="#8b949e" font-size="11">malware · insecure-code (SAST) · system-prompt-leak</text>
-
-  <rect x="382" y="358" width="362" height="58" rx="10" fill="#03281a" stroke="#2ea44f"/>
-  <text x="400" y="382" fill="#3fb950" font-size="13" font-weight="600">✓ eval-gated · 100% precision/recall (corpus)</text>
-  <text x="400" y="401" fill="#3fb950" font-size="12">✓ adversarial-fuzz: 100% robustness vs obfuscation</text>
-
-  <line x1="766" y1="288" x2="812" y2="288" stroke="#8b949e" stroke-width="1.5" marker-end="url(#ah)"/>
-
-  <!-- ── Column C: outcomes ── -->
-  <text x="820" y="126" fill="#8b949e" font-size="13" letter-spacing="1.5">OUTCOME  (warn + audit by default)</text>
-
-  <rect x="820" y="142" width="340" height="58" rx="10" fill="#161b22" stroke="#e3b341"/>
-  <text x="838" y="167" fill="#e3b341" font-size="15" font-weight="600">warn + audit</text>
-  <text x="838" y="187" fill="#8b949e" font-size="12">"this is data, not instructions" → audit log</text>
-
-  <rect x="820" y="212" width="340" height="50" rx="10" fill="#161b22" stroke="#cf222e"/>
-  <text x="838" y="242" fill="#ff6b6b" font-size="14" font-weight="600">block  ·  COMPASS_REDTEAM_ENFORCE=1</text>
-
-  <rect x="820" y="274" width="340" height="50" rx="10" fill="#161b22" stroke="#a371f7" stroke-dasharray="5 4"/>
-  <text x="838" y="304" fill="#a371f7" font-size="14" font-weight="600">optional: webhook · Bedrock · Azure</text>
-
-  <line x1="990" y1="324" x2="990" y2="356" stroke="#8b949e" stroke-width="1.5" marker-end="url(#ah)"/>
-
-  <rect x="820" y="356" width="340" height="64" rx="12" fill="#04260f" stroke="#2ea44f" stroke-width="2"/>
-  <text x="838" y="384" fill="#3fb950" font-size="16" font-weight="700">human merge / deploy gate</text>
-  <text x="838" y="404" fill="#8b949e" font-size="12">you merge — always. the gate never moves.</text>
-
-  <text x="40" y="500" fill="#6e7681" font-size="12.5">compass redteam [--eval · --scan · --attack] · compass scan --injection · hooks: SessionStart · UserPromptSubmit · PostToolUse · toggles: COMPASS_REDTEAM*</text>
+  <!-- nodes -->
+  <g text-anchor="middle">
+    <g><circle cx="110" cy="205" r="30" fill="#0f1219" stroke="url(#rail)" stroke-width="2.5"/><text x="110" y="213" font-size="20">📥</text><text x="110" y="252" font-size="13.5" font-weight="600">Input</text></g>
+    <g><circle cx="290" cy="205" r="30" fill="#0f1219" stroke="url(#rail)" stroke-width="2.5"/><text x="290" y="213" font-size="20">🔓</text><text x="290" y="252" font-size="13.5" font-weight="600">Decode</text><text x="290" y="270" class="m dim" font-size="9.5">base64·hex·zero-width·tags</text></g>
+    <g><circle cx="470" cy="205" r="30" fill="#0f1219" stroke="url(#rail)" stroke-width="2.5"/><text x="470" y="213" font-size="20">🔎</text><text x="470" y="252" font-size="13.5" font-weight="600">Detectors</text><text x="470" y="270" class="m" font-size="9.5" fill="#2ee6cf">eval-gated · 100% P/R</text></g>
+    <g><circle cx="650" cy="205" r="30" fill="#0f1219" stroke="url(#rail)" stroke-width="2.5"/><text x="650" y="213" font-size="18">⚖️</text><text x="650" y="252" font-size="13.5" font-weight="600">Decision</text></g>
+    <g><circle cx="830" cy="205" r="33" fill="#0f1219" stroke="url(#rail)" stroke-width="3"/><text x="830" y="213" font-size="20">🔒</text><text x="830" y="254" font-size="13.5" font-weight="600" fill="#c4a5ff">Human gate</text><text x="830" y="272" class="m dim" font-size="9.5">you merge · always</text></g>
+  </g>
 </svg>

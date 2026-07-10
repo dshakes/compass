@@ -84,8 +84,13 @@
 
   /* HERO */
   .hero{padding:52px 0 24px;text-align:center}
-  .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:start;text-align:left}
+  .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;text-align:left}
   .hero-grid>*,.loop-grid>*{min-width:0}
+  .term-wrap{display:flex;flex-direction:column;gap:14px}
+  .term-foot{display:flex;gap:8px;flex-wrap:wrap}
+  .term-foot .s{flex:1;min-width:92px;text-align:center;background:var(--elev);border:1px solid var(--line);border-radius:11px;padding:10px 8px}
+  .term-foot .s b{display:block;font-family:var(--disp);font-weight:700;font-size:16px}
+  .term-foot .s span{display:block;font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:2px;letter-spacing:.04em}
   .badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12.5px;color:var(--muted);
     border:1px solid var(--line);background:rgba(255,255,255,.03);padding:6px 13px;border-radius:22px;margin-bottom:22px}
   .badge .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:pulse 2.4s infinite}
@@ -390,9 +395,16 @@
         </svg>
       </div>
       <!-- live product demo -->
-      <div class="term-live" role="img" aria-label="A compass session: a dangerous command is blocked, the review loop auto-fixes and hands off, a task is routed to a cheap model, and the session stays under its budget.">
-        <div class="bar"><i></i><i></i><i></i><span>claude — ~/payments-api</span></div>
-        <div class="body" id="termBody"></div>
+      <div class="term-wrap">
+        <div class="term-live" role="img" aria-label="A compass session: a dangerous command is blocked, the review loop auto-fixes and hands off, a task is routed to a cheap model, and the session stays under its budget.">
+          <div class="bar"><i></i><i></i><i></i><span>claude — ~/payments-api</span></div>
+          <div class="body" id="termBody"></div>
+        </div>
+        <div class="term-foot">
+          <div class="s"><b class="grad-text">100/100</b><span>guardrail P/R</span></div>
+          <div class="s"><b class="grad-text">100%</b><span>red-team · 85</span></div>
+          <div class="s"><b class="grad-text">~61%</b><span>cheaper</span></div>
+        </div>
       </div>
     </div>
   </div>
