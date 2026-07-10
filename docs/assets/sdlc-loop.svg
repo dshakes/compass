@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 540" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1117"/><stop offset="1" stop-color="#0a0e14"/></linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#cf222e"/><stop offset="0.5" stop-color="#8A63D2"/><stop offset="1" stop-color="#2ea44f"/>
+      <animateTransform attributeName="gradientTransform" type="translate" values="-0.3 0;0.3 0;-0.3 0" dur="6s" repeatCount="indefinite"/>
+    </linearGradient>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8b949e"/></marker>
+    <marker id="arg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2ea44f"/></marker>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#cf222e"/></marker>
+    <marker id="arp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8A63D2"/></marker>
+    <marker id="ary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#e3b341"/></marker>
+    <marker id="arb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#58a6ff"/></marker>
+    <filter id="g" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <!-- type glyphs: 🤖 agent / 👤 human (drawn so they render identically everywhere) -->
+    <g id="ic-bot" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="-7" y="-4" width="14" height="11.5" rx="3"/>
+      <circle cx="-3.2" cy="2" r="1.4" fill="currentColor" stroke="none"/>
+      <circle cx="3.2" cy="2" r="1.4" fill="currentColor" stroke="none"/>
+      <path d="M0,-4 V-7.4"/><circle cx="0" cy="-8.7" r="1.4" fill="currentColor" stroke="none"/>
+    </g>
+    <g id="ic-human" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="0" cy="-4.4" r="3"/>
+      <path d="M-5.6,7.4 C-5.6,1.2 5.6,1.2 5.6,7.4"/>
+    </g>
+  </defs>
+  <rect x="1" y="1" width="1198" height="538" rx="20" fill="url(#bg)" stroke="#30363d" stroke-width="2"/>
+  <rect x="1" y="536" width="1198" height="4" fill="url(#acc)"/>
+
+  <!-- header -->
+  <g transform="translate(56,46)">
+    <circle r="20" fill="#161b22" stroke="#8A63D2" stroke-width="2.5"/>
+    <g><path d="M0,-12 A12,12 0 1 1 -10.4,6" fill="none" stroke="#58a6ff" stroke-width="3" stroke-linecap="round"/>
+       <polygon points="-13,2 -7,9 -16,11" fill="#58a6ff"/>
+       <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="4s" repeatCount="indefinite"/></g>
+    <text x="36" y="0" font-size="25" font-weight="800" fill="#f0f6fc">Autonomous SDLC</text>
+    <text x="37" y="22" font-size="14" fill="#8b949e">named, governed agents — they fix their own review findings, then <tspan fill="#3fb950" font-weight="700">you merge</tspan></text>
+  </g>
+
+  <!-- legend: which boxes are agents vs you -->
+  <g font-size="12.5" fill="#adbac7" font-weight="600">
+    <g color="#a371f7"><use href="#ic-bot" x="986" y="44"/></g>
+    <text x="999" y="48">agent</text>
+    <g color="#58a6ff"><use href="#ic-human" x="1062" y="44"/></g>
+    <text x="1074" y="48">you</text>
+  </g>
+
+  <!-- ============ TOP ROW (happy path), all centered on y=250 ============ -->
+
+  <!-- INTAKE (zero-touch): a maintainer-labeled issue auto-opens the PR -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="0.15s" dur="0.6s" fill="freeze"/>
+    <rect x="42" y="100" width="156" height="58" rx="12" fill="#161b22" stroke="#e3b341" stroke-width="1.8"/>
+    <text x="120" y="124" text-anchor="middle" font-size="13" font-weight="800" fill="#f0f6fc">📋 an issue</text>
+    <text x="120" y="143" text-anchor="middle" font-size="11.5" font-weight="700" fill="#e3b341">label: agent:build</text>
+  </g>
+  <path d="M120,158 V204" fill="none" stroke="#e3b341" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ary)"/>
+  <text x="128" y="185" text-anchor="start" font-size="10" fill="#8b949e">agent opens it</text>
+
+  <!-- PR node — pushed by you, OR opened by an agent from the labeled issue -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="0.3s" dur="0.6s" fill="freeze"/>
+    <rect x="58" y="210" width="124" height="80" rx="14" fill="#161b22" stroke="#8A63D2" stroke-width="2"/>
+    <g transform="translate(120,227)" stroke="#a371f7" stroke-width="3" fill="none" stroke-linecap="round">
+      <circle cx="-11" cy="-7" r="3.6"/><circle cx="11" cy="-7" r="3.6"/><circle cx="0" cy="13" r="3.6"/>
+      <path d="M-11,-3 Q-11,6 0,6 M11,-3 Q11,6 0,6 M0,6 V9.4"/>
+    </g>
+    <text x="120" y="260" text-anchor="middle" font-size="14.5" font-weight="800" fill="#f0f6fc">a PR</text>
+    <text x="120" y="278" text-anchor="middle" font-size="10.5" fill="#adbac7">you push · or auto</text>
+  </g>
+  <line x1="184" y1="250" x2="208" y2="250" stroke="#8b949e" stroke-width="2.5" marker-end="url(#ar)"/>
+  <circle r="3.5" fill="#a371f7" filter="url(#g)"><animateMotion path="M184,250 L202,250" dur="1.6s" repeatCount="indefinite"/></circle>
+
+  <!-- agents box -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="0.6s" dur="0.6s" fill="freeze"/>
+    <rect x="210" y="150" width="300" height="200" rx="16" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+    <text x="360" y="180" text-anchor="middle" font-size="12.5" letter-spacing="1.5" fill="#8b949e">RUNS AUTOMATICALLY ON THE PR</text>
+    <g font-size="13.5" fill="#e6edf3" font-weight="700">
+      <g><rect x="226" y="198" width="130" height="44" rx="10" fill="#0d1117" stroke="#a371f7" stroke-width="1.6"><animate attributeName="stroke-width" values="1.6;2.8;1.6" keyTimes="0;0.12;0.3" dur="4s" begin="1s" repeatCount="indefinite"/></rect><g color="#a371f7"><use href="#ic-bot" x="247" y="220"/></g><text x="262" y="225">Reviewer</text></g>
+      <g><rect x="368" y="198" width="130" height="44" rx="10" fill="#0d1117" stroke="#58a6ff" stroke-width="1.6"><animate attributeName="stroke-width" values="1.6;2.8;1.6" keyTimes="0;0.12;0.3" dur="4s" begin="1.3s" repeatCount="indefinite"/></rect><g color="#58a6ff"><use href="#ic-bot" x="389" y="221"/></g><text x="404" y="216" font-size="13">Auditor</text><text x="404" y="231" font-size="10.5" fill="#7d8590" font-weight="600">Codex</text></g>
+      <g><rect x="226" y="252" width="130" height="44" rx="10" fill="#0d1117" stroke="#f0596b" stroke-width="1.6"><animate attributeName="stroke-width" values="1.6;2.8;1.6" keyTimes="0;0.12;0.3" dur="4s" begin="1.6s" repeatCount="indefinite"/></rect><g color="#f0596b"><use href="#ic-bot" x="247" y="274"/></g><text x="262" y="279">Security</text></g>
+      <g><rect x="368" y="252" width="130" height="44" rx="10" fill="#0d1117" stroke="#3fb950" stroke-width="1.6"><animate attributeName="stroke-width" values="1.6;2.8;1.6" keyTimes="0;0.12;0.3" dur="4s" begin="1.9s" repeatCount="indefinite"/></rect><g color="#3fb950"><use href="#ic-bot" x="389" y="274"/></g><text x="404" y="279">QA · tests</text></g>
+    </g>
+    <text x="360" y="326" text-anchor="middle" font-size="12.5" fill="#6e7681">parallel · per-tenant ids · fresh context</text>
+  </g>
+  <line x1="510" y1="250" x2="548" y2="250" stroke="#8b949e" stroke-width="2.5" marker-end="url(#ar)"/>
+  <circle r="3.5" fill="#58a6ff" filter="url(#g)"><animateMotion path="M510,250 L542,250" dur="1.5s" repeatCount="indefinite"/></circle>
+
+  <!-- verdict diamond (flips BLOCKING <-> CLEAN) -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="1s" dur="0.6s" fill="freeze"/>
+    <text x="615" y="180" text-anchor="middle" font-size="12" letter-spacing="1" fill="#8b949e">REVIEWER VERDICT</text>
+    <polygon points="615,198 680,250 615,302 550,250" fill="#161b22" stroke="#cf222e" stroke-width="3">
+      <animate attributeName="stroke" values="#cf222e;#cf222e;#3fb950;#3fb950" keyTimes="0;0.45;0.55;1" dur="5s" repeatCount="indefinite"/></polygon>
+    <g text-anchor="middle" font-weight="800">
+      <text x="615" y="256" font-size="16" fill="#ff6b6b"><animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.45;0.55;1" dur="5s" repeatCount="indefinite"/>BLOCKING</text>
+      <text x="615" y="256" font-size="18" fill="#3fb950"><animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.45;0.55;1" dur="5s" repeatCount="indefinite"/>CLEAN</text>
+    </g>
+  </g>
+
+  <!-- CLEAN branch: verdict -> checks green -> human gate -> you merge -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="1.4s" dur="0.6s" fill="freeze"/>
+    <text x="710" y="240" text-anchor="middle" font-size="10.5" letter-spacing="0.5" font-weight="700" fill="#3fb950">CLEAN</text>
+    <line x1="680" y1="250" x2="740" y2="250" stroke="#2ea44f" stroke-width="2.5" marker-end="url(#arg)"/>
+    <rect x="745" y="226" width="116" height="48" rx="12" fill="#0d1117" stroke="#2ea44f" stroke-width="2"/>
+    <text x="803" y="247" text-anchor="middle" font-size="13" font-weight="700" fill="#3fb950">checks green</text>
+    <text x="803" y="264" text-anchor="middle" font-size="10.5" fill="#6e7681">review · qa required</text>
+    <line x1="861" y1="250" x2="897" y2="250" stroke="#8b949e" stroke-width="2.5" marker-end="url(#ar)"/>
+    <rect x="899" y="210" width="116" height="80" rx="14" fill="#161b22" stroke="#e3b341" stroke-width="2"/>
+    <g color="#58a6ff" transform="translate(957,233)"><use href="#ic-human" x="0" y="0"/></g>
+    <text x="957" y="266" text-anchor="middle" font-size="13" font-weight="700" fill="#f0f6fc">human gate</text>
+    <text x="957" y="282" text-anchor="middle" font-size="10.5" fill="#adbac7">1 code-owner</text>
+    <line x1="1015" y1="250" x2="1051" y2="250" stroke="#8b949e" stroke-width="2.5" marker-end="url(#ar)"/>
+    <rect x="1053" y="224" width="124" height="52" rx="13" fill="#13261a" stroke="#3fb950" stroke-width="2.5"/>
+    <g color="#58a6ff"><use href="#ic-human" x="1071" y="250"/></g>
+    <text x="1125" y="247" text-anchor="middle" font-size="13.5" font-weight="800" fill="#3fb950">you merge</text>
+    <text x="1125" y="265" text-anchor="middle" font-size="11" fill="#7ee2a8">&amp; deploy</text>
+  </g>
+  <circle r="3.5" fill="#3fb950" filter="url(#g)"><animateMotion path="M682,250 L738,250" dur="1.4s" begin="2s" repeatCount="indefinite"/></circle>
+  <circle r="3.5" fill="#3fb950" filter="url(#g)"><animateMotion path="M863,250 L895,250" dur="1.4s" begin="2.4s" repeatCount="indefinite"/></circle>
+  <circle r="3.5" fill="#3fb950" filter="url(#g)"><animateMotion path="M1017,250 L1049,250" dur="1.4s" begin="2.8s" repeatCount="indefinite"/></circle>
+
+  <!-- BLOCKING branch: verdict -> needs-fix -> Builder -> (loop back) / round cap -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="1.6s" dur="0.6s" fill="freeze"/>
+    <text x="568" y="316" text-anchor="middle" font-size="10.5" letter-spacing="0.5" font-weight="700" fill="#ff6b6b">BLOCKING</text>
+    <line x1="615" y1="302" x2="615" y2="322" stroke="#cf222e" stroke-width="2.5" marker-end="url(#arr)"/>
+    <rect x="538" y="326" width="154" height="24" rx="12" fill="#2d1418" stroke="#cf222e" stroke-width="1.5"/>
+    <text x="615" y="342" text-anchor="middle" font-size="12" font-weight="700" fill="#ff6b6b">label: agent:needs-fix</text>
+    <line x1="615" y1="350" x2="615" y2="378" stroke="#cf222e" stroke-width="2.5" marker-end="url(#arr)"/>
+
+    <rect x="473" y="380" width="284" height="62" rx="14" fill="#161b22" stroke="#a371f7" stroke-width="2"/>
+    <g color="#a371f7"><use href="#ic-bot" x="491" y="397"/></g>
+    <text x="615" y="406" text-anchor="middle" font-size="14.5" font-weight="800" fill="#f0f6fc">Builder fixes on the PR branch</text>
+    <text x="615" y="426" text-anchor="middle" font-size="12.5" fill="#adbac7">+ pushes via <tspan fill="#58a6ff" font-weight="700">SDLC_BOT_TOKEN</tspan></text>
+
+    <!-- loop-back to agents box (re-review) -->
+    <path d="M473,411 C 405,411 360,406 360,353" fill="none" stroke="#8A63D2" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#arp)">
+      <animate attributeName="stroke-dashoffset" from="52" to="0" dur="0.9s" repeatCount="indefinite"/></path>
+    <text x="412" y="396" text-anchor="middle" font-size="12" font-weight="700" fill="#a371f7">↻ re-review</text>
+
+    <!-- round cap -> needs-human -->
+    <line x1="615" y1="442" x2="615" y2="460" stroke="#e3b341" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#ary)"/>
+    <rect x="494" y="461" width="242" height="28" rx="14" fill="#2a2210" stroke="#e3b341" stroke-width="1.5"/>
+    <text x="615" y="479" text-anchor="middle" font-size="11.5" font-weight="700" fill="#e3b341">round cap ×3 → sdlc:needs-human</text>
+  </g>
+  <!-- tokens on the fix loop -->
+  <circle r="3.5" fill="#ff6b6b" filter="url(#g)"><animateMotion path="M615,304 L615,320" dur="1.2s" begin="2.2s" repeatCount="indefinite"/></circle>
+  <circle r="4" fill="#a371f7" filter="url(#g)"><animateMotion path="M473,411 C 405,411 360,406 360,353" dur="1.7s" repeatCount="indefinite"/></circle>
+
+  <!-- HUMAN-IN-THE-LOOP: steer the loop from the PR (re-enters the Builder) -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="2.4s" dur="0.6s" fill="freeze"/>
+    <rect x="778" y="416" width="306" height="80" rx="13" fill="#10161f" stroke="#58a6ff" stroke-width="1.8"/>
+    <g color="#58a6ff"><use href="#ic-human" x="801" y="434"/></g>
+    <text x="813" y="440" font-size="12.5" font-weight="800" fill="#58a6ff">human-in-the-loop</text>
+    <text x="794" y="459" font-size="11" fill="#adbac7">steer anytime — never babysit:</text>
+    <text x="794" y="481" font-size="12" font-weight="700" fill="#e6edf3">/revise · /hold · /resume · /approve</text>
+  </g>
+  <path d="M778,440 C 770,428 764,420 760,414" fill="none" stroke="#58a6ff" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arb)"/>
+
+  <!-- footer tagline -->
+  <text x="600" y="514" text-anchor="middle" font-size="13" fill="#8b949e">open a PR  →  review · security · tests · cross-audit  →  <tspan fill="#ff6b6b" font-weight="700">it fixes its own blockers</tspan>  →  <tspan fill="#3fb950" font-weight="700">you merge &amp; deploy</tspan></text>
+</svg>

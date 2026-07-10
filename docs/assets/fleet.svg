@@ -1,0 +1,180 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1117"/><stop offset="1" stop-color="#0a0e14"/></linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#cf222e"/><stop offset="0.5" stop-color="#8A63D2"/><stop offset="1" stop-color="#2ea44f"/>
+      <animateTransform attributeName="gradientTransform" type="translate" values="-0.3 0;0.3 0;-0.3 0" dur="6s" repeatCount="indefinite"/>
+    </linearGradient>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8b949e"/></marker>
+    <marker id="arg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2ea44f"/></marker>
+    <marker id="arp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8A63D2"/></marker>
+    <marker id="ary" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#e3b341"/></marker>
+    <marker id="arb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#58a6ff"/></marker>
+    <filter id="g" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <!-- type glyphs: agent / human (drawn so they render identically everywhere) -->
+    <g id="ic-bot" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="-7" y="-4" width="14" height="11.5" rx="3"/>
+      <circle cx="-3.2" cy="2" r="1.4" fill="currentColor" stroke="none"/>
+      <circle cx="3.2" cy="2" r="1.4" fill="currentColor" stroke="none"/>
+      <path d="M0,-4 V-7.4"/><circle cx="0" cy="-8.7" r="1.4" fill="currentColor" stroke="none"/>
+    </g>
+    <g id="ic-human" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="0" cy="-4.4" r="3"/>
+      <path d="M-5.6,7.4 C-5.6,1.2 5.6,1.2 5.6,7.4"/>
+    </g>
+    <!-- phone glyph -->
+    <g id="ic-phone" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="-7.5" y="-12" width="15" height="24" rx="3"/>
+      <path d="M-2.6,-9 H2.6"/><circle cx="0" cy="8.4" r="1.2" fill="currentColor" stroke="none"/>
+    </g>
+  </defs>
+
+  <rect x="1" y="1" width="1198" height="598" rx="20" fill="url(#bg)" stroke="#30363d" stroke-width="2"/>
+  <rect x="1" y="596" width="1198" height="4" fill="url(#acc)"/>
+
+  <!-- header -->
+  <g transform="translate(56,46)">
+    <circle r="20" fill="#161b22" stroke="#8A63D2" stroke-width="2.5"/>
+    <g fill="none" stroke="#a371f7" stroke-width="2.4" stroke-linecap="round">
+      <circle cx="0" cy="0" r="3.2" fill="#a371f7" stroke="none"/>
+      <circle cx="-9" cy="-6" r="2.3" fill="#58a6ff" stroke="none"/>
+      <circle cx="9" cy="-6" r="2.3" fill="#e3b341" stroke="none"/>
+      <circle cx="0" cy="10" r="2.3" fill="#3fb950" stroke="none"/>
+      <path d="M0,0 L-9,-6 M0,0 L9,-6 M0,0 L0,10"/>
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="9s" repeatCount="indefinite"/>
+    </g>
+    <text x="36" y="0" font-size="25" font-weight="800" fill="#f0f6fc">The autonomous fleet</text>
+    <text x="37" y="22" font-size="14" fill="#8b949e">scheduled, governed agents keep <tspan fill="#a371f7" font-weight="700">all</tspan> your repos healthy — and <tspan fill="#3fb950" font-weight="700">you merge</tspan></text>
+  </g>
+
+  <!-- legend -->
+  <g font-size="12.5" fill="#adbac7" font-weight="600">
+    <g color="#a371f7"><use href="#ic-bot" x="986" y="44"/></g>
+    <text x="999" y="48">agent</text>
+    <g color="#58a6ff"><use href="#ic-human" x="1062" y="44"/></g>
+    <text x="1074" y="48">you</text>
+  </g>
+
+  <!-- =================== PRODUCTION PIPELINE (top row, cy≈235) =================== -->
+
+  <!-- trigger -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="0.1s" dur="0.6s" fill="freeze"/>
+    <rect x="44" y="196" width="120" height="80" rx="12" fill="#161b22" stroke="#e3b341" stroke-width="1.8"/>
+    <text x="104" y="228" text-anchor="middle" font-size="22">⏰</text>
+    <text x="104" y="252" text-anchor="middle" font-size="12.5" font-weight="800" fill="#f0f6fc">schedule</text>
+    <text x="104" y="268" text-anchor="middle" font-size="11" fill="#8b949e">or dispatch</text>
+  </g>
+  <path d="M164,236 H192" fill="none" stroke="#e3b341" stroke-width="2.2" marker-end="url(#ary)"/>
+
+  <!-- fleet agents container -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="0.3s" dur="0.6s" fill="freeze"/>
+    <rect x="194" y="124" width="262" height="224" rx="14" fill="#12101c" stroke="#8A63D2" stroke-width="1.8"/>
+    <g color="#a371f7"><use href="#ic-bot" x="216" y="146"/></g>
+    <text x="230" y="150" font-size="13.5" font-weight="800" fill="#f0f6fc">fleet agents</text>
+    <text x="442" y="150" text-anchor="end" font-size="10.5" fill="#8b949e">GitHub Actions</text>
+
+    <rect x="212" y="166" width="226" height="50" rx="10" fill="#161b22" stroke="#cf222e" stroke-width="1.5"/>
+    <text x="226" y="190" font-size="12.5" font-weight="800" fill="#f0f6fc">🛡️ vuln-remediate</text>
+    <text x="226" y="207" font-size="10.5" fill="#8b949e">scan deps + alerts → safe auto-fix</text>
+    <text x="426" y="184" text-anchor="end" font-size="10" font-weight="700" fill="#e3b341">nightly</text>
+
+    <rect x="212" y="224" width="226" height="50" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+    <text x="226" y="248" font-size="12.5" font-weight="800" fill="#f0f6fc">🔁 issue-poller</text>
+    <text x="226" y="265" font-size="10.5" fill="#8b949e">agent:autofix → build the backlog</text>
+    <text x="426" y="242" text-anchor="end" font-size="10" font-weight="700" fill="#e3b341">~30 min</text>
+
+    <rect x="212" y="282" width="226" height="50" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+    <text x="226" y="306" font-size="12.5" font-weight="800" fill="#f0f6fc">🩹 dep · flaky · doc · babysit</text>
+    <text x="226" y="323" font-size="10.5" fill="#8b949e">refresh, triage, de-drift, nudge</text>
+    <text x="426" y="300" text-anchor="end" font-size="10" font-weight="700" fill="#e3b341">weekly</text>
+  </g>
+  <path d="M456,236 H494" fill="none" stroke="#8A63D2" stroke-width="2.2" marker-end="url(#arp)"/>
+  <text x="475" y="226" text-anchor="middle" font-size="10" fill="#8b949e">act on</text>
+
+  <!-- your repos -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="0.5s" dur="0.6s" fill="freeze"/>
+    <rect x="496" y="158" width="152" height="156" rx="14" fill="#161b22" stroke="#30363d" stroke-width="1.8"/>
+    <text x="572" y="182" text-anchor="middle" font-size="12.5" font-weight="800" fill="#f0f6fc">your repos</text>
+    <text x="572" y="198" text-anchor="middle" font-size="10" fill="#8b949e">fleet/repos.txt</text>
+    <rect x="514" y="210" width="116" height="28" rx="8" fill="#0d1117" stroke="#3d444d"/><text x="572" y="229" text-anchor="middle" font-size="11.5" font-weight="700" fill="#adbac7">repo A</text>
+    <rect x="514" y="244" width="116" height="28" rx="8" fill="#0d1117" stroke="#3d444d"/><text x="572" y="263" text-anchor="middle" font-size="11.5" font-weight="700" fill="#adbac7">repo B</text>
+    <rect x="514" y="278" width="116" height="28" rx="8" fill="#0d1117" stroke="#3d444d"/><text x="572" y="297" text-anchor="middle" font-size="11.5" font-weight="700" fill="#adbac7">repo C</text>
+  </g>
+  <path d="M648,236 H686" fill="none" stroke="#8b949e" stroke-width="2.2" marker-end="url(#ar)">
+    <animate attributeName="stroke-dashoffset" from="18" to="0" dur="0.9s" repeatCount="indefinite"/>
+    <set attributeName="stroke-dasharray" to="6 4"/>
+  </path>
+  <text x="667" y="226" text-anchor="middle" font-size="10" fill="#8b949e">test-gated PR</text>
+
+  <!-- the safety gate (prominent) -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="0.7s" dur="0.6s" fill="freeze"/>
+    <rect x="688" y="178" width="216" height="116" rx="14" fill="#0f1d14" stroke="#2ea44f" stroke-width="2.2" filter="url(#g)"/>
+    <text x="796" y="206" text-anchor="middle" font-size="14" font-weight="800" fill="#f0f6fc">🧪 the safety gate</text>
+    <text x="796" y="228" text-anchor="middle" font-size="11.5" fill="#adbac7">review · QA · <tspan font-weight="700" fill="#3fb950">test-architect</tspan></text>
+    <text x="796" y="246" text-anchor="middle" font-size="11.5" fill="#adbac7">generates + runs unit &amp; e2e tests</text>
+    <rect x="712" y="258" width="168" height="24" rx="7" fill="#0d1117" stroke="#2ea44f"/>
+    <text x="796" y="275" text-anchor="middle" font-size="11" font-weight="800" fill="#3fb950">no tests → no merge</text>
+  </g>
+  <path d="M904,236 H944" fill="none" stroke="#2ea44f" stroke-width="2.4" marker-end="url(#arg)"/>
+  <text x="924" y="226" text-anchor="middle" font-size="10" font-weight="700" fill="#3fb950">green</text>
+
+  <!-- you merge -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="0.9s" dur="0.6s" fill="freeze"/>
+    <rect x="946" y="198" width="150" height="76" rx="12" fill="#0c1d33" stroke="#58a6ff" stroke-width="2"/>
+    <g color="#58a6ff"><use href="#ic-human" x="976" y="232"/></g>
+    <text x="1058" y="230" text-anchor="middle" font-size="14" font-weight="800" fill="#f0f6fc">you merge</text>
+    <text x="1021" y="256" text-anchor="middle" font-size="10.5" fill="#79c0ff">the gate is always yours</text>
+  </g>
+
+  <!-- divider -->
+  <line x1="44" y1="372" x2="1156" y2="372" stroke="#21262d" stroke-width="1.5" stroke-dasharray="2 5"/>
+  <text x="56" y="394" font-size="12" font-weight="700" fill="#8b949e">CONTROL PLANE — <tspan fill="#adbac7">watch · approve · trigger from anywhere</tspan></text>
+
+  <!-- =================== MOBILE CONTROL PLANE (bottom row, cy≈462) =================== -->
+
+  <!-- fleet-digest -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="1.05s" dur="0.6s" fill="freeze"/>
+    <rect x="44" y="424" width="184" height="76" rx="12" fill="#12101c" stroke="#8A63D2" stroke-width="1.8"/>
+    <text x="136" y="454" text-anchor="middle" font-size="12.5" font-weight="800" fill="#f0f6fc">🧭 fleet · mission-digest</text>
+    <text x="136" y="472" text-anchor="middle" font-size="10.5" fill="#8b949e">rolls up every PR's state</text>
+    <text x="136" y="488" text-anchor="middle" font-size="10" font-weight="700" fill="#e3b341">~30 min</text>
+  </g>
+  <path d="M228,462 H300" fill="none" stroke="#8A63D2" stroke-width="2.2" marker-end="url(#arp)"/>
+
+  <!-- fleet panel -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="1.2s" dur="0.6s" fill="freeze"/>
+    <rect x="302" y="424" width="196" height="76" rx="12" fill="#161b22" stroke="#a371f7" stroke-width="1.8"/>
+    <text x="400" y="452" text-anchor="middle" font-size="12.5" font-weight="800" fill="#f0f6fc">📌 fleet panel</text>
+    <text x="400" y="470" text-anchor="middle" font-size="10.5" fill="#8b949e">one pinned view of all repos</text>
+    <text x="400" y="487" text-anchor="middle" font-size="10.5" font-weight="700" fill="#d29922">🔔 pings only when newly needs-you</text>
+  </g>
+  <path d="M498,462 H570" fill="none" stroke="#58a6ff" stroke-width="2.2" marker-end="url(#arb)"/>
+
+  <!-- your phone -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="1.35s" dur="0.6s" fill="freeze"/>
+    <rect x="572" y="406" width="232" height="112" rx="14" fill="#0c1d33" stroke="#58a6ff" stroke-width="2"/>
+    <g color="#58a6ff"><use href="#ic-phone" x="600" y="448"/></g>
+    <text x="624" y="434" font-size="14" font-weight="800" fill="#f0f6fc">your phone</text>
+    <text x="624" y="453" font-size="10.5" fill="#79c0ff">GitHub Mobile · Slack/Telegram</text>
+    <text x="624" y="469" font-size="10.5" fill="#79c0ff">· iMessage / WhatsApp</text>
+    <rect x="591" y="482" width="196" height="24" rx="7" fill="#0d1117" stroke="#1f6feb"/>
+    <text x="689" y="499" text-anchor="middle" font-size="11" font-weight="800" fill="#79c0ff">/approve · /hold · /build #N</text>
+  </g>
+
+  <!-- approve-from-anywhere: phone loops back up to the human merge gate -->
+  <path d="M804,440 C900,408 1010,372 1021,278" fill="none" stroke="#58a6ff" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arb)" opacity="0">
+    <animate attributeName="opacity" from="0" to="0.9" begin="1.6s" dur="0.7s" fill="freeze"/>
+    <animate attributeName="stroke-dashoffset" from="22" to="0" dur="1.1s" begin="1.6s" repeatCount="indefinite"/>
+  </path>
+  <text x="930" y="372" text-anchor="middle" font-size="10.5" font-weight="700" fill="#79c0ff" opacity="0"><animate attributeName="opacity" from="0" to="1" begin="1.7s" dur="0.6s" fill="freeze"/>approve from anywhere</text>
+
+  <!-- governance caption -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="1.5s" dur="0.7s" fill="freeze"/>
+    <text x="862" y="452" font-size="11.5" fill="#8b949e">Each loop is <tspan fill="#adbac7" font-weight="700">opt-in</tspan>, scheduled or</text>
+    <text x="862" y="470" font-size="11.5" fill="#8b949e">event-driven, and <tspan fill="#adbac7" font-weight="700">stops at the PR</tspan>.</text>
+    <text x="862" y="494" font-size="12.5" font-weight="800" fill="#3fb950">agents prepare · you merge</text>
+  </g>
+
+  <!-- footer -->
+  <text x="600" y="556" text-anchor="middle" font-size="12" fill="#6e7681">the fleet's control plane is GitHub itself — no new dashboard, no lock-in · auto-approve only ever <tspan font-style="italic">signals</tspan>, never merges (ADR-0003)</text>
+</svg>

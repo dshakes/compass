@@ -53,7 +53,7 @@
   a{color:inherit;text-decoration:none}
   ::selection{background:rgba(163,113,247,.35);color:#fff}
   .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
-  section{position:relative;padding:104px 0}
+  section{position:relative;padding:72px 0}
   h1,h2,h3{font-family:var(--disp);font-weight:600;line-height:1.1;letter-spacing:-.02em}
   .mono{font-family:var(--mono)}
   .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -83,8 +83,8 @@
   .nav-toggle span{display:block;width:20px;height:2px;background:var(--text);margin:4px 0;transition:.25s}
 
   /* HERO */
-  .hero{padding:72px 0 80px;text-align:center}
-  .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;text-align:left}
+  .hero{padding:52px 0 24px;text-align:center}
+  .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:start;text-align:left}
   .hero-grid>*,.loop-grid>*{min-width:0}
   .badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12.5px;color:var(--muted);
     border:1px solid var(--line);background:rgba(255,255,255,.03);padding:6px 13px;border-radius:22px;margin-bottom:22px}
@@ -128,7 +128,7 @@
   .cmd-note{font-size:12.5px;color:var(--dim);margin-top:10px;font-family:var(--mono)}
 
   /* generic section head */
-  .head{max-width:70ch;margin-bottom:44px}
+  .head{max-width:70ch;margin-bottom:36px}
   .head h2{font-size:clamp(28px,3.6vw,42px);margin:14px 0 16px}
   .center{text-align:center;margin-left:auto;margin-right:auto}
 
@@ -216,6 +216,19 @@
   .demo .chrome span{margin-left:8px;font-family:var(--mono);font-size:12px;color:var(--dim)}
   .demo .screen{background:#06070b;line-height:0;min-height:120px;display:flex;align-items:center;justify-content:center}
   .demo .screen img{width:100%;height:auto;display:block}
+  .demo .screen.anim{display:block;padding:18px 18px 20px;font-family:var(--mono);font-size:13px;color:var(--muted);min-height:218px;line-height:1.7}
+  .b-cmd{color:var(--cyan);margin-bottom:16px}
+  .b-row{display:flex;justify-content:space-between;font-size:13px}
+  .b-amt{color:#e9ecf3}
+  .meter{height:12px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid var(--line);overflow:hidden;margin:8px 0 14px}
+  .meter .fill{height:100%;width:0;background:linear-gradient(90deg,#3ad07f,#febc2e 68%,#ff6b6b)}
+  .b-msg{margin-top:10px;font-size:12.5px;min-height:38px;color:var(--dim)}
+  .b-msg .halt{color:var(--red);font-weight:600}
+  .step{display:flex;gap:11px;align-items:flex-start;opacity:.22;transition:opacity .35s ease;margin:8px 0}
+  .step.on{opacity:1}
+  .step .mk{width:16px;flex:none;text-align:center}
+  .step .mk.ok{color:var(--green)} .step .mk.warn{color:#febc2e} .step .mk.pend{color:var(--dim)}
+  .step .tx{color:#cfd5e1;font-size:12.7px} .step .tx b{color:#fff}
   .demo .cap{padding:16px 18px}
   .demo .cap h4{font-family:var(--disp);font-size:16px;margin-bottom:5px}
   .demo .cap p{color:var(--muted);font-size:13.5px}
@@ -289,7 +302,7 @@
     .trio,.proofs,.safety,.demos{grid-template-columns:1fr}
     .stats{grid-template-columns:repeat(2,1fr);gap:14px}
     .agents{grid-template-columns:repeat(2,1fr)}
-    section{padding:88px 0}
+    section{padding:60px 0}
   }
   img{max-width:100%;height:auto}
   @media(max-width:680px){
@@ -324,7 +337,7 @@
       <a href="#features">Features</a>
       <a href="#architecture">Architecture</a>
       <a href="#install">Install</a>
-      <a href="https://github.com/dshakes/compass/tree/main/docs/11-using-compass.md">Docs</a>
+      <a href="docs.html#11-using-compass">Docs</a>
     </nav>
     <div class="nav-cta">
       <a class="btn ghost" href="https://github.com/dshakes/compass" target="_blank" rel="noopener">★ <span class="star-count" id="stars">GitHub</span></a>
@@ -483,19 +496,31 @@
 <section id="demo" style="padding-top:0">
   <div class="wrap">
     <div class="head rv">
-      <div class="eyebrow">not a mockup — real terminal capture</div>
+      <div class="eyebrow">compass in action</div>
       <h2>Watch the guardrails fire.</h2>
-      <p class="lead">These are unedited recordings from the repo. The budget cap really halts; the loop really pushes its own fixes until the tests go green.</p>
+      <p class="lead">The budget cap really halts before the next tool call; the loop really pushes its own fixes until tests pass. Don't take the animation's word for it — reproduce both on your machine with <span class="mono" style="color:var(--cyan)">export COMPASS_MAX_USD=5</span> and <span class="mono" style="color:var(--cyan)">/review</span>.</p>
     </div>
     <div class="demos">
       <div class="demo rv">
-        <div class="chrome"><i></i><i></i><i></i><span>~/myrepo — compass budget ceiling</span></div>
-        <div class="screen"><img src="assets/budget-real.gif" alt="A live terminal: the session cost climbs toward the COMPASS_MAX_USD ceiling and the next tool call is hard-blocked before it runs." loading="lazy" width="640" height="400"/></div>
+        <div class="chrome"><i></i><i></i><i></i><span>~/payments-api — session budget</span></div>
+        <div class="screen anim" id="budgetDemo" role="img" aria-label="Session spend climbs to the $5 ceiling and the next tool call is halted.">
+          <div class="b-cmd">$ export COMPASS_MAX_USD=5.00</div>
+          <div class="b-row"><span style="color:var(--dim)">session spend</span><span class="b-amt" id="bAmt">$0.00</span></div>
+          <div class="meter"><div class="fill" id="bFill"></div></div>
+          <div class="b-msg" id="bMsg">agent working…</div>
+        </div>
         <div class="cap"><h4>The $ ceiling that stops it<span class="tagm halt">HALTED</span></h4><p>Cost climbs to the cap → the next tool call is blocked, not warned. Your $5 stays $5.</p></div>
       </div>
       <div class="demo rv">
-        <div class="chrome"><i></i><i></i><i></i><span>~/myrepo — the self-fixing loop</span></div>
-        <div class="screen"><img src="assets/loop.gif" alt="A live terminal: the SDLC loop generates a change, runs tests, critiques, and pushes its own fixes until the suite passes." loading="lazy" width="640" height="400"/></div>
+        <div class="chrome"><i></i><i></i><i></i><span>~/payments-api — /review loop</span></div>
+        <div class="screen anim" id="loopDemo" role="img" aria-label="The loop generates a change, tests fail, it auto-fixes and re-tests until green, then hands off to a human merge.">
+          <div class="step"><span class="mk pend">▸</span><span class="tx">generate change · <b>calc.py</b></span></div>
+          <div class="step"><span class="mk warn">✕</span><span class="tx">run tests · <b>2 failing</b></span></div>
+          <div class="step"><span class="mk ok">✓</span><span class="tx">critique → auto-fix pushed</span></div>
+          <div class="step"><span class="mk ok">✓</span><span class="tx">re-run tests · <b>all green</b></span></div>
+          <div class="step"><span class="mk ok">✓</span><span class="tx">security + cross-audit clean</span></div>
+          <div class="step"><span class="mk">🔒</span><span class="tx"><b>ready for your merge</b></span></div>
+        </div>
         <div class="cap"><h4>Generate → test → fix → repeat<span class="tagm live">GREEN</span></h4><p>It drives a change to passing tests on its own — then stops at your merge.</p></div>
       </div>
     </div>
@@ -511,7 +536,7 @@
       <p class="lead">A one-shot agent stops at its first wrong answer. compass <b style="color:var(--text)">loops</b> — generate → test → critique → fix → repeat against a gate — so quality comes from iteration, not one lucky prompt.</p>
     </div>
     <div class="loop-grid">
-      <a class="diagram rv" href="https://github.com/dshakes/compass/tree/main/docs/20-loops.md" target="_blank" rel="noopener" style="padding:24px;display:block;cursor:pointer" title="Open docs/20-loops.md">
+      <a class="diagram rv" href="docs.html#20-loops" target="_blank" rel="noopener" style="padding:24px;display:block;cursor:pointer" title="Open docs/20-loops.md">
         <!-- loop diagram -->
         <svg viewBox="0 0 420 380" role="img" aria-label="The task loop: generate, test, critique, fix, repeat until a gate passes, then a human merges">
           <defs>
@@ -564,15 +589,15 @@
       <p class="lead">The whole toolkit — guardrails, the crew, the router, the CLI — is live the moment you install. The autonomous loops sit on top, opt-in.</p>
     </div>
     <div class="bento">
-      <div class="fcard span-3 rv"><span class="em">🔁</span><h3>Autonomous SDLC</h3><p>The review → security → tests → cross-audit → auto-fix → re-review loop on every PR. Parallel reviewers, round-capped fixes, a second-model audit — then it stops at your merge.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/09-sdlc.md">09-sdlc →</a></div>
-      <div class="fcard span-3 rv"><span class="em">🛰️</span><h3>The fleet</h3><p>The loop, scheduled across all your repos through a test gate — overnight. Wake up to a PR per repo you can approve from your phone.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/14-fleet.md">14-fleet →</a></div>
-      <div class="fcard span-2 rv"><span class="em">🛡</span><h3>Guardrails &amp; scanning</h3><p>A hook layer that blocks disasters, catches secrets, auto-formats, and keeps a JSONL audit log.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/16-hardening-and-frontier.md">16-hardening →</a></div>
-      <div class="fcard span-2 rv"><span class="em">🧪</span><h3>Red-team hardening</h3><p>Eval-gated defense vs prompt-injection, config poisoning, safety-override, MCP tool-poisoning, malware &amp; insecure code.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/17-red-team.md">17-red-team →</a></div>
+      <div class="fcard span-3 rv"><span class="em">🔁</span><h3>Autonomous SDLC</h3><p>The review → security → tests → cross-audit → auto-fix → re-review loop on every PR. Parallel reviewers, round-capped fixes, a second-model audit — then it stops at your merge.</p><a class="more" href="docs.html#09-sdlc">09-sdlc →</a></div>
+      <div class="fcard span-3 rv"><span class="em">🛰️</span><h3>The fleet</h3><p>The loop, scheduled across all your repos through a test gate — overnight. Wake up to a PR per repo you can approve from your phone.</p><a class="more" href="docs.html#14-fleet">14-fleet →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🛡</span><h3>Guardrails &amp; scanning</h3><p>A hook layer that blocks disasters, catches secrets, auto-formats, and keeps a JSONL audit log.</p><a class="more" href="docs.html#16-hardening-and-frontier">16-hardening →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🧪</span><h3>Red-team hardening</h3><p>Eval-gated defense vs prompt-injection, config poisoning, safety-override, MCP tool-poisoning, malware &amp; insecure code.</p><a class="more" href="docs.html#17-red-team">17-red-team →</a></div>
       <div class="fcard span-2 rv"><span class="em">🧭</span><h3>Cost-tier router</h3><p>Standalone, reusable: keyword heuristic → optional classifier → judge cascade. Eval-gated.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/router">router/ →</a></div>
-      <div class="fcard span-2 rv"><span class="em">👥</span><h3>The crew + workflows</h3><p>Cost-tiered expert subagents, slash-commands, and dynamic workflows that fact-check each other.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/agents-roster.md">roster →</a></div>
-      <div class="fcard span-2 rv"><span class="em">🧰</span><h3>The compass CLI</h3><p><span class="mono" style="font-size:12px">onboard · impact · drift · scan · redteam · sandbox · verify · audit-log · spend · dashboard</span></p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/11-using-compass.md">11-using →</a></div>
-      <div class="fcard span-2 rv"><span class="em">🔌</span><h3>MCP + LSP</h3><p>Curated, version-pinned MCP servers plus opt-in language-server intelligence.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/04-mcp.md">04-mcp →</a></div>
-      <div class="fcard span-2 rv"><span class="em">🪪</span><h3>Every agent, one source</h3><p>Claude Code · Codex · Gemini — plus Cursor/Windsurf/Copilot via the AGENTS.md standard.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/docs/12-every-agent.md">12-every-agent →</a></div>
+      <div class="fcard span-2 rv"><span class="em">👥</span><h3>The crew + workflows</h3><p>Cost-tiered expert subagents, slash-commands, and dynamic workflows that fact-check each other.</p><a class="more" href="docs.html#agents-roster">roster →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🧰</span><h3>The compass CLI</h3><p><span class="mono" style="font-size:12px">onboard · impact · drift · scan · redteam · sandbox · verify · audit-log · spend · dashboard</span></p><a class="more" href="docs.html#11-using-compass">11-using →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🔌</span><h3>MCP + LSP</h3><p>Curated, version-pinned MCP servers plus opt-in language-server intelligence.</p><a class="more" href="docs.html#04-mcp">04-mcp →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🪪</span><h3>Every agent, one source</h3><p>Claude Code · Codex · Gemini — plus Cursor/Windsurf/Copilot via the AGENTS.md standard.</p><a class="more" href="docs.html#12-every-agent">12-every-agent →</a></div>
     </div>
   </div>
 </section>
@@ -586,60 +611,75 @@
       <p class="lead">Every source outside the boundary — a pasted prompt, a fetched page, an MCP tool result, a cloned repo's <span class="mono">CLAUDE.md</span> — is decoded, normalized, and scored before it can steer the agent.</p>
     </div>
     <div class="diagram rv">
-      <svg viewBox="0 0 1000 330" role="img" aria-label="Red-team dataflow: untrusted input flows through decode and normalize, then detectors, eval-gated, producing warn/audit or block, ending at the human merge gate.">
+      <svg viewBox="0 0 1000 300" role="img" aria-label="Red-team pipeline: untrusted input travels a single rail through decode and normalize, then eval-gated detectors, then a warn-or-block decision, ending at the human merge gate.">
         <defs>
-          <linearGradient id="ag" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a371f7"/><stop offset=".5" stop-color="#5b9dff"/><stop offset="1" stop-color="#2ee6cf"/></linearGradient>
-          <marker id="a2" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6" fill="none" stroke="#5b9dff" stroke-width="1.6"/></marker>
+          <linearGradient id="rail" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a371f7"/><stop offset=".5" stop-color="#5b9dff"/><stop offset="1" stop-color="#2ee6cf"/></linearGradient>
+          <radialGradient id="pulse" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="rgba(196,165,255,.7)"/><stop offset="1" stop-color="rgba(91,157,255,0)"/></radialGradient>
+          <marker id="a2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="currentColor" stroke-width="1.4"/></marker>
         </defs>
-        <!-- col 1: inputs -->
-        <g font-family="JetBrains Mono,monospace" font-size="11.5" fill="#98a2b6">
-          <text x="20" y="24" fill="#6b7488" font-size="11" letter-spacing="1.5">UNTRUSTED INPUT</text>
-          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/17-red-team.md" target="_blank" rel="noopener"><rect x="20" y="40" width="180" height="34" rx="8" fill="#0f1219" stroke="#30364a"/><text x="34" y="61">prompt / paste</text></a>
-          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/04-mcp.md" target="_blank" rel="noopener"><rect x="20" y="84" width="180" height="34" rx="8" fill="#0f1219" stroke="#30364a"/><text x="34" y="105">web · MCP · tool output</text></a>
-          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/12-every-agent.md" target="_blank" rel="noopener"><rect x="20" y="128" width="180" height="34" rx="8" fill="#0f1219" stroke="#30364a"/><text x="34" y="149">CLAUDE.md · AGENTS.md</text></a>
-          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/03-customize.md" target="_blank" rel="noopener"><rect x="20" y="172" width="180" height="34" rx="8" fill="#0f1219" stroke="#30364a"/><text x="34" y="193">.claude/settings.json</text></a>
+
+        <!-- the rail -->
+        <line x1="120" y1="150" x2="900" y2="150" stroke="url(#rail)" stroke-width="3" opacity=".45"/>
+        <line x1="120" y1="150" x2="900" y2="150" stroke="url(#rail)" stroke-width="3" stroke-dasharray="1.5 11" class="flow" opacity=".9"/>
+        <!-- traveling pulse -->
+        <circle r="16" fill="url(#pulse)"><animateMotion dur="3.4s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear" path="M120,150 H900"/></circle>
+        <circle r="3.5" fill="#fff"><animateMotion dur="3.4s" repeatCount="indefinite" path="M120,150 H900"/></circle>
+
+        <!-- input sources feeding node 1 -->
+        <g font-family="JetBrains Mono,monospace" font-size="10.5" fill="#98a2b6" text-anchor="middle">
+          <text x="120" y="42" fill="#6b7488" font-size="10" letter-spacing="1.5">UNTRUSTED INPUT</text>
+          <text x="120" y="64">prompt · paste</text>
+          <text x="120" y="81">web · MCP · tools</text>
+          <text x="120" y="98">CLAUDE.md · settings</text>
         </g>
-        <!-- col 2: decode (clickable) -->
-        <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/17-red-team.md" target="_blank" rel="noopener">
-          <rect x="260" y="52" width="200" height="142" rx="12" fill="rgba(163,113,247,.06)" stroke="url(#ag)" stroke-width="1.5"/>
-          <text x="360" y="78" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="15" fill="#e9ecf3" font-weight="600">decode &amp; normalize</text>
-          <text x="360" y="102" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10.5" fill="#98a2b6">base64 · hex · %-enc · entity</text>
-          <text x="360" y="120" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10.5" fill="#98a2b6">zero-width · ASCII-smuggling</text>
-          <text x="360" y="138" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10.5" fill="#98a2b6">homoglyph · leetspeak</text>
-          <text x="360" y="170" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#2ee6cf">payload recovered ✓</text>
+        <path d="M120,108 L120,118" stroke="#5b9dff" stroke-width="1.3" fill="none" opacity=".5"/>
+
+        <!-- decision branches off node 4 -->
+        <g color="#3ad07f"><path d="M705,120 C705,96 705,92 705,80" stroke="#3ad07f" stroke-width="1.4" fill="none" marker-end="url(#a2)" opacity=".75"/></g>
+        <g color="#ff6b6b"><path d="M705,180 C705,204 705,208 705,220" stroke="#ff6b6b" stroke-width="1.4" fill="none" marker-end="url(#a2)" opacity=".75"/></g>
+        <a class="mod" href="docs.html#17-red-team" target="_blank" rel="noopener">
+          <rect x="620" y="44" width="170" height="34" rx="9" fill="rgba(58,208,127,.09)" stroke="#3ad07f" stroke-width="1.3"/>
+          <text x="705" y="65" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="#3ad07f">warn + audit · default</text>
         </a>
-        <!-- col 3: detectors (clickable) -->
-        <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/17-red-team.md" target="_blank" rel="noopener">
-          <rect x="520" y="30" width="220" height="238" rx="12" fill="rgba(91,157,255,.06)" stroke="url(#ag)" stroke-width="1.5"/>
-          <text x="630" y="54" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="15" fill="#e9ecf3" font-weight="600">detectors</text>
-          <g font-family="JetBrains Mono,monospace" font-size="10.5" fill="#98a2b6" text-anchor="middle">
-            <text x="630" y="78">prompt-injection</text>
-            <text x="630" y="97">authority-spoof</text>
-            <text x="630" y="116">MCP tool-poisoning</text>
-            <text x="630" y="135">context-poisoning</text>
-            <text x="630" y="154">safety-override</text>
-            <text x="630" y="173">data / DNS exfiltration</text>
-            <text x="630" y="192">malware · insecure-code</text>
-            <text x="630" y="211">system-prompt-leak</text>
-          </g>
-          <text x="630" y="240" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#2ee6cf">eval-gated · 100% P/R</text>
+        <a class="mod" href="docs.html#17-red-team" target="_blank" rel="noopener">
+          <rect x="620" y="222" width="170" height="34" rx="9" fill="rgba(255,107,107,.09)" stroke="#ff6b6b" stroke-width="1.3"/>
+          <text x="705" y="243" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="#ff6b6b">block · enforce</text>
         </a>
-        <!-- col 4: outcomes (clickable) -->
-        <g font-family="JetBrains Mono,monospace" font-size="11">
-          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/17-red-team.md" target="_blank" rel="noopener"><rect x="800" y="60" width="180" height="40" rx="8" fill="rgba(58,208,127,.08)" stroke="#3ad07f" stroke-width="1.3"/><text x="890" y="85" text-anchor="middle" fill="#3ad07f">warn + audit (default)</text></a>
-          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/17-red-team.md" target="_blank" rel="noopener"><rect x="800" y="112" width="180" height="40" rx="8" fill="rgba(255,107,107,.08)" stroke="#ff6b6b" stroke-width="1.3"/><text x="890" y="137" text-anchor="middle" fill="#ff6b6b">block (enforce)</text></a>
-          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/04-mcp.md" target="_blank" rel="noopener"><rect x="800" y="164" width="180" height="40" rx="8" fill="#0f1219" stroke="#30364a"/><text x="890" y="189" text-anchor="middle" fill="#98a2b6">managed backend</text></a>
-          <a class="mod" href="https://github.com/dshakes/compass/tree/main/docs/16-hardening-and-frontier.md" target="_blank" rel="noopener"><rect x="800" y="230" width="180" height="52" rx="10" fill="rgba(163,113,247,.1)" stroke="url(#ag)" stroke-width="2"/><text x="890" y="252" text-anchor="middle" fill="#c4a5ff" font-size="12">🔒 HUMAN GATE</text><text x="890" y="270" text-anchor="middle" fill="#98a2b6" font-size="9.5">you merge · always</text></a>
+
+        <!-- gate glow -->
+        <circle cx="900" cy="150" r="46" fill="rgba(163,113,247,.10)"/>
+
+        <!-- stage nodes on the rail -->
+        <g>
+          <a class="mod" href="docs.html#17-red-team" target="_blank" rel="noopener">
+            <circle cx="120" cy="150" r="30" fill="#0f1219" stroke="url(#rail)" stroke-width="2.5"/>
+            <text x="120" y="158" text-anchor="middle" font-size="19">📥</text>
+            <text x="120" y="196" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="13" fill="#e9ecf3" font-weight="600">Input</text>
+          </a>
+          <a class="mod" href="docs.html#17-red-team" target="_blank" rel="noopener">
+            <circle cx="315" cy="150" r="30" fill="#0f1219" stroke="url(#rail)" stroke-width="2.5"/>
+            <text x="315" y="158" text-anchor="middle" font-size="19">🔓</text>
+            <text x="315" y="196" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="13" fill="#e9ecf3" font-weight="600">Decode</text>
+            <text x="315" y="213" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9.5" fill="#6b7488">base64·hex·zero-width·tags</text>
+          </a>
+          <a class="mod" href="docs.html#17-red-team" target="_blank" rel="noopener">
+            <circle cx="510" cy="150" r="30" fill="#0f1219" stroke="url(#rail)" stroke-width="2.5"/>
+            <text x="510" y="158" text-anchor="middle" font-size="19">🔎</text>
+            <text x="510" y="196" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="13" fill="#e9ecf3" font-weight="600">Detectors</text>
+            <text x="510" y="213" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9.5" fill="#2ee6cf">eval-gated · 100% P/R</text>
+          </a>
+          <a class="mod" href="docs.html#17-red-team" target="_blank" rel="noopener">
+            <circle cx="705" cy="150" r="30" fill="#0f1219" stroke="url(#rail)" stroke-width="2.5"/>
+            <text x="705" y="158" text-anchor="middle" font-size="18">⚖️</text>
+            <text x="705" y="196" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="13" fill="#e9ecf3" font-weight="600">Decision</text>
+          </a>
+          <a class="mod" href="docs.html#16-hardening-and-frontier" target="_blank" rel="noopener">
+            <circle cx="900" cy="150" r="32" fill="#0f1219" stroke="url(#rail)" stroke-width="3"/>
+            <text x="900" y="158" text-anchor="middle" font-size="19">🔒</text>
+            <text x="900" y="198" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="13" fill="#c4a5ff" font-weight="600">Human gate</text>
+            <text x="900" y="215" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9.5" fill="#6b7488">you merge · always</text>
+          </a>
         </g>
-        <!-- flow lines: straight, evenly-spaced, edge-to-edge -->
-        <g fill="none" stroke="#5b9dff" stroke-width="1.6" marker-end="url(#a2)" opacity=".75">
-          <path class="flow" d="M204,123 L253,123"/>
-          <path class="flow" d="M464,131 L513,145"/>
-          <path d="M744,97 L793,80"/>
-          <path d="M744,149 L793,132"/>
-          <path d="M744,201 L793,184"/>
-        </g>
-        <path d="M890,204 L890,225" fill="none" stroke="#a371f7" stroke-width="1.6" marker-end="url(#a2)"/>
       </svg>
       <div class="diagram-hint">↑ every module is <b>clickable</b> — tap one to open its doc</div>
     </div>
@@ -738,7 +778,7 @@
       </div>
       <div class="hero-cta">
         <a class="btn primary" href="https://github.com/dshakes/compass" target="_blank" rel="noopener">★ Star on GitHub</a>
-        <a class="btn ghost" href="https://github.com/dshakes/compass/tree/main/docs/11-using-compass.md">Read the docs →</a>
+        <a class="btn ghost" href="docs.html#11-using-compass">Read the docs →</a>
       </div>
     </div>
   </div>
@@ -755,17 +795,17 @@
       <div class="foot-links">
         <div class="fl">
           <h5>Start</h5>
-          <a href="https://github.com/dshakes/compass/tree/main/docs/11-using-compass.md">Using compass</a>
+          <a href="docs.html#11-using-compass">Using compass</a>
           <a href="#install">Install</a>
-          <a href="https://github.com/dshakes/compass/tree/main/docs/loop-engineering.md">The thesis</a>
-          <a href="https://github.com/dshakes/compass/tree/main/docs/20-loops.md">The five moves</a>
+          <a href="docs.html#loop-engineering">The thesis</a>
+          <a href="docs.html#20-loops">The five moves</a>
         </div>
         <div class="fl">
           <h5>Deep dives</h5>
-          <a href="https://github.com/dshakes/compass/tree/main/docs/09-sdlc.md">Autonomous SDLC</a>
-          <a href="https://github.com/dshakes/compass/tree/main/docs/17-red-team.md">Red-team</a>
-          <a href="https://github.com/dshakes/compass/tree/main/docs/18-benchmark.md">Benchmark</a>
-          <a href="https://github.com/dshakes/compass/tree/main/docs/19-provenance.md">Provenance</a>
+          <a href="docs.html#09-sdlc">Autonomous SDLC</a>
+          <a href="docs.html#17-red-team">Red-team</a>
+          <a href="docs.html#18-benchmark">Benchmark</a>
+          <a href="docs.html#19-provenance">Provenance</a>
         </div>
         <div class="fl">
           <h5>Project</h5>
@@ -873,6 +913,35 @@
   }
   var co=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&e.target.hasAttribute('data-count')){animate(e.target);co.unobserve(e.target);}})},{threshold:.6});
   document.querySelectorAll('[data-count]').forEach(function(el){co.observe(el)});
+
+  // animated budget-ceiling demo (loops while in view)
+  var bAmt=document.getElementById('bAmt'),bFill=document.getElementById('bFill'),bMsg=document.getElementById('bMsg');
+  function runBudget(){
+    if(!bAmt)return; var v=0,cap=5,st=performance.now(),dur=2600;
+    bMsg.innerHTML='agent working…';bMsg.classList.remove();
+    (function tick(now){
+      var p=Math.min((now-st)/dur,1),e=1-Math.pow(1-p,2.2);v=cap*e;
+      bAmt.textContent='$'+v.toFixed(2);bFill.style.width=(e*100).toFixed(1)+'%';
+      if(p<1){requestAnimationFrame(tick);}
+      else{bAmt.textContent='$5.00';bMsg.innerHTML='<span class="halt">🛑 budget ceiling reached — next tool call blocked.</span>';
+        setTimeout(function(){if(inView(bAmt))runBudget();},2600);}
+    })(st);
+  }
+  // animated loop demo
+  function runLoop(){
+    var steps=document.querySelectorAll('#loopDemo .step');if(!steps.length)return;
+    steps.forEach(function(s){s.classList.remove('on')});
+    var i=0;(function nx(){ if(i<steps.length){steps[i].classList.add('on');i++;setTimeout(nx,620);}
+      else{setTimeout(function(){if(inView(steps[0]))runLoop();},2800);} })();
+  }
+  function inView(el){if(!el)return false;var r=el.getBoundingClientRect();return r.top<innerHeight&&r.bottom>0;}
+  var demoStarted={};
+  var demoIO=new IntersectionObserver(function(es){es.forEach(function(e){
+    if(e.isIntersecting){var id=e.target.id;
+      if(id==='budgetDemo'&&!demoStarted.b){demoStarted.b=1;runBudget();}
+      if(id==='loopDemo'&&!demoStarted.l){demoStarted.l=1;runLoop();}}
+  })},{threshold:.4});
+  ['budgetDemo','loopDemo'].forEach(function(id){var el=document.getElementById(id);el&&demoIO.observe(el);});
 
   // live star count (best-effort, no key)
   fetch('https://api.github.com/repos/dshakes/compass').then(function(r){return r.json()}).then(function(d){

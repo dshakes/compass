@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>compass docs</title>
+<meta name="description" content="compass documentation — guardrails, the autonomous SDLC loop, the fleet, red-team hardening, the router, and more." />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🧭%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+<style>
+  :root{
+    --bg:#07080c;--bg-2:#0a0c12;--elev:#0f1219;--elev-2:#141824;
+    --line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.14);
+    --text:#e9ecf3;--muted:#98a2b6;--dim:#6b7488;
+    --violet:#a371f7;--violet-2:#c4a5ff;--cyan:#2ee6cf;--blue:#5b9dff;
+    --grad:linear-gradient(115deg,#a371f7,#5b9dff 45%,#2ee6cf);
+    --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif;
+    --body:'Inter',system-ui,-apple-system,sans-serif;
+    --sb:280px;--top:60px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased;letter-spacing:.1px}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:radial-gradient(50vw 40vh at 100% -5%,rgba(163,113,247,.12),transparent 60%),radial-gradient(45vw 40vh at 0% 105%,rgba(46,230,207,.08),transparent 60%)}
+  a{color:var(--violet-2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  ::selection{background:rgba(163,113,247,.35);color:#fff}
+
+  /* top bar */
+  .top{position:fixed;top:0;left:0;right:0;height:var(--top);z-index:40;display:flex;align-items:center;gap:16px;
+    padding:0 20px;background:rgba(7,8,12,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .top .brand{display:flex;align-items:center;gap:9px;font-family:var(--disp);font-weight:700;font-size:17px;color:var(--text)}
+  .top .brand:hover{text-decoration:none}
+  .top .brand .rose{width:22px;height:22px;filter:drop-shadow(0 0 6px rgba(163,113,247,.6))}
+  .top .tag{font-family:var(--mono);font-size:11px;color:var(--dim);border:1px solid var(--line);padding:2px 8px;border-radius:20px;letter-spacing:.1em}
+  .top .sp{margin-left:auto}
+  .top .search{display:flex;align-items:center;gap:8px;background:var(--elev);border:1px solid var(--line-2);border-radius:10px;padding:7px 11px;width:210px}
+  .top .search input{background:none;border:none;outline:none;color:var(--text);font-family:var(--body);font-size:13.5px;width:100%}
+  .top .search input::placeholder{color:var(--dim)}
+  .top .tlink{color:var(--muted);font-size:14px;font-weight:500}
+  .top .tlink:hover{color:var(--text);text-decoration:none}
+  .top .home{background:var(--grad);color:#0a0710;font-family:var(--disp);font-weight:600;font-size:13.5px;padding:8px 14px;border-radius:10px}
+  .top .home:hover{text-decoration:none}
+  .menu-btn{display:none;background:none;border:1px solid var(--line);border-radius:8px;padding:7px;cursor:pointer}
+  .menu-btn span{display:block;width:18px;height:2px;background:var(--text);margin:3px 0}
+
+  /* sidebar */
+  aside{position:fixed;top:var(--top);bottom:0;left:0;width:var(--sb);overflow-y:auto;padding:26px 16px 60px 24px;
+    border-right:1px solid var(--line);background:rgba(9,11,17,.4)}
+  aside::-webkit-scrollbar{width:8px}aside::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:8px}
+  .grp{margin-bottom:22px}
+  .grp h4{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin:0 0 8px 10px}
+  .grp a{display:block;color:var(--muted);font-size:14px;font-weight:450;padding:7px 12px;border-radius:9px;transition:.16s;line-height:1.35}
+  .grp a:hover{color:var(--text);background:rgba(255,255,255,.04);text-decoration:none}
+  .grp a.active{color:#fff;background:linear-gradient(90deg,rgba(163,113,247,.22),rgba(163,113,247,.04));
+    box-shadow:inset 2px 0 0 var(--violet);font-weight:500}
+
+  /* content */
+  main{margin-left:var(--sb);padding:calc(var(--top) + 40px) 40px 120px;max-width:calc(var(--sb) + 900px)}
+  .doc{max-width:800px}
+  .crumbs{font-family:var(--mono);font-size:12px;color:var(--dim);margin-bottom:14px}
+  .crumbs a{color:var(--dim)}
+  .doc h1{font-family:var(--disp);font-weight:700;font-size:clamp(28px,4vw,40px);line-height:1.12;letter-spacing:-.02em;margin:6px 0 22px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .doc h2{font-family:var(--disp);font-weight:600;font-size:24px;margin:44px 0 14px;padding-top:14px;border-top:1px solid var(--line);letter-spacing:-.01em}
+  .doc h3{font-family:var(--disp);font-weight:600;font-size:18px;margin:30px 0 10px}
+  .doc h4{font-family:var(--disp);font-weight:600;font-size:15px;margin:22px 0 8px;color:var(--violet-2)}
+  .doc p{margin:0 0 16px;color:#d4d9e4}
+  .doc ul,.doc ol{margin:0 0 16px;padding-left:24px}
+  .doc li{margin:6px 0;color:#d4d9e4}
+  .doc li::marker{color:var(--violet)}
+  .doc strong{color:#fff;font-weight:600}
+  .doc em{color:var(--violet-2)}
+  .doc a{border-bottom:1px solid rgba(163,113,247,.35)}
+  .doc a:hover{border-color:var(--violet);text-decoration:none}
+  .doc code{font-family:var(--mono);font-size:13px;background:rgba(163,113,247,.12);border:1px solid var(--line);
+    color:var(--violet-2);padding:1px 6px;border-radius:6px}
+  .doc pre{background:#06070b;border:1px solid var(--line-2);border-radius:12px;padding:16px 18px;overflow-x:auto;margin:0 0 18px;box-shadow:0 12px 30px -18px #000}
+  .doc pre code{background:none;border:none;color:#e9ecf3;padding:0;font-size:13px;line-height:1.6}
+  .doc blockquote{border-left:3px solid var(--violet);background:rgba(163,113,247,.06);border-radius:0 10px 10px 0;
+    padding:12px 18px;margin:0 0 18px;color:var(--muted)}
+  .doc blockquote p:last-child{margin:0}
+  .doc img,.doc svg{max-width:100%;height:auto;border-radius:12px;margin:8px 0 18px;display:block}
+  .doc table{width:100%;border-collapse:collapse;margin:0 0 20px;font-size:14px;display:block;overflow-x:auto}
+  .doc th,.doc td{border:1px solid var(--line);padding:9px 13px;text-align:left}
+  .doc th{background:var(--elev);font-family:var(--disp);font-weight:600;color:var(--text);font-size:13px}
+  .doc td{color:#cfd5e1}
+  .doc hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+  .doc h2:first-child,.doc h1:first-child{margin-top:0}
+
+  .pager{display:flex;gap:14px;margin-top:52px;padding-top:24px;border-top:1px solid var(--line)}
+  .pager a{flex:1;display:block;background:var(--elev);border:1px solid var(--line);border-radius:12px;padding:16px 18px;transition:.2s}
+  .pager a:hover{border-color:var(--violet);text-decoration:none;transform:translateY(-2px)}
+  .pager .k{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.1em}
+  .pager .t{font-family:var(--disp);font-weight:600;color:var(--text);margin-top:4px}
+  .pager .nx{text-align:right}
+  .edit{display:inline-flex;gap:7px;align-items:center;margin-top:26px;font-size:13px;color:var(--dim);font-family:var(--mono)}
+  .loading{color:var(--dim);font-family:var(--mono);padding:40px 0}
+
+  .backdrop{display:none}
+  @media(max-width:900px){
+    :root{--sb:0px}
+    aside{transform:translateX(-100%);transition:transform .28s ease;width:290px;z-index:45;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+    body.nav-open aside{transform:none}
+    body.nav-open .backdrop{display:block;position:fixed;inset:var(--top) 0 0 0;background:rgba(0,0,0,.5);z-index:44}
+    main{margin-left:0;padding:calc(var(--top) + 28px) 22px 90px}
+    .menu-btn{display:block}
+    .top .search{width:150px}
+    .top .tlink{display:none}
+  }
+  @media(max-width:560px){ .top .search{display:none} }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="menu-btn" id="menuBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+  <a class="brand" href="index.html">
+    <svg class="rose" viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="ng" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a371f7"/><stop offset="1" stop-color="#2ee6cf"/></linearGradient></defs><circle cx="50" cy="50" r="44" fill="none" stroke="url(#ng)" stroke-width="4"/><polygon points="50,14 58,50 50,86 42,50" fill="url(#ng)"/><polygon points="14,50 50,42 86,50 50,58" fill="rgba(255,255,255,.25)"/><circle cx="50" cy="50" r="5" fill="#fff"/></svg>
+    compass <span class="tag" style="margin-left:2px">docs</span>
+  </a>
+  <span class="sp"></span>
+  <div class="search"><span style="color:var(--dim)">⌕</span><input id="filter" type="text" placeholder="Filter docs…" aria-label="Filter docs" /></div>
+  <a class="tlink" href="https://github.com/dshakes/compass" target="_blank" rel="noopener">GitHub ↗</a>
+  <a class="home" href="index.html">← Home</a>
+</header>
+<div class="backdrop" id="backdrop"></div>
+
+<aside id="sidebar"></aside>
+
+<main>
+  <div class="doc" id="doc"><div class="loading">Loading…</div></div>
+  <div id="pager"></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  var REPO='https://github.com/dshakes/compass/blob/main/docs/';
+  var NAV=[
+    {group:'Start here',items:[
+      ['00-philosophy','Philosophy'],['11-using-compass','Using compass'],
+      ['01-architecture','Architecture'],['03-customize','Customize']]},
+    {group:'Loops',items:[
+      ['loop-engineering','Loop engineering — the thesis'],['20-loops','The five moves'],
+      ['09-sdlc','Autonomous SDLC'],['13-workflows','Workflows'],['14-fleet','The fleet']]},
+    {group:'Safety & trust',items:[
+      ['16-hardening-and-frontier','Hardening & frontier'],['17-red-team','Red-team'],
+      ['18-benchmark','Benchmark'],['19-provenance','Provenance']]},
+    {group:'Setup & platform',items:[
+      ['05-plugin','Plugin & team rollout'],['04-mcp','MCP servers'],['06-lsp','LSP'],
+      ['08-defaults','Defaults'],['12-every-agent','Every agent']]},
+    {group:'Reference',items:[
+      ['02-cost-and-models','Cost & models'],['07-practices','Practices'],
+      ['agents-roster','Agents roster'],['15-competitive-audit','Competitive audit'],
+      ['10-roadmap','Roadmap']]}
+  ];
+  // flat list for prev/next + title lookup
+  var FLAT=[],TITLE={};
+  NAV.forEach(function(g){g.items.forEach(function(it){FLAT.push(it[0]);TITLE[it[0]]=it[1];})});
+  var SET={};FLAT.forEach(function(s){SET[s]=1});
+
+  // build sidebar
+  var side=document.getElementById('sidebar');
+  side.innerHTML=NAV.map(function(g){
+    return '<div class="grp"><h4>'+g.group+'</h4>'+g.items.map(function(it){
+      return '<a href="#'+it[0]+'" data-slug="'+it[0]+'">'+it[1]+'</a>';
+    }).join('')+'</div>';
+  }).join('');
+
+  marked.setOptions({gfm:true,breaks:false,highlight:function(code,lang){
+    try{return (lang&&hljs.getLanguage(lang))?hljs.highlight(code,{language:lang}).value:hljs.highlightAuto(code).value;}catch(e){return code;}
+  }});
+
+  var docEl=document.getElementById('doc'),pagerEl=document.getElementById('pager');
+
+  function slugFromHref(href){
+    // strip query/anchor, get last path segment without .md
+    var m=href.replace(/[#?].*$/,'').match(/([^\/]+)\.md$/i);
+    return m?m[1]:null;
+  }
+  function rewrite(){
+    // links
+    docEl.querySelectorAll('a[href]').forEach(function(a){
+      var href=a.getAttribute('href');
+      if(/^https?:|^mailto:/.test(href)) {a.target='_blank';a.rel='noopener';return;}
+      if(href.charAt(0)==='#'){return;} // in-page anchor
+      var slug=slugFromHref(href);
+      if(slug&&SET[slug]){a.setAttribute('href','#'+slug);}
+      else if(/\.md$/i.test(href)){ // e.g. adr/* or unlisted → open on GitHub
+        a.setAttribute('href',REPO+href.replace(/^\.?\//,'').replace(/^\.\.\//,'../'));a.target='_blank';a.rel='noopener';
+      }
+    });
+    // images: docs use ../assets/x — assets are mirrored into ./assets/
+    docEl.querySelectorAll('img').forEach(function(img){
+      var s=img.getAttribute('src')||'';
+      var m=s.match(/([^\/]+\.(?:svg|png|gif|jpe?g))$/i);
+      if(m){img.setAttribute('src','assets/'+m[1]);img.setAttribute('loading','lazy');}
+    });
+  }
+  function setActive(slug){
+    side.querySelectorAll('a').forEach(function(a){a.classList.toggle('active',a.getAttribute('data-slug')===slug);});
+    var act=side.querySelector('a.active'); if(act){act.scrollIntoView({block:'nearest'});}
+  }
+  function pager(slug){
+    var i=FLAT.indexOf(slug),prev=i>0?FLAT[i-1]:null,next=i>=0&&i<FLAT.length-1?FLAT[i+1]:null;
+    pagerEl.innerHTML='<div class="pager">'+
+      (prev?'<a href="#'+prev+'"><div class="k">← Previous</div><div class="t">'+TITLE[prev]+'</div></a>':'<span style="flex:1"></span>')+
+      (next?'<a class="nx" href="#'+next+'"><div class="k">Next →</div><div class="t">'+TITLE[next]+'</div></a>':'<span style="flex:1"></span>')+
+      '</div>';
+  }
+  function load(slug){
+    if(!SET[slug]) slug=FLAT[0];
+    docEl.innerHTML='<div class="loading">Loading '+TITLE[slug]+'…</div>';
+    fetch(slug+'.md',{cache:'no-cache'}).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(md){
+      docEl.innerHTML='<div class="crumbs"><a href="index.html">compass</a> / docs / '+TITLE[slug]+'</div>'+marked.parse(md);
+      rewrite();
+      docEl.querySelectorAll('pre code').forEach(function(b){try{hljs.highlightElement(b);}catch(e){}});
+      docEl.insertAdjacentHTML('beforeend','<a class="edit" href="'+REPO+slug+'.md" target="_blank" rel="noopener">✎ Edit this page on GitHub</a>');
+      pager(slug);setActive(slug);
+      window.scrollTo(0,0);
+      document.body.classList.remove('nav-open');
+    }).catch(function(){
+      docEl.innerHTML='<div class="loading">Could not load this page. <a href="'+REPO+slug+'.md" target="_blank" rel="noopener">Open on GitHub ↗</a></div>';
+      pagerEl.innerHTML='';setActive(slug);
+    });
+  }
+  function route(){var slug=(location.hash||'').replace(/^#\/?/,'')||FLAT[0];load(slug);}
+  addEventListener('hashchange',route); route();
+
+  // mobile nav
+  var mb=document.getElementById('menuBtn'),bd=document.getElementById('backdrop');
+  mb&&mb.addEventListener('click',function(){document.body.classList.toggle('nav-open');});
+  bd&&bd.addEventListener('click',function(){document.body.classList.remove('nav-open');});
+
+  // filter
+  var f=document.getElementById('filter');
+  f&&f.addEventListener('input',function(){
+    var q=f.value.toLowerCase();
+    side.querySelectorAll('.grp').forEach(function(g){
+      var any=false;
+      g.querySelectorAll('a').forEach(function(a){
+        var hit=a.textContent.toLowerCase().indexOf(q)>-1;a.style.display=hit?'':'none';if(hit)any=true;});
+      g.style.display=any?'':'none';
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#0a0e14"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8A63D2"/>
+      <stop offset="1" stop-color="#2ea44f"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#6e7681"/>
+    </marker>
+  </defs>
+
+  <rect x="1" y="1" width="1198" height="618" rx="18" fill="url(#bg)" stroke="#30363d" stroke-width="2"/>
+  <rect x="1" y="616" width="1198" height="3" fill="url(#accent)" opacity="0.8"/>
+
+  <!-- compass mark -->
+  <g transform="translate(486,76)">
+    <circle r="30" fill="#161b22" stroke="#8A63D2" stroke-width="2.5"/>
+    <circle r="30" fill="none" stroke="#2ea44f" stroke-width="2.5" stroke-dasharray="2 8" opacity="0.6"/>
+    <polygon points="0,-19 6,0 0,4 -6,0" fill="#ff5f56"/>
+    <polygon points="0,19 6,0 0,-4 -6,0" fill="#c9d1d9"/>
+    <circle r="3" fill="#0d1117" stroke="#c9d1d9" stroke-width="1.5"/>
+  </g>
+  <text x="532" y="88" font-size="52" font-weight="700" fill="#f0f6fc">compass</text>
+  <text x="600" y="138" text-anchor="middle" font-size="21" fill="#adbac7">One config that makes <tspan fill="#c9d1d9" font-weight="600">Claude Code</tspan>, <tspan fill="#c9d1d9" font-weight="600">Codex</tspan>, and <tspan fill="#c9d1d9" font-weight="600">Gemini</tspan> behave like your best engineer — in every repo.</text>
+
+  <!-- flow: one config -> both tools -> every repo -->
+  <g transform="translate(0,178)">
+    <rect x="60" y="0" width="320" height="150" rx="14" fill="#161b22" stroke="#8A63D2" stroke-width="1.5"/>
+    <text x="220" y="34" text-anchor="middle" font-size="19" font-weight="700" fill="#f0f6fc">one config · compass</text>
+    <text x="220" y="64" text-anchor="middle" font-size="14" fill="#8b949e">operating manual · guardrail hooks</text>
+    <text x="220" y="86" text-anchor="middle" font-size="14" fill="#8b949e">9 subagents · 12 commands · compass CLI</text>
+    <text x="220" y="108" text-anchor="middle" font-size="14" fill="#8b949e">MCP · skills · status line · impact</text>
+    <text x="220" y="132" text-anchor="middle" font-size="13" fill="#6e7681">git source of truth → symlinked live</text>
+
+    <line x1="392" y1="75" x2="452" y2="75" stroke="#6e7681" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="462" y="4" width="276" height="40" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="600" y="30" text-anchor="middle" font-size="17" font-weight="600" fill="#c9d1d9">Claude Code</text>
+    <rect x="462" y="50" width="276" height="40" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="600" y="76" text-anchor="middle" font-size="17" font-weight="600" fill="#c9d1d9">Codex</text>
+    <rect x="462" y="96" width="276" height="40" rx="10" fill="#161b22" stroke="#30363d"/>
+    <text x="600" y="122" text-anchor="middle" font-size="17" font-weight="600" fill="#c9d1d9">Gemini · Cursor</text>
+    <text x="600" y="-2" text-anchor="middle" font-size="12" fill="#6e7681">AGENTS.md → CLAUDE.md · one source</text>
+
+    <line x1="750" y1="75" x2="810" y2="75" stroke="#6e7681" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="820" y="0" width="320" height="150" rx="14" fill="#161b22" stroke="#2ea44f" stroke-width="1.5"/>
+    <text x="980" y="40" text-anchor="middle" font-size="19" font-weight="700" fill="#f0f6fc">every repo</text>
+    <text x="980" y="70" text-anchor="middle" font-size="14" fill="#8b949e">understands first · stays in scope</text>
+    <text x="980" y="92" text-anchor="middle" font-size="14" fill="#8b949e">blocks rm -rf / · auto-formats edits</text>
+    <text x="980" y="114" text-anchor="middle" font-size="14" fill="#8b949e">cheap models for grunt work · live $cost</text>
+  </g>
+
+  <!-- autonomous loop strip -->
+  <g transform="translate(0,392)">
+    <rect x="60" y="0" width="1080" height="150" rx="14" fill="#10151c" stroke="#30363d"/>
+    <text x="86" y="34" font-size="15" font-weight="700" fill="#8A63D2">AUTONOMOUS SDLC LOOP</text>
+    <text x="1114" y="34" text-anchor="end" font-size="13" fill="#6e7681">humans merge &amp; deploy — always</text>
+
+    <g font-size="14" fill="#c9d1d9" text-anchor="middle">
+      <rect x="86"  y="58" width="150" height="46" rx="10" fill="#161b22" stroke="#30363d"/>
+      <text x="161" y="86">you open a PR</text>
+      <line x1="240" y1="81" x2="280" y2="81" stroke="#6e7681" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <rect x="284" y="58" width="250" height="46" rx="10" fill="#161b22" stroke="#30363d"/>
+      <text x="409" y="80" font-size="13">review · security · tests</text>
+      <text x="409" y="96" font-size="13" fill="#8b949e">+ Codex cross-audit</text>
+      <line x1="538" y1="81" x2="578" y2="81" stroke="#6e7681" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <rect x="582" y="58" width="230" height="46" rx="10" fill="#161b22" stroke="#d29922"/>
+      <text x="697" y="80" font-size="13" fill="#e3b341">Blocking? Builder fixes</text>
+      <text x="697" y="96" font-size="13" fill="#8b949e">on the branch, re-review</text>
+      <line x1="816" y1="81" x2="856" y2="81" stroke="#6e7681" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <rect x="860" y="58" width="254" height="46" rx="10" fill="#161b22" stroke="#2ea44f"/>
+      <text x="987" y="86" fill="#3fb950">green → you merge ✓</text>
+    </g>
+    <path d="M697 104 L697 124 L161 124 L161 108" fill="none" stroke="#6e7681" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow)"/>
+    <text x="429" y="120" text-anchor="middle" font-size="11" fill="#6e7681">repeats until clean (round-capped)</text>
+  </g>
+
+  <text x="600" y="598" text-anchor="middle" font-size="13" fill="#6e7681">no magic · every piece is a documented Claude Code / Codex feature, assembled with care</text>
+</svg>

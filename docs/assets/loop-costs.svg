@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#0a0e14"/>
+    </linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"   stop-color="#cf222e"/>
+      <stop offset="0.5" stop-color="#8A63D2"/>
+      <stop offset="1"   stop-color="#2ea44f"/>
+      <animateTransform attributeName="gradientTransform" type="translate" values="-0.3 0;0.3 0;-0.3 0" dur="6s" repeatCount="indefinite"/>
+    </linearGradient>
+    <!-- arrow markers, one per guard color + muted for cycle -->
+    <marker id="arg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#2ea44f"/>
+    </marker>
+    <marker id="arp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#8A63D2"/>
+    </marker>
+    <marker id="arb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#58a6ff"/>
+    </marker>
+    <marker id="arm" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#6e7681"/>
+    </marker>
+    <filter id="g" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- background + border -->
+  <rect x="1" y="1" width="1198" height="558" rx="20" fill="url(#bg)" stroke="#30363d" stroke-width="2"/>
+  <!-- animated accent bar -->
+  <rect x="1" y="556" width="1198" height="4" fill="url(#acc)"/>
+
+  <!-- header: spinning compass glyph + title -->
+  <g transform="translate(56,46)">
+    <circle r="20" fill="#161b22" stroke="#8A63D2" stroke-width="2.5"/>
+    <g>
+      <path d="M0,-12 A12,12 0 1 1 -10.4,6" fill="none" stroke="#8A63D2" stroke-width="2.5" stroke-linecap="round"/>
+      <polygon points="-13,2 -7,9 -16,11" fill="#8A63D2"/>
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="8s" repeatCount="indefinite"/>
+    </g>
+    <text x="36" y="2"  font-size="25" font-weight="800" fill="#f0f6fc">Four silent costs</text>
+    <text x="37" y="22" font-size="14" fill="#8b949e">a loop that runs itself errs by itself — each cost has a compass guard</text>
+  </g>
+
+  <!-- column headers -->
+  <text x="295" y="90" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="0.5" fill="#8b4049">THE COST (silent — no alarm while it runs)</text>
+  <text x="875" y="90" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="0.5" fill="#2d6b3f">THE COMPASS GUARD</text>
+  <line x1="60"  y1="97" x2="530"  y2="97" stroke="#cf222e" stroke-width="0.5" opacity="0.25"/>
+  <line x1="660" y1="97" x2="1140" y2="97" stroke="#2ea44f" stroke-width="0.5" opacity="0.25"/>
+
+  <!-- ── ROW 1: Verification debt → Independent evaluator ── -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="0.3s" dur="0.6s" fill="freeze"/>
+    <rect x="60"  y="108" width="470" height="68" rx="13" fill="#161b22" stroke="#cf222e" stroke-width="2"/>
+    <text x="80"  y="130" font-size="14.5" font-weight="800" fill="#f0596b">Verification debt</text>
+    <text x="80"  y="150" font-size="12" fill="#8b949e">unverified output piles up between</text>
+    <text x="80"  y="166" font-size="12" fill="#8b949e">'runs' and 'right'</text>
+
+    <line x1="540" y1="142" x2="648" y2="142" stroke="#6e7681" stroke-width="2" marker-end="url(#arg)"/>
+    <circle r="3.5" fill="#2ea44f" filter="url(#g)">
+      <animateMotion path="M540,142 L643,142" dur="1.7s" repeatCount="indefinite"/>
+    </circle>
+
+    <rect x="660" y="108" width="480" height="68" rx="13" fill="#161b22" stroke="#2ea44f" stroke-width="2"/>
+    <text x="680" y="130" font-size="14.5" font-weight="800" fill="#3fb950">Independent evaluator</text>
+    <text x="680" y="150" font-size="12" fill="#8b949e">a different agent, assumes broken, runs it</text>
+    <text x="680" y="166" font-size="12" fill="#6e7681">(compass evaluator subagent)</text>
+  </g>
+
+  <!-- ── ROW 2: Comprehension rot → compass digest ── -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="0.6s" dur="0.6s" fill="freeze"/>
+    <rect x="60"  y="188" width="470" height="68" rx="13" fill="#161b22" stroke="#cf222e" stroke-width="2"/>
+    <text x="80"  y="210" font-size="14.5" font-weight="800" fill="#f0596b">Comprehension rot</text>
+    <text x="80"  y="230" font-size="12" fill="#8b949e">code you didn't write outpaces</text>
+    <text x="80"  y="246" font-size="12" fill="#8b949e">the map in your head</text>
+
+    <line x1="540" y1="222" x2="648" y2="222" stroke="#6e7681" stroke-width="2" marker-end="url(#arp)"/>
+    <circle r="3.5" fill="#8A63D2" filter="url(#g)">
+      <animateMotion path="M540,222 L643,222" dur="1.7s" begin="0.4s" repeatCount="indefinite"/>
+    </circle>
+
+    <rect x="660" y="188" width="480" height="68" rx="13" fill="#161b22" stroke="#8A63D2" stroke-width="2"/>
+    <text x="680" y="210" font-size="14.5" font-weight="800" fill="#a371f7">compass digest</text>
+    <text x="680" y="230" font-size="12" fill="#8b949e">samples merged changes daily,</text>
+    <text x="680" y="246" font-size="12" fill="#8b949e">makes you explain them</text>
+  </g>
+
+  <!-- ── ROW 3: Cognitive surrender → The human gate ── -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="0.9s" dur="0.6s" fill="freeze"/>
+    <rect x="60"  y="268" width="470" height="68" rx="13" fill="#161b22" stroke="#cf222e" stroke-width="2"/>
+    <text x="80"  y="290" font-size="14.5" font-weight="800" fill="#f0596b">Cognitive surrender</text>
+    <text x="80"  y="310" font-size="12" fill="#8b949e">you stop having an opinion,</text>
+    <text x="80"  y="326" font-size="12" fill="#8b949e">take whatever it hands back</text>
+
+    <line x1="540" y1="302" x2="648" y2="302" stroke="#6e7681" stroke-width="2" marker-end="url(#arb)"/>
+    <circle r="3.5" fill="#58a6ff" filter="url(#g)">
+      <animateMotion path="M540,302 L643,302" dur="1.7s" begin="0.8s" repeatCount="indefinite"/>
+    </circle>
+
+    <rect x="660" y="268" width="480" height="68" rx="13" fill="#161b22" stroke="#58a6ff" stroke-width="2"/>
+    <text x="680" y="290" font-size="14.5" font-weight="800" fill="#58a6ff">The human gate</text>
+    <text x="680" y="310" font-size="12" fill="#8b949e">one door always open — the loop</text>
+    <text x="680" y="326" font-size="12" fill="#8b949e">executes, you decide &amp; merge</text>
+  </g>
+
+  <!-- ── ROW 4: Token blowout → Daily budget cap ── -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="1.2s" dur="0.6s" fill="freeze"/>
+    <rect x="60"  y="348" width="470" height="68" rx="13" fill="#161b22" stroke="#e3b341" stroke-width="2"/>
+    <text x="80"  y="370" font-size="14.5" font-weight="800" fill="#e3b341">Token blowout</text>
+    <text x="80"  y="390" font-size="12" fill="#8b949e">helpers + retries spin all night</text>
+    <text x="80"  y="406" font-size="12" fill="#8b949e">into a surprise bill</text>
+
+    <line x1="540" y1="382" x2="648" y2="382" stroke="#6e7681" stroke-width="2" marker-end="url(#arg)"/>
+    <circle r="3.5" fill="#2ea44f" filter="url(#g)">
+      <animateMotion path="M540,382 L643,382" dur="1.7s" begin="1.2s" repeatCount="indefinite"/>
+    </circle>
+
+    <rect x="660" y="348" width="480" height="68" rx="13" fill="#161b22" stroke="#2ea44f" stroke-width="2"/>
+    <text x="680" y="370" font-size="14.5" font-weight="800" fill="#3fb950">Daily budget cap</text>
+    <text x="680" y="390" font-size="12" fill="#8b949e">COMPASS_MAX_USD_DAY halts spend</text>
+    <text x="680" y="406" font-size="12" fill="#8b949e">before it runs away</text>
+  </g>
+
+  <!-- ── Reinforcing cycle motif ── -->
+  <g opacity="0"><animate attributeName="opacity" from="0" to="1" begin="1.6s" dur="0.6s" fill="freeze"/>
+    <!-- separator -->
+    <line x1="80" y1="433" x2="1120" y2="433" stroke="#30363d" stroke-width="1" opacity="0.6"/>
+
+    <!-- four labeled dots -->
+    <circle cx="170"  cy="466" r="5" fill="#cf222e" opacity="0.55"/>
+    <text x="170"  y="482" text-anchor="middle" font-size="11" fill="#8b4049">verification debt</text>
+
+    <circle cx="430"  cy="466" r="5" fill="#cf222e" opacity="0.55"/>
+    <text x="430"  y="482" text-anchor="middle" font-size="11" fill="#8b4049">comprehension rot</text>
+
+    <circle cx="750"  cy="466" r="5" fill="#cf222e" opacity="0.55"/>
+    <text x="750"  y="482" text-anchor="middle" font-size="11" fill="#8b4049">cognitive surrender</text>
+
+    <circle cx="1030" cy="466" r="5" fill="#e3b341" opacity="0.55"/>
+    <text x="1030" y="482" text-anchor="middle" font-size="11" fill="#7a6020">token blowout</text>
+
+    <!-- forward arrows (dashed) -->
+    <path d="M180,463 Q305,448 420,463" fill="none" stroke="#6e7681" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arm)" opacity="0.45"/>
+    <path d="M440,463 Q595,448 740,463" fill="none" stroke="#6e7681" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arm)" opacity="0.45"/>
+    <path d="M760,463 Q895,448 1020,463" fill="none" stroke="#6e7681" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arm)" opacity="0.45"/>
+    <!-- loop-back arc (below dots) -->
+    <path d="M1030,473 Q1080,500 600,500 Q120,500 170,473" fill="none" stroke="#6e7681" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arm)" opacity="0.35"/>
+
+    <text x="600" y="515" text-anchor="middle" font-size="12" fill="#6e7681">the four reinforce each other — guard all four, or none holds</text>
+  </g>
+
+  <!-- footer tagline -->
+  <text x="600" y="546" text-anchor="middle" font-size="13" fill="#8b949e">the loop says yes at speed — keep a human who can say no</text>
+</svg>
