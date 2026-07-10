@@ -110,6 +110,12 @@
   .rose-ghost{position:absolute;left:auto;right:-230px;top:50%;transform:translateY(-50%);width:min(700px,125%);opacity:.28;z-index:0;pointer-events:none;
     filter:drop-shadow(0 0 54px rgba(163,113,247,.5))}
   .rose-ghost svg{width:100%;height:auto;animation:spins 60s linear infinite;transform-origin:center}
+  /* faint compass watermark for otherwise-empty sections */
+  .rose-bg{position:relative;overflow:hidden}
+  .rose-bg>*{position:relative;z-index:1}
+  .rose-bg::before{content:"";position:absolute;z-index:0;pointer-events:none;width:min(560px,70vw);height:min(560px,70vw);
+    background:url(assets/compass-rose.svg) center/contain no-repeat;opacity:.05;top:50%;right:-190px;transform:translateY(-50%)}
+  .rose-bg.left::before{right:auto;left:-190px}
   /* live terminal demo */
   .term-live{position:relative;z-index:1;width:100%;background:#06070b;border:1px solid var(--line-2);
     border-radius:14px;overflow:hidden;box-shadow:0 30px 80px -30px rgba(0,0,0,.85),0 0 0 1px rgba(163,113,247,.08)}
@@ -415,7 +421,7 @@
 </section>
 
 <!-- ============ STOPS THREE THINGS ============ -->
-<section id="why">
+<section id="why" class="rose-bg">
   <div class="wrap">
     <div class="head rv">
       <div class="eyebrow">the three footguns</div>
@@ -544,7 +550,7 @@
 </section>
 
 <!-- ============ THE LOOP ============ -->
-<section id="loop">
+<section id="loop" class="rose-bg left">
   <div class="wrap">
     <div class="head rv">
       <div class="eyebrow">⭐ the part people screenshot</div>
@@ -597,7 +603,7 @@
 </section>
 
 <!-- ============ FEATURES BENTO ============ -->
-<section id="features">
+<section id="features" class="rose-bg">
   <div class="wrap">
     <div class="head rv">
       <div class="eyebrow">what's in the box</div>

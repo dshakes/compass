@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 350" width="760" font-family="'Space Grotesk',system-ui,sans-serif" role="img" aria-label="The loop thesis: generate, then a gate of tests plus an independent review; on fail it critiques and fixes and loops back; on pass a human ships; a hard resource ceiling stops a non-converging loop.">
+  <defs>
+    <linearGradient id="lt-g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a371f7"/><stop offset="1" stop-color="#2ee6cf"/></linearGradient>
+    <radialGradient id="lt-p" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff"/><stop offset=".4" stop-color="rgba(196,165,255,.7)"/><stop offset="1" stop-color="rgba(91,157,255,0)"/></radialGradient>
+    <marker id="lt-a" markerWidth="9" markerHeight="9" refX="5.5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#5b9dff" stroke-width="1.5"/></marker>
+    <marker id="lt-af" markerWidth="9" markerHeight="9" refX="5.5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#ff8a8a" stroke-width="1.5"/></marker>
+    <marker id="lt-ag" markerWidth="9" markerHeight="9" refX="5.5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#3ad07f" stroke-width="1.5"/></marker>
+  </defs>
+  <rect x="1" y="1" width="758" height="348" rx="18" fill="#0b0d13" stroke="rgba(255,255,255,.08)"/>
+  <text x="30" y="40" font-size="16" font-weight="700" fill="#e9ecf3">🧭 the unit of work is the loop, not the prompt</text>
+
+  <!-- ceiling -->
+  <rect x="250" y="60" width="260" height="30" rx="8" fill="rgba(255,173,71,.08)" stroke="#ffad47" stroke-width="1.2"/>
+  <text x="380" y="80" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#ffce8a">⏱ hard ceiling — the loop stops spending</text>
+
+  <!-- generate -->
+  <rect x="40" y="150" width="150" height="64" rx="12" fill="#0f1219" stroke="url(#lt-g)" stroke-width="1.8"/>
+  <text x="115" y="180" text-anchor="middle" font-size="14" font-weight="600" fill="#e9ecf3">generate</text>
+  <text x="115" y="199" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#6b7488">a draft = iteration 1</text>
+
+  <!-- gate -->
+  <rect x="300" y="140" width="180" height="84" rx="12" fill="rgba(46,230,207,.08)" stroke="#2ee6cf" stroke-width="2"/>
+  <text x="390" y="168" text-anchor="middle" font-size="14" font-weight="700" fill="#2ee6cf">THE GATE</text>
+  <text x="390" y="188" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#c9d3e0">tests run · review reads</text>
+  <text x="390" y="204" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#6b7488">maker ≠ checker</text>
+
+  <!-- ship -->
+  <rect x="590" y="150" width="140" height="64" rx="12" fill="rgba(58,208,127,.10)" stroke="#3ad07f" stroke-width="1.8"/>
+  <text x="660" y="176" text-anchor="middle" font-size="20">🧑‍💻</text>
+  <text x="660" y="200" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e9ecf3">a human ships</text>
+
+  <!-- generate -> gate -->
+  <line x1="190" y1="182" x2="300" y2="182" stroke="#5b9dff" stroke-width="1.6" marker-end="url(#lt-a)"/>
+  <!-- gate -> ship (pass) -->
+  <line x1="480" y1="182" x2="590" y2="182" stroke="#3ad07f" stroke-width="1.8" marker-end="url(#lt-ag)"/>
+  <text x="535" y="173" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#3ad07f">pass</text>
+
+  <!-- fail loop: gate down -> critique+fix -> back up to generate -->
+  <text x="398" y="250" font-family="ui-monospace,monospace" font-size="10" fill="#ff8a8a">fail</text>
+  <path d="M390,224 V270 H115 V214" fill="none" stroke="#ff8a8a" stroke-width="1.6" stroke-dasharray="5 5" marker-end="url(#lt-af)"/>
+  <rect x="250" y="255" width="200" height="30" rx="8" fill="rgba(255,107,107,.06)" stroke="rgba(255,107,107,.4)" stroke-width="1.2"/>
+  <text x="350" y="275" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#ff9d9d">critique → fix, then re-check</text>
+
+  <!-- flowing pulse generate -> gate -->
+  <circle r="5" fill="url(#lt-p)"><animateMotion dur="2.4s" repeatCount="indefinite" path="M190,182 H300"/></circle>
+  <!-- pulse looping back on fail -->
+  <circle r="4.5" fill="url(#lt-p)"><animateMotion dur="3s" begin="1s" repeatCount="indefinite" path="M390,224 V270 H115 V214"/></circle>
+
+  <text x="380" y="326" text-anchor="middle" font-size="12.5" fill="#98a2b6">generate → check → critique → fix, <tspan fill="#c4a5ff" font-weight="600">until a gate says done</tspan> — a human still owns the merge</text>
+</svg>

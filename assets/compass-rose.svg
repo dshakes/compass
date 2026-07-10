@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 360" width="360" role="img" aria-label="Compass rose">
+  <defs><linearGradient id="cr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a371f7"/><stop offset=".5" stop-color="#5b9dff"/><stop offset="1" stop-color="#2ee6cf"/></linearGradient></defs>
+  <g fill="none" stroke="url(#cr)">
+    <circle cx="180" cy="180" r="150" stroke-width="1.5" opacity=".35"/>
+    <circle cx="180" cy="180" r="118" stroke-width="2.5"/>
+    <circle cx="180" cy="180" r="86" stroke-width="1" opacity=".4" stroke-dasharray="3 6"/>
+  </g>
+  <g stroke="#8b93a7" stroke-width="1.5" opacity=".5">
+    <line x1="180" y1="30" x2="180" y2="46"/><line x1="180" y1="314" x2="180" y2="330"/>
+    <line x1="30" y1="180" x2="46" y2="180"/><line x1="314" y1="180" x2="330" y2="180"/>
+    <line x1="74" y1="74" x2="85" y2="85"/><line x1="286" y1="74" x2="275" y2="85"/>
+    <line x1="74" y1="286" x2="85" y2="275"/><line x1="286" y1="286" x2="275" y2="275"/>
+  </g>
+  <polygon points="180,58 194,180 180,166 166,180" fill="#c4a5ff"/>
+  <polygon points="180,302 194,180 180,194 166,180" fill="#2a3040"/>
+  <circle cx="180" cy="180" r="9" fill="#0a0c12" stroke="url(#cr)" stroke-width="3"/>
+</svg>

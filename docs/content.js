@@ -165,9 +165,7 @@ compass doctor      # expect "0 error"
 
 ## The trust boundary
 
-Everything outside the boundary — a pasted prompt, a fetched page, an MCP result, a cloned repo's \`CLAUDE.md\` — is decoded, normalized, and scored *before* it can steer the agent.
-
-![The red-team pipeline](assets/red-team.svg)
+Everything outside the boundary — a pasted prompt, a fetched page, an MCP result, a cloned repo's \`CLAUDE.md\` — is decoded, normalized, and scored *before* it can steer the agent. That whole decode → detect → decide pipeline gets its own page: **[Red-team →](#17-red-team)**.
 
 <div class="cal"><span class="h">Why deterministic hooks?</span> They <b>fail safe</b> — a broken hook never silently disables a guardrail — and they're <b>fast</b> and auditable. The model does discovery and judgment; scripts hold the hard gates. That split is the whole design.</div>
 
@@ -198,7 +196,7 @@ Everything outside the boundary — a pasted prompt, a fetched page, an MCP resu
 
 <p class="lede">The unit of work is the <strong>loop</strong>, not the prompt: generate → check → critique → fix → repeat, until a gate says done. On anything checkable, an agent that loops under a real gate beats a smarter one that guesses once.</p>
 
-![The self-fixing loop](assets/sdlc-loop.svg)
+![The loop thesis: generate, gate, ship — or fail back through critique and fix, under a hard ceiling](assets/loop-thesis.svg)
 
 ## The gate is the whole game
 
