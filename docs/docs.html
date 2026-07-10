@@ -80,6 +80,38 @@
   .dcard span{display:block;color:var(--muted);font-size:13px;margin-top:4px}
   .home-hero{background:radial-gradient(120% 120% at 0 0,rgba(163,113,247,.12),transparent 60%);border:1px solid var(--line);border-radius:16px;padding:24px 26px;margin-bottom:26px}
   .home-hero p{margin-bottom:0}
+  /* ── engaging doc components (used from content.js) ── */
+  .doc .lede{font-size:18px;line-height:1.6;color:#d4d9e4;margin:0 0 22px}
+  .doc .lede strong{color:#fff}
+  /* callouts */
+  .cal{border:1px solid var(--line);border-left:3px solid var(--violet);background:rgba(163,113,247,.06);border-radius:0 12px 12px 0;padding:14px 18px;margin:0 0 20px;font-size:14.5px;color:#cfd5e1}
+  .cal.tip{border-left-color:var(--cyan);background:rgba(46,230,207,.06)}
+  .cal.warn{border-left-color:#febc2e;background:rgba(254,188,46,.06)}
+  .cal.key{border-left-color:var(--violet);background:rgba(163,113,247,.08)}
+  .cal b{color:#fff}
+  .cal .h{font-family:var(--disp);font-weight:600;color:#fff;display:block;margin-bottom:3px}
+  /* stat tiles */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:0 0 22px}
+  .tile{background:var(--elev);border:1px solid var(--line);border-radius:13px;padding:16px 14px;text-align:center}
+  .tile b{display:block;font-family:var(--disp);font-weight:700;font-size:24px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1}
+  .tile span{display:block;color:var(--muted);font-size:12px;margin-top:7px;line-height:1.3}
+  /* step cards */
+  .steps{display:grid;gap:12px;margin:0 0 22px;counter-reset:st}
+  .stp{position:relative;background:var(--elev);border:1px solid var(--line);border-radius:13px;padding:15px 18px 15px 54px}
+  .stp::before{counter-increment:st;content:counter(st);position:absolute;left:15px;top:14px;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-family:var(--disp);font-weight:700;font-size:13px;color:#0a0710;background:var(--grad)}
+  .stp b{font-family:var(--disp);color:#fff;display:block;margin-bottom:2px}
+  .stp span{color:var(--muted);font-size:13.5px}
+  /* feature grid */
+  .feats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 22px}
+  .feat{background:var(--elev);border:1px solid var(--line);border-radius:13px;padding:16px 18px;transition:.2s}
+  .feat:hover{border-color:var(--violet);transform:translateY(-2px)}
+  .feat .e{font-size:20px}
+  .feat b{font-family:var(--disp);color:#fff;display:block;margin:8px 0 3px}
+  .feat span{color:var(--muted);font-size:13.5px}
+  /* pill row */
+  .pills{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 20px}
+  .pills code{background:rgba(163,113,247,.10);border:1px solid var(--line);color:var(--violet-2);padding:5px 11px;border-radius:8px;font-size:12.5px}
+  @media(max-width:560px){.feats{grid-template-columns:1fr}}
   .crumbs{font-family:var(--mono);font-size:12px;color:var(--dim);margin-bottom:14px}
   .crumbs a{color:var(--dim)}
   .doc h1{font-family:var(--disp);font-weight:700;font-size:clamp(28px,4vw,40px);line-height:1.12;letter-spacing:-.02em;margin:6px 0 22px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
