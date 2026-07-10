@@ -141,6 +141,14 @@
   .copy:hover{color:var(--text);border-color:var(--violet);background:rgba(163,113,247,.12)}
   .copy.done{color:var(--green);border-color:var(--green)}
   .cmd-note{font-size:12.5px;color:var(--dim);margin-top:10px;font-family:var(--mono)}
+  /* install method tabs */
+  .itab-heads{display:flex;gap:6px;margin-bottom:9px;flex-wrap:wrap}
+  .itab-h{font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--elev);border:1px solid var(--line);
+    border-radius:9px;padding:6px 12px;cursor:pointer;transition:.15s}
+  .itab-h:hover{color:var(--text)}
+  .itab-h.on{color:var(--text);border-color:var(--violet);background:rgba(163,113,247,.12)}
+  .itab-p{display:none;flex-direction:column;gap:8px}
+  .itab-p.on{display:flex}
 
   /* generic section head */
   .head{max-width:70ch;margin-bottom:36px}
@@ -377,12 +385,29 @@
         <span class="chip">a budget cap that halts</span>
         <span class="chip">you always merge</span>
       </div>
-      <div class="cmd" style="margin-bottom:14px">
-        <span class="prompt">$</span>
-        <code id="heroCmd">git clone https://github.com/dshakes/compass ~/compass &amp;&amp; cd ~/compass &amp;&amp; ./quickstart.sh</code>
-        <button class="copy" data-copy="git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && ./quickstart.sh">⧉ Copy</button>
+      <div class="itabs" style="margin-bottom:14px">
+        <div class="itab-heads" role="tablist" aria-label="Install method">
+          <button class="itab-h on" data-t="cc" role="tab">Claude Code</button>
+          <button class="itab-h" data-t="brew" role="tab">Homebrew</button>
+          <button class="itab-h" data-t="gem" role="tab">Gemini</button>
+          <button class="itab-h" data-t="git" role="tab">git</button>
+        </div>
+        <div class="itab-p on" data-p="cc">
+          <div class="cmd"><span class="prompt">▸</span><code>/plugin marketplace add dshakes/compass</code><button class="copy" data-copy="/plugin marketplace add dshakes/compass">⧉ Copy</button></div>
+          <div class="cmd"><span class="prompt">▸</span><code>/plugin install core@compass</code><button class="copy" data-copy="/plugin install core@compass">⧉ Copy</button></div>
+        </div>
+        <div class="itab-p" data-p="brew">
+          <div class="cmd"><span class="prompt">$</span><code>brew tap dshakes/compass https://github.com/dshakes/compass</code><button class="copy" data-copy="brew tap dshakes/compass https://github.com/dshakes/compass">⧉ Copy</button></div>
+          <div class="cmd"><span class="prompt">$</span><code>brew install dshakes/compass/compass &amp;&amp; compass quickstart</code><button class="copy" data-copy="brew install dshakes/compass/compass && compass quickstart">⧉ Copy</button></div>
+        </div>
+        <div class="itab-p" data-p="gem">
+          <div class="cmd"><span class="prompt">$</span><code>gemini extensions install https://github.com/dshakes/compass</code><button class="copy" data-copy="gemini extensions install https://github.com/dshakes/compass">⧉ Copy</button></div>
+        </div>
+        <div class="itab-p" data-p="git">
+          <div class="cmd"><span class="prompt">$</span><code>git clone https://github.com/dshakes/compass ~/compass &amp;&amp; cd ~/compass &amp;&amp; ./quickstart.sh</code><button class="copy" data-copy="git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && ./quickstart.sh">⧉ Copy</button></div>
+        </div>
       </div>
-      <div class="cmd-note">no <code>curl | sh</code> · fully reversible · previews every change, asks first</div>
+      <div class="cmd-note">native package managers · no <code>curl | sh</code> · fully reversible · asks first</div>
       <div class="hero-cta" style="margin-top:26px">
         <a class="btn primary" href="#install">One-click install ↓</a>
         <a class="btn ghost" href="https://github.com/dshakes/compass" target="_blank" rel="noopener">View on GitHub →</a>
@@ -941,6 +966,15 @@
         var o=b.innerHTML;b.innerHTML='✓ Copied';b.classList.add('done');
         setTimeout(function(){b.innerHTML=o;b.classList.remove('done')},1600);
       });
+    });
+  });
+
+  // hero install-method tabs
+  document.querySelectorAll('.itab-h').forEach(function(b){
+    b.addEventListener('click',function(){
+      var t=b.getAttribute('data-t'),box=b.closest('.itabs');
+      box.querySelectorAll('.itab-h').forEach(function(x){x.classList.toggle('on',x===b)});
+      box.querySelectorAll('.itab-p').forEach(function(p){p.classList.toggle('on',p.getAttribute('data-p')===t)});
     });
   });
 

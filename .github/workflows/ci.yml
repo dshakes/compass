@@ -32,6 +32,29 @@ jobs:
             exit 1
           fi
 
+      - name: Homebrew formula tracks the latest release (no stale package)
+        run: |
+          # The release workflow opens a formula-bump PR on each tag; this guard
+          # fails main if that PR never merged, so `brew install` can't go stale.
+          git fetch --tags --quiet 2>/dev/null || true
+          latest="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+          if [ -z "$latest" ]; then echo "no tags yet — skipping"; exit 0; fi
+          pinned="v$(grep -oE 'tags/v[0-9]+\.[0-9]+\.[0-9]+' Formula/compass.rb | head -1 | sed 's|tags/v||')"
+          if [ "$pinned" != "$latest" ]; then
+            echo "::error::Formula/compass.rb pins $pinned but the latest release tag is $latest — merge the formula-bump PR (url + sha256)."
+            exit 1
+          fi
+          # Belt-and-suspenders: the pinned sha256 must match the real release tarball.
+          url="https://github.com/${GITHUB_REPOSITORY:-dshakes/compass}/archive/refs/tags/$latest.tar.gz"
+          got="$(curl -fsSL "$url" 2>/dev/null | sha256sum | cut -d' ' -f1 || true)"
+          want="$(grep -oE 'sha256 "[a-f0-9]{64}"' Formula/compass.rb | grep -oE '[a-f0-9]{64}')"
+          if [ -n "$got" ] && [ "$got" != "$want" ]; then
+            echo "::error::formula sha256 ($want) != $latest tarball ($got) — re-run the bump."
+            exit 1
+          fi
+          [ -z "$got" ] && echo "::warning::could not fetch tarball to verify sha256 (network) — version check still passed"
+          echo "formula pins $pinned = latest tag $latest, sha256 verified ✓"
+
       - name: shellcheck (errors fail the build)
         run: shellcheck -S error claude/hooks/*.sh claude/hooks/lib/*.sh claude/statusline.sh scripts/*.sh bin/compass install.sh quickstart.sh claude/skills/*/*.sh sdlc/*.sh router/*.sh
 
