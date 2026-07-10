@@ -74,10 +74,93 @@ compass doctor      # expect "0 error"
 
 <p class="lede">Three layers, each doing one job: one config for every agent, deterministic guardrail hooks, and the loop orchestration on top.</p>
 
-<div class="feats">
-<div class="feat"><span class="e">🪪</span><b>1 · One config, every agent</b><span><code>CLAUDE.md</code> · <code>AGENTS.md</code> · <code>GEMINI.md</code> are a single source of truth — operating principles, safety lines, conventions. A <code>git pull</code> updates every agent at once.</span></div>
-<div class="feat"><span class="e">🛡</span><b>2 · Guardrail hooks</b><span>Short, deterministic shell hooks fire on the agent lifecycle: <b>PreToolUse</b> blocks a dangerous command before it runs; <b>PostToolUse</b> treats tool output as untrusted; <b>SessionStart</b>/<b>UserPromptSubmit</b> scan poisoned context.</span></div>
-<div class="feat"><span class="e">🔁</span><b>3 · The loop</b><span>On top sits orchestration: the <a href="#09-sdlc">autonomous SDLC</a>, the <a href="#14-fleet">fleet</a>, and <a href="#13-workflows">workflows</a> — agents that generate, get checked by a gate, and repeat until green.</span></div>
+<div class="sysdiag">
+<svg xmlns="http://www.w3.org/2000/svg" id="compass-sysarch" viewBox="0 0 900 700" font-family="'Space Grotesk',system-ui,sans-serif" role="img" aria-label="Compass system architecture: one config feeds every agent; every agent action passes deterministic guardrail hooks; safe work runs the self-fixing loop; the human owns the merge.">
+  <defs>
+    <linearGradient id="sa-rail" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a371f7"/><stop offset=".5" stop-color="#5b9dff"/><stop offset="1" stop-color="#2ee6cf"/></linearGradient>
+    <radialGradient id="sa-pulse" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff"/><stop offset=".4" stop-color="rgba(196,165,255,.7)"/><stop offset="1" stop-color="rgba(91,157,255,0)"/></radialGradient>
+    <marker id="sa-ar" markerWidth="9" markerHeight="9" refX="5.5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#5b9dff" stroke-width="1.5"/></marker>
+    <style>
+      #compass-sysarch text{fill:#e9ecf3}
+      #compass-sysarch .m{font-family:ui-monospace,'JetBrains Mono',monospace}
+      #compass-sysarch .cap{fill:#8b93a7;font-size:11px;letter-spacing:.14em}
+      #compass-sysarch .dim{fill:#6b7488}
+      #compass-sysarch a{cursor:pointer}
+      #compass-sysarch .card{transition:filter .2s}
+      #compass-sysarch a:hover .card{filter:brightness(1.4)}
+      #compass-sysarch a:hover .hh{fill:#fff}
+    </style>
+  </defs>
+  <rect x="1" y="1" width="898" height="698" rx="20" fill="#0b0d13" stroke="rgba(255,255,255,.08)"/>
+  <a href="#12-every-agent">
+    <rect class="card" x="250" y="40" width="400" height="80" rx="14" fill="rgba(163,113,247,.10)" stroke="#a371f7" stroke-width="1.5"/>
+    <text x="270" y="66" class="cap">1 · ONE CONFIG — SOURCE OF TRUTH</text>
+    <text x="270" y="98" class="m hh" font-size="15">CLAUDE.md · AGENTS.md · GEMINI.md</text>
+  </a>
+  <text x="466" y="146" class="m dim" font-size="10.5">git pull → every agent updates at once</text>
+  <g fill="none" stroke="#5b9dff" stroke-width="1.4" marker-end="url(#sa-ar)" opacity=".8">
+    <path d="M450,120 C450,150 220,150 220,192"/><path d="M450,120 V192"/><path d="M450,120 C450,150 680,150 680,192"/>
+  </g>
+  <a href="#12-every-agent">
+    <rect class="card" x="120" y="194" width="200" height="62" rx="12" fill="#0f1219" stroke="url(#sa-rail)" stroke-width="1.6"/>
+    <text x="220" y="221" text-anchor="middle" font-size="14" font-weight="600" class="hh">Claude Code</text>
+    <text x="220" y="240" text-anchor="middle" class="m dim" font-size="10.5">plugin + marketplace</text>
+  </a>
+  <a href="#12-every-agent">
+    <rect class="card" x="350" y="194" width="200" height="62" rx="12" fill="#0f1219" stroke="url(#sa-rail)" stroke-width="1.6"/>
+    <text x="450" y="221" text-anchor="middle" font-size="14" font-weight="600" class="hh">Codex</text>
+    <text x="450" y="240" text-anchor="middle" class="m dim" font-size="10.5">AGENTS.md native</text>
+  </a>
+  <a href="#12-every-agent">
+    <rect class="card" x="580" y="194" width="200" height="62" rx="12" fill="#0f1219" stroke="url(#sa-rail)" stroke-width="1.6"/>
+    <text x="680" y="221" text-anchor="middle" font-size="14" font-weight="600" class="hh">Gemini</text>
+    <text x="680" y="240" text-anchor="middle" class="m dim" font-size="10.5">extension</text>
+  </a>
+  <text x="466" y="286" class="m dim" font-size="10.5">every tool call is intercepted</text>
+  <g fill="none" stroke="#5b9dff" stroke-width="1.4" marker-end="url(#sa-ar)" opacity=".8">
+    <path d="M220,256 C220,296 450,296 450,318"/><path d="M450,256 V318"/><path d="M680,256 C680,296 450,296 450,318"/>
+  </g>
+  <a href="#16-hardening-and-frontier">
+    <rect class="card" x="150" y="320" width="600" height="96" rx="14" fill="rgba(46,230,207,.07)" stroke="#2ee6cf" stroke-width="1.5"/>
+    <text x="176" y="346" class="cap" fill="#2ee6cf">2 · GUARDRAIL HOOKS — DETERMINISTIC SHELL, NOT THE MODEL</text>
+    <g class="m" font-size="11.5">
+      <rect x="176" y="360" width="150" height="38" rx="9" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.12)"/>
+      <text x="251" y="377" text-anchor="middle" class="hh">PreToolUse</text><text x="251" y="391" text-anchor="middle" class="dim" font-size="9.5">blocks danger</text>
+      <rect x="338" y="360" width="150" height="38" rx="9" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.12)"/>
+      <text x="413" y="377" text-anchor="middle" class="hh">PostToolUse</text><text x="413" y="391" text-anchor="middle" class="dim" font-size="9.5">output = untrusted</text>
+      <rect x="500" y="360" width="224" height="38" rx="9" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.12)"/>
+      <text x="612" y="377" text-anchor="middle" class="hh">UserPrompt · SessionStart</text><text x="612" y="391" text-anchor="middle" class="dim" font-size="9.5">scan poisoned context</text>
+    </g>
+  </a>
+  <text x="466" y="446" class="m dim" font-size="10.5">only safe actions get through</text>
+  <line x1="450" y1="416" x2="450" y2="458" stroke="#5b9dff" stroke-width="1.4" marker-end="url(#sa-ar)" opacity=".8"/>
+  <a href="#09-sdlc">
+    <rect class="card" x="200" y="460" width="500" height="92" rx="14" fill="rgba(91,157,255,.08)" stroke="#5b9dff" stroke-width="1.5"/>
+    <text x="226" y="486" class="cap" fill="#8fbaff">3 · THE LOOP — ORCHESTRATION ON TOP</text>
+    <g class="m" font-size="12.5">
+      <text x="238" y="522" class="hh">build</text><text x="330" y="522" class="dim">→</text><text x="360" y="522" class="hh">review</text><text x="452" y="522" class="dim">→</text><text x="486" y="522" class="hh">auto-fix</text><text x="586" y="522" class="dim">→</text><text x="616" y="522" class="hh">re-check</text>
+    </g>
+    <text x="238" y="540" class="m dim" font-size="10">until tests + an independent review both pass</text>
+  </a>
+  <line x1="450" y1="552" x2="450" y2="592" stroke="#2ee6cf" stroke-width="1.6" marker-end="url(#sa-ar)" opacity=".9"/>
+  <a href="#09-sdlc">
+    <rect class="card" x="290" y="594" width="320" height="66" rx="14" fill="rgba(46,230,207,.10)" stroke="#2ee6cf" stroke-width="1.8"/>
+    <text x="330" y="626" font-size="24">🧑‍💻</text>
+    <text x="368" y="622" font-size="15" font-weight="700" class="hh">Human gate</text>
+    <text x="368" y="642" class="m dim" font-size="10.5">you merge · deploy · publish — always</text>
+  </a>
+  <g fill="url(#sa-pulse)">
+    <circle r="5"><animateMotion dur="3.2s" repeatCount="indefinite" path="M450,120 C450,150 220,150 220,192"/></circle>
+    <circle r="5"><animateMotion dur="3.2s" repeatCount="indefinite" path="M450,120 V192"/></circle>
+    <circle r="5"><animateMotion dur="3.2s" repeatCount="indefinite" path="M450,120 C450,150 680,150 680,192"/></circle>
+    <circle r="5"><animateMotion dur="3.2s" begin="1.6s" repeatCount="indefinite" path="M220,256 C220,296 450,296 450,318"/></circle>
+    <circle r="5"><animateMotion dur="3.2s" begin="1.6s" repeatCount="indefinite" path="M450,256 V318"/></circle>
+    <circle r="5"><animateMotion dur="3.2s" begin="1.6s" repeatCount="indefinite" path="M680,256 C680,296 450,296 450,318"/></circle>
+    <circle r="5.5"><animateMotion dur="2.2s" begin=".4s" repeatCount="indefinite" path="M450,416 V458"/></circle>
+    <circle r="5.5"><animateMotion dur="2.2s" begin="1.1s" repeatCount="indefinite" path="M450,552 V592"/></circle>
+  </g>
+</svg>
+<p class="diagcap">↑ every module is <b>clickable</b> — tap one to open its doc</p>
 </div>
 
 ## The trust boundary
