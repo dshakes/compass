@@ -110,5 +110,15 @@ jobs:
           git push -f origin "$branch"
           gh pr create --base main --head "$branch" \
             --title "chore(release): Homebrew formula -> $VERSION" \
-            --body "Automated formula bump for **$VERSION** (url + tarball \`sha256 $sha\`). Merge to point \`brew install\` at the new release." \
+            --body "Automated formula bump for **$VERSION** (url + tarball \`sha256 $sha\`). Auto-merges once checks pass, so \`brew install\` never lags a release." \
             || gh pr edit "$branch" --body "Automated formula bump for $VERSION (sha256 $sha)." || true
+          # Close the loop: land the bump automatically once required checks pass, so a
+          # forgotten manual merge can't leave brew on a stale release (the reason we
+          # were pinned to v0.20.0). Tolerant — if the repo hasn't enabled auto-merge,
+          # the CI drift guard on main still flags the staleness loudly.
+          # NOTE: if branch protection requires the `ci` check, that check must be able
+          # to run on this bot-authored PR — pushes made with the default GITHUB_TOKEN
+          # don't trigger `on: pull_request`, so use a PAT (secrets.RELEASE_PAT) for the
+          # push above if auto-merge stalls waiting on checks.
+          gh pr merge --auto --squash "$branch" \
+            || echo "::warning::could not enable auto-merge — enable 'Allow auto-merge' in repo settings (+ required checks), or merge the formula PR by hand"
