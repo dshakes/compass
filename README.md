@@ -153,8 +153,7 @@ Every loop ends the same way — **you merge.** That gate never moves.
 
 **🍺 Homebrew** — managed & versioned
 ```bash
-brew tap dshakes/compass https://github.com/dshakes/compass
-brew install dshakes/compass/compass     # latest release · --HEAD to track main
+brew install dshakes/tap/compass         # latest release · --HEAD to track main
 compass quickstart                       # previews, asks, then wires it into ~/.claude
 ```
 
