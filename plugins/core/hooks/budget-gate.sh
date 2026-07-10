@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034  # COMPASS_AUDIT_TOOL/RULE are consumed by deny()/compass_log_audit in the sourced lib/common.sh
 # budget-gate.sh — PreToolUse live spend ceiling (session + daily).
 #
 # Halts a session the moment its estimated cost crosses a ceiling you set — the live

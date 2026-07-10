@@ -44,15 +44,17 @@
   <text x="382" y="168" fill="#a371f7" font-size="13" letter-spacing="1.5">COMPASS RED-TEAM LAYER</text>
 
   <rect x="382" y="182" width="362" height="60" rx="10" fill="#161b22" stroke="#30363d"/>
-  <text x="400" y="210" fill="#f0f6fc" font-size="15" font-weight="600">decode &amp; normalize</text>
-  <text x="400" y="230" fill="#8b949e" font-size="12">base64 · zero-width · homoglyph · leetspeak</text>
+  <text x="400" y="203" fill="#f0f6fc" font-size="14" font-weight="600">decode &amp; normalize</text>
+  <text x="400" y="220" fill="#8b949e" font-size="10.5">base64 · hex · percent · HTML-entity</text>
+  <text x="400" y="234" fill="#8b949e" font-size="10.5">zero-width · ASCII-smuggling (Unicode Tags) · homoglyph · leet</text>
 
   <line x1="563" y1="242" x2="563" y2="258" stroke="#8b949e" stroke-width="1.5" marker-end="url(#ah)"/>
 
   <rect x="382" y="258" width="362" height="84" rx="10" fill="#161b22" stroke="#30363d"/>
-  <text x="400" y="284" fill="#f0f6fc" font-size="15" font-weight="600">detectors</text>
-  <text x="400" y="305" fill="#8b949e" font-size="12">prompt-injection · context-poisoning · safety-override</text>
-  <text x="400" y="323" fill="#8b949e" font-size="12">malware · insecure-code (SAST) · system-prompt-leak</text>
+  <text x="400" y="280" fill="#f0f6fc" font-size="14" font-weight="600">detectors</text>
+  <text x="400" y="298" fill="#8b949e" font-size="11">prompt-injection · authority-spoof · MCP tool-poisoning</text>
+  <text x="400" y="314" fill="#8b949e" font-size="11">context-poisoning · safety-override · data/DNS exfiltration</text>
+  <text x="400" y="330" fill="#8b949e" font-size="11">malware · insecure-code (SAST) · system-prompt-leak</text>
 
   <rect x="382" y="358" width="362" height="58" rx="10" fill="#03281a" stroke="#2ea44f"/>
   <text x="400" y="382" fill="#3fb950" font-size="13" font-weight="600">✓ eval-gated · 100% precision/recall (corpus)</text>

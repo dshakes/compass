@@ -94,7 +94,7 @@ compass verify     # resolves the latest release → ✓ provenance verified
 ```
 
 <p align="center">
-  <a href="docs/17-red-team.md"><img src="assets/red-team.svg" alt="compass red-team layer: untrusted input (prompt/paste · web/MCP/tool output · CLAUDE.md/AGENTS.md · .claude/settings.json) → decode &amp; normalize (base64/zero-width/homoglyph/leet) → detectors (injection · context-poisoning · safety-override · malware · insecure-code · prompt-leak), eval-gated 100% P/R → warn+audit / block / optional managed backend → human merge gate." width="900"></a>
+  <a href="docs/17-red-team.md"><img src="assets/red-team.svg" alt="compass red-team layer: untrusted input (prompt/paste · web/MCP/tool output · CLAUDE.md/AGENTS.md · .claude/settings.json) → decode &amp; normalize (base64/hex/entity/zero-width/ASCII-smuggling/homoglyph/leet) → detectors (injection · authority-spoof · MCP tool-poisoning · context-poisoning · safety-override · data/DNS exfil · malware · insecure-code · prompt-leak), eval-gated 100% P/R → warn+audit / block / optional managed backend → human merge gate." width="900"></a>
 </p>
 
 No service, no telemetry, no `--dangerously-skip-permissions`; `git pull` to update. The work it can't safely own, it hands back — **you keep the merge.**

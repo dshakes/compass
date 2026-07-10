@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034  # COMPASS_AUDIT_TOOL/RULE are consumed by deny()/compass_log_audit in the sourced lib/common.sh
 # protect-paths.sh — PreToolUse guardrail.
 #
 # Blocks the small set of actions that are almost never intended and are

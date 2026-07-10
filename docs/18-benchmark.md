@@ -39,7 +39,7 @@ that some novel phrasings will slip — they should be contributed back as new c
 ### 2. Red-team corpus — `scripts/redteam-corpus.tsv`
 
 Tests the `injection_findings` detector (prompt-injection, context-poisoning,
-safety-override, malware-intent, insecure-code patterns). **68 labeled cases**
+safety-override, malware-intent, insecure-code patterns). **85 labeled cases**
 (56 file-based + additional programmatic assertions).
 
 ```
@@ -100,8 +100,8 @@ compass redteam --json
 
 | Corpus | Cases | Precision | Recall | Notes |
 |---|---|---|---|---|
-| Guardrail | 68 | 100% | 100% | floor: 100% P / 95% R |
-| Red-team | 68 | 100% | 100% | floor: 100% P / 90% R |
+| Guardrail | 61 | 100% | 100% | floor: 100% P / 95% R |
+| Red-team | 85 | 100% | 100% | floor: 100% P / 90% R |
 | Red-team adversarial | 155 transforms | 100% | 100% | floor: 80% robustness |
 | Router | 86 (32 holdout) | — | — | accuracy 96.9%; floor 90% |
 
@@ -149,7 +149,7 @@ leetspeak and homoglyph lookalikes before matching — so the five standard
 transforms score 100% on the corpus. A sixth, novel transform can still slip.
 
 **Corpus recall is on the corpus, not the real-world attack distribution.** 100%
-recall on 68 cases does not mean 100% real-world catch rate. The corpus is the
+recall on 85 cases does not mean 100% real-world catch rate. The corpus is the
 fast, always-on floor. Periodic deep sweeps against a running agent endpoint
 provide complementary coverage.
 

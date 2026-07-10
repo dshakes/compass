@@ -28,7 +28,7 @@ usage: compass redteam [--eval | --scan | --attack] [--json]
   --eval      only score the detectors against the corpus (the CI gate)
   --scan      only scan this repo's CLAUDE.md/AGENTS.md/READMEs/MCP/settings
   --attack    adversarial fuzz: obfuscate the corpus payloads (base64 · zero-width ·
-              homoglyph · leetspeak · case) and measure how many the detectors still
+              homoglyph · leetspeak · ASCII-smuggling tags · hex) and measure how many the detectors still
               catch (robustness %). Notes garak/promptfoo for live-agent attacks.
   --json      machine-readable summary
 
@@ -113,14 +113,19 @@ _mutate() { # <transform> <payload>
     homoglyph) command -v perl >/dev/null 2>&1 \
                  && printf '%s' "$p" | perl -CSAD -pe 'tr/ioea/\x{0456}\x{043e}\x{0435}\x{0430}/' 2>/dev/null \
                  || printf '%s' "$p" ;;
+    tags)      printf 'note: %s' "$(printf '%s' "$p" | perl -CSAD -pe 's/([\x20-\x7e])/chr(0xE0000 + ord($1))/ge' 2>/dev/null)" ;; # ASCII smuggling (Unicode Tags)
+    hex)       printf '%s' "$p" | perl -pe 's/(.)/sprintf("\\x%02x",ord($1))/ge' 2>/dev/null ;;
   esac
 }
 run_attack() {
-  local label payload t mut
+  local label payload t mut transforms
+  transforms="identity base64 zerowidth leet homoglyph"
+  # tags + hex decode rely on perl (see normalize_untrusted); only fuzz them when present.
+  command -v perl >/dev/null 2>&1 && transforms="$transforms tags hex"
   while IFS=$'\t' read -r label payload; do
     case "$label" in inject) ;; *) continue ;; esac
     [ -n "$payload" ] || continue
-    for t in identity base64 zerowidth leet homoglyph; do
+    for t in $transforms; do
       mut="$(_mutate "$t" "$payload")"
       ATTACK_TOTAL=$((ATTACK_TOTAL + 1))
       if [ -n "$(injection_findings "$mut")" ]; then
@@ -133,7 +138,7 @@ run_attack() {
 }
 
 if [ "$MODE" = attack ]; then
-  [ "$JSON" = 1 ] || echo "adversarial fuzz — obfuscating corpus payloads (base64 · zero-width · leetspeak · homoglyph):"
+  [ "$JSON" = 1 ] || echo "adversarial fuzz — obfuscating corpus payloads (base64 · zero-width · leetspeak · homoglyph · ASCII-smuggling tags · hex):"
   run_attack
   robust=100; [ "$ATTACK_TOTAL" -gt 0 ] && robust=$(( ATTACK_CAUGHT * 100 / ATTACK_TOTAL ))
   if [ "$JSON" = 1 ]; then

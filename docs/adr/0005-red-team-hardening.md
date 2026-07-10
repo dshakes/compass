@@ -29,7 +29,11 @@ Add a **measured, defense-in-depth red-team layer**, mirroring the guardrail pat
 
 1. **Pure detectors** in `claude/hooks/lib/policy.sh` — `injection_findings`,
    `settings_override_reason`, `malware_intent_findings`, `insecure_code_findings` —
-   so the same code runs on live hooks and in a CI-gated eval.
+   so the same code runs on live hooks and in a CI-gated eval. `injection_findings`
+   scans a **decoded + normalized** copy of the input (base64 / hex / percent /
+   HTML-entity / zero-width / ASCII-smuggling Unicode Tags / homoglyph / leetspeak),
+   covering direct + authority-spoof injection, MCP tool-poisoning, context poisoning,
+   data / DNS exfiltration, malware and insecure-code intent, and system-prompt leaks.
 2. **A labeled corpus + eval** (`scripts/redteam-corpus.tsv`, `scripts/test-redteam.sh`)
    gated by `compass doctor` (precision floor 100%, recall floor 90%).
 3. **Runtime hooks** for the three ingress paths: SessionStart (context files + settings),

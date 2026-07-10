@@ -300,12 +300,15 @@ POLICY_INJECTION_DETECTORS='instruction-override|(ignore|disregard|forget|overri
 persona-jailbreak|(you are now|from now on|act as|pretend (you|to be|that)|roleplay as).{0,50}(developer mode|do anything now|\bdan\b|unrestricted|uncensored|jailbroken|no (restrictions|rules|filter|guardrails|limits))
 disable-safety|(disable|bypass|turn off|ignore|circumvent|switch off|remove).{0,30}(safety|guardrail|content (policy|filter)|moderation|restriction|the sandbox|approval step|permission check|security (check|hook))
 permission-escalation|((run|use|using|with|enable|pass|set|invoke|add) .{0,20}--dangerously-skip-permissions|skip( the)? permission (check|prompt)|grant (yourself|me|all|full)|give (yourself|me) (admin|root|full)|add .{0,40}(allow ?list|allowlist))
-data-exfiltration|(send|post|upload|exfiltrate|transmit|e-?mail|forward|leak).{0,60}(\.env\b|secret|credential|password|api[ _-]?key|access[ _-]?token|private key|env(ironment)? variable|ssh key|\.aws|conversation history|chat history|system prompt)
+data-exfiltration|(send|post|upload|exfiltrate|transmit|e-?mail|forward|leak).{0,60}(\.env\b|secret|credential|password|api[ _-]?key|access[ _-]?token|private key|env(ironment)? variable|ssh key|\.aws|conversation history|chat history|system prompt|id_rsa|id_ed25519|authorized_keys|\.pem\b|\.p12\b|\.git-credentials|\.netrc|kubeconfig|/etc/(passwd|shadow))
+exfil-channel|(dig|nslookup|host) +[^ ]*\$\(|(curl|wget) .{0,60}(--data(-binary|-raw)?|--upload-file|--form|-d |-T |-F ).{0,25}@?[^ ]*(id_rsa|id_ed25519|\.ssh/|\.env\b|\.aws/|/etc/(passwd|shadow)|\.git-credentials|kubeconfig)
 covert-instruction|do not (tell|inform|warn|mention .{0,15}to|reveal .{0,15}to|notify|alert) (the )?(user|human|operator|developer|owner)
 fake-role-tag|</?(system|assistant)>|\[/?INST\]|<\|(im_start|im_end|system)\|>|(^|\n)#{2,3} *system *:
 markdown-exfil|!\[[^]]*\]\( *https?://[^)]*(\$\{|secret|token|api[_-]?key)
 hidden-html-comment|<!--[^>]*(ignore (previous|above|all|the)|you are now|system prompt|assistant *:|do the following|run this|execute the)[^>]*-->
-system-prompt-leak|((repeat|reveal|print|show me|disclose|output|dump|leak|give me) .{0,20}your (system |initial )?(prompt|instructions|rules|configuration|directive)|what (is|are) your (system |initial )?(prompt|instructions|rules|directive|configuration))'
+system-prompt-leak|((repeat|reveal|print|show me|disclose|output|dump|leak|give me) .{0,20}your (system |initial )?(prompt|instructions|rules|configuration|directive)|what (is|are) your (system |initial )?(prompt|instructions|rules|directive|configuration))
+tool-poisoning|<(important|secret|system|instructions?)>.{0,80}(ignore|do not (tell|mention|reveal|disclose)|read|send|fetch|exfiltrat|before (using|calling))|before (using|calling|invoking|running) (this|the) (tool|function|mcp|command).{0,60}(read|cat|send|fetch|exfiltrat|pass|include|append).{0,40}(~?/|\.ssh|id_rsa|\.env|secret|credential|token|password|api[ _-]?key)
+authority-spoof|(the (user|developer|owner|operator|human|admin)|anthropic|your (creator|developer|maker)) (has|have|already) ?(been )?(authoriz|approv|pre-?approv|sanction|permit|allow|consent|clear)[a-z]* (you to|this action|bypass|skip|disabl|full access|admin(istrator)? access|root|the permission|without (asking|confirm))|(i am|this is|acting as) (the|an|your) (admin(istrator)?|developer|creator|owner|system administrator|anthropic (staff|employee)).{0,25}(so |therefore |now )?(you (must|should|can|are|will)|override|disable|bypass|grant|ignore)'
 
 # Lines carrying one of these markers are NOT flagged — so the corpus, this file,
 # and docs/17 (which quote the patterns to explain them) don't self-trip a repo scan.
@@ -325,6 +328,15 @@ normalize_untrusted() {
   # 1 · drop zero-width / bidi control chars so split/hidden words rejoin.
   out="$(printf '%s' "$text" | LC_ALL=C sed 's/'$'\342\200''[\213-\217\252-\256]//g; s/'$'\342\201''[\246-\251]//g; s/'$'\357\273\277''//g' 2>/dev/null)"
   [ -n "$out" ] || out="$text"
+  # 1b · Unicode Tags block (U+E0000–E007F) "ASCII smuggling": invisible tag chars map
+  # 1:1 onto ASCII. Decode the printable ones back to readable text (recovers the hidden
+  # payload for matching) and strip the rest; fall back to stripping when perl is absent.
+  if command -v perl >/dev/null 2>&1; then
+    out="$(printf '%s' "$out" | perl -CSAD -pe 's/([\x{E0020}-\x{E007E}])/chr(ord($1)-0xE0000)/ge; s/[\x{E0000}-\x{E007F}]//g' 2>/dev/null || printf '%s' "$out")"
+  else
+    out="$(printf '%s' "$out" | LC_ALL=C sed 's/'$'\363\240''[\200-\201][\200-\277]//g' 2>/dev/null || printf '%s' "$out")"
+  fi
+  [ -n "$out" ] || out="$text"
   # 2 · decode base64-looking tokens (>=16 chars), append printable plaintext.
   extra=""
   while IFS= read -r tok; do
@@ -335,12 +347,26 @@ $dec"
   done <<EOF
 $(printf '%s' "$out" | grep -oE '[A-Za-z0-9+/]{16,}={0,2}' 2>/dev/null | head -20)
 EOF
-  # 3 · leetspeak fold + homoglyph fold (Cyrillic/Greek lookalikes -> Latin via perl).
-  folded="$(printf '%s' "$out" | LC_ALL=C tr '013457@$' 'oieastas' 2>/dev/null)"
+  # 2b · decode hex (\xHH), percent (%HH) and HTML numeric entities (&#NN; / &#xHH;) so
+  # instructions escaped through any of those channels are scanned in readable form too.
   if command -v perl >/dev/null 2>&1; then
-    folded="$(printf '%s' "$folded" | perl -CSAD -pe 'tr/\x{0430}\x{0435}\x{043e}\x{0440}\x{0441}\x{0445}\x{0443}\x{0456}\x{03bf}\x{03b1}\x{03b5}/aeopcxyioae/' 2>/dev/null || printf '%s' "$folded")"
+    dec="$(printf '%s' "$out" | perl -pe 's/(?:\\x|%)([0-9A-Fa-f]{2})/chr(hex($1))/ge; s/&#(\d{1,7});/chr($1)/ge; s/&#x([0-9A-Fa-f]{1,6});/chr(hex($1))/ge' 2>/dev/null | LC_ALL=C tr -dc '\11\12\15\40-\176' 2>/dev/null)"
+    [ ${#dec} -ge 6 ] && [ "$dec" != "$out" ] && extra="$extra
+$dec"
   fi
-  printf '%s%s\n%s' "$out" "$extra" "$folded"
+  # 3 · leetspeak fold + homoglyph fold (Cyrillic/Greek lookalikes -> Latin via perl).
+  # Two leet variants: `folded` maps '$'->'s' (catches "di$able safety"); `folded2`
+  # keeps '$' (so shell "$(" survives for the exfil-channel detector). Emitting both
+  # loses nothing and closes the leet/homoglyph evasion of '$('-keyed patterns.
+  local folded2=""
+  folded="$(printf '%s' "$out" | LC_ALL=C tr '013457@$' 'oieastas' 2>/dev/null)"
+  folded2="$(printf '%s' "$out" | LC_ALL=C tr '013457@' 'oieasta' 2>/dev/null)"
+  if command -v perl >/dev/null 2>&1; then
+    local homoglyph='tr/\x{0430}\x{0435}\x{043e}\x{0440}\x{0441}\x{0445}\x{0443}\x{0456}\x{03bf}\x{03b1}\x{03b5}/aeopcxyioae/'
+    folded="$(printf '%s' "$folded" | perl -CSAD -pe "$homoglyph" 2>/dev/null || printf '%s' "$folded")"
+    folded2="$(printf '%s' "$folded2" | perl -CSAD -pe "$homoglyph" 2>/dev/null || printf '%s' "$folded2")"
+  fi
+  printf '%s%s\n%s\n%s' "$out" "$extra" "$folded" "$folded2"
 }
 
 # injection_findings "<text>"  -> one "rule: snippet…" line per likely injection
@@ -355,6 +381,12 @@ injection_findings() {
   local zwpat; zwpat="$(printf '\342\200[\213-\217\252-\256]|\342\201[\246-\251]|\357\273\277')"
   if printf '%s' "$text" | LC_ALL=C grep -Eq "$zwpat" 2>/dev/null; then
     printf 'hidden-unicode: zero-width/bidirectional control character\n'
+  fi
+  # Unicode Tags block (U+E0000–E007F): the invisible "ASCII smuggling" channel — no
+  # legitimate use in agent-facing text, so flag its mere presence (payload is decoded
+  # for matching by normalize_untrusted above).
+  if printf '%s' "$text" | LC_ALL=C grep -Eq "$(printf '\363\240[\200-\201][\200-\277]')" 2>/dev/null; then
+    printf 'ascii-smuggling: invisible Unicode Tags-block characters (U+E0000-E007F)\n'
   fi
 
   # scan raw + de-obfuscated rendering in one pass (a match in either fires the rule).
