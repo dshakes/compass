@@ -118,6 +118,10 @@
   .doc h2{font-family:var(--disp);font-weight:600;font-size:24px;margin:44px 0 14px;padding-top:14px;border-top:1px solid var(--line);letter-spacing:-.01em}
   .doc h3{font-family:var(--disp);font-weight:600;font-size:18px;margin:30px 0 10px}
   .doc h4{font-family:var(--disp);font-weight:600;font-size:15px;margin:22px 0 8px;color:var(--violet-2)}
+  .doc h2,.doc h3,.doc h4{scroll-margin-top:88px}
+  .hlink{opacity:0;margin-left:.4em;color:var(--violet);font-weight:700;border:0!important;text-decoration:none;transition:opacity .15s;font-family:var(--mono);cursor:pointer}
+  .doc h2:hover .hlink,.doc h3:hover .hlink,.doc h4:hover .hlink,.hlink:focus{opacity:.5}
+  .doc .hlink:hover{opacity:1;border:0}
   .doc p{margin:0 0 16px;color:#d4d9e4}
   .doc ul,.doc ol{margin:0 0 16px;padding-left:24px}
   .doc li{margin:6px 0;color:#d4d9e4}
@@ -257,13 +261,33 @@
     '<p>New to the thesis behind it all? Start with <a href="#loop-engineering">Loop engineering</a>. Want the fastest tour? <a href="index.html">The interactive site →</a></p>'
   ].join('\n');
 
+  function anchorHeadings(slug){
+    var used={};
+    docEl.querySelectorAll('h2, h3, h4').forEach(function(h){
+      if(h.id){used[h.id]=1;}
+      else{
+        var base=h.textContent.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,50)||'section';
+        var id=base,n=2; while(used[id]){id=base+'-'+(n++);} used[id]=1; h.id=id;
+      }
+      if(h.querySelector('.hlink'))return;
+      var a=document.createElement('a');
+      a.className='hlink';a.href='#'+slug+'~'+h.id;a.textContent='#';
+      a.setAttribute('aria-label','Link to this section');
+      h.appendChild(a);
+    });
+  }
+  function scrollToAnchor(id){
+    if(!id)return false; var t=document.getElementById(id);
+    if(t){t.scrollIntoView();return true;} return false;
+  }
   function buildTOC(){
     var hs=docEl.querySelectorAll('h2, h3');
     if(hs.length<2){tocEl.innerHTML='';return;}
     var html='<h5>On this page</h5>';
     hs.forEach(function(h,i){
       if(!h.id){h.id='s-'+i+'-'+h.textContent.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,40);}
-      html+='<a href="#" data-id="'+h.id+'" class="'+(h.tagName==='H3'?'sub':'')+'">'+h.textContent+'</a>';
+      var c=h.cloneNode(true),l=c.querySelector('.hlink');if(l)l.remove();
+      html+='<a href="#" data-id="'+h.id+'" class="'+(h.tagName==='H3'?'sub':'')+'">'+c.textContent+'</a>';
     });
     tocEl.innerHTML=html;
     tocEl.querySelectorAll('a').forEach(function(a){
@@ -313,12 +337,15 @@
       (next?'<a class="nx" href="#'+next+'"><div class="k">Next →</div><div class="t">'+TITLE[next]+'</div></a>':'<span style="flex:1"></span>')+
       '</div>';
   }
-  function finish(slug){
-    buildTOC();scrollSpy();pager(slug);setActive(slug);window.scrollTo(0,0);document.body.classList.remove('nav-open');
+  function finish(slug,anch){
+    anchorHeadings(slug);buildTOC();scrollSpy();pager(slug);setActive(slug);document.body.classList.remove('nav-open');
+    if(!(anch&&scrollToAnchor(anch)))window.scrollTo(0,0);
   }
-  function load(slug){
+  var CURRENT=null;
+  function load(slug,anch){
     if(!SET[slug]) slug='overview';
-    if(slug==='overview'){docEl.innerHTML=OVERVIEW;rewrite();finish('overview');return;}
+    CURRENT=slug;
+    if(slug==='overview'){docEl.innerHTML=OVERVIEW;rewrite();finish('overview',anch);return;}
     // prefer concise authored content; the raw .md stays the linked source of truth
     var authored=window.COMPASS_DOCS&&window.COMPASS_DOCS[slug];
     if(authored){
@@ -326,7 +353,7 @@
       rewrite();
       docEl.querySelectorAll('pre code').forEach(function(b){try{hljs.highlightElement(b);}catch(e){}});
       docEl.insertAdjacentHTML('beforeend','<a class="edit" href="'+REPO+slug+'.md" target="_blank" rel="noopener">📖 Full reference for this page on GitHub →</a>');
-      finish(slug);return;
+      finish(slug,anch);return;
     }
     docEl.innerHTML='<div class="loading">Loading '+TITLE[slug]+'…</div>';
     fetch(slug+'.md',{cache:'no-cache'}).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(md){
@@ -334,13 +361,19 @@
       rewrite();
       docEl.querySelectorAll('pre code').forEach(function(b){try{hljs.highlightElement(b);}catch(e){}});
       docEl.insertAdjacentHTML('beforeend','<a class="edit" href="'+REPO+slug+'.md" target="_blank" rel="noopener">✎ Edit this page on GitHub</a>');
-      finish(slug);
+      finish(slug,anch);
     }).catch(function(){
       docEl.innerHTML='<div class="loading">Could not load this page. <a href="'+REPO+slug+'.md" target="_blank" rel="noopener">Open on GitHub ↗</a></div>';
       pagerEl.innerHTML='';tocEl.innerHTML='';setActive(slug);
     });
   }
-  function route(){var slug=(location.hash||'').replace(/^#\/?/,'')||'overview';load(slug);}
+  function route(){
+    var raw=(location.hash||'').replace(/^#\/?/,'');
+    var parts=raw.split('~'),slug=parts[0]||'overview',anch=parts[1]||'';
+    var resolved=SET[slug]?slug:'overview';
+    if(resolved===CURRENT){scrollToAnchor(anch);return;}
+    load(slug,anch);
+  }
   addEventListener('scroll',function(){if(spy)cancelAnimationFrame(spy);spy=requestAnimationFrame(scrollSpy);},{passive:true});
   addEventListener('hashchange',route); route();
 

@@ -83,10 +83,10 @@
   .nav-toggle span{display:block;width:20px;height:2px;background:var(--text);margin:4px 0;transition:.25s}
 
   /* HERO */
-  .hero{padding:52px 0 24px;text-align:center}
-  .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:start;text-align:left}
+  .hero{padding:52px 0 24px;text-align:center;position:relative;overflow:hidden}
+  .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:stretch;text-align:left}
   .hero-grid>*,.loop-grid>*{min-width:0}
-  .term-wrap{display:flex;flex-direction:column;gap:14px}
+  .term-wrap{display:flex;flex-direction:column;gap:14px;width:100%;max-width:540px;position:relative;z-index:1}
   .term-foot{display:flex;gap:8px;flex-wrap:wrap}
   .term-foot .s{flex:1;min-width:92px;text-align:center;background:var(--elev);border:1px solid var(--line);border-radius:11px;padding:10px 8px}
   .term-foot .s b{display:block;font-family:var(--disp);font-weight:700;font-size:16px}
@@ -95,7 +95,11 @@
     border:1px solid var(--line);background:rgba(255,255,255,.03);padding:6px 13px;border-radius:22px;margin-bottom:22px}
   .badge .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:pulse 2.4s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-  .hero h1{font-size:clamp(38px,5.6vw,66px);font-weight:700;margin-bottom:22px}
+  .hero h1{font-size:clamp(33px,4.6vw,55px);font-weight:700;margin-bottom:22px;line-height:1.08;letter-spacing:-.01em}
+  .hero h1 .hl{display:block;white-space:nowrap}
+  .hero h1 em{font-style:normal}
+  .hero h1 em.v{color:var(--violet-2)}
+  .hero h1 em.c{color:var(--cyan)}
   .hero h1 .sub{display:block;font-size:clamp(17px,2.1vw,23px);font-weight:500;color:var(--muted);margin-top:16px;font-family:var(--body);letter-spacing:normal;line-height:1.5}
   .kicker{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 30px}
   .chip{font-family:var(--mono);font-size:12.5px;color:var(--violet-2);border:1px solid rgba(163,113,247,.32);
@@ -103,17 +107,17 @@
   .hero-cta{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
   .hero-visual{display:flex;justify-content:center;align-items:center;position:relative}
   /* ambient compass rose behind the terminal */
-  .rose-ghost{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,88%);opacity:.14;z-index:0;pointer-events:none;
-    filter:drop-shadow(0 0 40px rgba(163,113,247,.5))}
+  .rose-ghost{position:absolute;left:auto;right:-230px;top:50%;transform:translateY(-50%);width:min(700px,125%);opacity:.28;z-index:0;pointer-events:none;
+    filter:drop-shadow(0 0 54px rgba(163,113,247,.5))}
   .rose-ghost svg{width:100%;height:auto;animation:spins 60s linear infinite;transform-origin:center}
   /* live terminal demo */
-  .term-live{position:relative;z-index:1;width:100%;max-width:540px;background:#06070b;border:1px solid var(--line-2);
+  .term-live{position:relative;z-index:1;width:100%;background:#06070b;border:1px solid var(--line-2);
     border-radius:14px;overflow:hidden;box-shadow:0 30px 80px -30px rgba(0,0,0,.85),0 0 0 1px rgba(163,113,247,.08)}
   .term-live .bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--line);background:#0b0d13}
   .term-live .bar i{width:11px;height:11px;border-radius:50%}
   .term-live .bar i:nth-child(1){background:#ff5f57}.term-live .bar i:nth-child(2){background:#febc2e}.term-live .bar i:nth-child(3){background:#28c840}
   .term-live .bar span{margin-left:9px;font-family:var(--mono);font-size:12px;color:var(--dim)}
-  .term-live .body{padding:15px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.6;min-height:300px}
+  .term-live .body{padding:15px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.6;height:392px;overflow:hidden}
   .tl{opacity:0;transform:translateY(4px);transition:opacity .28s ease,transform .28s ease;white-space:pre-wrap;color:var(--muted)}
   .tl.show{opacity:1;transform:none}
   .tl .u{color:var(--cyan)} .tl .p{color:#e9ecf3} .tl .blk{color:var(--red)} .tl .ok{color:var(--green)} .tl .vi{color:var(--violet-2)} .tl .dim{color:var(--dim)}
@@ -359,7 +363,7 @@
   <div class="wrap hero-grid">
     <div>
       <div class="badge"><span class="dot"></span> local-first · no telemetry · MIT · beta</div>
-      <h1>Let your coding agent<br>off the leash.<br><span class="grad-text">Not off the rails.</span>
+      <h1><span class="hl">Let your coding <em class="v">agent</em></span><span class="hl">off the <em class="c">leash</em>.</span><span class="hl grad-text">Not off the rails.</span>
         <span class="sub">compass is a config layer for <b style="color:var(--text)">Claude Code, Codex &amp; Gemini</b> that stops your agent from burning your budget, running unsafe commands, or merging unverified code — <b style="color:var(--text)">scored 100/100 in CI, not asserted.</b></span>
       </h1>
       <div class="kicker">
@@ -627,15 +631,47 @@
         <defs>
           <linearGradient id="rail" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a371f7"/><stop offset=".5" stop-color="#5b9dff"/><stop offset="1" stop-color="#2ee6cf"/></linearGradient>
           <radialGradient id="pulse" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="rgba(196,165,255,.7)"/><stop offset="1" stop-color="rgba(91,157,255,0)"/></radialGradient>
+          <radialGradient id="pulseG" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="rgba(126,240,176,.9)"/><stop offset="1" stop-color="rgba(58,208,127,0)"/></radialGradient>
+          <radialGradient id="pulseR" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff0f0"/><stop offset=".35" stop-color="rgba(255,140,140,.95)"/><stop offset="1" stop-color="rgba(255,107,107,0)"/></radialGradient>
           <marker id="a2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="currentColor" stroke-width="1.4"/></marker>
         </defs>
 
         <!-- the rail -->
         <line x1="120" y1="150" x2="900" y2="150" stroke="url(#rail)" stroke-width="3" opacity=".45"/>
         <line x1="120" y1="150" x2="900" y2="150" stroke="url(#rail)" stroke-width="3" stroke-dasharray="1.5 11" class="flow" opacity=".9"/>
-        <!-- traveling pulse -->
-        <circle r="16" fill="url(#pulse)"><animateMotion dur="3.4s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear" path="M120,150 H900"/></circle>
-        <circle r="3.5" fill="#fff"><animateMotion dur="3.4s" repeatCount="indefinite" path="M120,150 H900"/></circle>
+        <!-- one packet, two fates. green (safe): rail → detours UP into warn+audit →
+             returns → continues to the human gate. red (dangerous): rail → detours
+             DOWN into block → stops there. it routes through the decision, never straight. -->
+        <!-- PASS · green -->
+        <g>
+          <circle r="15" fill="url(#pulseG)" opacity="0">
+            <animate attributeName="opacity" dur="6.4s" repeatCount="indefinite" values="0;1;1;0;0" keyTimes="0;.03;.42;.47;1"/>
+            <animateMotion dur="6.4s" repeatCount="indefinite" calcMode="linear" path="M120,150 H705 V82 V150 H900" keyPoints="0;1;1;1" keyTimes="0;.43;.47;1"/>
+          </circle>
+          <circle r="3.4" fill="#eafff3" opacity="0">
+            <animate attributeName="opacity" dur="6.4s" repeatCount="indefinite" values="0;1;1;0;0" keyTimes="0;.03;.42;.47;1"/>
+            <animateMotion dur="6.4s" repeatCount="indefinite" calcMode="linear" path="M120,150 H705 V82 V150 H900" keyPoints="0;1;1;1" keyTimes="0;.43;.47;1"/>
+          </circle>
+        </g>
+        <!-- FAIL · red -->
+        <g>
+          <circle r="15" fill="url(#pulseR)" opacity="0">
+            <animate attributeName="opacity" dur="6.4s" repeatCount="indefinite" values="0;0;1;1;1;0" keyTimes="0;.5;.54;.9;.96;1"/>
+            <animateMotion dur="6.4s" repeatCount="indefinite" calcMode="linear" path="M120,150 H705 V220" keyPoints="0;0;1;1" keyTimes="0;.5;.82;1"/>
+          </circle>
+          <circle r="3.8" fill="#fff0f0" opacity="0">
+            <animate attributeName="opacity" dur="6.4s" repeatCount="indefinite" values="0;0;1;1;1;0" keyTimes="0;.5;.54;.9;.96;1"/>
+            <animateMotion dur="6.4s" repeatCount="indefinite" calcMode="linear" path="M120,150 H705 V220" keyPoints="0;0;1;1" keyTimes="0;.5;.82;1"/>
+          </circle>
+        </g>
+        <!-- block box flashes when the red packet lands in it -->
+        <rect x="620" y="222" width="170" height="34" rx="9" fill="none" stroke="#ff6b6b" stroke-width="2.5" opacity="0">
+          <animate attributeName="opacity" dur="6.4s" repeatCount="indefinite" values="0;0;.95;0;0" keyTimes="0;.8;.84;.95;1"/>
+        </rect>
+        <!-- warn box glows when the green packet passes through it -->
+        <rect x="620" y="44" width="170" height="34" rx="9" fill="none" stroke="#3ad07f" stroke-width="2.5" opacity="0">
+          <animate attributeName="opacity" dur="6.4s" repeatCount="indefinite" values="0;0;.9;0;0" keyTimes="0;.28;.32;.4;1"/>
+        </rect>
 
         <!-- input sources feeding node 1 -->
         <g font-family="JetBrains Mono,monospace" font-size="10.5" fill="#98a2b6" text-anchor="middle">
@@ -649,11 +685,11 @@
         <!-- decision branches off node 4 -->
         <g color="#3ad07f"><path d="M705,120 C705,96 705,92 705,80" stroke="#3ad07f" stroke-width="1.4" fill="none" marker-end="url(#a2)" opacity=".75"/></g>
         <g color="#ff6b6b"><path d="M705,180 C705,204 705,208 705,220" stroke="#ff6b6b" stroke-width="1.4" fill="none" marker-end="url(#a2)" opacity=".75"/></g>
-        <a class="mod" href="docs.html#17-red-team" target="_blank" rel="noopener">
+        <a class="mod" href="docs.html#08-defaults" target="_blank" rel="noopener">
           <rect x="620" y="44" width="170" height="34" rx="9" fill="rgba(58,208,127,.09)" stroke="#3ad07f" stroke-width="1.3"/>
           <text x="705" y="65" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="#3ad07f">warn + audit · default</text>
         </a>
-        <a class="mod" href="docs.html#17-red-team" target="_blank" rel="noopener">
+        <a class="mod" href="docs.html#16-hardening-and-frontier" target="_blank" rel="noopener">
           <rect x="620" y="222" width="170" height="34" rx="9" fill="rgba(255,107,107,.09)" stroke="#ff6b6b" stroke-width="1.3"/>
           <text x="705" y="243" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="#ff6b6b">block · enforce</text>
         </a>
@@ -674,20 +710,20 @@
             <text x="315" y="196" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="13" fill="#e9ecf3" font-weight="600">Decode</text>
             <text x="315" y="213" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9.5" fill="#6b7488">base64·hex·zero-width·tags</text>
           </a>
-          <a class="mod" href="docs.html#17-red-team" target="_blank" rel="noopener">
+          <a class="mod" href="docs.html#18-benchmark" target="_blank" rel="noopener">
             <circle cx="510" cy="150" r="30" fill="#0f1219" stroke="url(#rail)" stroke-width="2.5"/>
             <text x="510" y="158" text-anchor="middle" font-size="19">🔎</text>
             <text x="510" y="196" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="13" fill="#e9ecf3" font-weight="600">Detectors</text>
             <text x="510" y="213" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9.5" fill="#2ee6cf">eval-gated · 100% P/R</text>
           </a>
-          <a class="mod" href="docs.html#17-red-team" target="_blank" rel="noopener">
+          <a class="mod" href="docs.html#16-hardening-and-frontier" target="_blank" rel="noopener">
             <circle cx="705" cy="150" r="30" fill="#0f1219" stroke="url(#rail)" stroke-width="2.5"/>
             <text x="705" y="158" text-anchor="middle" font-size="18">⚖️</text>
             <text x="705" y="196" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="13" fill="#e9ecf3" font-weight="600">Decision</text>
           </a>
-          <a class="mod" href="docs.html#16-hardening-and-frontier" target="_blank" rel="noopener">
+          <a class="mod" href="docs.html#09-sdlc" target="_blank" rel="noopener">
             <circle cx="900" cy="150" r="32" fill="#0f1219" stroke="url(#rail)" stroke-width="3"/>
-            <text x="900" y="158" text-anchor="middle" font-size="19">🔒</text>
+            <text x="900" y="159" text-anchor="middle" font-size="22">🧑‍💻</text>
             <text x="900" y="198" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-size="13" fill="#c4a5ff" font-weight="600">Human gate</text>
             <text x="900" y="215" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9.5" fill="#6b7488">you merge · always</text>
           </a>
