@@ -1,0 +1,11 @@
+# Baseline for plugins/core scan.
+# The injection detector fires on "allowlist" in skills/harden/SKILL.md — a
+# known false positive from security documentation that uses the word "allowlist"
+# in a context the permission-escalation pattern matches. Documented limitation
+# in policy.sh: "best-effort, not a security boundary."
+#
+# Format: relative-path<TAB>rule
+# This file is operator-supplied (--baseline flag). Never place it inside the
+# scanned plugin directory — a plugin that controls its own baseline can suppress
+# any finding against itself.
+skills/harden/SKILL.md	permission-escalation

@@ -86,6 +86,10 @@ usage: compass <command> [args]
   listen                   Run the command listener: act on /status /approve /hold /build
                            from your phone DM via Telegram (free) or an iMessage/WhatsApp bridge
                            (long-running daemon; needs gh + a configured transport).
+  audit-plugin [--json] [--baseline FILE] DIR
+                           Security-scan a third-party plugin/marketplace dir BEFORE
+                           installing: injection in agent text + MCP tool descriptions,
+                           unpinned servers, fetch-and-execute hooks, settings rewrites.
   audit-log [--since D] [-n N] [--json]
                            The security trail: every blocked footgun (secret write,
                            dangerous command, scan hit) as a queryable JSONL record.
@@ -123,6 +127,7 @@ case "$cmd" in
   gate)     run gate "$@" ;;
   notify)   run notify "$@" ;;
   listen)   command -v node >/dev/null || { echo "compass listen: node required" >&2; exit 1; }; exec node "$SCRIPTS/compass-listen.mjs" "$@" ;;
+  audit-plugin) run audit-plugin "$@" ;;
   audit-log) run audit-log "$@" ;;
   doctor)   exec "$SCRIPTS/doctor.sh" "$@" ;;
   release)  exec "$SCRIPTS/release.sh" "$@" ;;
