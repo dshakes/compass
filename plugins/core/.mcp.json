@@ -2,15 +2,15 @@
   "mcpServers": {
     "context7": {
       "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"]
+      "args": ["-y", "@upstash/context7-mcp@3.1.0"]
     },
     "fetch": {
       "command": "uvx",
-      "args": ["mcp-server-fetch"]
+      "args": ["--from", "mcp-server-fetch==2025.4.7", "mcp-server-fetch"]
     },
     "git": {
       "command": "uvx",
-      "args": ["mcp-server-git"]
+      "args": ["--from", "mcp-server-git==2026.1.14", "mcp-server-git"]
     }
   }
 }

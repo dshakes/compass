@@ -16,7 +16,7 @@ fail=0
 no() { printf '  \033[31m✗\033[0m %s\n' "$1"; fail=1; }
 ok() { printf '  \033[32mok\033[0m %s\n' "$1"; }
 
-command -v jq >/dev/null 2>&1 || { echo "check-vendor: jq required"; exit 0; }
+command -v jq >/dev/null 2>&1 || { echo "check-vendor: jq required" >&2; exit 1; }
 [ -f "$EXT" ] || { no "missing gemini-extension.json"; exit 1; }
 jq empty "$EXT" 2>/dev/null && ok "gemini-extension.json is valid JSON" || no "gemini-extension.json invalid JSON"
 
@@ -45,6 +45,27 @@ IFS=','; for k in $want; do
   b="$(jq -Sc --arg k "$k" '.servers[$k]|{command,args}' "$SRV" 2>/dev/null)"
   [ "$a" = "$b" ] && ok "mcp '$k' command+args match servers.json" || no "mcp '$k' drift: ext=$a src=$b"
 done; unset IFS
+
+# ── Plugin .mcp.json must carry the same pinned versions as servers.json ──
+# (supply-chain control: the plugin path is a second delivery channel for MCP servers;
+#  if it ships unpinned args the pin in servers.json is bypassed for plugin installs)
+MCP_PLUGIN="$ROOT/plugins/core/.mcp.json"
+if [ -f "$MCP_PLUGIN" ]; then
+  jq empty "$MCP_PLUGIN" 2>/dev/null && ok "plugin .mcp.json is valid JSON" || no "plugin .mcp.json invalid JSON"
+  pnames="$(jq -r '.mcpServers | keys[]' "$MCP_PLUGIN" 2>/dev/null)"
+  for pname in $pnames; do
+    pin="$(jq -r --arg n "$pname" '.servers[$n].pin // empty' "$SRV" 2>/dev/null)"
+    if [ -z "$pin" ]; then
+      ok "plugin '$pname': no pin required (local/non-pkgrunner in servers.json)"
+      continue
+    fi
+    pargs="$(jq -r --arg n "$pname" '.mcpServers[$n].args // [] | join(" ")' "$MCP_PLUGIN" 2>/dev/null)"
+    case "$pargs" in
+      *"$pin"*) ok "plugin '$pname' args carry pin $pin" ;;
+      *) no "plugin '$pname' args missing pin '$pin' — update plugins/core/.mcp.json to match servers.json" ;;
+    esac
+  done
+else no "missing plugins/core/.mcp.json"; fi
 
 # ── Codex plugin + marketplace (mirrors the Claude plugin; same single source) ──
 CXP="$ROOT/plugins/core/.codex-plugin/plugin.json"
