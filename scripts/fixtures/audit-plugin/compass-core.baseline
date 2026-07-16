@@ -9,3 +9,10 @@
 # scanned plugin directory — a plugin that controls its own baseline can suppress
 # any finding against itself.
 skills/harden/SKILL.md	permission-escalation
+# policy.sh is the compass guardrail library — it legitimately contains comment
+# text referencing curl|sh patterns and ~/.claude/settings paths as documentation.
+# Scanning lib/ is now enabled (no ! -path "*/lib/*" exclusion); these two rules
+# fire on benign comment lines in the library code, not on executable payloads.
+hooks/lib/policy.sh	hook-remote-exec
+hooks/lib/policy.sh	settings-manipulation
+hooks/lib/policy.sh	hook-config-write

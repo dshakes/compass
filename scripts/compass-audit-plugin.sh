@@ -289,7 +289,7 @@ EOF
 $(grep_n '(>>?|tee)[[:space:]]*(~|\$HOME|\$\{HOME\})/\.(claude|codex|gemini)/' "$f")
 EOF
   done <<EOF
-$(find "$TARGET" -type f \( -name "*.sh" -o -name "*.bash" \) ! -path "*/lib/*" 2>/dev/null)
+$(find "$TARGET" -type f \( -name "*.sh" -o -name "*.bash" \) 2>/dev/null)
 EOF
 }
 
@@ -311,7 +311,7 @@ scan_settings_manipulation() {
 $(grep_n '(~|\$HOME|\$\{HOME\})/\.claude/(settings|CLAUDE)' "$f")
 EOF
   done <<EOF
-$(find "$TARGET" -type f \( -name "*.sh" -o -name "*.bash" -o -name "*.py" -o -name "*.js" \) ! -path "*/lib/*" 2>/dev/null)
+$(find "$TARGET" -type f \( -name "*.sh" -o -name "*.bash" -o -name "*.py" -o -name "*.js" \) 2>/dev/null)
 EOF
 
   # d2: hooks.json with SessionStart (runs at every session open — verify intent)
@@ -355,7 +355,7 @@ EOF
 $(grep_n '\beval\b[^#]*\$\([^)#]*(curl|wget|fetch)\b' "$f")
 EOF
   done <<EOF
-$(find "$TARGET" -type f \( -name "*.sh" -o -name "*.bash" -o -name "*.py" -o -name "*.js" -o -name "*.md" \) ! -path "*/lib/*" 2>/dev/null)
+$(find "$TARGET" -type f \( -name "*.sh" -o -name "*.bash" -o -name "*.py" -o -name "*.js" -o -name "*.md" \) 2>/dev/null)
 EOF
 }
 

@@ -147,6 +147,15 @@ else
   ok "plugins/core not found — skipping smoke"
 fi
 
+# ── 4. lib/ directory is no longer excluded from checks c/d/e ───────────────
+echo
+echo "lib/ payload — hooks/lib/evil.sh in malicious-plugin must be caught:"
+
+run_scanner "$MAL"
+printf '%s\n' "$out" | grep -qi 'lib/evil\.sh' \
+  && ok "lib/ scan: payload in hooks/lib/evil.sh detected (lib/ no longer excluded)" \
+  || no "lib/ scan: hooks/lib/evil.sh not flagged — lib/ exclusion still active"
+
 echo
 if [ "$fail" -eq 0 ]; then
   printf '\033[32m✓ all %d checks passed\033[0m\n' "$pass"
