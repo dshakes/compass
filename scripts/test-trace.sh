@@ -106,6 +106,22 @@ if ( cd "$G" && PATH="$STUB:$PATH" COSIGN_PUB="$STUB/cosign" STUB_VERIFY_RC=1 ba
 if ( cd "$G" && PATH="$STUB:$PATH" STUB_SIGN_RC=1 bash "$TRACE" attach "$C2" --sign >/dev/null 2>&1 ); then
   ok "signing failure degrades gracefully (attach still 0)"; else no "sign failure should not fail attach"; fi
 
+echo "role/run provenance (SDLC_TRACE extended fields):"
+trace_role() { ( cd "$G" && COMPASS_TRACE_TOOL=test-tool COMPASS_TRACE_TOOL_VERSION=1.0.0 \
+  COMPASS_TRACE_MODEL='test/model-1' COMPASS_TRACE_SESSION=sess-1 \
+  COMPASS_TRACE_ROLE='builder' COMPASS_TRACE_RUN='run-20260716-120000' \
+  bash "$TRACE" "$@" ); }
+RR="$(trace_role emit "$C2" 2>/dev/null)"
+has "role field in metadata"        "$RR" '"role":"builder"'
+has "run_id field in metadata"      "$RR" '"run_id":"run-20260716-120000"'
+has "existing fields still present" "$RR" '"session_id":"sess-1"'
+trace_role attach "$C2" >/dev/null 2>&1
+if trace_role verify "$C2" >/dev/null 2>&1; then ok "record with role/run verifies ok"; else no "record with role/run should verify"; fi
+# Emit without role/run — check they are absent (no leakage from previous run's env)
+RR_PLAIN="$(trace emit "$C2" 2>/dev/null)"
+case "$RR_PLAIN" in *'"role"'*) no "role absent when env unset (leakage)" ;; *) ok "role absent when COMPASS_TRACE_ROLE unset"; esac
+case "$RR_PLAIN" in *'"run_id"'*) no "run_id absent when env unset (leakage)" ;; *) ok "run_id absent when COMPASS_TRACE_RUN unset"; esac
+
 echo "CLI wiring:"
 if grep -q 'trace) *run trace' "$ROOT/bin/compass"; then ok "compass trace wired into the dispatcher"; else no "trace not wired into bin/compass"; fi
 HASH_HELP="$(bash "$ROOT/bin/compass" help 2>/dev/null || true)"
