@@ -23,8 +23,15 @@ export COMPASS_HOME="$HOME_TMP"
 SID="sess-eval"
 mkdir -p "$COMPASS_HOME/sessions"
 
-# input <session_id> — a minimal PreToolUse payload.
-input() { printf '{"session_id":"%s","tool_name":"Bash","tool_input":{"command":"echo hi"}}' "${1:-$SID}"; }
+# input <session_id> [transcript_path] — a minimal PreToolUse payload.
+input() {
+  local sid="${1:-$SID}" tpath="${2:-}"
+  if [ -n "$tpath" ]; then
+    printf '{"session_id":"%s","tool_name":"Bash","tool_input":{"command":"echo hi"},"transcript_path":"%s"}' "$sid" "$tpath"
+  else
+    printf '{"session_id":"%s","tool_name":"Bash","tool_input":{"command":"echo hi"}}' "$sid"
+  fi
+}
 # set_spent <usd> / clear_spent — write or remove the statusline breadcrumb (dollars).
 set_spent() { printf '%s' "$1" > "$COMPASS_HOME/sessions/$SID.cost"; }
 clear_spent() { rm -f "$COMPASS_HOME/sessions/$SID.cost"; }
@@ -111,6 +118,51 @@ echo "session + daily are independent (session under, day over → blocks):"
 export COMPASS_MAX_USD=100 COMPASS_MAX_USD_DAY=15
 : > "$LEDGER"; day_row 14.00; set_spent 2.00; block "session \$2<\$100 cap but day \$16>\$15 cap"
 unset COMPASS_MAX_USD COMPASS_MAX_USD_DAY; rm -f "$LEDGER"
+
+# ── Transcript JSONL fallback (headless / no statusline breadcrumb) ───────────────────────────
+# Fixture: 1 assistant message, claude-sonnet-5, 1000 input + 500 output tokens.
+# Cost: 1000×$0.000003 + 500×$0.000015 = $0.003 + $0.0075 = $0.010500
+TFILE="$HOME_TMP/transcript-fixture.jsonl"
+cat > "$TFILE" <<'EOF'
+{"type":"user","message":{"role":"user","content":"hello"}}
+{"type":"assistant","message":{"model":"claude-sonnet-5-20251201","role":"assistant","usage":{"input_tokens":1000,"output_tokens":500,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
+EOF
+
+allow_t() {
+  local desc="$1" out rc
+  out="$(input "$SID" "$TFILE" | bash "$HOOK" 2>/dev/null)"; rc=$?
+  if [ "$rc" = 0 ] && ! printf '%s' "$out" | grep -q '"permissionDecision":"deny"'; then
+    ok "ALLOW  $desc"; else no "should ALLOW ($rc): $desc"; fi
+}
+block_t() {
+  local desc="$1" out rc
+  out="$(input "$SID" "$TFILE" | bash "$HOOK" 2>/dev/null)"; rc=$?
+  if [ "$rc" = 2 ] && printf '%s' "$out" | grep -q '"permissionDecision":"deny"'; then
+    ok "BLOCK  $desc"; else no "should BLOCK ($rc): $desc"; fi
+}
+
+echo 'transcript fallback: no breadcrumb, cost from JSONL ($0.0105 sonnet):'
+unset COMPASS_MAX_USD; clear_spent
+export COMPASS_MAX_USD=0.01;  block_t "transcript \$0.0105 >= \$0.01 cap → block"
+export COMPASS_MAX_USD=0.05;  allow_t "transcript \$0.0105 < \$0.05 cap → allow"
+unset COMPASS_MAX_USD
+
+echo "transcript fallback: missing transcript file → fail open:"
+export COMPASS_MAX_USD=0.005; clear_spent
+out_no_tfile="$(input "$SID" "$HOME_TMP/no-such-file.jsonl" | bash "$HOOK" 2>/dev/null)"; rc_no=$?
+{ [ "$rc_no" = 0 ] && ! printf '%s' "$out_no_tfile" | grep -q '"permissionDecision":"deny"'; } \
+  && ok "ALLOW  no transcript file → fail open ($rc_no)" \
+  || no "should ALLOW: missing transcript file ($rc_no)"
+unset COMPASS_MAX_USD
+
+echo "transcript fallback: breadcrumb + transcript → prefer larger:"
+export COMPASS_MAX_USD=0.015
+# breadcrumb=$0.02 > transcript=$0.0105 → max=$0.02 >= $0.015 → block
+set_spent 0.02;  block_t "breadcrumb \$0.02 > transcript \$0.0105; max \$0.02 >= \$0.015 → block"
+# breadcrumb=$0.005 < transcript=$0.0105 → max=$0.0105 >= $0.015? No: $0.0105 < $0.015 → allow
+export COMPASS_MAX_USD=0.008
+set_spent 0.005; block_t "transcript \$0.0105 > breadcrumb \$0.005; max \$0.0105 >= \$0.008 → block"
+unset COMPASS_MAX_USD; clear_spent
 
 echo
 printf 'budget-gate tests: %d passed, %d failed\n' "$pass" "$fail"
