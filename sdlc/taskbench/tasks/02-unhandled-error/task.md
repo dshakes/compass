@@ -1,0 +1,1 @@
+Fix backup.sh: the backup() function always returns exit code 0 even when the copy fails, because the trailing echo masks cp's non-zero exit. Fix it so backup() returns a non-zero exit code when cp fails. Tests in test_backup.sh verify the corrected behaviour.

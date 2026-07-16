@@ -1,0 +1,1 @@
+Refactor report.py: extract a pure calculate_stats(data) function that returns (total, average) as a tuple without printing anything. Keep generate_report(data) working by having it call calculate_stats internally. Tests in test_report.py import and verify calculate_stats in isolation.
