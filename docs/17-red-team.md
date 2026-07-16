@@ -154,7 +154,7 @@ CI — so you can measure your own setup, not take a vendor's word:
 
 | Dataset | Cases | What it proves | Run |
 |---|---|---|---|
-| `scripts/redteam-corpus.tsv` | 56 file + 4 programmatic = 60 scored | injection / override / malware / insecure-code precision & recall | `compass redteam --eval` |
+| `scripts/redteam-corpus.tsv` | 69 file + 16 programmatic = 85 scored | injection / override / malware / insecure-code precision & recall | `compass redteam --eval` |
 | `scripts/guardrail-corpus.tsv` | 61 | catastrophic-command + secret-write precision & recall | `compass bench --guardrail` |
 
 **Apply them in your repo / CI** (deterministic, offline — no tokens, no model calls):

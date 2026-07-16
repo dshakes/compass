@@ -46,6 +46,35 @@ tighten `protect-paths.sh`, or extend `inject-context.sh` to surface project-spe
 context (open PRs, failing CI). Keep them fast and never let them exit non-zero
 except an intentional PreToolUse block.
 
+## Opt-in hooks
+
+Five hooks ship in `claude/hooks/` but are **not wired in `claude/settings.json`** — they
+are off until you add them. They are safe to enable one at a time; each exits 0 silently
+if its prerequisites are missing.
+
+| Hook | Wire under | What it does |
+|---|---|---|
+| `checkpoint-wip.sh` | `hooks.Stop` | git-stash-creates uncommitted work after each turn so a crash loses nothing; never touches branch history |
+| `session-memory.sh` | `hooks.SessionStart` | injects relevant cross-repo learnings from the compass-memory store; requires `COMPASS_MEMORY_TRUST` |
+| `record-learning.sh` | `hooks.Stop` / `hooks.SubagentStop` | persists lines the agent marks `LEARNED:` / `MEMORY:` to the store; requires `COMPASS_MEMORY_TRUST` |
+| `route-intent.sh` | `hooks.UserPromptSubmit` | detects load-bearing intents (migration, new dependency, trust boundary) and injects an advisory nudge |
+| `require-tests.sh` | `hooks.PostToolUse` | advisory nudge when a source file is edited but no test file is touched; never blocks |
+
+**Wiring pattern** (add to `claude/settings.json`, under the `hooks` key):
+
+```json
+"Stop": [
+  {
+    "matcher": "*",
+    "hooks": [{"type": "command", "command": "$HOME/.claude/hooks/checkpoint-wip.sh", "timeout": 10}]
+  }
+]
+```
+
+Use the same shape for other events (`SessionStart`, `UserPromptSubmit`, `PostToolUse`). Wire
+`session-memory.sh` and `record-learning.sh` together if you enable memory; they read and write
+the same store. Run `make doctor` after editing `settings.json`.
+
 ## Trim for a non-AI-infra stack
 The global `CLAUDE.md` has a marked "STACK SECTION" — delete from that marker down
 if Go/Rust/K8s aren't your world. The principles above it stand alone.
