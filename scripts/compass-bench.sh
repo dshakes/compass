@@ -22,10 +22,21 @@ CORPUS="$ROOT/scripts/guardrail-corpus.tsv"
 PREC_FLOOR="${COMPASS_BENCH_PRECISION_FLOOR:-100}"
 RECALL_FLOOR="${COMPASS_BENCH_RECALL_FLOOR:-95}"
 
+# Anthropic list prices ($/Mtok, retrieved 2026-07) — override via env to update rates
+HAIKU_IN="${COMPASS_BENCH_HAIKU_IN:-0.80}"
+HAIKU_OUT="${COMPASS_BENCH_HAIKU_OUT:-4.00}"
+SONNET_IN="${COMPASS_BENCH_SONNET_IN:-3.00}"
+SONNET_OUT="${COMPASS_BENCH_SONNET_OUT:-15.00}"
+OPUS_IN="${COMPASS_BENCH_OPUS_IN:-15.00}"
+OPUS_OUT="${COMPASS_BENCH_OPUS_OUT:-75.00}"
+# Fixed token profile per routing decision (assumption — see docs/18-benchmark.md §Cost routing)
+BENCH_TOK_IN="${COMPASS_BENCH_TOK_IN:-2000}"
+BENCH_TOK_OUT="${COMPASS_BENCH_TOK_OUT:-500}"
+
 WHAT=all; JSON=0; SDLC_DIR=""
 for a in "$@"; do case "$a" in
-  --guardrail) WHAT=guardrail ;; --router) WHAT=router ;; --json) JSON=1 ;;
-  --sdlc) WHAT=sdlc ;; -h|--help) echo "usage: compass-bench.sh [--guardrail|--router|--sdlc <dir>] [--json]"; exit 0 ;;
+  --guardrail) WHAT=guardrail ;; --router) WHAT=router ;; --cost) WHAT=cost ;; --json) JSON=1 ;;
+  --sdlc) WHAT=sdlc ;; -h|--help) echo "usage: compass-bench.sh [--guardrail|--router|--cost|--sdlc <dir>] [--json]"; exit 0 ;;
   *) [ "$WHAT" = sdlc ] && SDLC_DIR="$a" || { echo "unknown arg: $a" >&2; exit 2; } ;;
 esac; done
 
@@ -55,6 +66,36 @@ bench_router() {
   : "${R_ACC:=0}"
 }
 
+# ── cost routing: routed vs all-opus cost on the evalset ─────────────────────
+# Calls the router script per case (no model calls; uses router.json heuristic).
+# See docs/18-benchmark.md §"Cost routing benchmark" for full methodology.
+COST_EVALSET="$ROOT/scripts/route-evalset.tsv"
+C_ROUTED="0"; C_OPUS_TOT="0"; C_NC=0
+bench_cost() {
+  local expected task tier _tmp
+  [ -f "$COST_EVALSET" ] || { printf 'cost bench: evalset not found: %s\n' "$COST_EVALSET" >&2; return 1; }
+  while IFS=$'\t' read -r expected task; do
+    case "$expected" in '#'*|'') continue ;; esac
+    [ -n "${task:-}" ] || continue
+    tier="$(bash "$ROOT/scripts/compass-route.sh" "$task" 2>/dev/null)" || tier="sonnet"
+    C_NC=$((C_NC + 1))
+    _tmp="$(awk \
+      -v tier="$tier" -v r="$C_ROUTED" -v o="$C_OPUS_TOT" \
+      -v hi="$HAIKU_IN"  -v ho="$HAIKU_OUT" \
+      -v si="$SONNET_IN" -v so="$SONNET_OUT" \
+      -v oi="$OPUS_IN"   -v oo="$OPUS_OUT" \
+      -v ti="$BENCH_TOK_IN" -v to="$BENCH_TOK_OUT" \
+      'BEGIN{
+        if (tier == "haiku")       c = hi*ti/1e6 + ho*to/1e6
+        else if (tier == "sonnet") c = si*ti/1e6 + so*to/1e6
+        else                       c = oi*ti/1e6 + oo*to/1e6
+        printf "%.10f %.10f", r + c, o + oi*ti/1e6 + oo*to/1e6
+      }')"
+    C_ROUTED="${_tmp%% *}"
+    C_OPUS_TOT="${_tmp##* }"
+  done < "$COST_EVALSET"
+}
+
 pct() { awk "BEGIN{ d=$2; if(d==0){print \"100.0\"} else printf \"%.1f\", 100*$1/d }"; }
 
 if [ "$WHAT" = sdlc ]; then
@@ -74,8 +115,9 @@ if [ "$WHAT" = sdlc ]; then
   echo "SDLC fix-rate: $pass/$tot"; exit 0
 fi
 
-[ "$WHAT" = router ] || bench_guardrail
+[ "$WHAT" = router ] || [ "$WHAT" = cost ] || bench_guardrail
 [ "$WHAT" = guardrail ] || bench_router
+[ "$WHAT" = guardrail ] || [ "$WHAT" = router ] || bench_cost
 
 g_total=$((G_TP+G_FP+G_TN+G_FN))
 g_prec="$(pct "$G_TP" "$((G_TP+G_FP))")"
@@ -91,18 +133,30 @@ fi
 echo
 echo "  🧭 compass · benchmark scorecard  (deterministic — reproducible, CI-gated)"
 echo "  ──────────────────────────────────────────────────────────────────────"
-if [ "$WHAT" != router ]; then
+if [ "$WHAT" != router ] && [ "$WHAT" != cost ]; then
   printf "  guardrail   %d cases   precision %s%%   recall %s%%   accuracy %s%%\n" "$g_total" "$g_prec" "$g_recall" "$g_acc"
   printf "              TP %d · FP %d · TN %d · FN %d   (floors: precision %s%%, recall %s%%)\n" "$G_TP" "$G_FP" "$G_TN" "$G_FN" "$PREC_FLOOR" "$RECALL_FLOOR"
 fi
-[ "$WHAT" != guardrail ] && printf "  router      accuracy %s%%   (deterministic tier-picker vs labeled set)\n" "$R_ACC"
+[ "$WHAT" != guardrail ] && [ "$WHAT" != cost ] && printf "  router      accuracy %s%%   (deterministic tier-picker vs labeled set)\n" "$R_ACC"
+if [ "$WHAT" = all ] || [ "$WHAT" = cost ]; then
+  awk \
+    -v r="$C_ROUTED" -v o="$C_OPUS_TOT" -v n="$C_NC" \
+    -v racc="$R_ACC" \
+    -v ti="$BENCH_TOK_IN" -v to="$BENCH_TOK_OUT" \
+    'BEGIN{
+      pct = (o > 0 ? 100*(o - r)/o : 0)
+      printf "  cost routing  %d-case evalset   routed $%.4f vs all-opus $%.4f → %.1f%% cheaper\n", n, r, o, pct
+      printf "                at %.1f%% routing accuracy\n", racc
+      printf "                (assumption: %d tok in / %d tok out per task; Anthropic list prices 2026-07)\n", ti, to
+    }'
+fi
 echo
 echo "  model-driven SDLC fix-rate: compass bench --sdlc <fixtures>  (needs a CLI + tokens; not CI-gated)"
 echo
 
 # ── gate ─────────────────────────────────────────────────────────────────────────
 rc=0
-if [ "$WHAT" != router ]; then
+if [ "$WHAT" != router ] && [ "$WHAT" != cost ]; then
   awk "BEGIN{exit !($g_prec >= $PREC_FLOOR)}"   || { echo "FAIL: guardrail precision $g_prec% < $PREC_FLOOR% (a safe command was blocked)" >&2; rc=1; }
   awk "BEGIN{exit !($g_recall >= $RECALL_FLOOR)}" || { echo "FAIL: guardrail recall $g_recall% < $RECALL_FLOOR% (a footgun slipped through)" >&2; rc=1; }
 fi

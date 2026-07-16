@@ -141,6 +141,74 @@ transform not yet in the rotate is exactly the kind of finding to contribute.
 
 ---
 
+## Cost routing benchmark
+
+`compass bench` (the `all` mode) and `compass bench --cost` print a cost
+comparison: what the router's tier assignments cost vs routing every task to Opus.
+This section documents the formula, pricing, assumptions, and limits so the number
+is reproducible and critiqueable.
+
+### Formula
+
+For each case in `scripts/route-evalset.tsv`:
+
+1. Run the deterministic router (`scripts/compass-route.sh <task>`) to get the
+   assigned tier (haiku / sonnet / opus).
+2. Compute task cost: `price_in × tok_in/1e6 + price_out × tok_out/1e6`
+3. Compute all-Opus baseline cost: same formula, always Opus prices.
+4. Sum across all cases → `routed_total` and `opus_total`.
+5. Savings: `100 × (opus_total − routed_total) / opus_total`
+
+### Pricing table (Anthropic list prices, retrieved 2026-07)
+
+| Tier | Model | Input $/Mtok | Output $/Mtok |
+|---|---|---|---|
+| haiku | claude-haiku-4-5 | $0.80 | $4.00 |
+| sonnet | claude-sonnet-4-6 | $3.00 | $15.00 |
+| opus | claude-opus-4-8 | $15.00 | $75.00 |
+
+Prices are env-overridable (`COMPASS_BENCH_HAIKU_IN`, `COMPASS_BENCH_SONNET_IN`,
+etc.) so the bench stays accurate as rates change. Run with updated values and
+re-report if Anthropic adjusts pricing.
+
+### Token profile assumption
+
+A fixed profile of **2,000 input tokens / 500 output tokens** per task is
+assumed. This represents a short task description arriving at the router, not a
+full SDLC turn with context. It is stated and overridable
+(`COMPASS_BENCH_TOK_IN`, `COMPASS_BENCH_TOK_OUT`), not hidden.
+
+**Sensitivity:** the *relative* savings % is stable under proportional changes to
+the token profile (doubling both still gives ~62%). It shifts if the in/out ratio
+changes — a context-heavy task with 10k input tokens would show higher savings
+because cheap models have a lower input penalty. Use `--tok-in / --tok-out` env
+overrides to test your own profile.
+
+### How to reproduce
+
+```bash
+compass bench         # full scorecard including cost routing
+compass bench --cost  # cost routing only (also runs router accuracy)
+```
+
+No tokens are consumed. No network calls. Runs in seconds.
+
+To update prices:
+```bash
+COMPASS_BENCH_OPUS_IN=18.00 COMPASS_BENCH_OPUS_OUT=90.00 compass bench --cost
+```
+
+### Honest limits
+
+| Limit | Detail |
+|---|---|
+| Evalset is self-authored | The 32 cases were written by the compass maintainers to exercise the routing rules; they are not drawn from a held-out production sample. The router was tuned partly against them, so the accuracy (96.9%) is partly a resubstitution score — the 10 labeled "holdout" cases in `router/evalset.tsv` are a fairer generalization check. |
+| Quality proxy is routing accuracy | The cost claim compares tier assignments, not task success. A cheaper tier that fails the task is not a saving. The bench measures "did the router pick the right tier?" — not "did the model complete the task well?" |
+| Token profile is an assumption | Real SDLC turns carry much more context. The 2k/500 profile is a conservative routing-decision estimate. Actual savings on real traffic depend on your workload's token distribution. |
+| Prices are point-in-time | Anthropic pricing changes. The date is stated; re-run with updated env vars to get current numbers. |
+
+---
+
 ## Methodology — what these numbers mean (and don't)
 
 **Pattern-based detection is best-effort, not a security boundary.** The decode/
