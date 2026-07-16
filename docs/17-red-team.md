@@ -50,15 +50,16 @@ and Simon Willison's **"lethal trifecta"** (private data + untrusted content + a
 as pure functions that take a string and echo a finding per line (empty = clean) — no
 side effects, no network — so the *same* code runs on the live hooks AND in the CI eval:
 
-- `injection_findings` — instruction-override, persona-jailbreak, disable-safety,
-  permission-escalation, data-exfiltration, exfil-channel (DNS / `curl --data` of
-  sensitive files), covert-instruction, authority-spoof (forged "the developer
-  authorized you…"), tool-poisoning (directives hidden in MCP tool descriptions),
-  fake-role-tags, markdown-image exfil, hidden HTML comments, zero-width /
-  bidirectional unicode, and ASCII smuggling (invisible Unicode Tags, U+E0000–E007F).
-  Every detector runs against a **decoded + normalized** copy of the input, so the
-  same patterns catch payloads hidden behind base64, hex (`\xHH`), percent (`%HH`),
-  HTML numeric entities (`&#NN;`), leetspeak, and Cyrillic/Greek homoglyphs.
+- `injection_findings` — instruction-override (the "ignore all previous instructions" family),
+  role-hijack (persona-jailbreak, disable-safety, god/developer/maintenance-mode framing),
+  permission-escalation, data-exfiltration, exfil-channel (DNS / `curl --data` of sensitive
+  files), covert-instruction, authority-spoof (forged "the developer authorized you…"),
+  tool-poisoning (directives hidden in MCP tool descriptions), fake-role-tags, markdown-image
+  exfil, hidden HTML comments, zero-width / bidirectional unicode, ASCII smuggling (invisible
+  Unicode Tags, U+E0000–E007F), system-prompt-leak, and prompt-leak (requests to reveal the
+  system prompt or initial instructions). Every detector runs against a **decoded + normalized**
+  copy of the input, so the same patterns catch payloads hidden behind base64, hex (`\xHH`),
+  percent (`%HH`), HTML numeric entities (`&#NN;`), leetspeak, and Cyrillic/Greek homoglyphs.
 - `settings_override_reason` — project config that *loosens* safety (project config may
   always *tighten* it).
 - `malware_intent_findings` — high-signal offensive constructs (reverse shell, ransomware,
@@ -82,9 +83,13 @@ data) and **log** to the audit trail (`compass audit-log`). They never silently 
 detectors and gates in CI via `compass doctor`:
 
 ```
-redteam corpus: 85 cases — TP=49 FP=0 TN=36 FN=0
+redteam corpus: 99 cases — TP=... FP=0 TN=... FN=0
 precision=100% (floor 100%)  recall=100% (floor 90%)
 ```
+
+(99 total: 83 file-based rows + 16 programmatic assertions covering invisible unicode, encoding
+evasions, config-override, malware-intent, and insecure-code families. Run
+`compass redteam --eval` to reproduce the live numbers.)
 
 ---
 
@@ -133,6 +138,7 @@ compass redteam --eval       # just the corpus eval (the CI gate)
 compass redteam --scan [DIR] # scan a repo's context (CLAUDE.md/AGENTS.md/READMEs · MCP · settings)
 compass redteam --attack     # adversarial fuzz: obfuscate the corpus (base64 · zero-width ·
                              #   leetspeak · homoglyph) and report detector robustness %
+compass redteam --external   # score detectors against an external, third-party corpus (see below)
 compass redteam --json       # machine-readable summary
 
 compass scan --injection            # add a prompt-injection / insecure-code / malware pass
@@ -154,8 +160,9 @@ CI — so you can measure your own setup, not take a vendor's word:
 
 | Dataset | Cases | What it proves | Run |
 |---|---|---|---|
-| `scripts/redteam-corpus.tsv` | 56 file + 4 programmatic = 60 scored | injection / override / malware / insecure-code precision & recall | `compass redteam --eval` |
+| `scripts/redteam-corpus.tsv` | 83 file + 16 programmatic = 99 scored | injection / override / malware / insecure-code precision & recall | `compass redteam --eval` |
 | `scripts/guardrail-corpus.tsv` | 61 | catastrophic-command + secret-write precision & recall | `compass bench --guardrail` |
+| deepset/prompt-injections (external) | 546 train rows (203 inject, 343 safe) | external, unbiased precision & recall; how compass fares against attacks it did not author | `compass redteam --external` |
 
 **Apply them in your repo / CI** (deterministic, offline — no tokens, no model calls):
 
@@ -177,6 +184,30 @@ COMPASS_REDTEAM_CORPUS=tests/my-redteam.tsv compass redteam --eval
 [garak](https://github.com/NVIDIA/garak) or [promptfoo](https://www.promptfoo.dev/) to
 attack a *running* agent endpoint with adaptive variants — the static eval here is the
 fast, always-on floor; those are the periodic deep sweep.
+
+### External corpus — independent measurement
+
+`compass redteam --external` scores the detectors against **deepset/prompt-injections**
+(HuggingFace, Apache 2.0) — 546 train rows from an external dataset that compass's authors
+did not write. This converts "100% on our own corpus" into an independent number.
+
+```bash
+compass redteam --external        # downloads once (~1 MB parquet), caches to ~/.compass/cache/
+compass redteam --external --json # machine-readable
+```
+
+**Honest numbers — run to reproduce:** external precision is around **90%**, external recall
+around **8%**. The high miss rate on this dataset is expected and not a defect:
+
+- The deepset corpus targets general chatbots (role-play, political opinion shifts, fictional
+  personas). Compass's coding-agent patterns cover the families that matter for a coding agent:
+  instruction-override, authority-spoof, tool-poisoning, data-exfiltration, config-override.
+- The `compass redteam --external` output prints the top 10 missed examples so a human can
+  judge their relevance. Most misses are general-LLM attacks outside a coding agent's scope.
+- The internal corpus (precision 100% / recall 100%) covers the coding-agent-relevant families
+  exhaustively; the external number is a second-opinion sanity check, not the primary gate.
+
+The command never runs in CI — it requires a network download and is report-only.
 
 ---
 

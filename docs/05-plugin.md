@@ -54,7 +54,7 @@ version + MCP servers are CI-checked against `plugins/core` and `mcp/servers.jso
 manifest can never silently drift from the real config.
 
 ## What the plugin delivers
-15 subagents · 12 commands · 5 hooks (guardrail, red-team, budget-ceiling, format-on-edit, notify) ·
+15 subagents · 12 commands · 8 hooks (guardrail · inject-context · red-team ×3 · budget-gate · format-on-edit · notify) ·
 `bootstrap-agent-config` skill · "Concise" output style ·
 3 MCP servers. Validated via `claude plugin details core@compass`
 (≈1,165 always-on tokens; agents/commands cost only when invoked).

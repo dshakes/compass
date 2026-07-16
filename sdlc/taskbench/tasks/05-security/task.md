@@ -1,0 +1,1 @@
+Fix the shell injection in run_cmd.py: check_user() concatenates user-controlled input directly into a shell command string (shell=True), allowing an attacker to inject arbitrary commands. Replace the string command with a list-based subprocess call (shell=False) so that untrusted usernames cannot inject shell commands. Tests in test_security.py verify the fix.

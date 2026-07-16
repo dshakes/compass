@@ -73,13 +73,15 @@ uuid_for() { local s="$1"; printf '%s-%s-5%s-8%s-%s' "${s:0:8}" "${s:8:4}" "${s:
 
 # Build the Agent Trace record for a commit, on stdout (one line, deterministic).
 emit_record() {
-  local sha="$1" tool toolver model ctype session conv_url repo ts contrib urlpart
+  local sha="$1" tool toolver model ctype session conv_url repo ts contrib urlpart role run_id
   tool="${COMPASS_TRACE_TOOL:-${CLAUDE_SESSION_ID:+claude-code}}"; tool="${tool:-unknown}"
   toolver="${COMPASS_TRACE_TOOL_VERSION:-unknown}"
   model="${COMPASS_TRACE_MODEL:-}"
   ctype="${COMPASS_TRACE_CONTRIBUTOR:-ai}"
   session="${COMPASS_TRACE_SESSION:-${CLAUDE_SESSION_ID:-}}"
   conv_url="${COMPASS_TRACE_CONVERSATION_URL:-}"
+  role="${COMPASS_TRACE_ROLE:-}"
+  run_id="${COMPASS_TRACE_RUN:-}"
   repo="$(git config --get remote.origin.url 2>/dev/null || true)"
   [ -n "$repo" ] || repo="$(basename "$(git rev-parse --show-toplevel)")"
   ts="$(TZ=UTC0 git show -s --format=%cd --date=format-local:%Y-%m-%dT%H:%M:%SZ "$sha")"
@@ -105,6 +107,8 @@ emit_record() {
   local meta
   meta="{\"generator\":\"compass-trace\",\"repo\":\"$(json_escape "$repo")\""
   [ -n "$session" ] && meta="$meta,\"session_id\":\"$(json_escape "$session")\""
+  [ -n "$role" ]    && meta="$meta,\"role\":\"$(json_escape "$role")\""
+  [ -n "$run_id" ]  && meta="$meta,\"run_id\":\"$(json_escape "$run_id")\""
   meta="$meta}"
 
   printf '{"version":"%s","id":"%s","timestamp":"%s","vcs":{"type":"git","revision":"%s"},"tool":{"name":"%s","version":"%s"},"files":[%s],"metadata":%s}\n' \

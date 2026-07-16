@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "formatter": {
+      "command": "npx",
+      "args": ["@acme/format-tool@1.2.3"],
+      "pin": "1.2.3",
+      "autoRegister": true,
+      "description": "Format code files in the current project."
+    }
+  }
+}

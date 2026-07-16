@@ -31,7 +31,7 @@ Symlink install means `git -C ~/compass pull` updates every repo at once.
 |---|---|---|---|
 | **Operating manual** (`CLAUDE.md`/`AGENTS.md`) | the standing instructions | every session, automatically | never — it's just on |
 | **Hooks** | shell scripts the harness runs deterministically | on tool calls / session events | never — automatic (e.g. blocks `rm -rf /`, auto-formats) |
-| **Subagents** (9) | specialists in their own context, on the right model | when the driver delegates | by asking, or auto-delegated |
+| **Subagents** (15) | specialists in their own context, on the right model | when the driver delegates | by asking, or auto-delegated |
 | **Commands** (`/ship` `/review` `/tdd` `/spec` …) | saved prompts / procedures | when you type them | `/<name>` |
 | **Skills** | procedures with steps, auto-loaded by relevance | when relevant, or by name | `/<skill>` or automatically |
 | **MCP servers** | external tools (docs, fetch, git, browser, memory) | when a tool is used | configured once; the agent calls them |

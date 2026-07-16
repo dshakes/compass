@@ -5,6 +5,73 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+Prod-hardening + cross-agent enforcement — closes the gaps between what the docs promised and
+what the code did, and pushes the safety story onto ground no competitor holds: enforcement for
+*any* agent, a security scanner for the plugin ecosystem, and honesty against a corpus we didn't
+write.
+
+### Added
+
+- **`compass gate`** (`scripts/compass-gate.py`) — a localhost budget-enforcing reverse proxy
+  that gives **any** agent the session cap that was previously Claude-Code-only. Point
+  `ANTHROPIC_BASE_URL` / `OPENAI_BASE_URL` at it; requests are refused with `402` once
+  `COMPASS_MAX_USD` / `_DAY` is reached. SSE-aware usage accounting, shares the existing
+  `spend.tsv` ledger, binds `127.0.0.1` only, never logs credentials. Experimental, opt-in.
+- **`compass audit-plugin DIR`** (`scripts/compass-audit-plugin.sh`) — a read-only security
+  scanner for third-party plugins/marketplaces before you install them: injection + hidden
+  instructions in agent text and **MCP tool descriptions**, unpinned MCP servers,
+  fetch-and-execute hooks, `settings.json`/`CLAUDE.md` rewrites, and base64/eval payloads
+  (now including `hooks/lib/` — no path is exempt). Operator-supplied `--baseline` accepts a
+  finding only when named on the CLI, never from inside the scanned plugin.
+- **`compass redteam --external`** (`scripts/compass-redteam-external.sh`) — scores the
+  detectors against a **pinned public corpus we didn't author** (`deepset/prompt-injections`,
+  Apache-2.0, sha256-verified download). Report-only, never gates CI. Publishes the honest
+  number: **90% precision / 8% recall** — the recall reflects that the external set is
+  dominated by general-chatbot attacks out of scope for a coding-agent guardrail; the catches
+  are the coding-agent-relevant families.
+- **New detector families** in `injection_findings()`: `instruction-override`
+  ("ignore all preceding orders", "forget everything, new task"), `role-hijack`
+  ("act as a linux terminal", "developer mode"), `prompt-leak` ("show your system prompt").
+  Each ships with benign counterexamples; internal eval stays **100% precision** on 99 cases,
+  **100%** obfuscation-robust.
+- **Advanced router engine, opt-in.** `COMPASS_ROUTE_ENGINE=advanced` (or
+  `compass route --engine advanced`) delegates to the 9-stage cost-aware router in `router/`,
+  eval-gated against `router/evalset.tsv`. Keyword remains the default and the CI floor; the
+  Naive-Bayes classifier tier is honestly marked **unbuilt** (no phantom model path).
+- **Reproducible cost benchmark.** `compass bench` now prints routed-vs-all-Opus cost over the
+  routing evalset — **~62% cheaper at 96.9% routing accuracy**, with the pricing table and
+  token-profile assumptions stated inline and in [`docs/18`](docs/18-benchmark.md).
+- **Task-success benchmark harness** (`sdlc/taskbench/`) — 5 seeded-bug tasks (off-by-one,
+  unhandled-error, regex, refactor, command-injection) each with an **independent oracle**.
+  CI validates structure + that every seeded bug genuinely fails pre-fix; live fix-rate runs
+  spend tokens and are run by you.
+- **SDLC provenance + context** (opt-in): `SDLC_TRACE=1` emits an Agent-Trace record
+  (role · model · run-id) for every commit the loop makes — "prove which agent wrote what";
+  `SDLC_CONTEXT=1` feeds the review step a repo context pack (touched symbols → call sites).
+- **OpenSSF Scorecard** workflow (`.github/workflows/scorecard.yml`) — supply-chain posture as
+  a published, SHA-pinned, least-privilege signal.
+- **A generic "run any framework under compass" guide** ([`docs/21`](docs/21-run-any-framework.md)) —
+  compass as the governance layer *under* spec-driven / orchestration / methodology frameworks.
+
+### Changed
+
+- **Budget gate works headless.** `budget-gate.sh` now computes session cost from the
+  transcript JSONL when no statusline breadcrumb exists (headless `claude -p`, CI), taking the
+  larger of the two so it never under-counts toward the cap.
+- **Real CycloneDX output.** `compass sbom --cyclonedx` emits valid CycloneDX 1.5 JSON (the
+  default dependency-list view is unchanged), and the script now uses `mktemp` + `trap`.
+- Plugin-delivered MCP servers (`plugins/core/.mcp.json`) are now **version-pinned** to match
+  `mcp/servers.json`, with a CI drift check so the supply-chain control can't miss that path.
+
+### Fixed
+
+- **`scripts/release.sh`** no longer uses `eval` (runs argv directly) and **confirms every push
+  to origin** (`--yes` to skip) — the release path no longer trips compass's own guardrail.
+- **Fail-closed consistency:** `check-vendor.sh` now exits non-zero when `jq` is missing
+  (matching `check-mcp.sh`) instead of a silent green.
+- **Doc drift:** corrected subagent count (15), red-team corpus size (99 scored), and wired-hook
+  count (8 of 13) across the docs; documented the 5 opt-in hooks that ship dormant.
+
 ## [0.21.0] — 2026-07-09
 
 Red-team maturation — the `injection_findings` detector grows from a prompt-injection scanner

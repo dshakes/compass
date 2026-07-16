@@ -30,6 +30,8 @@ usage: compass redteam [--eval | --scan | --attack] [--json]
   --attack    adversarial fuzz: obfuscate the corpus payloads (base64 · zero-width ·
               homoglyph · leetspeak · ASCII-smuggling tags · hex) and measure how many the detectors still
               catch (robustness %). Notes garak/promptfoo for live-agent attacks.
+  --external  score the detectors against a pinned PUBLIC corpus we didn't write
+              (downloads once, sha256-verified; report-only — never gates CI)
   --json      machine-readable summary
 
 Optional managed-guardrail escalation (the hooks use these at runtime):
@@ -45,6 +47,7 @@ for a in "$@"; do case "$a" in
   --eval) MODE=eval ;;
   --scan) MODE=scan ;;
   --attack) MODE=attack ;;
+  --external) exec "$(dirname "${BASH_SOURCE[0]}")/compass-redteam-external.sh" ;;
   -h|--help) usage; exit 0 ;;
   --*) echo "compass redteam: unknown arg: $a" >&2; usage; exit 2 ;;
   *) TARGET="$a" ;;   # positional: a directory to scan (for CI / fleet sweeps)

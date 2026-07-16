@@ -118,25 +118,55 @@ run_eval() {
 
 # ── arg parsing ───────────────────────────────────────────────────────────────
 EXPLAIN=0; TASK=""; EVAL=0; EVALSET=""; SCORE=0
+ENGINE="${COMPASS_ROUTE_ENGINE:-keyword}"   # keyword (default) | advanced
+NEXT_ENGINE=0
 for a in "$@"; do
+  if [ "$NEXT_ENGINE" = 1 ]; then ENGINE="$a"; NEXT_ENGINE=0; continue; fi
   case "$a" in
-    --explain) EXPLAIN=1 ;;
-    --eval)    EVAL=1 ;;
-    --score)   SCORE=1 ;;
+    --explain)      EXPLAIN=1 ;;
+    --eval)         EVAL=1 ;;
+    --score)        SCORE=1 ;;
+    --engine)       NEXT_ENGINE=1 ;;
     --help|-h)
-      printf 'usage: compass-route.sh [--explain|--score] "<task>"  |  compass-route.sh --eval [set.tsv]\n'
+      printf 'usage: compass-route.sh [--explain|--score] [--engine keyword|advanced] "<task>"\n'
+      printf '       compass-route.sh --eval [--engine advanced] [set.tsv]\n'
       printf 'Prints: haiku | sonnet | opus   (--score appends a TAB confidence 0–100)\n'
-      printf 'Env: COMPASS_ROUTE_BUDGET_BIAS=low downgrades weak sonnet picks to haiku.\n'; exit 0 ;;
+      printf 'Engines: keyword (default, CI-gated, 96.9%%) | advanced (router/route.sh, 9-stage pipeline)\n'
+      printf 'Env: COMPASS_ROUTE_ENGINE=advanced  COMPASS_ROUTE_BUDGET_BIAS=low\n'; exit 0 ;;
     -*) printf 'unknown option: %s\n' "$a" >&2; exit 2 ;;
     *)  if [ "$EVAL" = 1 ]; then EVALSET="$a"; else TASK="$a"; fi ;;
   esac
 done
 
-if [ "$EVAL" = 1 ]; then run_eval "$EVALSET"; exit $?; fi
+case "$ENGINE" in
+  keyword|advanced) ;;
+  *) printf 'compass route: unknown engine "%s" — want: keyword | advanced\n' "$ENGINE" >&2; exit 2 ;;
+esac
+
+if [ "$EVAL" = 1 ]; then
+  if [ "$ENGINE" = "advanced" ]; then
+    BENCHSH="$HERE/../router/bench.sh"
+    [ -f "$BENCHSH" ] || { printf 'compass route: router/bench.sh not found: %s\n' "$BENCHSH" >&2; exit 2; }
+    exec bash "$BENCHSH"
+  fi
+  run_eval "$EVALSET"; exit $?
+fi
 
 if [ -z "$TASK" ]; then
-  printf 'usage: compass-route.sh [--explain|--score] "<task description>"\n' >&2
+  printf 'usage: compass-route.sh [--explain|--score] [--engine keyword|advanced] "<task description>"\n' >&2
   exit 2
+fi
+
+# Advanced engine: delegate to router/route.sh (9-stage pipeline). Output format is
+# identical — a single tier name on stdout, reason on stderr with --explain.
+if [ "$ENGINE" = "advanced" ]; then
+  ROUTESH="$HERE/../router/route.sh"
+  [ -f "$ROUTESH" ] || { printf 'compass route: router/route.sh not found: %s\n' "$ROUTESH" >&2; exit 2; }
+  # ponytail: unquoted empty strings expand to zero words — intentional flag-omission.
+  _exp=""; _scr=""
+  [ "$EXPLAIN" = 1 ] && _exp="--explain"
+  [ "$SCORE" = 1 ]   && _scr="--score"
+  exec bash "$ROUTESH" $_exp $_scr "$TASK"
 fi
 
 # Call in the current shell so MODEL/REASON propagate (see route_one's note).

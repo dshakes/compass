@@ -69,6 +69,27 @@ is a 61-case labeled corpus (must-block / must-allow) — the highest-stakes fil
 has a test, and it found 3 real bugs while being written. Still footgun-prevention, **not
 a security boundary** — unchanged framing.
 
+### Third-party plugin scanner — `compass audit-plugin` (R1 extension)
+
+Before installing a plugin from any marketplace or config repo, scan it:
+
+```bash
+compass audit-plugin /path/to/plugin-dir
+compass audit-plugin /path/to/plugin-dir --json               # machine-readable
+compass audit-plugin /path/to/plugin-dir --baseline my.tsv   # suppress known findings
+```
+
+Checks five categories: (a) injection patterns in `.md` files and MCP tool descriptions,
+(b) unpinned MCP servers (`@latest` or no version pin), (c) hook scripts that
+fetch-and-execute from the network or write outside the plugin dir, (d) scripts that write
+to `~/.claude/settings*` or `CLAUDE.md`, and (e) executable payloads (base64-decode-and-run,
+eval of downloaded content). Exits 0 = clean (or only INFO + baselined), 1 = HIGH/MED
+findings, 2 = usage error. Never executes target code.
+
+**Why `--baseline` is CLI-only, never read from inside the plugin.** A plugin that could
+supply its own baseline could suppress any finding against itself, defeating the scanner.
+Suppression is operator-controlled only — pass a `path<TAB>rule` file you wrote.
+
 ### GitHub Actions audit (R3, R4)
 [`scripts/check-actions.sh`](../scripts/check-actions.sh) gates four things in CI:
 **mirror drift** (`.github/workflows/sdlc-*` must equal the `sdlc/workflows/` templates —
@@ -118,6 +139,15 @@ CLAUDE.md rules — it **edits nothing**; a human accepts them. The opt-in
 [`sdlc/routines/policy-synth.yml`](../sdlc/routines/policy-synth.yml) runs the LLM variant
 weekly and files an **issue** (never a PR, never a merge). The self-improving loop, kept
 auditable and human-gated.
+
+### OpenSSF Scorecard (supply-chain posture)
+
+`.github/workflows/scorecard.yml` runs the [OpenSSF Scorecard](https://securityscorecards.dev/)
+action weekly (Monday 03:17 UTC) and on every push to `main`. It publishes SARIF results to the
+GitHub code-scanning dashboard and uploads SARIF as a workflow artifact (retained 5 days). The
+workflow uses `read-all` permissions at the top level with only the two scopes the action
+requires (`security-events: write`, `id-token: write`) added at the job level — it passes
+compass's own `check-actions.sh` least-privilege gate.
 
 ### Provenance: SBOM + signed commits (R14)
 `compass sbom` emits a dependency SBOM (prefers `syft`) + native vuln audit

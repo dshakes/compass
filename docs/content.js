@@ -10,9 +10,9 @@ window.COMPASS_DOCS = {
 
 <div class="tiles">
 <div class="tile"><b>100/100</b><span>guardrail P/R</span></div>
-<div class="tile"><b>100/100</b><span>red-team · 85 cases</span></div>
+<div class="tile"><b>100/100</b><span>red-team · 99 cases</span></div>
 <div class="tile"><b>96.9%</b><span>router accuracy</span></div>
-<div class="tile"><b>~61%</b><span>cheaper than all-Opus</span></div>
+<div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
 </div>
 
 ## What compass believes
@@ -58,12 +58,14 @@ compass doctor      # expect "0 error"
 | Command | What it does |
 |---|---|
 | \`compass bench\` | score the guardrail + router against the labeled corpora |
-| \`compass redteam\` | prompt-injection resistance + scan this repo's config |
+| \`compass redteam\` | prompt-injection resistance + scan this repo's config (\`--external\` for a public corpus) |
+| \`compass audit-plugin <dir>\` | security-scan a third-party plugin/marketplace before installing |
+| \`compass gate\` | localhost proxy that hard-caps spend for *any* agent (Codex/Gemini/SDKs) |
 | \`compass route "<task>"\` | pick the cheapest model tier that fits the task |
 | \`compass spend\` | session + daily cost, against your cap |
 | \`compass scan\` | secrets / risky patterns in the working tree |
 | \`compass sandbox <cmd>\` | run untrusted code in a real isolation boundary |
-| \`compass verify\` | drive a change end-to-end to confirm it actually works |
+| \`compass verify\` | verify a release's SLSA provenance (keyless attestation) |
 | \`compass doctor\` | validate the install |
 
 ## The status line
@@ -185,7 +187,7 @@ Everything outside the boundary — a pasted prompt, a fetched page, an MCP resu
 ## Common tweaks
 
 <div class="steps">
-<div class="stp"><b>Change the budget ceiling</b><span><code>export COMPASS_MAX_USD=10</code> — per-session hard stop. A per-day cap covers unattended fleet runs.</span></div>
+<div class="stp"><b>Change the budget ceiling</b><span><code>export COMPASS_MAX_USD=10</code> — per-session hard stop. A per-day cap covers unattended fleet runs. For Codex/Gemini/SDKs, <code>compass gate</code> enforces the same cap via a localhost proxy.</span></div>
 <div class="stp"><b>Add a project rule</b><span>Append one crisp line to the repo's <code>CLAUDE.md</code> — every agent reads it on the next run.</span></div>
 <div class="stp"><b>Enforce instead of warn</b><span>Flip the red-team hook from warn→block with a single env var when you want hard denial.</span></div>
 </div>
@@ -348,8 +350,8 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 
 <div class="tiles">
 <div class="tile"><b>100%</b><span>precision / recall</span></div>
-<div class="tile"><b>85</b><span>labeled cases</span></div>
-<div class="tile"><b>273/273</b><span>robust under obfuscation</span></div>
+<div class="tile"><b>99</b><span>labeled cases</span></div>
+<div class="tile"><b>329/329</b><span>robust under obfuscation</span></div>
 </div>
 
 Run \`compass redteam\` to reproduce the score — and to scan *this* repo's config, MCP, and settings for poisoning.
@@ -365,14 +367,17 @@ Run \`compass redteam\` to reproduce the score — and to scan *this* repo's con
 | Suite | Cases | Precision | Recall |
 |---|---|---|---|
 | Guardrail | 61 | 100% | 100% |
-| Red-team | 85 | 100% | 100% |
-| Router | 86 | — | 96.9% acc |
+| Red-team (internal) | 99 | 100% | 100% |
+| Red-team (external, public corpus) | 546 | 90% | 8%* |
+| Router | 44 | — | 96.9% acc |
 
 <div class="tiles">
-<div class="tile"><b>~61%</b><span>cheaper than all-Opus</span></div>
-<div class="tile"><b>~98%</b><span>quality retained</span></div>
+<div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
+<div class="tile"><b>96.9%</b><span>routing accuracy</span></div>
 <div class="tile"><b>100%</b><span>red-team obfuscation-robust</span></div>
 </div>
+
+<p class="cal tip"><span class="h">* honest by design</span> The external corpus (a public set we didn't write) is dominated by general-chatbot attacks out of scope for a coding-agent guardrail; the catches are the coding-agent-relevant families. We publish the low number because a floor you can only hit on your own cases isn't a floor. Reproduce: <code>compass redteam --external</code>.</p>
 
 ## Why floors, not just numbers
 
@@ -410,7 +415,7 @@ The release attestation lets you confirm an artifact's origin *before* it touche
 
 ## The router picks for you
 
-\`compass route "<task>"\` classifies a task (keyword heuristic → optional classifier → judge cascade) and returns the cheapest tier that fits.
+\`compass route "<task>"\` classifies a task and returns the cheapest tier that fits. The default is a deterministic keyword tier-picker (eval-gated at 96.9%); an opt-in 9-stage cost-aware engine (\`--engine advanced\`) adds budget/latency governors. Honest note: the learned-classifier tier is designed but unbuilt — the default is keyword matching, and it's the one that's measured.
 
 \`\`\`bash
 compass route "redesign the auth model"   # → opus
@@ -419,8 +424,8 @@ compass route "fix a typo"                 # → haiku
 
 <div class="tiles">
 <div class="tile"><b>96.9%</b><span>routing accuracy · 86 cases</span></div>
-<div class="tile"><b>~61%</b><span>cheaper than all-Opus</span></div>
-<div class="tile"><b>~98%</b><span>quality retained</span></div>
+<div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
+<div class="tile"><b>96.9%</b><span>routing accuracy</span></div>
 </div>
 
 <div class="cal tip">The router is standalone and reusable — drop it into your own app to cut model spend, eval-gated the same way.</div>`,

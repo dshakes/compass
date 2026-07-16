@@ -14,6 +14,7 @@ Guardrails, a hard budget cap, and a self-fixing PR loop for your AI coding agen
 [![Codex](https://img.shields.io/badge/Codex-plugin-111111.svg)](docs/05-plugin.md)
 [![Gemini](https://img.shields.io/badge/Gemini-extension-4285F4.svg)](docs/05-plugin.md)
 [![status: beta](https://img.shields.io/badge/status-beta-8A63D2.svg)](#safety-honesty--status)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/dshakes/compass/badge)](https://securityscorecards.dev/viewer/?uri=github.com/dshakes/compass)
 
 ### 🧭 &nbsp;[**Explore the interactive site →**](https://dshakes.github.io/compass/)
 
@@ -75,8 +76,10 @@ compass bench     # → guardrail 100% precision/recall (61-case corpus), router
 **🧪 Red-team resistance, measured.** Prompt-injection (direct/indirect/paste), agent-config poisoning, local safety-override, malware & insecure-code — scored against a labeled corpus that gates CI, obfuscation-resistant (`--attack`), with optional escalation to a managed guardrails backend. *A poisoned repo or web page can't quietly turn your agent against you — and you can measure how well that holds.*
 
 ```bash
-compass redteam   # → injection corpus 100% P/R (85 cases) + 100% obfuscation-robust, then scans THIS repo's config/MCP/settings
+compass redteam            # → injection corpus 100% P/R (99 cases) + 100% obfuscation-robust, then scans THIS repo's config/MCP/settings
+compass redteam --external # → score the detectors against a public corpus we DIDN'T write (honest: 90% precision, and we tell you why recall is what it is)
 ```
+<sub>Most tools show you 100% on their own test set. We show that too — <b>and</b> the number against someone else's corpus, because a floor you can only hit on your own cases isn't a floor.</sub>
 
 **💸 A budget ceiling that actually stops it.** Usage trackers *report* spend; compass *enforces* it — the session is **halted before the next tool call** once your dollar cap is reached. An agent can't quietly run up a $40 bill while you're away.
 
@@ -85,17 +88,19 @@ export COMPASS_MAX_USD=5     # this session hard-stops at $5 — blocked, not wa
 compass spend --max-usd 5    # the same ceiling on the ledger, for scheduled / fleet runs
 ```
 
-**📉 Cost routing that's measured.** Cheap work goes to cheap models — scored against an eval set, ~61% cheaper than all-Opus at ~98% quality on a fair mix.
+**📉 Cost routing that's measured.** Cheap work goes to cheap models — **~62% cheaper than all-Opus at 96.9% routing accuracy** on the 44-case routing evalset, with the pricing table and token assumptions stated in the output. Run the number, don't take it.
 
 ```bash
 compass route "redesign the auth model"    # → opus
 compass route "fix a typo"                 # → haiku
+compass bench                              # → routed vs all-Opus: ~62% cheaper (assumptions printed)
 ```
 
-**🔏 Supply chain you can verify.** Releases carry keyless SLSA provenance — a tampered or look-alike download is rejected.
+**🔏 Supply chain you can verify.** Releases carry keyless SLSA provenance — a tampered or look-alike download is rejected — and the repo publishes an OpenSSF Scorecard. And before you trust *someone else's* plugin, scan it.
 
 ```bash
-compass verify     # resolves the latest release → ✓ provenance verified
+compass verify                 # resolves the latest release → ✓ provenance verified
+compass audit-plugin ./their-marketplace   # injection · tool-poisoning · unpinned MCP · fetch-and-execute hooks — before you install
 ```
 
 <p align="center">
@@ -185,6 +190,8 @@ git checkout "$(git describe --tags --abbrev=0)"   # optional: pin to the latest
 
 `CLAUDE.md` · `AGENTS.md` · `GEMINI.md` are **one file** (symlinks), and the plugin/extension manifests are generated from one source and CI-checked (`scripts/check-vendor.sh`) — a `git pull` updates every agent at once and a manifest can't drift. The manifests are structure-validated in CI; the live `gemini extensions install` / `codex plugin marketplace add` paths are verified manually (those CLIs aren't in the runner).
 
+**Enforcement, not just the manual.** Claude Code gets the full hook layer (guardrails, budget gate, scans). For everything else — Codex, Gemini, Cursor, any SDK — the **budget cap travels via `compass gate`**, a localhost proxy you point `ANTHROPIC_BASE_URL`/`OPENAI_BASE_URL` at, so the hard dollar ceiling holds for any agent, not only the one with hooks. → [02-cost](docs/02-cost-and-models.md)
+
 ### ✅ Verify → your first run
 ```bash
 compass doctor      # validate the install — expect "0 error"
@@ -207,7 +214,9 @@ Everything below is **on after one install** or a single opt-in — the autonomo
 | 🛡 | **Guardrails & scanning** | a hook layer that blocks disasters, catches secrets (write-hook + `compass scan`), auto-formats, keeps a JSONL audit log | [16-hardening](docs/16-hardening-and-frontier.md) |
 | 🧪 | **Red-team hardening** | eval-gated defense vs prompt-injection, config poisoning, safety-override, malware & insecure code | [17-red-team](docs/17-red-team.md) |
 | 🧭 | **Cost-tier router** | a standalone, reusable module — keyword heuristic → optional classifier → judge cascade; eval-gated | [router/](router/) |
-| 🧰 | **The compass CLI** | `onboard · impact · drift · scan · redteam · sandbox · verify · audit-log · spend · dashboard` | [11-using](docs/11-using-compass.md) |
+| 🧰 | **The compass CLI** | `onboard · impact · drift · scan · redteam · audit-plugin · gate · sandbox · verify · audit-log · spend · dashboard` | [11-using](docs/11-using-compass.md) |
+| 🚦 | **Cross-agent enforcement** | `compass gate` — a localhost proxy that hard-caps spend for Codex/Gemini/any SDK, not just Claude Code | [02-cost](docs/02-cost-and-models.md) |
+| 🔍 | **Plugin-security scanner** | `compass audit-plugin` — vet a third-party plugin/marketplace (injection · tool-poisoning · unpinned MCP · fetch-exec) before you install it | [17-red-team](docs/17-red-team.md) |
 | 🔌 | **MCP + LSP** | curated, **version-pinned** MCP servers + opt-in language-server intelligence | [04](docs/04-mcp.md) · [06](docs/06-lsp.md) |
 | 🪪 | **Every agent, one source** | Claude Code · Codex · Gemini — plus Cursor/Windsurf/Copilot via the [`AGENTS.md`](https://agents.md/) standard | [12-every-agent](docs/12-every-agent.md) |
 | 💸 | **Live budget ceiling** | a hard cap that halts the session before the next tool call (`COMPASS_MAX_USD`), plus a per-day cap for unattended loops | [02-cost](docs/02-cost-and-models.md) |
@@ -233,6 +242,6 @@ Built to be **trusted before it's run** — and honest about its limits.
 **[The thesis → Loop engineering](docs/loop-engineering.md)** — why iteration-under-a-gate beats a one-shot guess.
 **[In practice → The five moves](docs/20-loops.md)** — each move of a self-running loop, mapped to the primitive that builds it.
 
-[Philosophy](docs/00-philosophy.md) · [Architecture](docs/01-architecture.md) · [Cost & models](docs/02-cost-and-models.md) · [Customize](docs/03-customize.md) · [MCP](docs/04-mcp.md) · [Plugin & team rollout](docs/05-plugin.md) · [LSP](docs/06-lsp.md) · [Practices](docs/07-practices.md) · [Defaults](docs/08-defaults.md) · [SDLC](docs/09-sdlc.md) · [Roadmap](docs/10-roadmap.md) · [Every agent](docs/12-every-agent.md) · [Workflows](docs/13-workflows.md) · [Fleet](docs/14-fleet.md) · [Competitive audit](docs/15-competitive-audit.md) · [Hardening](docs/16-hardening-and-frontier.md) · [Red-team](docs/17-red-team.md) · [Benchmark](docs/18-benchmark.md) · [Provenance](docs/19-provenance.md) · [Loops](docs/20-loops.md) · [Agents roster](docs/agents-roster.md) · [Router module](router/README.md) · [ADRs](docs/adr/)
+[Philosophy](docs/00-philosophy.md) · [Architecture](docs/01-architecture.md) · [Cost & models](docs/02-cost-and-models.md) · [Customize](docs/03-customize.md) · [MCP](docs/04-mcp.md) · [Plugin & team rollout](docs/05-plugin.md) · [LSP](docs/06-lsp.md) · [Practices](docs/07-practices.md) · [Defaults](docs/08-defaults.md) · [SDLC](docs/09-sdlc.md) · [Roadmap](docs/10-roadmap.md) · [Every agent](docs/12-every-agent.md) · [Workflows](docs/13-workflows.md) · [Fleet](docs/14-fleet.md) · [Competitive audit](docs/15-competitive-audit.md) · [Hardening](docs/16-hardening-and-frontier.md) · [Red-team](docs/17-red-team.md) · [Benchmark](docs/18-benchmark.md) · [Provenance](docs/19-provenance.md) · [Loops](docs/20-loops.md) · [Run any framework](docs/21-run-any-framework.md) · [Agents roster](docs/agents-roster.md) · [Router module](router/README.md) · [ADRs](docs/adr/)
 
 <div align="center"><br><sub>MIT · built to be shared · contributions welcome</sub></div>

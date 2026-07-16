@@ -21,6 +21,8 @@
 #                    overrides the judge model (default haiku). Default-to-doubt: only a clear MET stops it.
 #   SDLC_SPEC=path   spec-driven: plan/build to this spec; review verifies vs its acceptance criteria
 #   SDLC_LITE=1      fast/cheap: skip Codex audit + opus security (keep review + QA + human gate)
+#   SDLC_TRACE=1     after build/fix commits, attach an Agent Trace record (role+model+run) via compass-trace.sh
+#   SDLC_CONTEXT=1   before review, extract changed symbols + call sites into a context pack (fed to reviewer)
 set -uo pipefail
 
 TASK="${1:-}"; [ -n "$TASK" ] || { echo "usage: orchestrate.sh \"<task description>\""; exit 2; }
@@ -77,6 +79,18 @@ fi
 
 log(){ printf '\n\033[1;36m▶ %s\033[0m\n' "$*"; }
 note(){ printf '  %s\n' "$*"; }
+
+# Agent-identity trace (opt-in: SDLC_TRACE=1): attach an Agent Trace provenance record
+# (role + model + run-id) to every commit produced by each build/fix step via git notes.
+trace_new_commits(){  # args: <role> <model> <pre-sha>
+  [ "${SDLC_TRACE:-0}" = 1 ] || return 0
+  local role="$1" model="$2" pre="$3" sha
+  [ -z "$pre" ] && return 0
+  git log --format="%H" "${pre}..HEAD" 2>/dev/null | while IFS= read -r sha; do
+    COMPASS_TRACE_ROLE="$role" COMPASS_TRACE_MODEL="$model" COMPASS_TRACE_RUN="$RUN" \
+      bash "$SDLC_DIR/../scripts/compass-trace.sh" attach "$sha" 2>/dev/null || true
+  done
+}
 
 # Spend tracking: with jq we capture each step's real cost (claude -p --output-format json
 # reports total_cost_usd) into costs.tsv; without jq we stream text and skip the tally.
@@ -151,6 +165,7 @@ Verify it BY ACTING — run the relevant tests/lint and read the real output; in
 }
 
 # 2 · BUILD (edits + commits on the feature branch)
+PRE_BUILD_SHA="$(git rev-parse HEAD 2>/dev/null || echo '')"
 claude_step build builder.md "$BUILD_MODEL" "$BUILD_PERM" "$BUILD_TOOLS" \
   "Implement the plan in .sdlc/run-$TS/plan.md for this task: $TASK
 Stay on branch $BRANCH. Add tests. Build/test what you touch. Commit your work. Do not push or merge.$SPEC_CLAUSE"
@@ -160,6 +175,7 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   if git add -u && git commit -q $SIGN_FLAG -m "sdlc(builder): $TASK"; then note "committed builder leftovers"
   else note "⚠ could not commit builder leftovers — the review/PR may see a stale tree"; fi
 fi
+trace_new_commits builder "$BUILD_MODEL" "$PRE_BUILD_SHA"
 
 # Diff-size routing (R9): a tiny diff doesn't need sonnet to review it. Pick haiku for
 # diffs ≤ SDLC_HAIKU_DIFF_LINES (default 25); sonnet otherwise. Security always stays opus.
@@ -168,6 +184,17 @@ if [ -z "${SDLC_REVIEW_MODEL:-}" ]; then
   DIFF_LINES="$(git diff "$BASE"...HEAD --numstat 2>/dev/null | awk '{a+=$1+$2} END{print a+0}')"
   if [ "${DIFF_LINES:-0}" -gt 0 ] && [ "${DIFF_LINES:-0}" -le "${SDLC_HAIKU_DIFF_LINES:-25}" ]; then
     REVIEW_MODEL="haiku"; note "diff-size routing: ${DIFF_LINES}-line diff → haiku review (override: SDLC_REVIEW_MODEL=sonnet)"
+  fi
+fi
+
+# Context pack (opt-in: SDLC_CONTEXT=1): extract changed symbols + call sites for the reviewer.
+# Written to the run-dir and referenced in the review prompt so the reviewer reads it.
+if [ "${SDLC_CONTEXT:-0}" = 1 ]; then
+  note "context-pack: extracting changed symbols..."
+  "$SDLC_DIR/../scripts/context-pack.sh" "$BASE...HEAD" >"$RUN/context-pack.md" 2>/dev/null || true
+  if [ -s "$RUN/context-pack.md" ]; then
+    REVIEW_PROMPT="$REVIEW_PROMPT
+Also read $RUN/context-pack.md for a compact map of changed symbols and their call sites across the repo."
   fi
 fi
 
@@ -187,6 +214,7 @@ if [ "${SDLC_CONVERGE:-0}" = 1 ] || [ -n "$GOAL" ]; then
   while { grep -qiE '^SDLC-VERDICT: BLOCKING' "$RUN/review.md" 2>/dev/null \
           || { [ -n "$GOAL" ] && [ "$GOAL_V" != MET ]; }; } && [ "$r" -le "$MAXR" ]; do
     log "converge round $r/$MAXR  (fix → re-review${GOAL:+ → goal-check})"
+    PRE_FIX_SHA="$(git rev-parse HEAD 2>/dev/null || echo '')"
     claude_step "fix-$r" builder.md "$BUILD_MODEL" "$BUILD_PERM" "$BUILD_TOOLS" \
       "Address every Blocking and Should-fix item in .sdlc/run-$TS/review.md on branch $BRANCH for task: $TASK.${GOAL:+ The run must also satisfy this stop condition: $GOAL — make it true.}
 Edit the code, add/adjust tests, build/test what you touch, commit. Do not push or merge."
@@ -194,6 +222,7 @@ Edit the code, add/adjust tests, build/test what you touch, commit. Do not push 
       # shellcheck disable=SC2086  # SIGN_FLAG is intentionally word-split (empty or -S)
       git add -u && git commit -q $SIGN_FLAG -m "sdlc(converge $r): $TASK"
     fi
+    trace_new_commits builder "$BUILD_MODEL" "$PRE_FIX_SHA"
     claude_step review reviewer.md "$REVIEW_MODEL" plan "$REVIEW_TOOLS" "$REVIEW_PROMPT"
     GOAL_V="$(goal_check)"
     r=$((r + 1))

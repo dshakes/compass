@@ -29,6 +29,14 @@ EX="$("$COMPASS" route --explain 'redesign the auth trust model' 2>&1)"; EXRC=$?
 eq  "--explain exit 0"        "$EXRC" 0
 has "--explain prints reason" "$EX" 'route: opus (matched opus keyword)'
 
+echo "route --engine — opt-in advanced engine (router/route.sh):"
+eq "advanced: typo → haiku"    "$("$COMPASS" route --engine advanced 'fix a typo in the readme')" haiku
+eq "advanced: feature → sonnet" "$("$COMPASS" route --engine advanced 'add a rate limiter with tests')" sonnet
+eq "advanced: security → opus"  "$("$COMPASS" route --engine advanced 'redesign the auth trust model')" opus
+eq "env COMPASS_ROUTE_ENGINE=advanced works" "$(COMPASS_ROUTE_ENGINE=advanced "$COMPASS" route 'fix a typo in the readme')" haiku
+if "$COMPASS" route --engine bogus 'fix a typo' >/dev/null 2>&1; then no "unknown engine should error"; else ok "unknown engine errors cleanly (exit 2)"; fi
+eq "default (no --engine) still keyword" "$("$COMPASS" route 'fix a typo in the readme')" haiku
+
 echo "route --score — cost-aware tier + confidence (deterministic floor preserved):"
 has "opus high-stakes stays opus + high confidence" "$("$COMPASS" route --score 'redesign the auth trust model')" "opus	9"
 has "haiku trivial + confidence"                    "$("$COMPASS" route --score 'fix typo')" "haiku	"

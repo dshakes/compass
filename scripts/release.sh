@@ -7,6 +7,8 @@
 #   scripts/release.sh            # version = newest [X.Y.Z] heading in CHANGELOG
 #   scripts/release.sh v0.10.0    # or name it explicitly
 #   scripts/release.sh --dry-run  # show the plan + release notes, touch nothing
+#   scripts/release.sh --yes      # skip the per-push confirmations (deliberate only)
+# Flags come before the version. Every push to origin asks first unless --yes.
 #
 # Needs: git (push), curl + sha256sum/shasum (formula sha), gh (the Release). Each missing
 # tool degrades to a printed next-step rather than failing the whole run.
@@ -15,9 +17,25 @@ set -euo pipefail
 REPO_SLUG="dshakes/compass"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$ROOT"
 
-DRY=0; [ "${1:-}" = "--dry-run" ] && { DRY=1; shift; }
+DRY=0 YES=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --dry-run) DRY=1; shift ;;
+    --yes)     YES=1; shift ;;
+    *) break ;;
+  esac
+done
 say() { printf '\033[1;36m▶ %s\033[0m\n' "$*"; }
-do_or_show() { if [ "$DRY" = 1 ]; then printf '  [dry-run] %s\n' "$*"; else printf '  + %s\n' "$*"; eval "$@"; fi; }
+# Runs its arguments directly (argv, no eval — nothing here re-parses as shell).
+do_or_show() { if [ "$DRY" = 1 ]; then printf '  [dry-run] %s\n' "$*"; else printf '  + %s\n' "$*"; "$@"; fi; }
+# Pushes are outward-facing: confirm each one unless --yes (or dry-run, which never pushes).
+confirm_push() {
+  [ "$DRY" = 1 ] && return 0
+  [ "$YES" = 1 ] && return 0
+  printf '  push to origin: %s — proceed? [y/N] ' "$*"
+  read -r reply </dev/tty || reply=""
+  case "$reply" in y|Y|yes|YES) return 0 ;; *) echo "  skipped ($*)"; return 1 ;; esac
+}
 
 # ── version: arg, else the newest semver heading in the CHANGELOG ────────────────
 VER="${1:-}"
@@ -53,9 +71,9 @@ notes="$(awk -v v="$NUM" '
 # ── 1 · tag + push ────────────────────────────────────────────────────────────────
 say "1 · tag"
 if git rev-parse -q --verify "refs/tags/$VER" >/dev/null; then echo "  tag $VER exists locally"
-else do_or_show "git tag -a '$VER' -m 'compass $VER'"; fi
+else do_or_show git tag -a "$VER" -m "compass $VER"; fi
 if [ -n "$(git ls-remote --tags origin "$VER" 2>/dev/null)" ]; then echo "  tag $VER already on origin"
-else do_or_show "git push origin '$VER'"; fi
+elif confirm_push "tag $VER"; then do_or_show git push origin "$VER"; fi
 
 # ── 2 · Homebrew formula: bump url + tarball sha ──────────────────────────────────
 say "2 · Homebrew formula"
@@ -72,8 +90,8 @@ else
            -e "s/^([[:space:]]*sha256 )\"[a-f0-9]*\"/\1\"$sha\"/" Formula/compass.rb >"$tmp" && mv "$tmp" Formula/compass.rb
     if git diff --quiet Formula/compass.rb; then echo "  formula already at $VER / $sha"
     else
-      do_or_show "git commit -q -m 'chore(release): pin $VER + tarball sha in the Homebrew formula' Formula/compass.rb"
-      do_or_show "git push origin main"
+      do_or_show git commit -q -m "chore(release): pin $VER + tarball sha in the Homebrew formula" Formula/compass.rb
+      if confirm_push "main (formula bump)"; then do_or_show git push origin main; fi
       echo "  formula → $VER  sha256 $sha"
     fi
   else

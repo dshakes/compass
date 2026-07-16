@@ -120,6 +120,9 @@ jobs:
       - name: SDLC loop self-test (round cap + verdict parsing)
         run: bash sdlc/selftest.sh
 
+      - name: Task benchmark (structure + pre-fix oracle, no tokens)
+        run: bash sdlc/taskbench/validate.sh
+
       - name: compass-memory store tests (redaction + trust tiers)
         run: python3 mcp/compass-memory/test_store.py
 

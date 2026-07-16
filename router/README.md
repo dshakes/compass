@@ -1,5 +1,7 @@
 # router — a deterministic cost-tier router
 
+> **Status:** The advanced engine is now reachable via `COMPASS_ROUTE_ENGINE=advanced` (or `compass route --engine advanced`). The keyword router remains the default and the CI accuracy floor. The local classifier (layer ②) is **unbuilt** — no trained model file exists; `classify.sh` abstains and `fallback-cascade.sh` falls through to the LLM judge until you run `train-classifier.sh` with enough `--log` data.
+
 <p align="center">
   <img src="../assets/router-cascade.svg" alt="compass router cascade — a task flows through ① a free keyword heuristic, ② an optional free local classifier, and ③ a Haiku LLM judge for the ambiguous tail; ~80% of traffic exits early for free. Below, the data flywheel: --log decisions → the LLM labels them → train-classifier → classifier ON → fewer LLM calls." width="900">
 </p>

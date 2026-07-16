@@ -1,0 +1,1 @@
+Fix the is_valid_email regex in validator.py: it rejects valid emails that contain dots, hyphens, or plus signs in the local part (before the @). The regex should accept those characters while still rejecting obviously invalid addresses. Tests in test_validator.py document the expected behaviour.
