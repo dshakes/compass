@@ -29,6 +29,16 @@ human merge/deploy gate is untouched). Per-item status:
 | + | **Dashboard** (impact + spend + live fleet PRs) | ✅ shipped | `compass dashboard` |
 | + | **SBOM + signed commits** (provenance) | ✅ shipped (opt-in) | `compass sbom` · `orchestrate.sh` `SDLC_SIGN=` `SDLC_SBOM=` |
 | + | **spec-kit interop** | ✅ shipped | `orchestrate.sh` spec auto-discovery → [16](16-hardening-and-frontier.md) |
+| + | **Cross-agent budget proxy** (enforcement for Codex/Gemini/SDKs) | ✅ shipped (experimental) | `compass gate` → `scripts/compass-gate.py` |
+| + | **Plugin-security scanner** (injection · tool-poisoning · unpinned MCP · fetch-exec) | ✅ shipped | `compass audit-plugin` · operator `--baseline` |
+| + | **External red-team corpus** (public set we didn't write) | ✅ shipped (report-only) | `compass redteam --external` → [17](17-red-team.md) |
+| + | **Advanced router engine** (9-stage cost-aware, opt-in) | ✅ shipped | `COMPASS_ROUTE_ENGINE=advanced` · `router/` |
+| + | **Cost benchmark** (routed vs all-Opus, reproducible) | ✅ shipped | `compass bench` → [18](18-benchmark.md) |
+| + | **Task-success benchmark** (seeded-bug oracles) | ✅ shipped (CI validates structure) | `sdlc/taskbench/` |
+| + | **Agent-identity provenance in the loop** (role/model/run per commit) | ✅ shipped (opt-in) | `orchestrate.sh` `SDLC_TRACE=1` |
+| + | **Repo context pack for review** (touched-symbol call sites) | ✅ shipped (opt-in) | `orchestrate.sh` `SDLC_CONTEXT=1` · `scripts/context-pack.sh` |
+| + | **OpenSSF Scorecard** (supply-chain posture) | ✅ shipped | `.github/workflows/scorecard.yml` |
+| + | **Headless budget cap** (transcript-JSONL cost fallback) | ✅ shipped | `claude/hooks/budget-gate.sh` |
 
 The detail below is the design rationale + how to enable each. Each was validated like the
 rest of the pipeline (lint, shellcheck, selftest, CI). Cross-repo memory stays ADR-gated.

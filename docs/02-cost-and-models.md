@@ -116,11 +116,13 @@ Cross-provider *smart routing* as a first-class compass layer is roadmapped (`do
   ```
   How it reads spend: the status line is the only place the runtime hands us live session cost, so
   it drops a per-session breadcrumb (`~/.compass/sessions/<id>.cost`) that the gate consults — so
-  the ceiling is accurate **to the last status-line render**, not to the cent. **Honest limit:** it
-  *fails open* — if the cap is unset, or no render has happened yet (spend unknown), it never
-  blocks; a budget ceiling must not wedge a session on missing data. It's a cost guardrail, not a
-  security boundary, and (today) depends on the compass status line being active. To continue past
-  a stop, raise `COMPASS_MAX_USD` or start a fresh session.
+  the ceiling is accurate **to the last status-line render**, not to the cent. **Headless mode
+  (`claude -p` / CI):** the status line never renders, so the gate falls back to reading session
+  cost from the transcript JSONL that `claude -p` always writes — the cap works without the status
+  line active. **Honest limit:** it *fails open* — if the cap is unset, or spend is unknown, it
+  never blocks; a budget ceiling must not wedge a session on missing data. It's a cost guardrail,
+  not a security boundary. To continue past a stop, raise `COMPASS_MAX_USD` or start a fresh
+  session.
 - **Daily ceiling (the unattended-loop circuit breaker):** a per-day cap across *every* run, not
   just one session — set it **before** you let loops run unattended, on the assumption something
   will spin idle overnight. The same `budget-gate.sh` hook blocks once **today's total** (this
@@ -156,6 +158,43 @@ Cross-provider *smart routing* as a first-class compass layer is roadmapped (`do
   files auto-formatted, spend by model, and an **estimated `$` saved** vs running everything on
   Opus (a rough multiple-based estimate, labelled as such).
 
+## Cross-agent budget enforcement — `compass gate` (experimental)
+
+The budget gate above works only for Claude Code sessions (where the status line or transcript is
+accessible). **`compass gate`** extends hard-stop enforcement to **any agent that speaks the
+Anthropic or OpenAI API** — Codex, SDK scripts, or any framework pointed at `api.anthropic.com` /
+`api.openai.com`.
+
+It's a localhost reverse proxy (`python3 scripts/compass-gate.py`):
+
+```bash
+# start the gate (uses same COMPASS_MAX_USD / COMPASS_MAX_USD_DAY env vars)
+compass gate                       # listens on 127.0.0.1:4141
+compass gate --port 9000           # custom port
+
+# point any agent at it
+export ANTHROPIC_BASE_URL=http://127.0.0.1:4141
+export OPENAI_BASE_URL=http://127.0.0.1:4141
+
+# check live spend without interrupting the gate
+compass gate --status
+```
+
+Once session or daily spend (the same caps from `COMPASS_MAX_USD` / `COMPASS_MAX_USD_DAY`, read
+from env or `~/.compass/config`) reaches the cap, all further requests get a **402** response
+before hitting the upstream API. The gate logs cost to the shared `~/.compass/spend.tsv` ledger
+so `compass spend` tallies gate-tracked runs alongside Claude Code sessions.
+
+**Honest limits:**
+- Cost is computed from token counts in the response (input × price + output × price per model).
+  Unknown models fall back to the conservative Opus rate — over-estimates, never under.
+- For OpenAI streaming responses, cost is only tracked when the client passes
+  `stream_options: {include_usage: true}` — otherwise recorded as $0.
+- `python3` is required. The gate is marked **experimental**: it's a simple HTTP proxy with no
+  TLS termination (it forwards the auth header as-is to the real API — never expose it on a
+  non-loopback interface).
+- Fails open: if caps are unset, all requests pass through.
+
 ## Auto-routing the model — now measured
 `compass route "<task>"` maps a task to the cheapest-correct tier (haiku/sonnet/opus) by a
 deterministic keyword heuristic. `orchestrate.sh` uses it for the Builder step **only** when
@@ -183,6 +222,22 @@ a vibe. The set also documents the heuristic's limits honestly: a couple of cont
 tasks (e.g. "a backward-compatible proto contract change") are irreducible misses for *keyword*
 routing — which is exactly why `SDLC_AUTOROUTE` stays opt-in. Add real mis-routes to the set as
 they surface; that's how it earns its keep.
+
+### Advanced router engine (opt-in)
+
+The keyword router is the default and the CI accuracy floor. An **advanced engine** — a 9-stage
+pipeline with cache-aware cost-min, confidence scoring, budget bias, and domain quality floors —
+is available opt-in:
+
+```bash
+compass route --engine advanced "refactor the auth module"
+COMPASS_ROUTE_ENGINE=advanced compass route "write unit tests for the parser"
+```
+
+The local classifier inside the advanced engine is **not yet trained** — `classify.sh` abstains
+and the pipeline falls through to the LLM judge for the ambiguous tail. See
+[`router/README.md`](../router/README.md) for the full pipeline description and how to build the
+classifier from logged routing decisions.
 
 ## Rules of thumb baked into `CLAUDE.md`
 - Don't re-read a file you just edited.

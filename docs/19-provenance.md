@@ -77,6 +77,47 @@ git fetch origin 'refs/notes/*:refs/notes/*'                        # consume
 
 CI can then gate on disclosure where you want it: `compass trace verify "$SHA"`.
 
+## Attaching records in the SDLC loop
+
+`SDLC_TRACE=1` calls `compass trace attach` automatically after each Build or Fix commit in
+`sdlc/orchestrate.sh` — no manual step required. The record captures the role (e.g. `builder`),
+model, and orchestrate run-id alongside the standard Agent Trace fields:
+
+```bash
+SDLC_TRACE=1 ~/compass/sdlc/orchestrate.sh "add rate limiting"
+# → each Builder/Fixer commit gets an Agent Trace note attached automatically
+compass trace show HEAD   # inspect the record on any resulting commit
+```
+
+Records are stored as git notes (`refs/notes/agent-trace`), so they don't affect the commit
+SHA. Push with `git push origin refs/notes/agent-trace` to share.
+
+## Reviewer context pack (`SDLC_CONTEXT=1`)
+
+A separate opt-in: before the Reviewer runs, `context-pack.sh` extracts the symbols touched
+by the diff (functions, types, call sites) into a structured context pack. The Reviewer
+receives this as an additional input so it can reason about side-effects without re-reading
+the entire codebase.
+
+```bash
+SDLC_CONTEXT=1 ~/compass/sdlc/orchestrate.sh "refactor the auth module"
+```
+
+The context pack is written to `.sdlc/run-*/context-pack.txt` for inspection. It does not
+affect the final commit or PR body.
+
+## OpenSSF Scorecard
+
+`.github/workflows/scorecard.yml` runs the OpenSSF Scorecard weekly and on every push to
+`main`. Scorecard grades the repo on supply-chain security practices (dependency pinning,
+branch protection, signed releases, CI configuration) and publishes results to GitHub's
+code-scanning dashboard as SARIF. The SARIF artifact is also retained for 5 days as a
+workflow artifact.
+
+This is a **posture check**, not a gate: Scorecard findings are advisory and reported to the
+security dashboard, not blocking. They complement the hard CI gates (`compass doctor`,
+`check-actions.sh`) with an external, standardized view of the supply chain.
+
 ## Limitations (read this)
 
 - **Best-effort attribution.** Env-supplied tool/model/session; nothing diffs the

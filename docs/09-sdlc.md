@@ -149,7 +149,11 @@ outputs from `.sdlc/run-*`, then opens a PR and stops. The **closed label-loop i
 GitHub-native only** — the local runner does not simulate label-triggered re-runs.
 
 Knobs: `SDLC_NO_PR=1` (don't open the PR), `SDLC_YOLO=1` (Builder unattended),
-`SDLC_BUDGET=8` (USD hint), `SDLC_BASE=main`, `SDLC_CONVERGE=1` (loop fix→re-review until clean).
+`SDLC_BUDGET=8` (USD hint), `SDLC_BASE=main`, `SDLC_CONVERGE=1` (loop fix→re-review until clean),
+`SDLC_TRACE=1` (attach an Agent Trace provenance record after each build/fix commit —
+role + model + run id stored as a git note; see [provenance](19-provenance.md)),
+`SDLC_CONTEXT=1` (extract changed symbols and call sites into a context pack before the review
+step — feeds the reviewer a touched-symbols index so it doesn't need to re-read the whole tree).
 Built on `claude -p` + `codex exec`.
 
 **Run until a condition (`SDLC_GOAL`).** Instead of stopping at "the reviewer says clean," give

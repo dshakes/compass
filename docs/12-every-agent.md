@@ -34,6 +34,24 @@ MCP is the other Agentic-AI-Foundation standard. compass's single manifest
 Gemini CLI and Cursor also speak MCP, so the same servers (context7, fetch, git, …) are
 portable there. → [MCP guide](04-mcp.md)
 
+## Budget enforcement for non-Claude agents
+
+Claude Code's built-in budget gate works only for sessions that render the status line or write a
+transcript. `compass gate` closes the gap: it's a localhost reverse proxy that enforces
+`COMPASS_MAX_USD` / `COMPASS_MAX_USD_DAY` for **any** agent that speaks the Anthropic or OpenAI
+API:
+
+```bash
+compass gate &                           # start the proxy (port 4141)
+export ANTHROPIC_BASE_URL=http://127.0.0.1:4141
+export OPENAI_BASE_URL=http://127.0.0.1:4141
+# run Codex, SDK scripts, or any framework here — caps apply
+```
+
+Once the cap is reached, further requests get a 402 before hitting upstream. Cost is tracked in
+the shared `~/.compass/spend.tsv` ledger alongside Claude Code sessions.
+→ full details in [cost & models](02-cost-and-models.md#cross-agent-budget-enforcement----compass-gate-experimental)
+
 ## Why this matters
 You don't bet on one vendor. Switch or mix Claude Code, Codex, Gemini, Cursor, Windsurf — your
 team's operating manual, conventions, and guardrail *intent* travel with you, from one file.

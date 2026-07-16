@@ -437,8 +437,8 @@
         </div>
         <div class="term-foot">
           <div class="s"><b class="grad-text">100/100</b><span>guardrail P/R</span></div>
-          <div class="s"><b class="grad-text">100%</b><span>red-team · 85</span></div>
-          <div class="s"><b class="grad-text">~61%</b><span>cheaper</span></div>
+          <div class="s"><b class="grad-text">100%</b><span>red-team · 99</span></div>
+          <div class="s"><b class="grad-text">~62%</b><span>cheaper</span></div>
         </div>
       </div>
     </div>
@@ -479,9 +479,9 @@
     </div>
     <div class="stats">
       <div class="stat rv"><div class="n grad-text" data-count="100" data-suffix="/100">100/100</div><div class="l"><b>Guardrail</b> precision/recall<br>61-case corpus, in CI</div></div>
-      <div class="stat rv"><div class="n grad-text" data-count="100" data-suffix="%">100%</div><div class="l"><b>Red-team</b> P/R · 85 cases<br>100% obfuscation-robust</div></div>
+      <div class="stat rv"><div class="n grad-text" data-count="100" data-suffix="%">100%</div><div class="l"><b>Red-team</b> P/R · 99 cases<br>100% obfuscation-robust</div></div>
       <div class="stat rv"><div class="n grad-text" data-count="96.9" data-suffix="%">96.9%</div><div class="l"><b>Router</b> accuracy<br>86-case eval set</div></div>
-      <div class="stat rv"><div class="n grad-text" data-count="61" data-suffix="%">61%</div><div class="l"><b>Cheaper</b> than all-Opus<br>~98% quality retained</div></div>
+      <div class="stat rv"><div class="n grad-text" data-count="62" data-suffix="%">62%</div><div class="l"><b>Cheaper</b> than all-Opus<br>96.9% routing accuracy</div></div>
       <div class="stat rv"><div class="n grad-text">SLSA</div><div class="l"><b>Verified</b> supply chain<br>keyless provenance</div></div>
     </div>
   </div>
@@ -509,7 +509,7 @@
         <div class="ph"><span class="e">🧪</span><h3>Red-team resistance</h3></div>
         <div class="term"><div class="bar"><i></i><i></i><i></i></div><div class="body">
           <span class="c">$</span> compass redteam<br>
-          <span class="o">→ injection corpus </span><span class="g">100% P/R</span><span class="o"> (85 cases)</span><br>
+          <span class="o">→ injection corpus </span><span class="g">100% P/R</span><span class="o"> (99 cases) + 90% on a public corpus</span><br>
           <span class="o">→ adversarial robustness </span><span class="g">100%</span><span class="o"> (273/273)</span><br>
           <span class="o">→ scans THIS repo's config · MCP · settings</span>
         </div></div>
@@ -533,7 +533,7 @@
           <span class="c">$</span> compass route <span class="v">"fix a typo"</span><br>
           <span class="o">→ </span><span class="g">haiku</span>
         </div></div>
-        <p>Cheap work goes to cheap models — ~61% cheaper than all-Opus at ~98% quality on a fair mix.</p>
+        <p>Cheap work goes to cheap models — ~62% cheaper than all-Opus at 96.9% routing accuracy. Run <code>compass bench</code> to reproduce it.</p>
       </div>
     </div>
   </div>
@@ -640,9 +640,11 @@
       <div class="fcard span-3 rv"><span class="em">🛰️</span><h3>The fleet</h3><p>The loop, scheduled across all your repos through a test gate — overnight. Wake up to a PR per repo you can approve from your phone.</p><a class="more" href="docs.html#14-fleet">14-fleet →</a></div>
       <div class="fcard span-2 rv"><span class="em">🛡</span><h3>Guardrails &amp; scanning</h3><p>A hook layer that blocks disasters, catches secrets, auto-formats, and keeps a JSONL audit log.</p><a class="more" href="docs.html#16-hardening-and-frontier">16-hardening →</a></div>
       <div class="fcard span-2 rv"><span class="em">🧪</span><h3>Red-team hardening</h3><p>Eval-gated defense vs prompt-injection, config poisoning, safety-override, MCP tool-poisoning, malware &amp; insecure code.</p><a class="more" href="docs.html#17-red-team">17-red-team →</a></div>
-      <div class="fcard span-2 rv"><span class="em">🧭</span><h3>Cost-tier router</h3><p>Standalone, reusable: keyword heuristic → optional classifier → judge cascade. Eval-gated.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/router">router/ →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🧭</span><h3>Cost-tier router</h3><p>Standalone, reusable: a deterministic keyword tier-picker (eval-gated 96.9%), with an opt-in 9-stage cost-aware engine. Measured, not vibes.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/router">router/ →</a></div>
       <div class="fcard span-2 rv"><span class="em">👥</span><h3>The crew + workflows</h3><p>Cost-tiered expert subagents, slash-commands, and dynamic workflows that fact-check each other.</p><a class="more" href="docs.html#agents-roster">roster →</a></div>
-      <div class="fcard span-2 rv"><span class="em">🧰</span><h3>The compass CLI</h3><p><span class="mono" style="font-size:12px">onboard · impact · drift · scan · redteam · sandbox · verify · audit-log · spend · dashboard</span></p><a class="more" href="docs.html#11-using-compass">11-using →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🚦</span><h3>Cross-agent enforcement</h3><p><code>compass gate</code> — a localhost proxy that hard-caps spend for Codex, Gemini, and any SDK, not just Claude Code. The budget wall for every agent.</p><a class="more" href="docs.html#02-cost-and-models">02-cost →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🔍</span><h3>Plugin-security scanner</h3><p><code>compass audit-plugin</code> — vet a third-party plugin or marketplace (injection · tool-poisoning · unpinned MCP · fetch-and-execute hooks) <em>before</em> you install it.</p><a class="more" href="docs.html#17-red-team">17-red-team →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🧰</span><h3>The compass CLI</h3><p><span class="mono" style="font-size:12px">onboard · impact · drift · scan · redteam · audit-plugin · gate · sandbox · verify · spend · dashboard</span></p><a class="more" href="docs.html#11-using-compass">11-using →</a></div>
       <div class="fcard span-2 rv"><span class="em">🔌</span><h3>MCP + LSP</h3><p>Curated, version-pinned MCP servers plus opt-in language-server intelligence.</p><a class="more" href="docs.html#04-mcp">04-mcp →</a></div>
       <div class="fcard span-2 rv"><span class="em">🪪</span><h3>Every agent, one source</h3><p>Claude Code · Codex · Gemini — plus Cursor/Windsurf/Copilot via the AGENTS.md standard.</p><a class="more" href="docs.html#12-every-agent">12-every-agent →</a></div>
     </div>
@@ -925,7 +927,7 @@
     '<span class="ok">     ✓ tests green · ready for your merge</span>',
     ' ',
     '<span class="u">$</span> <span class="p">compass route "rename a variable"</span>',
-    '<span class="vi">     → haiku</span>   <span class="dim">$0.001 · ~61% cheaper</span>',
+    '<span class="vi">     → haiku</span>   <span class="dim">$0.001 · ~62% cheaper</span>',
     ' ',
     '<span class="dim">     session  </span><span class="ok">$0.42</span><span class="dim"> / $5.00 · under budget ▸</span>'
   ];

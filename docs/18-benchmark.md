@@ -39,8 +39,9 @@ that some novel phrasings will slip — they should be contributed back as new c
 ### 2. Red-team corpus — `scripts/redteam-corpus.tsv`
 
 Tests the `injection_findings` detector (prompt-injection, context-poisoning,
-safety-override, malware-intent, insecure-code patterns). **85 labeled cases**
-(56 file-based + additional programmatic assertions).
+safety-override, malware-intent, insecure-code patterns). **99 labeled cases**
+(83 file-based + 16 programmatic assertions covering invisible unicode, encoding evasions,
+config-override, malware-intent, and insecure-code families).
 
 ```
 # Columns (TAB-separated):
@@ -101,8 +102,8 @@ compass redteam --json
 | Corpus | Cases | Precision | Recall | Notes |
 |---|---|---|---|---|
 | Guardrail | 61 | 100% | 100% | floor: 100% P / 95% R |
-| Red-team | 85 | 100% | 100% | floor: 100% P / 90% R |
-| Red-team adversarial | 155 transforms | 100% | 100% | floor: 80% robustness |
+| Red-team | 99 | 100% | 100% | floor: 100% P / 90% R |
+| Red-team adversarial | 155+ transforms | 100% | 100% | floor: 80% robustness |
 | Router | 86 (32 holdout) | — | — | accuracy 96.9%; floor 90% |
 
 Run with `--json` to get machine-readable results for your own tooling or dashboards.
@@ -209,6 +210,57 @@ COMPASS_BENCH_OPUS_IN=18.00 COMPASS_BENCH_OPUS_OUT=90.00 compass bench --cost
 
 ---
 
+## Task-success benchmark — `sdlc/taskbench/`
+
+The static eval corpora above measure policy correctness (zero model calls). This benchmark
+measures whether the SDLC loop actually **fixes bugs** — a live-fire harness that spends tokens.
+
+### Structure
+
+Five seeded-bug tasks live in `sdlc/taskbench/tasks/`, each in its own directory with exactly
+three files:
+
+```
+setup.sh   # creates a fixture repo with a seeded bug (tempdir, no side effects)
+task.md    # the natural-language prompt given to the SDLC loop
+check.sh   # independent oracle — exits 0 if the bug is fixed, nonzero otherwise
+```
+
+Tasks cover: off-by-one error, unhandled error, regex bug, refactor correctness, and a
+security fix.
+
+### Running it
+
+```bash
+# ⚠ THIS SPENDS TOKENS — run manually, never in CI
+bash sdlc/taskbench/run.sh                  # all 5 tasks
+bash sdlc/taskbench/run.sh 01-off-by-one    # one task by directory name
+SDLC_BUDGET=2 bash sdlc/taskbench/run.sh   # cap per-task spend (default $4)
+```
+
+Results land in `sdlc/taskbench/results.tsv` (task / PASS|FAIL / cost_usd / run_dir). Each
+task runs in an isolated temp directory — no state leaks between tasks.
+
+### What CI does validate (no tokens)
+
+`sdlc/taskbench/validate.sh` runs in CI and checks three things without spending any tokens:
+1. **Structure** — every task directory contains all three required files.
+2. **Shellcheck** — all scripts in the tree pass `shellcheck -S error`.
+3. **Pre-fix oracle** — `setup.sh` then `check.sh` are run; `check.sh` must exit **nonzero**,
+   proving the seeded bug genuinely fails the oracle before the loop touches it (a task where
+   `check.sh` passes pre-fix is a broken benchmark case).
+
+This means CI validates that the harness is structurally sound and the bugs are real; it does
+not claim a fix-rate without running the loop.
+
+### Honest limits
+
+The fix-rate from a live run is a single-run sample: it reflects the model's behavior on these
+five tasks at that moment, with the configured budget. It is not a reproducible accuracy number
+— token sampling is stochastic, and a $4 cap may not be enough for a complex task. Run multiple
+times and look at the spread. The benchmark is a directional check that the SDLC loop can close
+bugs, not a claim about a specific pass rate.
+
 ## Methodology — what these numbers mean (and don't)
 
 **Pattern-based detection is best-effort, not a security boundary.** The decode/
@@ -217,9 +269,10 @@ leetspeak and homoglyph lookalikes before matching — so the five standard
 transforms score 100% on the corpus. A sixth, novel transform can still slip.
 
 **Corpus recall is on the corpus, not the real-world attack distribution.** 100%
-recall on 85 cases does not mean 100% real-world catch rate. The corpus is the
-fast, always-on floor. Periodic deep sweeps against a running agent endpoint
-provide complementary coverage.
+recall on 99 cases does not mean 100% real-world catch rate — as the external
+corpus (`compass redteam --external`, ~8% recall on a public set) makes plain.
+The internal corpus is the fast, always-on floor; the external run and periodic
+deep sweeps against a running agent endpoint provide complementary, honest coverage.
 
 **Precision is weighted heavily because false positives destroy trust.** A
 guardrail that blocks legitimate commands teaches users to disable it. That is
