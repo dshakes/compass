@@ -61,6 +61,11 @@ jobs:
           # To use a pay-per-use API key instead, replace the line below with:
           #   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # This job re-triggers on `synchronize` — including the Builder's own auto-fix
+          # push (actor = compass-sdlc-bot). Newer claude-code-action refuses bot-initiated
+          # runs unless told to allow them, which would stall the fix→re-review loop. The
+          # trigger is our own gated same-repo PR, so allow bots (matches sdlc-fix.yml).
+          allowed_bots: "*"
           # The App token makes the label we set below trigger sdlc-fix.yml.
           # The reviewer deliberately does NOT fall back to SDLC_BOT_TOKEN (a broad,
           # contents-write PAT) — that would defeat the least-privilege App token when
