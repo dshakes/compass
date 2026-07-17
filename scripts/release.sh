@@ -17,14 +17,17 @@ set -euo pipefail
 REPO_SLUG="dshakes/compass"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$ROOT"
 
-DRY=0 YES=0
-while [ $# -gt 0 ]; do
-  case "$1" in
-    --dry-run) DRY=1; shift ;;
-    --yes)     YES=1; shift ;;
-    *) break ;;
+DRY=0 YES=0; ARGS=()
+# Flags are recognized in ANY position (a version passed before --dry-run must NOT
+# silently become a real run). Everything non-flag is collected for the version arg.
+for a in "$@"; do
+  case "$a" in
+    --dry-run) DRY=1 ;;
+    --yes)     YES=1 ;;
+    *) ARGS+=("$a") ;;
   esac
 done
+set -- "${ARGS[@]+"${ARGS[@]}"}"
 say() { printf '\033[1;36m▶ %s\033[0m\n' "$*"; }
 # Runs its arguments directly (argv, no eval — nothing here re-parses as shell).
 do_or_show() { if [ "$DRY" = 1 ]; then printf '  [dry-run] %s\n' "$*"; else printf '  + %s\n' "$*"; "$@"; fi; }
@@ -32,6 +35,10 @@ do_or_show() { if [ "$DRY" = 1 ]; then printf '  [dry-run] %s\n' "$*"; else prin
 confirm_push() {
   [ "$DRY" = 1 ] && return 0
   [ "$YES" = 1 ] && return 0
+  if [ ! -r /dev/tty ]; then
+    echo "  no tty for confirmation — skipped ($*); re-run with --yes to push non-interactively"
+    return 1
+  fi
   printf '  push to origin: %s — proceed? [y/N] ' "$*"
   read -r reply </dev/tty || reply=""
   case "$reply" in y|Y|yes|YES) return 0 ;; *) echo "  skipped ($*)"; return 1 ;; esac

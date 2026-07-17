@@ -5,10 +5,12 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
-Prod-hardening + cross-agent enforcement — closes the gaps between what the docs promised and
-what the code did, and pushes the safety story onto ground no competitor holds: enforcement for
-*any* agent, a security scanner for the plugin ecosystem, and honesty against a corpus we didn't
-write.
+## [1.0.0] — 2026-07-16
+
+First stable release. Prod-hardening + cross-agent enforcement — closes the gaps between what the
+docs promised and what the code did, and pushes the safety story onto ground no competitor holds:
+enforcement for *any* agent, a security scanner for the plugin ecosystem, and honesty against a
+corpus we didn't write. The human merge/deploy gate remains the spine, by design.
 
 ### Added
 
@@ -62,6 +64,10 @@ write.
   default dependency-list view is unchanged), and the script now uses `mktemp` + `trap`.
 - Plugin-delivered MCP servers (`plugins/core/.mcp.json`) are now **version-pinned** to match
   `mcp/servers.json`, with a CI drift check so the supply-chain control can't miss that path.
+- **Pinned-action bumps** across active workflows *and* their `sdlc/workflows/` mirror templates
+  (kept byte-identical so `check-actions.sh` stays green): `actions/checkout` v6.0.3 → v7.0.0,
+  `actions/attest-build-provenance` v4.1.0 → v4.1.1, `openai/codex-action` and
+  `anthropics/claude-code-action` to their latest pinned SHAs.
 
 ### Fixed
 
