@@ -37,6 +37,11 @@ place. compass has a primitive for each:
 | **Persistence** | state that survives the conversation | a **state file** (`state/triage.md` / a pinned tracking issue) + [Serena memory](04-mcp.md) |
 | **Scheduling** | make it turn again, on its own | a **cloud routine** (`sdlc/routines/*.yml`) or local [`compass schedule`](11-using-compass.md) |
 
+One loop needs no schedule at all: **CI auto-fix** ([`sdlc-ci-fix.yml`](09-sdlc.md)) turns the
+moment a check suite goes red — PR failures feed the existing fix loop (round-capped), a
+default-branch failure gets one free rerun then a budget-capped `ci-fix/*` PR. The local
+no-Actions form is `compass schedule add ci-watch --daily`.
+
 Discovery sets the ceiling: surface work of no value and the other four are done beautifully in
 service of nothing. That's why discovery lives in a **skill** (knowledge made permanent), not a
 wall of instructions pasted into a schedule nobody will update.

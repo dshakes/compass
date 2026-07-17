@@ -49,7 +49,7 @@ usage: compass <command> [args]
                            behind. Deterministic, local, read-only on the repo.
   schedule add|list|remove|run <routine>
                            Local scheduled agents (cron + claude -p): dep-refresh,
-                           flaky-triage, doc-freshness, pr-babysit.
+                           flaky-triage, doc-freshness, pr-babysit, ci-watch.
   route   "<task>"         Print the cheapest-correct model tier (experimental).
   bench   [--guardrail|--router|--json]
                            Reproducible scorecard: guardrail precision/recall + router

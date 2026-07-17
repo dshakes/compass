@@ -102,6 +102,9 @@ jobs:
       - name: Agent Trace provenance (emit · attach · verify round-trip)
         run: bash scripts/test-trace.sh
 
+      - name: CI auto-fix eval (ci-watch routine + sdlc-ci-fix rails)
+        run: bash scripts/test-ci-watch.sh
+
       - name: Listener command parser (compass listen)
         run: node scripts/test-listen.mjs
 

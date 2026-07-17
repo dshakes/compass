@@ -7,7 +7,7 @@
 #   remove <routine>
 #   run <routine> [DIR]
 #
-# Routines: dep-refresh  flaky-triage  doc-freshness  pr-babysit
+# Routines: dep-refresh  flaky-triage  doc-freshness  pr-babysit  ci-watch
 #
 # Crontab block is delimited by:
 #   # >>> compass schedule >>>
@@ -30,10 +30,15 @@ BLOCK_CLOSE="# <<< compass schedule <<<"
 # ---------------------------------------------------------------------------
 # Valid routines (space-separated; validated by validate_routine)
 # ---------------------------------------------------------------------------
-VALID_ROUTINES="dep-refresh flaky-triage doc-freshness pr-babysit"
+VALID_ROUTINES="dep-refresh flaky-triage doc-freshness pr-babysit ci-watch"
 
 # Allowed tools for each routine's claude invocation (read + git + build/test only).
 ALLOWED_TOOLS="Read,Grep,Glob,Bash(git log:*),Bash(git diff:*),Bash(git status:*),Bash(git add:*),Bash(git commit:*),Bash(go build:*),Bash(go test:*),Bash(go vet:*),Bash(cargo build:*),Bash(cargo test:*),Bash(npm:*),Bash(pnpm:*),Bash(npx tsc:*),Bash(pytest:*),Bash(ruff:*),Bash(make:*),Bash(gh run list:*),Bash(gh run view:*),Bash(gh issue list:*),Bash(gh issue view:*),Bash(gh issue create:*),Bash(gh issue comment:*),Bash(gh pr list:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(gh api:*)"
+
+# ci-watch alone gets edit + branch + PR-opening tools — it exists to FIX failures.
+# ponytail: allowedTools can't scope a push to non-default branches; the prompt's hard
+# rules + repo branch protection are the guard on the default branch.
+CI_WATCH_EXTRA_TOOLS=",Edit,Write,Bash(git checkout:*),Bash(git switch:*),Bash(git push:*),Bash(gh pr checkout:*),Bash(gh pr create:*)"
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -49,7 +54,7 @@ Usage:
   compass schedule run <routine> [DIR]
   compass schedule -h|--help
 
-Routines: dep-refresh  flaky-triage  doc-freshness  pr-babysit
+Routines: dep-refresh  flaky-triage  doc-freshness  pr-babysit  ci-watch
 
 Schedule flags:
   --daily             0 6 * * *   (daily at 06:00)
@@ -263,6 +268,8 @@ cmd_run() {
   # instead of aborting under set -e.
   local maxturns="${COMPASS_ROUTINE_MAX_TURNS:-30}" budget="${COMPASS_ROUTINE_BUDGET:-1.00}"
   local tmo="${COMPASS_ROUTINE_TIMEOUT:-30m}" rc=0 out
+  local tools="$ALLOWED_TOOLS"
+  [ "$routine" = "ci-watch" ] && tools="${ALLOWED_TOOLS}${CI_WATCH_EXTRA_TOOLS}"
   out="$(
     cd "$dir" || exit 1
     if command -v timeout >/dev/null 2>&1; then to() { timeout "$tmo" "$@"; }; else to() { "$@"; }; fi
@@ -272,7 +279,7 @@ cmd_run() {
       --max-turns "$maxturns" \
       --max-budget-usd "$budget" \
       --output-format json \
-      --allowedTools "$ALLOWED_TOOLS"
+      --allowedTools "$tools"
   )" || rc=$?
   [ "$rc" -ne 0 ] && printf 'compass-schedule: claude exited %s (turn/budget cap, timeout, or error) — recording partial spend\n' "$rc" >&2
 

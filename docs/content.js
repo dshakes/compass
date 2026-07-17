@@ -235,6 +235,8 @@ Keep discovery and judgment in the model; keep persistence, de-dup, and the hard
 
 <div class="cal tip"><span class="h">The pattern under all of it</span> Anything deterministic logic can solve never goes to the model. Discovery and judgment stay in the model; loops, de-dup, and gates stay in scripts.</div>
 
+<div class="cal"><span class="h">A loop that needs no schedule</span> <b>CI auto-fix</b> turns the moment a check suite goes red: PR failures feed the round-capped fix loop; a red default branch gets one free rerun, then a <code>ci-fix/*</code> PR. Local form: <code>compass schedule add ci-watch --daily</code>. Details in <a href="#09-sdlc">Autonomous SDLC</a>.</div>
+
 > The why behind each move: [Loop engineering](#loop-engineering).`,
 
 "09-sdlc": `# Autonomous SDLC
@@ -259,6 +261,7 @@ issue → Planner → Builder → [PR] → Reviewer ⇄ Builder (auto-fix loop)
 <div class="feats">
 <div class="feat"><span class="e">👥</span><b>Maker ≠ checker</b><span>Claude builds; a second tool (Codex) audits. An independent opinion, not the author grading itself.</span></div>
 <div class="feat"><span class="e">🔁</span><b>Round-capped auto-fix</b><span>The reviewer's <em>Blocking</em> findings are fixed and re-reviewed up to a few rounds, then handed to a human if still red.</span></div>
+<div class="feat"><span class="e">🩺</span><b>CI auto-fix</b><span>No CI failure goes unhandled: a red check suite feeds the same fix loop on the PR; a red default branch gets one free rerun, then a budget-capped <code>ci-fix/*</code> PR. Disable with <code>SDLC_CI_FIX=off</code>.</span></div>
 <div class="feat"><span class="e">🧾</span><b>Auditable handoffs</b><span>Agents coordinate through the PR (labels + comments) and a shared run-dir — every step is a reviewable artifact.</span></div>
 <div class="feat"><span class="e">🚦</span><b>Gated at every push</b><span>Security and tests run on every push; nothing advances on red.</span></div>
 </div>

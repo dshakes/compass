@@ -179,6 +179,7 @@ Thirteen workflows, all in `.github/workflows/` after `setup.sh`:
 | `sdlc-classify.yml` | PR open/reopen | **Classifier** (Claude · haiku) | Labels the diff `domain:*` so routed reviewers can gate; cheap |
 | `sdlc-design-review.yml` | `domain:ui` label | **Design reviewer** (Claude · sonnet) | Routed UI design pass; advisory comment |
 | `sdlc-fix.yml` | `agent:needs-fix` label | **Builder** (Claude · sonnet) | Fixes on branch + pushes; enforces round cap |
+| `sdlc-ci-fix.yml` | any check suite fails | **CI medic** (gh glue + Claude · sonnet) | PR failure → logs commented + `agent:needs-fix` (the fix loop takes over); main failure → one free rerun, then a `ci-fix/*` PR. Kill switch `SDLC_CI_FIX=off` |
 | `sdlc-audit.yml` | PR open/reopen + `agent:audit` label | **Auditor** (Codex · gpt-5.5) | Independent second opinion; advisory |
 | `sdlc-security.yml` | PR open/reopen | **Security** (Claude · opus) | Deep security pass; advisory |
 | `sdlc-qa.yml` | every PR push | **QA** (auto-detect stack) | Runs tests; required check |
@@ -188,6 +189,22 @@ Thirteen workflows, all in `.github/workflows/` after `setup.sh`:
 | `sdlc-release.yml` | `agent:release` label on PR | **Releaser** (Claude · sonnet) | CHANGELOG + version bump on branch; never tags/publishes |
 | `sdlc-control.yml` | `/revise` `/hold` `/resume` `/approve` PR comment | **you** (human-in-the-loop) | Steer the loop from the PR; keeps a sticky status panel current |
 | `sdlc-autoapprove.yml` | `agent:reviewed-clean` label | **Auto-approve** (policy-gated) | Marks `agent:approve-eligible` if an allowlist holds; never approves or merges |
+
+### CI auto-fix (`sdlc-ci-fix.yml`) — no CI failure goes unhandled
+
+Fires on any completed-red check suite (on by default; disable per-repo with the
+variable `SDLC_CI_FIX=off`). Two paths:
+
+- **PR branch red** → deterministic gh glue posts the failing-step log as a PR comment
+  and (re)applies `agent:needs-fix` — the existing fix loop above does the rest,
+  including the `SDLC_MAX_FIX_ROUNDS` round cap → `sdlc:needs-human` escape hatch.
+- **Default branch red** → one free `gh run rerun --failed` (flakes don't cost model
+  budget), then a bounded CI-medic agent (sonnet, $5/30-turn cap) opens a `ci-fix/*`
+  PR — which then converges through the normal PR loop. One open `ci-fix/*` PR at a
+  time; `sdlc ·`-named workflows are ignored so the fixer never chases itself.
+
+Locally (no Actions needed), the same job runs as a scheduled routine:
+`compass schedule add ci-watch --daily`.
 
 Setup (one command):
 ```bash
