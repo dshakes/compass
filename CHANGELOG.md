@@ -5,6 +5,21 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+
+- **CI auto-fix** — "no CI failure goes unhandled," shipped both ways:
+  - `sdlc/workflows/sdlc-ci-fix.yml` (cloud) — fires on any red check suite. PR failure →
+    failing-step log commented + `agent:needs-fix`, so the existing round-capped fix loop
+    converges it; default-branch failure → one free `gh run rerun --failed` (flake guard),
+    then a budget-capped CI medic ($5/30 turns, sonnet) opens a `ci-fix/*` PR. Same-repo
+    PRs only, `sdlc ·` workflows ignored (no self-chasing), one trigger per SHA, kill
+    switch `SDLC_CI_FIX=off`. Never merges.
+  - `compass schedule add ci-watch` (local, no Actions) — a cron routine that reads recent
+    failures, filters flakes to the flaky-tests issue, fixes PR branches in place, and
+    opens `ci-fix/*` PRs for main; push/PR tools are widened for this routine only.
+  - Gated by a new CI eval (`scripts/test-ci-watch.sh`): registration, prompt safety rails
+    (never merge / never push default), tool-widening isolation, workflow rails + mirror drift.
+
 ## [1.0.0] — 2026-07-16
 
 First stable release. Prod-hardening + cross-agent enforcement — closes the gaps between what the

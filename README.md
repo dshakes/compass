@@ -143,6 +143,7 @@ Autonomy here isn't one big magic button — it's the *same closed loop* applied
 |---|---|---|---|
 | 🔁 | **The task loop** | generate → test → critique → fix → repeat — one change driven to green | when tests + review pass |
 | 🔎 | **The review loop** | review → auto-fix the Blocking findings → re-review, round-capped (×3) | hands off to a human if still red |
+| 🩺 | **The CI-fix loop** | any check suite goes red → failure log + auto-fix on the PR; main goes red → one free rerun, then a `ci-fix/*` PR | round cap → a human; never merges |
 | 🛰️ | **The fleet loop** | the whole pipeline, scheduled across *every repo you own*, overnight, test-gated | a PR per repo, **approve from your phone** |
 | 👥 | **The workflow loops** | parallel agents that fan out, fact-check each other, and converge | one synthesized answer |
 
@@ -208,6 +209,7 @@ Everything below is **on after one install** or a single opt-in — the autonomo
 | | Capability | One line | Deep dive |
 |---|---|---|---|
 | 🔁 | **Autonomous SDLC** | the review → security → tests → cross-audit → **auto-fix → re-review** loop; you merge | [09-sdlc](docs/09-sdlc.md) |
+| 🩺 | **CI auto-fix** | no CI failure goes unhandled: red PR checks feed the fix loop; red main gets one free rerun, then a `ci-fix/*` PR | [09-sdlc](docs/09-sdlc.md) |
 | 🔄 | **Loop engineering** | the five moves wired up: `morning-triage` discovery · an acting/skeptic evaluator · `compass digest` · per-day budget cap | [20-loops](docs/20-loops.md) |
 | 🛰️ | **The fleet** | the loop, scheduled across *all* your repos through a test gate; approve from your phone | [14-fleet](docs/14-fleet.md) |
 | 👥 | **The crew + workflows** | cost-tiered expert subagents · slash-commands · dynamic workflows that fact-check each other | [agents roster](docs/agents-roster.md) · [12](docs/12-every-agent.md) · [13](docs/13-workflows.md) |
