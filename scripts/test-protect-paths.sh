@@ -133,6 +133,8 @@ secret_blocked '/home/u/.aws/credentials'
 secret_blocked '/home/u/.ssh/id_ed25519'
 secret_blocked '/home/u/.netrc'
 secret_blocked '/repo/.htpasswd'
+secret_blocked '/repo/src/main/resources/application.properties'      # Spring (was a hole)
+secret_blocked '/repo/src/main/resources/application-prod.properties' # Spring profile (was a hole)
 secret_allowed '/repo/src/main.go'
 secret_allowed '/repo/README.md'
 secret_allowed '/repo/env.example'

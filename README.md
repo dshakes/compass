@@ -69,7 +69,7 @@ Every AI-agent config claims "safe" and "cheap." compass is the one that hands y
 **🛡 Guardrails with a score.** Catastrophic commands and secret writes are blocked *before they run* — and the policy is eval-gated in CI, not asserted.
 
 ```bash
-compass bench     # → guardrail 100% precision/recall (61-case corpus), router 96.9% — in CI
+compass bench     # → guardrail 100% precision/recall (61-case bench corpus; a separate 147-case bypass corpus gates CI), router 96.9%
 # then ask the agent to `rm -rf /` or write a .env → denied; `rm -rf ./build` → allowed
 ```
 
