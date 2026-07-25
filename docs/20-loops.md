@@ -32,7 +32,7 @@ place. compass has a primitive for each:
 | Move | What it does | compass primitive |
 |---|---|---|
 | **Discovery** | find this turn's work (don't be handed it) | the [`morning-triage`](../claude/skills/morning-triage/SKILL.md) skill + routine — reads failed CI · new issues · merged commits |
-| **Handoff** | hand each task off, isolated | a git **worktree** per task ([dynamic workflows](13-workflows.md) take `isolation:'worktree'`; the SDLC loop uses a branch/PR) |
+| **Handoff** | hand each task off, isolated | a git **worktree** per task ([dynamic workflows](13-workflows.md) take `isolation:'worktree'`; the SDLC loop uses a branch/PR); once a PR exists, the [`pr-shepherd`](../claude/skills/pr-shepherd/SKILL.md) skill carries it to the merge gate |
 | **Verification** | the move that can say **no** | an **evaluator subagent** ([code-reviewer](12-every-agent.md) / [reviewer role](09-sdlc.md)) — assumes broken, runs it |
 | **Persistence** | state that survives the conversation | a **state file** (`state/triage.md` / a pinned tracking issue) + [Serena memory](04-mcp.md) |
 | **Scheduling** | make it turn again, on its own | a **cloud routine** (`sdlc/routines/*.yml`) or local [`compass schedule`](11-using-compass.md) |

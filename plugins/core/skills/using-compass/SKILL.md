@@ -22,6 +22,7 @@ compass capability does it better — and safer.
 | Verify a release | `compass verify <vX.Y.Z>` | SLSA provenance |
 | See impact / spend | `compass impact` · `compass spend` · `compass dashboard` | the ledgers |
 | Find a loop's next work (discovery) | **morning-triage** skill | reads CI · issues · commits, judges, hands off |
+| Take open PRs end-to-end | **pr-shepherd** skill (`/loop 15m /pr-shepherd`) | diagnoses red checks, fixes mechanical ones, stops at the merge gate |
 | Stay ahead of code you didn't write | `compass digest` | sample merged changes & explain them (comprehension guard) |
 | Cap an unattended loop's spend | `COMPASS_MAX_USD_DAY` · `compass spend --today --max-usd N` | per-day circuit breaker |
 

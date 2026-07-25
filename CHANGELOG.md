@@ -7,6 +7,18 @@ All notable changes to this project are documented here. Format loosely follows
 
 ### Added
 
+- **`pr-shepherd` skill** — take every open PR end-to-end: diagnose red checks from the
+  actual logs, classify (real defect / mechanical / environmental), fix mechanical failures
+  on the PR branch (verified locally before pushing, three-strikes cap), and stop at the
+  merge gate — merged only with session merge authority, otherwise ready-to-merge.
+  Pairs with `/loop` for an interval loop (`/loop 15m /pr-shepherd`).
+
+### Fixed
+
+- **sdlc agent jobs no longer fail red on Dependabot PRs** — Dependabot-actor runs get
+  Dependabot's (empty) secret store, so classify/review/security/audit could never auth.
+  They now skip for that actor; a human push to the same branch restores them.
+
 - **CI auto-fix** — "no CI failure goes unhandled," shipped both ways:
   - `sdlc/workflows/sdlc-ci-fix.yml` (cloud) — fires on any red check suite. PR failure →
     failing-step log commented + `agent:needs-fix`, so the existing round-capped fix loop

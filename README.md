@@ -210,7 +210,7 @@ Everything below is **on after one install** or a single opt-in — the autonomo
 |---|---|---|---|
 | 🔁 | **Autonomous SDLC** | the review → security → tests → cross-audit → **auto-fix → re-review** loop; you merge | [09-sdlc](docs/09-sdlc.md) |
 | 🩺 | **CI auto-fix** | no CI failure goes unhandled: red PR checks feed the fix loop; red main gets one free rerun, then a `ci-fix/*` PR | [09-sdlc](docs/09-sdlc.md) |
-| 🔄 | **Loop engineering** | the five moves wired up: `morning-triage` discovery · an acting/skeptic evaluator · `compass digest` · per-day budget cap | [20-loops](docs/20-loops.md) |
+| 🔄 | **Loop engineering** | the five moves wired up: `morning-triage` discovery · `pr-shepherd` PR handoff → merge gate · an acting/skeptic evaluator · `compass digest` · per-day budget cap | [20-loops](docs/20-loops.md) |
 | 🛰️ | **The fleet** | the loop, scheduled across *all* your repos through a test gate; approve from your phone | [14-fleet](docs/14-fleet.md) |
 | 👥 | **The crew + workflows** | cost-tiered expert subagents · slash-commands · dynamic workflows that fact-check each other | [agents roster](docs/agents-roster.md) · [12](docs/12-every-agent.md) · [13](docs/13-workflows.md) |
 | 🛡 | **Guardrails & scanning** | a hook layer that blocks disasters, catches secrets (write-hook + `compass scan`), auto-formats, keeps a JSONL audit log | [16-hardening](docs/16-hardening-and-frontier.md) |
