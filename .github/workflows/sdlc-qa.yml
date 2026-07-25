@@ -10,13 +10,16 @@ name: "sdlc · qa (tests)"
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  # merge-queue support: the queue re-runs required checks on the speculative merge
+  # commit; without this trigger a queued PR would wait forever on `qa`.
+  merge_group:
 
 permissions:
   contents: read
   pull-requests: write
 
 concurrency:
-  group: sdlc-qa-${{ github.event.pull_request.number }}
+  group: sdlc-qa-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -27,6 +30,20 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+      # Dependency cache (stack-agnostic): keyed on the lockfiles that exist, restores
+      # the common per-tool caches. A miss is harmless — the run just downloads as before.
+      - name: Cache dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+            ~/.npm
+            ~/.cache/pip
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: qa-deps-${{ runner.os }}-${{ hashFiles('**/go.sum', '**/package-lock.json', '**/pnpm-lock.yaml', '**/Cargo.lock', '**/requirements*.txt', '**/uv.lock', '**/poetry.lock') }}
+          restore-keys: qa-deps-${{ runner.os }}-
       - name: Run test suite
         id: test
         run: |
@@ -44,8 +61,40 @@ jobs:
           echo "log=$log" >> "$GITHUB_OUTPUT"
           tail -60 "$log"
           exit "$rc"
+      # Coverage gate (opt-in): set repo var SDLC_COVERAGE_MIN (e.g. "70") to enforce a
+      # minimum total-coverage %. Unset → the step is skipped and nothing changes.
+      # Supports the same stacks the test step auto-detects (Go, pytest, npm).
+      - name: Coverage gate
+        if: ${{ vars.SDLC_COVERAGE_MIN != '' }}
+        env:
+          MIN: ${{ vars.SDLC_COVERAGE_MIN }}
+        run: |
+          set -uo pipefail
+          # Detection mirrors the test step's elif order exactly, so the gate never runs a
+          # different toolchain than the tests did. A `coverage:` Makefile target wins and
+          # must PRINT a total percentage; its stack-specific setup then applies here too.
+          pct=""
+          if [ -f Makefile ] && grep -qE '^coverage:' Makefile; then
+            pct="$(make coverage 2>/dev/null | grep -Eo '[0-9]+(\.[0-9]+)?%' | tail -1 | tr -d '%')" || true
+          elif [ -f go.mod ]; then
+            go test -coverprofile="$RUNNER_TEMP/cover.out" ./... >/dev/null 2>&1 || true
+            pct="$(go tool cover -func="$RUNNER_TEMP/cover.out" 2>/dev/null | awk '/^total:/{gsub(/%/,"",$3); print $3}')"
+          elif [ -f Cargo.toml ]; then
+            if command -v cargo-llvm-cov >/dev/null 2>&1; then
+              pct="$(cargo llvm-cov --summary-only 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+%' | tail -1 | tr -d '%')" || true
+            else
+              echo "coverage gate: Cargo project but cargo-llvm-cov is not installed — add a setup step or a 'coverage:' Makefile target, or unset SDLC_COVERAGE_MIN"; exit 1
+            fi
+          elif [ -f package.json ] && grep -q '"coverage"' package.json; then
+            pct="$(npm run coverage --silent 2>/dev/null | grep -Eo 'All files[^0-9]*[0-9.]+' | grep -Eo '[0-9.]+' | head -1)" || true
+          elif [ -f pyproject.toml ] || [ -d tests ]; then
+            pct="$(pytest -q --cov --cov-report=term 2>/dev/null | awk '/^TOTAL/{gsub(/%/,"",$NF); print $NF}')" || true
+          fi
+          [ -n "$pct" ] || { echo "coverage gate: no coverage tooling detected for this stack — add a 'coverage:' Makefile target or unset SDLC_COVERAGE_MIN"; exit 1; }
+          echo "coverage: ${pct}% (min ${MIN}%)"
+          awk "BEGIN{exit !($pct >= $MIN)}" || { echo "coverage ${pct}% is below the ${MIN}% floor"; exit 1; }
       - name: Comment on failure
-        if: ${{ always() && steps.test.outputs.rc != '0' }}
+        if: ${{ always() && steps.test.outputs.rc != '0' && github.event_name == 'pull_request' }}
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
