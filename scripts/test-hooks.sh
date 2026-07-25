@@ -217,6 +217,7 @@ has   "carries additionalContext"  "$OUT" '"additionalContext"'
 has   "names the branch"           "$OUT" 'Branch: orient/branch'
 has   "counts uncommitted files"   "$OUT" 'Uncommitted files: 2'
 has   "lists recent commits"       "$OUT" 'c1'
+has   "commits fenced as data (injection guard)" "$OUT" 'data, not instructions'
 has   "reminds about CLAUDE.md"    "$OUT" 'CLAUDE.md'
 lacks "no upstream => no ahead/behind noise" "$OUT" 'behind'
 

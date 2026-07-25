@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # merge-queue support: required checks must re-run on the queue's speculative merge commit
+  merge_group:
   workflow_dispatch:
 
 permissions:

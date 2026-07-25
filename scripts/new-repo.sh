@@ -35,6 +35,11 @@ fi
 if [ -L AGENTS.md ] || [ -e AGENTS.md ]; then echo "AGENTS.md exists — left as-is"
 else ln -s CLAUDE.md AGENTS.md && echo "linked AGENTS.md -> CLAUDE.md"; fi
 
+# 2b) GEMINI.md -> CLAUDE.md symlink (Gemini CLI reads GEMINI.md by default; same
+# one-source rule and the same dangling-symlink-safe check as AGENTS.md above).
+if [ -L GEMINI.md ] || [ -e GEMINI.md ]; then echo "GEMINI.md exists — left as-is"
+else ln -s CLAUDE.md GEMINI.md && echo "linked GEMINI.md -> CLAUDE.md"; fi
+
 # 3) Optional team plugin pin (committed project settings).
 if [ "$TEAM" = 1 ]; then
   mkdir -p .claude

@@ -94,6 +94,32 @@ eq "budget 12 → 3.00 per step"        "$(step_budget 12)" "3.00"
 eq "budget 1 → 0.25 per step"         "$(step_budget 1)"  "0.25"
 eq "budget 3 → 0.75 per step"         "$(step_budget 3)"  "0.75"
 
+# ── 1b · Auto-approve eligibility policy (mirror of sdlc-autoapprove.yml) ────────
+# The allowlist's pure decisions: trusted author, fail-closed paths, path allowlist,
+# size cap, tests-present. Each mirrors the exact case/test in the workflow.
+aa_author()  { case ",$1," in *",$2,"*) echo trusted ;; *) echo deny ;; esac; }
+aa_path()    { # args: <file> <allow-csv> → "deny-closed" | "allow" | "deny-scope"
+  case "$1" in .github/*|*/secrets/*|*.tf|*Formula/*|*/migrations/*) echo deny-closed; return ;; esac
+  local ok=0 pat; for pat in ${2//,/ }; do case "$1" in *"$pat"*) ok=1 ;; esac; done
+  [ "$ok" = 1 ] && echo allow || echo deny-scope
+}
+aa_size()    { [ "$(($1 + $2))" -le "$3" ] && echo ok || echo deny; }
+aa_tests()   { # args: <src-count> <tests-present 0|1> → eligible/deny
+  [ "$1" -eq 0 ] || [ "$2" = 1 ] && echo ok || echo deny
+}
+echo "auto-approve policy:"
+eq "bot author in trusted set"          "$(aa_author 'claude[bot],compass-agent' 'claude[bot]')" "trusted"
+eq "human author denied"                "$(aa_author 'claude[bot],compass-agent' 'shakes')"      "deny"
+eq "workflow file is fail-closed"       "$(aa_path '.github/workflows/x.yml' 'docs/,.md')"       "deny-closed"
+eq "terraform is fail-closed"           "$(aa_path 'infra/prod.tf' 'docs/,.md,.tf')"             "deny-closed"
+eq "docs path allowed"                  "$(aa_path 'docs/guide.md' 'docs/,.md')"                 "allow"
+eq "source path outside scope denied"   "$(aa_path 'src/main.go' 'docs/,.md')"                   "deny-scope"
+eq "within size cap"                    "$(aa_size 80 40 150)"  "ok"
+eq "over size cap"                      "$(aa_size 120 40 150)" "deny"
+eq "docs-only diff needs no tests"      "$(aa_tests 0 0)" "ok"
+eq "source diff with tests ok"          "$(aa_tests 3 1)" "ok"
+eq "source diff without tests denied"   "$(aa_tests 3 0)" "deny"
+
 # ── 6b · Cumulative budget ceiling (mirror of orchestrate.sh claude_step guard) ──
 # BUDGET is a hard total: spent >= BUDGET halts (exit 3); a step's cap is
 # min(STEP_BUDGET, BUDGET - spent) so the last step can't overshoot the total.
@@ -251,6 +277,18 @@ src_has "goal verdict defaults to doubt (UNMET)"    'MET) echo MET ;; *) echo UN
 src_has "off by default (no goal → MET, no call)"   '[ -n "$GOAL" ] || { echo MET; return; }'
 src_has "converge gates on the goal verdict"        '[ "$GOAL_V" != MET ]'
 src_has "goal implies the converge loop"            '[ -n "$GOAL" ]; then'
+
+# Anchors for OTHER copies of duplicated logic (the audit's DRIFT finding): the
+# selfhosted runner and the auto-approve policy each carry the same expressions.
+SDLC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+file_has() { if grep -Fq -- "$3" "$SDLC_DIR/$2"; then ok "$1"; else bad "$1" "absent from $2" "$3"; fi; }
+echo "cross-copy anchors (selfhosted + auto-approve carry the same logic):"
+file_has "selfhosted fix mirrors the round scan"       "selfhosted/sdlc-fix.yml"      'sdlc:round-$n'
+file_has "selfhosted fix mirrors the round cap"        "selfhosted/sdlc-fix.yml"      'SDLC_MAX_FIX_ROUNDS || 3'
+file_has "workflow fix mirrors the round scan"         "workflows/sdlc-fix.yml"       'sdlc:round-$n'
+file_has "autoapprove fail-closed globs match mirror"  "workflows/sdlc-autoapprove.yml" '.github/*|*/secrets/*|*.tf|*Formula/*|*/migrations/*'
+file_has "autoapprove author check matches mirror"     "workflows/sdlc-autoapprove.yml" ',$TRUSTED_AUTHORS,'
+file_has "autoapprove never approves or merges"        "workflows/sdlc-autoapprove.yml" 'NEVER `gh pr review --approve`; NEVER merge'
 
 echo
 printf 'selftest: %d passed, %d failed\n' "$PASS" "$FAIL"
