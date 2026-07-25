@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
-# setup-mcp.sh — register the curated MCP servers in BOTH Claude Code and Codex
-# from one manifest (mcp/servers.json). Idempotent, conflict-aware, secret-free.
+# setup-mcp.sh — register the curated MCP servers in Claude Code, Codex, Gemini CLI,
+# and Cursor from one manifest (mcp/servers.json). Idempotent, conflict-aware, secret-free.
 #
-#   ./scripts/setup-mcp.sh            # register autoRegister servers in both tools
+#   ./scripts/setup-mcp.sh            # register autoRegister servers in all tools
 #   ./scripts/setup-mcp.sh --dry-run  # show what would happen
 #
 # - Claude: `claude mcp add-json <name> '<json>' --scope user` (skips if present).
 # - Codex:  appends [mcp_servers.<name>] to ~/.codex/config.toml under a marker
 #           (skips if the block already exists, and skips any server whose name
 #           collides with an existing Codex plugin).
+# - Gemini CLI / Cursor: jq-merges mcpServers into ~/.gemini/settings.json and
+#           ~/.cursor/mcp.json (user-defined entries always win; never clobbers).
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MANIFEST="$REPO/mcp/servers.json"
@@ -75,6 +77,38 @@ else
     if [ "$DRY" = 1 ]; then echo "  [dry-run] append $added server(s) to $CODEX"; else mkdir -p "$(dirname "$CODEX")"; printf '\n%s\n' "$block" >>"$CODEX"; say "appended $added server(s) to ~/.codex/config.toml"; fi
   fi
 fi
+
+# ---- Gemini CLI + Cursor (same JSON shape: {"mcpServers": {name: {command, args, env}}}) ----
+# Merge, never clobber: manifest servers are added only where the name is absent,
+# so user-defined entries always win.
+merge_mcp_json() {
+  local label="$1" file="$2"
+  printf '\n\033[1m%s\033[0m\n' "$label"
+  if [ -s "$file" ] && ! jq empty "$file" >/dev/null 2>&1; then
+    say "skip: $file is not valid JSON — fix it by hand, then re-run"
+    return
+  fi
+  local want
+  want="$(jq -c '[.servers | to_entries[] | select(.value.autoRegister==true)]
+                 | map({key: .key, value: {command: .value.command, args: .value.args, env: (.value.env // {})}})
+                 | from_entries' "$MANIFEST")"
+  local have="{}"
+  [ -s "$file" ] && have="$(jq -c '.mcpServers // {}' "$file")"
+  for name in $names; do
+    if jq -e --arg n "$name" 'has($n)' <<<"$have" >/dev/null; then say "already registered: $name"; else say "queued: $name"; fi
+  done
+  if [ "$DRY" = 1 ]; then
+    echo "  [dry-run] merge into $file (existing entries preserved)"
+  else
+    mkdir -p "$(dirname "$file")"
+    [ -s "$file" ] || printf '{}\n' >"$file"
+    _tmp="$(mktemp)"
+    jq --argjson add "$want" '.mcpServers = ($add + (.mcpServers // {}))' "$file" >"$_tmp" && mv "$_tmp" "$file"
+    say "merged into ${file/#$HOME/~}"
+  fi
+}
+merge_mcp_json "Gemini CLI" "$HOME/.gemini/settings.json"
+merge_mcp_json "Cursor" "$HOME/.cursor/mcp.json"
 
 printf '\n\033[1mDone.\033[0m Verify with:  claude mcp list\n'
 say "Opt-in servers (github, postgres) — see docs/04-mcp.md for exact commands."
