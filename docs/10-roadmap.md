@@ -184,9 +184,9 @@ purpose: a hard block on every untested edit fights the natural write-code-then-
 Windsurf, Copilot, Amp, Devin; Gemini CLI reads `GEMINI.md` or `AGENTS.md` via `context.fileName`.
 - **Shipped:** `./install.sh --gemini` (one manual → Gemini CLI); per-repo `AGENTS.md` already
   feeds Cursor/Windsurf/Copilot; MCP manifest is cross-tool. See [`docs/12-every-agent.md`](12-every-agent.md).
-- **Next:** auto-register the MCP manifest into Gemini CLI / Cursor (`scripts/setup-mcp.sh`);
-  per-repo `GEMINI.md` symlink in `new-repo.sh`; a Gemini-driven cloud SDLC agent (`gemini -p`)
-  as a third cross-model auditor. 🔵
+- **Shipped since (2026-07):** MCP auto-register into Gemini CLI / Cursor (`scripts/setup-mcp.sh`);
+  per-repo `GEMINI.md` symlink in `new-repo.sh`; `sdlc-audit-gemini.yml` — a Gemini-driven third
+  cross-model auditor (green no-op until a `GEMINI_API_KEY` secret exists). 🟢
 
 ### 10. Cost-effective, low-latency SDLC 🟢
 The loop is already built for this: checks fire **in parallel** on a PR (not sequential),
@@ -203,16 +203,18 @@ reviewers only where they apply, and **round caps** bound spend.
   floor, so `SDLC_AUTOROUTE` is a checked claim. **Prompt caching** is documented + structurally
   exploited (stable system prefixes, byte-identical converge-loop prompts) in
   [`docs/02`](02-cost-and-models.md).
-- **Next:** diff-size-gated model selection (haiku review for ≤N-line diffs); GitHub Actions
-  dependency caching in `sdlc-qa.yml`; **test-impact selection** (run only tests affected by the
-  diff) for low-latency QA; a **first-class smart router** (cross-provider, cost-aware) and a
-  rolling spend dashboard; optional merge-queue. 🔵
+- **Shipped since (2026-07):** dependency caching in `sdlc-qa.yml` (lockfile-keyed); merge-queue
+  support (`merge_group` triggers on the required checks + a deterministic `review` pass-through —
+  activating the queue itself is a repo ruleset switch).
+- **Next:** a **first-class smart router** (cross-provider, cost-aware) and a rolling spend
+  dashboard. 🔵
 
 ### 11. More governed, more tested 🟢
 - **Shipped:** required status checks (`review` + `qa`), ADR-gated trust boundaries, self-tests
   (`selftest.sh` + `compass-memory` tests) in CI, a security-auditor pass on load-bearing code.
-- **Next:** an optional **dependency-audit / SBOM** step and a **coverage gate** in the QA
-  workflow; signed commits from the Builder; a periodic `security-review` routine. 🔵
+- **Shipped since (2026-07):** the **coverage gate** in `sdlc-qa.yml` (opt-in via repo var
+  `SDLC_COVERAGE_MIN`, mirrors the test-runner's stack detection). SBOM, signed commits
+  (`SDLC_SIGN=1`), and the `security-review` routine had already landed. 🟢
 
 ---
 
@@ -232,7 +234,10 @@ orchestration-level token budget that tracks spend across all subagents and hard
 stops the fan-out when exceeded.
 **Maps to:** ASI07 (insecure inter-agent communication) + ASI08 (cascading
 failures) in the OWASP Agentic Top-10.
-**Status:** not built; design phase. Requires the agent-team primitive to stabilise. 🟡
+**Status:** orchestrator half SHIPPED (2026-07): inter-step injection quarantine in
+`orchestrate.sh` (existing detectors, findings TSV, `SDLC_INJECTION_STRICT=1` halt) + the
+cumulative run-level budget ceiling. The inter-agent bus for agent-team fan-outs still
+waits on the agent-team primitive stabilising. 🟡
 
 ### 13. Eval-driven routing 🟡  *(feed scored eval outcomes back into routing weights)*
 The router currently scores on a fixed labeled set. Each scored eval run — from
@@ -243,7 +248,10 @@ says" and "what the live workload rewards."
 **Design.** A lightweight feedback record (task description, assigned tier, outcome,
 cost) written by `orchestrate.sh` → periodic roll-up by `compass policy-synth` →
 proposed weight update to `router/spec.yml` for human review and CI re-gate.
-**Status:** designed, not built; depends on structured post-run cost records. 🟡
+**Status:** SHIPPED (2026-07): per-run feedback records (`routing-feedback.tsv`) +
+`compass policy-synth --routing` proposal roll-up (never edits the spec; the route-eval
+CI floor must still pass before a human applies it). Note the router spec lives at
+`router/router.json`. 🟢
 
 ### 14. Per-task/per-PR hard budget caps 🟢  *(wired into the autonomous loop)*
 Round caps exist today. Hard token/spend caps are documented but not wired into
@@ -251,7 +259,8 @@ the autonomous convergence loop as a first-class exit condition — a long-runni
 run can exceed intent. **Design.** Add a `SDLC_BUDGET_USD` env to `orchestrate.sh`
 that reads the running cost from the per-step `total_cost_usd` field and halts
 (with a summary PR comment) when the cap is reached, before any more turns.
-**Status:** primitive is available (cost tracking exists); wiring is the work. 🟢
+**Status:** SHIPPED (2026-07): `SDLC_BUDGET` is a hard cumulative ceiling — the run halts
+(exit 3) at the total and each step is capped at min(per-step, remaining); selftest-mirrored. 🟢
 
 ### 15. Agent identity / attestation 🔵  *(SPIFFE-style identity for SDLC roles)*
 Today there is no cryptographic assertion of *which* agent produced a given output.
@@ -261,8 +270,9 @@ QA) carries a short-lived, verifiable identity certificate — so a downstream g
 can verify "this commit was authored by the Builder role" rather than trusting the
 commit author field.
 **Maps to:** ASI03 (agent identity & privilege abuse) in the OWASP Agentic Top-10.
-**Status:** design only; requires external identity infrastructure. ADR required
-before building. 🔵
+**Status:** design only; requires external identity infrastructure. The required ADR
+exists — [ADR-0007](adr/0007-agent-identity-attestation.md) (Proposed), with an explicit
+not-building-until trigger. 🔵
 
 ### 16. Provenance — signed Agent Trace records 🟡  *(landing now)*
 `compass trace` is being implemented in a parallel branch. It will produce

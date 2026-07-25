@@ -7,6 +7,29 @@ All notable changes to this project are documented here. Format loosely follows
 
 ### Added
 
+- **Gemini third cloud auditor** — `sdlc-audit-gemini.yml`: cross-model audit #3 (Claude
+  review · Codex audit · Gemini audit); green no-op until a `GEMINI_API_KEY` secret exists.
+  `setup-mcp.sh` now also auto-registers the MCP manifest into Gemini CLI and Cursor.
+- **Inter-step injection quarantine (§12)** — every orchestrator step's output passes the
+  red-team detectors before feeding the next step; flagged lines quarantined + logged,
+  `SDLC_INJECTION_STRICT=1` halts. The loop's inputs are scanned, not just its config.
+- **Eval-driven routing feedback (§13)** — per-run records → `compass policy-synth --routing`
+  proposes router-bias changes as a diff; the route-eval CI floor still gates applying them.
+- **Merge-queue support** — `merge_group` triggers on required checks with a deterministic
+  `review` pass-through; QA dependency cache; opt-in coverage gate (`SDLC_COVERAGE_MIN`).
+- **ADR-0007** — agent identity/attestation for SDLC roles (roadmap §15's required ADR).
+
+### Changed
+
+- Committed docs no longer name third-party projects (house rule) — findings kept, names
+  replaced with stable generic descriptors in docs/15 + docs/16.
+- Roadmap statuses updated: §9/§11/§13/§14 shipped, §12 orchestrator-half shipped.
+
+### Fixed
+
+- `orchestrate.sh` aborted at startup under `set -u` when `SDLC_GOAL` was unset (the
+  pre-run note read `$GOAL` before assignment).
+
 - **`SDLC_BUDGET` is now a hard ceiling** — the orchestrator halts the run (exit 3) once
   cumulative spend reaches the total, and each step's cap is min(per-step, remaining), so the
   last step can't overshoot. Was a per-step-only "hint". Selftest-mirrored with source anchors.
