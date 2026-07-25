@@ -15,9 +15,11 @@ outcomes: **merged** (gate satisfied + authority granted), **ready-to-merge** (r
 
 ## Enumerate
 
-`gh pr list --state open --json number,title,author,isDraft,headRefName,statusCheckRollup`
+`gh pr list --state open --json number,title,author,isDraft,isCrossRepository,headRefName,statusCheckRollup`
 
-Skip drafts. Fork-branch PRs are **read-only**: diagnose and comment, never push to them.
+Skip drafts. **Fail closed on forks**: if `isCrossRepository` is true — or the field is
+missing from the response — the PR is read-only: diagnose and comment, never check out into a
+pushable worktree, never push.
 
 ## Diagnose — read the check, don't guess
 
