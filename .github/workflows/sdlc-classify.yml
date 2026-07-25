@@ -35,6 +35,11 @@ jobs:
           # claude-code-action v1.0.134+ does an app-token exchange that requires a token
           # (or a workflow matching the default branch); pass the built-in one explicitly.
           github_token: ${{ github.token }}
+          # ACCEPTED (SECURITY/Low): base.ref is interpolated into the PROMPT (never a run:
+          # block — no shell injection). It's a branch name, collaborator-controlled at
+          # most (fork PRs are skipped above). $GITHUB_BASE_REF in-prompt was tried and
+          # broke the action's bash env (#76); the residual prompt-injection risk from a
+          # hostile same-repo branch name is accepted and documented here.
           prompt: |
             You are **Classifier** (agent:classify). Look at this PR's diff
             (`git diff origin/${{ github.event.pull_request.base.ref }}...HEAD`) and pick the
