@@ -11,7 +11,7 @@ changes the product's spine — readable config, reversible install, you always 
 > are opt-in and labeled experimental in the same honest spirit as the rest of the repo.
 
 <p align="center">
-  <img src="../assets/hardening-frontier.svg" alt="The hardening + frontier layer in three bands flowing to an unmoved human merge gate. HARDENED CORE (stable, CI-gated): policy.sh data-driven guardrail · 61-case bypass corpus · compass bench (100% precision/recall, router 96.9%) · actions audit (drift, least-privilege, SHA-pinning, injection). FRONTIER (opt-in): persistent memory · parallel SDLC + test-impact + diff-size routing · fleet brain (recurring findings to proposed rules) · cost-aware router · spec-kit interop · SBOM + signed commits. CONTROL SURFACE: compass dashboard (impact, spend, live fleet PRs) · --html/--json. Everything flows to the HUMAN MERGE GATE — unmoved by design; you always merge and deploy." width="900">
+  <img src="../assets/hardening-frontier.svg" alt="The hardening + frontier layer in three bands flowing to an unmoved human merge gate. HARDENED CORE (stable, CI-gated): policy.sh data-driven guardrail · 61-case bypass corpus · compass bench (100% precision/recall, router 96.9%) · actions audit (drift, least-privilege, SHA-pinning, injection). FRONTIER (opt-in): persistent memory · parallel SDLC + test-impact + diff-size routing · fleet brain (recurring findings to proposed rules) · cost-aware router · spec-driven interop · SBOM + signed commits. CONTROL SURFACE: compass dashboard (impact, spend, live fleet PRs) · --html/--json. Everything flows to the HUMAN MERGE GATE — unmoved by design; you always merge and deploy." width="900">
 </p>
 
 <p align="center"><sub>↑ the hardening + frontier layer. Below, the same layer as a text diagram:</sub></p>
@@ -29,7 +29,7 @@ flowchart TB
     par["parallel orchestrator<br/>+ test-impact QA<br/>+ diff-size routing"]
     brain["fleet brain<br/>recurring findings → proposed rules"]
     router["cost-aware router<br/>confidence + budget bias"]
-    spec["spec-kit interop"]
+    spec["spec-driven interop"]
     prov["SBOM + dep audit<br/>+ signed commits"]
   end
   subgraph SURFACE["👁️ Control surface"]
@@ -119,15 +119,15 @@ Two opt-in hooks over the existing [`compass-memory`](../mcp/compass-memory/) st
 **Enable:** set `COMPASS_MEMORY_TRUST='<repo>:read-write'` and wire the hooks under
 `hooks.SessionStart` / `hooks.Stop` in `settings.json`. Off by default → silent no-op.
 
-### Parallel orchestrator + test-impact + diff-size routing + spec-kit (R7, R9, R13)
+### Parallel orchestrator + test-impact + diff-size routing + spec-driven interop (R7, R9, R13)
 `orchestrate.sh`, all opt-in, default path byte-for-byte preserved:
 - `SDLC_PARALLEL=1` — the three independent read-only final passes (audit, security, QA)
   run concurrently on the converged HEAD. Same semantics, lower wall-clock.
 - `SDLC_TEST_IMPACT=1` — run only tests affected by the diff (`go test ./pkg/...`,
   `jest --findRelatedTests`, changed pytest files), full-suite fallback.
 - Diff-size routing — ≤25-line diffs review on haiku; security stays opus.
-- **spec-kit interop** — auto-discovers `.specify/specs/*/spec.md`, `specs/*/spec.md`,
-  `spec.md`, so compass is the governance+execution layer *under* github/spec-kit / BMAD.
+- **spec-driven interop** — auto-discovers `.specify/specs/*/spec.md`, `specs/*/spec.md`,
+  `spec.md`, so compass is the governance+execution layer *under* spec-driven frameworks.
 
 ### Cost-aware router (R11)
 `compass route --score` adds a 0–99 confidence; `COMPASS_ROUTE_BUDGET_BIAS=low`
