@@ -70,16 +70,27 @@ jobs:
           MIN: ${{ vars.SDLC_COVERAGE_MIN }}
         run: |
           set -uo pipefail
+          # Detection mirrors the test step's elif order exactly, so the gate never runs a
+          # different toolchain than the tests did. A `coverage:` Makefile target wins and
+          # must PRINT a total percentage; its stack-specific setup then applies here too.
           pct=""
-          if [ -f go.mod ]; then
+          if [ -f Makefile ] && grep -qE '^coverage:' Makefile; then
+            pct="$(make coverage 2>/dev/null | grep -Eo '[0-9]+(\.[0-9]+)?%' | tail -1 | tr -d '%')" || true
+          elif [ -f go.mod ]; then
             go test -coverprofile="$RUNNER_TEMP/cover.out" ./... >/dev/null 2>&1 || true
             pct="$(go tool cover -func="$RUNNER_TEMP/cover.out" 2>/dev/null | awk '/^total:/{gsub(/%/,"",$3); print $3}')"
-          elif [ -f pyproject.toml ] || [ -d tests ]; then
-            pct="$(pytest -q --cov --cov-report=term 2>/dev/null | awk '/^TOTAL/{gsub(/%/,"",$NF); print $NF}')" || true
+          elif [ -f Cargo.toml ]; then
+            if command -v cargo-llvm-cov >/dev/null 2>&1; then
+              pct="$(cargo llvm-cov --summary-only 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+%' | tail -1 | tr -d '%')" || true
+            else
+              echo "coverage gate: Cargo project but cargo-llvm-cov is not installed — add a setup step or a 'coverage:' Makefile target, or unset SDLC_COVERAGE_MIN"; exit 1
+            fi
           elif [ -f package.json ] && grep -q '"coverage"' package.json; then
             pct="$(npm run coverage --silent 2>/dev/null | grep -Eo 'All files[^0-9]*[0-9.]+' | grep -Eo '[0-9.]+' | head -1)" || true
+          elif [ -f pyproject.toml ] || [ -d tests ]; then
+            pct="$(pytest -q --cov --cov-report=term 2>/dev/null | awk '/^TOTAL/{gsub(/%/,"",$NF); print $NF}')" || true
           fi
-          [ -n "$pct" ] || { echo "coverage gate: no coverage tooling detected — set up coverage or unset SDLC_COVERAGE_MIN"; exit 1; }
+          [ -n "$pct" ] || { echo "coverage gate: no coverage tooling detected for this stack — add a 'coverage:' Makefile target or unset SDLC_COVERAGE_MIN"; exit 1; }
           echo "coverage: ${pct}% (min ${MIN}%)"
           awk "BEGIN{exit !($pct >= $MIN)}" || { echo "coverage ${pct}% is below the ${MIN}% floor"; exit 1; }
       - name: Comment on failure

@@ -8,6 +8,10 @@ name: "sdlc · review (Claude)"
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  # merge-queue support: `review` is a required check, so the queue's speculative merge
+  # commit needs the context. The agent review already ran on the PR itself; the
+  # merge_group event gets a deterministic pass-through job (below), not a second review.
+  merge_group:
 
 # Least privilege: read the code, comment + label the PR. No write to contents.
 permissions:
@@ -17,16 +21,25 @@ permissions:
   id-token: write # claude-code-action fetches an OIDC token
 
 concurrency:
-  group: sdlc-review-${{ github.event.pull_request.number }}
+  group: sdlc-review-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # Merge-queue pass-through: satisfies the required `review` context on the queue's
+  # speculative commit. The real agent review gated the PR before it could enter the
+  # queue; re-reviewing the identical diff here would only add cost and latency.
+  review-mq:
+    name: review # same stable check name branch protection requires
+    if: github.event_name == 'merge_group'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "merge-queue pass-through — agent review completed on the PR before queueing"
   review:
     name: review # stable check name — referenced by branch-protection required checks
     # Same-repo PRs only: secrets (and the loop) aren't available to forks; forks get a
     # read-only review on a best-effort basis but never the write-capable fix loop.
     # dependabot-actor runs get Dependabot's (empty) secret store — agent can't auth, so skip
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
