@@ -7,6 +7,12 @@ All notable changes to this project are documented here. Format loosely follows
 
 ### Added
 
+- **`SDLC_BUDGET` is now a hard ceiling** — the orchestrator halts the run (exit 3) once
+  cumulative spend reaches the total, and each step's cap is min(per-step, remaining), so the
+  last step can't overshoot. Was a per-step-only "hint". Selftest-mirrored with source anchors.
+- **Hook behavior corpus** — `scripts/test-hooks.sh`: 84 hermetic assertions covering
+  `format-on-edit`, `checkpoint-wip`, `inject-context` (the three previously-untested hooks),
+  mutation-tested, wired into `doctor` and CI.
 - **`pr-shepherd` skill** — take every open PR end-to-end: diagnose red checks from the
   actual logs, classify (real defect / mechanical / environmental), fix mechanical failures
   on the PR branch (verified locally before pushing, three-strikes cap), and stop at the
