@@ -18,15 +18,16 @@ once:
 
 | Layer | What compass ships | The category it competes in |
 |---|---|---|
-| **Config / constitution** | `CLAUDE.md` ≙ `AGENTS.md`, 15 subagents, 12 commands, 13 hooks (8 wired by default), MCP manifest | SuperClaude, gstack, spec-kit "constitution", awesome-claude-code configs |
-| **Local orchestration** | `orchestrate.sh` pipeline, 3 dynamic workflows, `compass route` | BMAD-METHOD, claude-flow, Conductor/Vibe-Kanban |
-| **Autonomous SDLC (cloud)** | self-fixing PR loop in GitHub Actions, Reviewer⇄Builder converge | Devin, Factory Droids, Cursor background agents, Codex cloud, GitHub Copilot coding agent |
-| **Fleet + review** | scheduled cross-repo agents, mission-digest, cross-model audit, mobile control | Greptile/CodeRabbit/Qodo (review), Charlie, Sweep |
+| **Config / constitution** | `CLAUDE.md` ≙ `AGENTS.md`, 15 subagents, 12 commands, 13 hooks (8 wired by default), MCP manifest | a methodology-skills suite, a swarm meta-harness, a spec-before-code framework, curated config collections |
+| **Local orchestration** | `orchestrate.sh` pipeline, 3 dynamic workflows, `compass route` | a methodology framework, an orchestration harness, task-orchestration tools |
+| **Autonomous SDLC (cloud)** | self-fixing PR loop in GitHub Actions, Reviewer⇄Builder converge | hosted coding agents, Cursor background agents, Codex cloud, GitHub Copilot coding agent |
+| **Fleet + review** | scheduled cross-repo agents, mission-digest, cross-model audit, mobile control | AI-review services, a fleet agent, an autonomous PR agent |
 
 The strategic insight in the README — *"everyone has the same models, the edge
 is configuration"* — is correct and is **exactly** the thesis the rest of the
 field converged on in 2026 (model routing as "a routing problem, not a branding
-problem" — Factory; "constitution as immutable principles" — spec-kit). compass
+problem" — one cloud SDLC operator; "constitution as immutable principles" — a
+spec-before-code framework). compass
 is on the right axis. The questions are: **how good is the execution**, and
 **where is it behind the frontier**.
 
@@ -92,8 +93,8 @@ the repo. This is the most important test to add.
 
 For a config/orchestration repo this is **top-decile engineering**: linted,
 tested, honest, portable, reversible. It is meaningfully more rigorous than
-SuperClaude (no CI shellcheck/actionlint gate) or typical `gstack`-style dotfile
-configs. The weaknesses are (a) the guardrail's coverage vs. its perceived
+comparable methodology-skills suites (no CI shellcheck/actionlint gate) or typical
+swarm meta-harness-style dotfile configs. The weaknesses are (a) the guardrail's coverage vs. its perceived
 promise, (b) workflow-tree drift, and (c) test gaps on the safety-critical path.
 
 ---
@@ -102,34 +103,35 @@ promise, (b) workflow-tree drift, and (c) test gaps on the safety-critical path.
 
 Legend: ✅ first-class · 🟡 partial / opt-in / experimental · ⬜ absent · ➖ N/A for category.
 
-### 3.1 vs. config frameworks (SuperClaude, spec-kit, gstack, claude-flow)
+### 3.1 vs. config frameworks (methodology-skills suites, spec-before-code frameworks, swarm meta-harnesses)
 
-| Capability | compass | SuperClaude | spec-kit | gstack |
+| Capability | compass | a methodology-skills suite | a spec-before-code framework | a swarm meta-harness |
 |---|---|---|---|---|
 | One constitution, multi-agent | ✅ (`AGENTS.md` symlink) | ✅ | ✅ ("constitution") | ✅ |
 | Cost-tiered subagents | ✅ | 🟡 personas, not priced | ⬜ | ✅ |
 | Deterministic model router + **eval gate** | ✅ (unique) | ⬜ | ⬜ | 🟡 |
 | Guardrail hooks (block/format) | ✅ | 🟡 | ⬜ | ✅ |
 | Spec-driven mode | 🟡 (`/spec`, `SDLC_SPEC=`) | 🟡 | ✅ (the whole product) | ⬜ |
-| Self-learning / memory hooks | 🟡 (ADR-gated MCP) | ✅ session memory | ⬜ | ✅ (GBrain) |
+| Self-learning / memory hooks | 🟡 (ADR-gated MCP) | ✅ session memory | ⬜ | ✅ (knowledge store) |
 | CI-enforced quality of the config itself | ✅ (unique strength) | ⬜ | 🟡 | ⬜ |
 | Adversarial multi-agent review | ✅ (dynamic workflows) | 🟡 | ⬜ | ⬜ |
 
 **Read:** compass leads on *rigor, routing, and adversarial review*; trails on
-*persistent learning/memory* (its strongest gap vs. SuperClaude & gstack) and is
-*roughly at parity but not category-leading* on spec-driven (spec-kit owns that).
+*persistent learning/memory* (its strongest gap vs. a methodology-skills suite and a swarm
+meta-harness) and is *roughly at parity but not category-leading* on spec-driven (the
+spec-before-code framework owns that).
 
-### 3.2 vs. autonomous SDLC (Devin, Factory, Cursor bg agents, Codex cloud, Copilot agent)
+### 3.2 vs. autonomous SDLC (hosted coding agents, Cursor bg agents, Codex cloud, Copilot agent)
 
-| Capability | compass | Devin / Factory | Cursor bg / Codex cloud |
+| Capability | compass | hosted SDLC agents | Cursor bg / Codex cloud |
 |---|---|---|---|
 | Self-fixing PR loop | ✅ | ✅ | ✅ |
 | Human merge gate enforced | ✅ (spine) | 🟡 (configurable) | 🟡 |
-| Cross-model audit (Claude↔Codex) | ✅ (differentiator) | 🟡 (Factory routes models) | ⬜ |
+| Cross-model audit (Claude↔Codex) | ✅ (differentiator) | 🟡 (vendor-side model routing) | ⬜ |
 | Runs on *your* infra, keyless option | ✅ | ⬜ (SaaS) | ⬜ (SaaS) |
 | Readable, `git pull`-able, no service | ✅ (differentiator) | ⬜ | ⬜ |
 | Hosted dashboard / web UI | ⬜ (GitHub + statusline only) | ✅ | ✅ |
-| Parallel multi-task across a repo | 🟡 (sequential pipeline) | ✅ (parallel Droids) | ✅ |
+| Parallel multi-task across a repo | 🟡 (sequential pipeline) | ✅ (parallel task agents) | ✅ |
 | Sandboxed cloud VM per task | ⬜ (GitHub Actions runner) | ✅ | ✅ |
 | Benchmarked task success (SWE-bench-style) | ⬜ | ✅ (published) | ✅ |
 
@@ -138,9 +140,9 @@ runs-on-your-infra**. Its gaps are **no first-class UI**, **sequential not
 parallel** task execution, and **no published success-rate benchmark** — the
 three things the funded SaaS players lead on.
 
-### 3.3 vs. AI review (CodeRabbit, Greptile, Qodo)
+### 3.3 vs. AI review (AI-review SaaS and services)
 
-| Capability | compass | CodeRabbit | Greptile | Qodo |
+| Capability | compass | an AI-review SaaS | a codebase-indexed review service | a multi-repo review SaaS |
 |---|---|---|---|---|
 | Multi-dimension PR review | ✅ (5 dims, parallel) | ✅ | ✅ | ✅ |
 | Adversarial false-positive suppression | ✅ (skeptic refute) | 🟡 | 🟡 | 🟡 |
@@ -161,8 +163,8 @@ codebase context*.
 Across every category the same handful of gaps recur. In priority order:
 
 1. **Persistent codebase/org context (RAG + memory).** Shows up as the review
-   gap (Greptile/Qodo index the repo; compass sees only the diff) *and* the
-   learning gap (SuperClaude/gstack remember; compass forgets between sessions).
+   gap (codebase-indexed review services index the whole repo; compass sees only the diff) *and* the
+   learning gap (methodology-skills suites and swarm meta-harnesses remember; compass forgets between sessions).
    compass has the *design* (ADR-0001, `mcp/compass-memory/`) but it's gated off.
    **This is the single highest-leverage investment.**
 2. **A visible control surface.** Everyone funded ships a UI/dashboard. compass
@@ -170,8 +172,8 @@ Across every category the same handful of gaps recur. In priority order:
    sound, but "I can't *see* the fleet" is a real adoption tax. A read-only,
    zero-infra **local TUI / `compass dashboard`** closes most of this without
    betraying the no-service principle.
-3. **Parallelism.** `orchestrate.sh` is strictly sequential; Factory's Droids
-   and Cursor's bg agents fan out. compass already enabled
+3. **Parallelism.** `orchestrate.sh` is strictly sequential; hosted SDLC operators run
+   parallel task agents and Cursor's background agents fan out. compass already enabled
    `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` and the dynamic-workflow primitive —
    the orchestrator just hasn't adopted parallel execution yet (roadmap §3/§5b).
 4. **Proof.** The funded players publish SWE-bench / bug-catch numbers. compass
@@ -216,7 +218,7 @@ own rule), is opt-in, and leaves the human merge gate untouched.
   hook injects top-relevant prior learnings; `Stop`/`SubagentStop` records
   durable ones; redaction + per-repo trust tiers already designed. Then feed the
   **review workflow** repo context too — even a lightweight `ctags`/embeddings
-  index of touched-symbols' call sites closes most of the Greptile/Qodo gap
+  index of touched-symbols' call sites closes most of the codebase-indexed review gap
   without a hosted service.
 - ✅ **R6 · `compass dashboard` (zero-infra TUI).** A read-only terminal panel
   (or a single static HTML it writes to `~/.compass/`) that renders fleet PR
@@ -224,7 +226,7 @@ own rule), is opt-in, and leaves the human merge gate untouched.
   ledgers + `gh`. Gives the "I can see it" surface without becoming a service.
 - ✅ **R7 · Parallel orchestrator.** Adopt the dynamic-workflow / agent-team
   primitive in `orchestrate.sh --team` so Review/Security/QA run concurrently
-  (roadmap §3). Same gates, lower wall-clock — directly answers Factory/Cursor.
+  (roadmap §3). Same gates, lower wall-clock — directly answers the lead on parallelism.
 - ✅ **R8 · Publish a benchmark.** A small, reproducible eval: run the SDLC loop on
   a fixed set of seeded-bug repos, report fix-rate + review precision/recall +
   $/task, gated in CI like the router eval already is. Converts the pitch from
@@ -243,7 +245,7 @@ own rule), is opt-in, and leaves the human merge gate untouched.
   *evaluated* guardrail layer.
 - ✅ **R11 · Cross-model, cost-aware smart router (real, not keyword).** Today's
   router is a deterministic keyword matcher (good, honest, evaluated). The
-  frontier (Factory, Requesty-style gateways) routes per-subtask across
+  frontier (cloud SDLC operators, cross-provider routing gateways) routes per-subtask across
   providers by measured difficulty/cost. Keep the deterministic floor; add an
   optional learned tier scored against the same evalset.
 - ✅ **R12 · A "fleet brain" — org-wide learnings + auto-policy.** Once R5 memory
@@ -251,10 +253,10 @@ own rule), is opt-in, and leaves the human merge gate untouched.
   a proposed `CLAUDE.md` rule or a new policy check (human-approved). This is
   the self-improving loop the "self-learning hooks" crowd is gesturing at, but
   governed and auditable.
-- ✅ **R13 · Spec-kit interop.** spec-kit owns spec-driven dev and works with 30+
-  agents. Rather than compete, make compass *consume* a spec-kit `spec.md`/
-  `plan.md` natively in `orchestrate.sh` (compass already has `SDLC_SPEC=`). Be
-  the *governance + execution* layer under the spec-driven standard.
+- ✅ **R13 · Spec-driven framework interop.** The leading spec-before-code framework owns
+  spec-driven dev and works with 30+ agents. Rather than compete, make compass *consume*
+  its `spec.md`/`plan.md` natively in `orchestrate.sh` (compass already has `SDLC_SPEC=`).
+  Be the *governance + execution* layer under the spec-driven standard.
 - ✅ **R14 · Supply-chain & SBOM gate + signed Builder commits.** Already flagged
   (roadmap §11). In a world of autonomous PRs, "this fix was generated by an
   agent, here's its provenance and SBOM delta" becomes a trust differentiator no
