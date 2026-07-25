@@ -371,3 +371,34 @@ native-install** (per-vendor manifests from one source — see the Gemini extens
 **trigger-first, enforceable `SKILL.md`** style (red-flags / verification checklists — see
 `verification-before-completion`, `systematic-debugging`). What compass deliberately does **not**
 try to be: a methodology framework — it leads with measured safety + provenance instead.
+
+---
+
+## 2026-07 refresh — field check without the name-dropping
+
+A fresh sweep of the five most-adopted neighbouring projects (verified via the GitHub API,
+2026-07-25; categories, not names — the ecosystem churns and renames faster than a doc should):
+
+**What became table stakes across the field** — multi-harness support, one-line install,
+plugin-marketplace listing, a docs domain, a large subagent roster, tiered model routing,
+spec-before-code workflows, a community channel. compass covers the capability half of this
+list; the *distribution* half (marketplace presence beyond the manifest, install ergonomics,
+visual discovery) is the actual gap.
+
+**Where compass still leads, verified thin-field** — agent review/security/QA gates as real
+CI jobs on PRs (nearest neighbour has a partial verification pipeline; another outsources
+review to a SaaS), release provenance / SLSA attestation (~one partial peer), and a
+red-team layer with effectively one peer. Component-level *eval gating* now has two credible
+peers (one certifies its catalog with static + LLM-judge + Monte-Carlo layers; one evals
+whether its skills actually fire) — compass's edge is that its evals gate CI, not a catalog.
+
+**Frontier moves observed elsewhere, worth watching** — persistent cross-session vector
+memory with trajectory learning; hosted zero-install demos; live agent dashboards with
+kill switches; opt-out adoption telemetry (exactly one project runs it — and it is the only
+one that knows its real adoption instead of guessing from stars).
+
+**Closed this cycle (from the 2026-06 gap list)** — Dependabot-actor agent-job skip,
+Spring `application.properties` in the secret blocklist (+ corpus cases), the 61-vs-147
+corpus-count clarity, `pr-shepherd` (PR handoff→merge-gate loop), and `SDLC_BUDGET`
+promoted from hint to enforced cumulative ceiling (halt + min(step, remaining) cap,
+selftest-mirrored).

@@ -94,6 +94,21 @@ eq "budget 12 → 3.00 per step"        "$(step_budget 12)" "3.00"
 eq "budget 1 → 0.25 per step"         "$(step_budget 1)"  "0.25"
 eq "budget 3 → 0.75 per step"         "$(step_budget 3)"  "0.75"
 
+# ── 6b · Cumulative budget ceiling (mirror of orchestrate.sh claude_step guard) ──
+# BUDGET is a hard total: spent >= BUDGET halts (exit 3); a step's cap is
+# min(STEP_BUDGET, BUDGET - spent) so the last step can't overshoot the total.
+budget_gate() { # args: <spent> <budget> <step_budget> → "halt" | "cap X.XX"
+  local spent="$1" budget="$2" step="$3"
+  if awk "BEGIN{exit !($spent >= $budget)}"; then echo halt; return; fi
+  awk "BEGIN{r=$budget-$spent; printf \"cap %.2f\", (r<$step)?r:$step}"
+}
+echo "cumulative budget ceiling:"
+eq "nothing spent → full step cap"      "$(budget_gate 0 8 2.00)"      "cap 2.00"
+eq "mid-run, plenty left → step cap"    "$(budget_gate 3.10 8 2.00)"   "cap 2.00"
+eq "last dollar → capped to remainder"  "$(budget_gate 7.50 8 2.00)"   "cap 0.50"
+eq "spent == budget → halt"             "$(budget_gate 8.00 8 2.00)"   "halt"
+eq "overshoot → halt"                   "$(budget_gate 9.25 8 2.00)"   "halt"
+
 # ── 7 · SDLC_LITE mode skips the right stages ────────────────────────────────────
 # SDLC_LITE=1 emits a note saying audit+security are skipped; review+QA+gate remain.
 # We mirror the exact logic branch rather than calling orchestrate.sh itself.
@@ -220,6 +235,9 @@ ORCH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/orchestrate.sh"
 src_has() { if grep -Fq -- "$2" "$ORCH"; then ok "$1"; else bad "$1" "absent from orchestrate.sh" "$2"; fi; }
 echo "source anchors (mirrors must match orchestrate.sh):"
 src_has "per-step budget is BUDGET/4"               'BUDGET/4}'
+src_has "cumulative ceiling halts the run"          'exit !($spent >= $BUDGET)'
+src_has "step cap is min(step, remaining)"          '(r<$STEP_BUDGET)?r:$STEP_BUDGET'
+src_has "ceiling halt is exit 3"                    'halting before'
 src_has "fix-round cap default is 3"                'SDLC_MAX_FIX_ROUNDS:-3'
 src_has "diff-size haiku threshold default is 25"   'SDLC_HAIKU_DIFF_LINES:-25'
 src_has "tiny diff routes review to haiku"          'REVIEW_MODEL="haiku"'

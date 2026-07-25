@@ -65,7 +65,8 @@ contract. Every bypass the audit found is closed:
 | `git push origin +main` (plus-refspec), `git -c k=v push --force` | blocked |
 
 This is **"policy-as-code with an eval"**: [`scripts/test-protect-paths.sh`](../scripts/test-protect-paths.sh)
-is a 61-case labeled corpus (must-block / must-allow) — the highest-stakes file finally
+is a 147-case labeled corpus (must-block / must-allow; distinct from the 61-case
+`compass bench` corpus) — the highest-stakes file finally
 has a test, and it found 3 real bugs while being written. Still footgun-prevention, **not
 a security boundary** — unchanged framing.
 

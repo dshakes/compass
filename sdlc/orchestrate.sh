@@ -12,7 +12,7 @@
 # Env:
 #   SDLC_NO_PR=1     stop before opening a PR (inspect the branch yourself)
 #   SDLC_YOLO=1      Builder runs --permission-mode bypassPermissions (fully unattended)
-#   SDLC_BUDGET=8    total USD budget hint; per-Claude-step cap is BUDGET/4
+#   SDLC_BUDGET=8    total USD hard ceiling (halts the run, exit 3; needs jq); per-Claude-step cap is BUDGET/4
 #   SDLC_BASE=main   base branch for the PR (default: current branch)
 #   SDLC_CONVERGE=1  after review, loop fix→re-review until CLEAN or SDLC_MAX_FIX_ROUNDS (default 3)
 #   SDLC_GOAL="..."  run-until-condition: a FRESH, cheap model (maker/checker) judges this explicit
@@ -101,10 +101,21 @@ claude_step(){
   local name="$1" role="$2" model="$3" perm="$4" tools="$5" prompt="$6"
   log "$name  (claude · $model)"
   if [ "$HAVE_JQ" = 1 ]; then
+    # Cumulative hard ceiling: SDLC_BUDGET is a real cap, not a hint. A step never
+    # gets more than what's left of the total, and a run that has spent it halts
+    # (exit 3) instead of starting another step. Without jq there's no spend data,
+    # so only the per-step cap applies (the pre-run note says so).
+    local spent step_cap
+    spent="$(awk -F'\t' '{s+=$2} END{printf "%.4f", s+0}' "$COSTS" 2>/dev/null || echo 0)"
+    if awk "BEGIN{exit !($spent >= $BUDGET)}"; then
+      note "✋ budget ceiling: \$$spent spent ≥ \$$BUDGET total (SDLC_BUDGET) — halting before '$name'"
+      exit 3
+    fi
+    step_cap="$(awk "BEGIN{r=$BUDGET-$spent; printf \"%.2f\", (r<$STEP_BUDGET)?r:$STEP_BUDGET}")"
     local j="$RUN/$name.json"
     claude -p "$prompt" --model "$model" --append-system-prompt-file "$ROLES/$role" \
       --permission-mode "$perm" --allowedTools "$tools" \
-      --max-turns 25 --max-budget-usd "$STEP_BUDGET" \
+      --max-turns 25 --max-budget-usd "$step_cap" \
       --output-format json >"$j" 2>>"$RUN/orchestrate.log" || true
     jq -r '.result // ""' "$j" 2>/dev/null | tee "$RUN/$name.md"
     local c; c="$(jq -r '.total_cost_usd // 0' "$j" 2>/dev/null || echo 0)"
@@ -130,7 +141,7 @@ note "base:   $BASE   branch: $BRANCH"
 note "run:    $RUN   (build perm: $BUILD_PERM)"
 # Pre-run estimate (budgeting): each Claude step is hard-capped at $STEP_BUDGET; the run
 # can't exceed roughly that × the number of steps. QA is free; the Codex audit isn't tallied.
-note "spend:  ceiling ~\$$STEP_BUDGET per Claude step (cap), ~\$$BUDGET total budget hint$([ "$HAVE_JQ" = 1 ] && echo '' || echo '  · install jq for per-step spend analysis')"
+note "spend:  ceiling ~\$$STEP_BUDGET per Claude step (cap), ~\$$BUDGET total hard ceiling (halts, exit 3)$([ "$HAVE_JQ" = 1 ] && echo '' || echo '  · install jq for per-step spend analysis')"
 [ -n "$GOAL" ] && note "goal:   run until a fresh $GOAL_MODEL judges → \"$GOAL\" (≤ ${SDLC_MAX_FIX_ROUNDS:-3} rounds)"
 git checkout -b "$BRANCH" >/dev/null 2>&1 || { echo "could not create branch $BRANCH"; exit 2; }
 
@@ -343,8 +354,8 @@ if [ "$HAVE_JQ" = 1 ] && [ -f "$COSTS" ]; then
   STEPS="$(wc -l <"$COSTS" | tr -d ' ')"
   log "spend  (Claude steps; QA free, Codex audit not tallied)"
   awk -F'\t' '{printf "    %-14s $%.4f\n", $1, $2+0}' "$COSTS"
-  note "total Claude spend: \$$TOTAL   (budget hint \$$BUDGET, per-step cap \$$STEP_BUDGET)"
-  SPEND_LINE="**~\$$TOTAL** across $STEPS Claude steps (budget hint \$$BUDGET; QA free; Codex audit not tallied)"
+  note "total Claude spend: \$$TOTAL   (ceiling \$$BUDGET, per-step cap \$$STEP_BUDGET)"
+  SPEND_LINE="**~\$$TOTAL** across $STEPS Claude steps (ceiling \$$BUDGET; QA free; Codex audit not tallied)"
 fi
 
 # 7 · GATE — open a PR for human merge (never auto-merge/deploy)

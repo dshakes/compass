@@ -76,6 +76,10 @@ else fail "vendor manifest drift — run: scripts/check-vendor.sh"; fi
 if "$REPO"/scripts/test-protect-paths.sh >/dev/null 2>&1; then pass "guardrail bypass corpus passes (protect-paths policy)"
 else fail "guardrail corpus failed — run: scripts/test-protect-paths.sh"; fi
 
+# Hook behavior: format-on-edit / checkpoint-wip / inject-context must stay non-destructive.
+if "$REPO"/scripts/test-hooks.sh >/dev/null 2>&1; then pass "hook behavior corpus passes (format · checkpoint · context)"
+else fail "hook behavior corpus failed — run: scripts/test-hooks.sh"; fi
+
 # Red-team policy: the prompt-injection / config-override / malware / insecure-code eval.
 if "$REPO"/scripts/test-redteam.sh >/dev/null 2>&1; then pass "red-team corpus passes (injection · override · malware · insecure-code)"
 else fail "red-team corpus failed — run: scripts/test-redteam.sh"; fi
