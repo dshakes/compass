@@ -25,7 +25,8 @@ jobs:
     name: review # stable check name — referenced by branch-protection required checks
     # Same-repo PRs only: secrets (and the loop) aren't available to forks; forks get a
     # read-only review on a best-effort basis but never the write-capable fix loop.
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    # dependabot-actor runs get Dependabot's (empty) secret store — agent can't auth, so skip
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
