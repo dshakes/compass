@@ -177,6 +177,10 @@ claude_step(){
 echo "compass · SDLC pipeline"
 note "task:   $TASK"
 note "base:   $BASE   branch: $BRANCH"
+# GOAL/GOAL_MODEL are read by the pre-run note just below — assign before first
+# use (under set -u the unassigned reference aborts the run at startup).
+GOAL="${SDLC_GOAL:-}"
+GOAL_MODEL="${SDLC_GOAL_MODEL:-haiku}"
 note "run:    $RUN   (build perm: $BUILD_PERM)"
 # Pre-run estimate (budgeting): each Claude step is hard-capped at $STEP_BUDGET; the run
 # can't exceed roughly that × the number of steps. QA is free; the Codex audit isn't tallied.
@@ -200,8 +204,6 @@ REVIEW_PROMPT="Review the diff of branch $BRANCH against $BASE: run 'git diff $B
 # Goal-gate (opt-in via SDLC_GOAL): a FRESH, independent, cheap model (maker/checker) judges
 # whether an explicit stop condition holds by RUNNING the tests/lint — completion is decided by a
 # different model than the one doing the work, not by the worker declaring victory.
-GOAL="${SDLC_GOAL:-}"
-GOAL_MODEL="${SDLC_GOAL_MODEL:-haiku}"
 GOAL_TOOLS="$REVIEW_TOOLS"
 # goal_check → writes $RUN/goal.md, echoes MET|UNMET (default-to-doubt: anything but a clear MET).
 # No goal set → echoes MET with no model call (zero overhead when the gate is off).
