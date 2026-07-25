@@ -55,7 +55,7 @@ jobs:
           permission-pull-requests: write
       - name: Claude review
         id: review
-        uses: anthropics/claude-code-action@e90deca47693f9457b72f2b53c17d7c445a87342 # v1
+        uses: anthropics/claude-code-action@af0559ee4f514d1ef21826982bed13f7edc3c35e # v1
         with:
           # Uses your Claude SUBSCRIPTION (no API credits) via `claude setup-token`.
           # To use a pay-per-use API key instead, replace the line below with:
