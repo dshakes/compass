@@ -32,3 +32,4 @@ docs/blog/
 router/classifier.model
 router/router.local.json
 router/*.model
+claude/settings.merged.json.bak-*

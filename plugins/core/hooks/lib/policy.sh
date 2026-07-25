@@ -103,7 +103,7 @@ secret_file_reason() {
   local file="$1" base; base="$(basename "$file")"
   case "$base" in
     .env|.env.*|.envrc|*.pem|*.key|id_rsa|id_dsa|id_ecdsa|id_ed25519|*.p12|*.pfx|*.keystore|*.jks|\
-credentials|credentials.*|.npmrc|.pypirc|.netrc|_netrc|.htpasswd|secrets.yaml|secrets.yml|secrets.json|.dockercfg|application.properties|application-*.properties)
+credentials|credentials.*|.npmrc|.pypirc|.netrc|_netrc|.htpasswd|secrets.yaml|secrets.yml|secrets.json|.dockercfg)
       printf "Refusing to write secret-bearing file '%s'. If this is intentional, edit it yourself or use 'ask' permission." "$base"; return 0 ;;
   esac
   case "$file" in
