@@ -23,6 +23,9 @@
 #   SDLC_LITE=1      fast/cheap: skip Codex audit + opus security (keep review + QA + human gate)
 #   SDLC_TRACE=1     after build/fix commits, attach an Agent Trace record (role+model+run) via compass-trace.sh
 #   SDLC_CONTEXT=1   before review, extract changed symbols + call sites into a context pack (fed to reviewer)
+#   SDLC_NO_INJECTION_SCAN=1  skip the inter-step injection scan (each step's output is scanned
+#                    before it feeds the next step's prompt; flagged lines are quarantined)
+#   SDLC_INJECTION_STRICT=1   halt the run (exit 4) on any injection finding instead of quarantining
 set -uo pipefail
 
 TASK="${1:-}"; [ -n "$TASK" ] || { echo "usage: orchestrate.sh \"<task description>\""; exit 2; }
@@ -96,6 +99,41 @@ trace_new_commits(){  # args: <role> <model> <pre-sha>
 # reports total_cost_usd) into costs.tsv; without jq we stream text and skip the tally.
 COSTS="$RUN/costs.tsv"; HAVE_JQ=0; command -v jq >/dev/null 2>&1 && HAVE_JQ=1
 
+# Inter-step injection scanning (roadmap §12): each step's output ($RUN/<name>.md) feeds
+# the NEXT step's prompt — an untrusted channel (the model may have quoted poisoned repo
+# content). Reuse the SAME detectors the hooks use (claude/hooks/lib/policy.sh): flagged
+# lines are QUARANTINED (stripped before they feed forward) and recorded in
+# $RUN/injection_findings.tsv; the run continues with a visible warning.
+# SDLC_INJECTION_STRICT=1 halts instead (exit 4). SDLC_NO_INJECTION_SCAN=1 disables.
+HAVE_INJECTION_SCAN=0
+if [ "${SDLC_NO_INJECTION_SCAN:-0}" != 1 ]; then
+  # shellcheck source=../claude/hooks/lib/common.sh
+  . "$SDLC_DIR/../claude/hooks/lib/common.sh" 2>/dev/null || true
+  # shellcheck source=../claude/hooks/lib/policy.sh
+  . "$SDLC_DIR/../claude/hooks/lib/policy.sh" 2>/dev/null || true
+  type injection_findings >/dev/null 2>&1 && HAVE_INJECTION_SCAN=1
+fi
+injection_scan_step(){ # arg: <name> — scan $RUN/<name>.md; quarantine flagged lines before they feed forward
+  [ "$HAVE_INJECTION_SCAN" = 1 ] || return 0
+  local name="$1" findings line kept dropped=0
+  local f="$RUN/$name.md"
+  [ -s "$f" ] || return 0
+  # cheap whole-file pass first; only a hit pays for the per-line quarantine pass
+  findings="$(injection_findings "$(cat "$f")")"
+  [ -n "$findings" ] || return 0
+  printf '%s\n' "$findings" | awk -v n="$name" -F': ' 'NF{print n "\t" $1 "\t" substr($0, index($0,": ")+2)}' >>"$RUN/injection_findings.tsv"
+  if [ "${SDLC_INJECTION_STRICT:-0}" = 1 ]; then
+    note "✋ injection scan: findings in $name.md — SDLC_INJECTION_STRICT halts the run (exit 4; see $RUN/injection_findings.tsv)"
+    exit 4
+  fi
+  kept="$(mktemp)"
+  while IFS= read -r line; do
+    if [ -n "$(injection_findings "$line")" ]; then dropped=$((dropped + 1)); else printf '%s\n' "$line" >>"$kept"; fi
+  done <"$f"
+  mv "$kept" "$f"
+  note "⚠ injection scan: quarantined $dropped flagged line(s) from $name.md before it feeds forward (findings: $RUN/injection_findings.tsv)"
+}
+
 # claude_step <name> <role> <model> <perm> <tools> <prompt>  -> $RUN/<name>.md
 claude_step(){
   local name="$1" role="$2" model="$3" perm="$4" tools="$5" prompt="$6"
@@ -133,6 +171,7 @@ claude_step(){
   # Surface a swallowed failure: a step that errored or hit the budget/turn cap leaves
   # an empty output that would otherwise feed the next phase silently.
   [ -s "$RUN/$name.md" ] || note "⚠ $name produced no output — it may have failed or hit the budget/turn cap (see $RUN/orchestrate.log)"
+  injection_scan_step "$name"
 }
 
 echo "compass · SDLC pipeline"
@@ -216,7 +255,7 @@ claude_step review reviewer.md "$REVIEW_MODEL" plan "$REVIEW_TOOLS" "$REVIEW_PRO
 # re-review until done or cap. The local mirror of the cloud loop's "review ⇄ fix until green,"
 # now with a run-until-condition gate: a fresh model judges an explicit stop condition each round
 # (maker/checker — completion decided by a different model than the worker). Humans still merge.
-GOAL_V="MET"
+GOAL_V="MET"; ROUNDS_USED=0
 if [ "${SDLC_CONVERGE:-0}" = 1 ] || [ -n "$GOAL" ]; then
   MAXR="${SDLC_MAX_FIX_ROUNDS:-3}"; r=1
   [ -n "$GOAL" ] && note "run-until-condition: a fresh $GOAL_MODEL will judge \"$GOAL\" each round (default-to-doubt)."
@@ -236,7 +275,7 @@ Edit the code, add/adjust tests, build/test what you touch, commit. Do not push 
     trace_new_commits builder "$BUILD_MODEL" "$PRE_FIX_SHA"
     claude_step review reviewer.md "$REVIEW_MODEL" plan "$REVIEW_TOOLS" "$REVIEW_PROMPT"
     GOAL_V="$(goal_check)"
-    r=$((r + 1))
+    ROUNDS_USED=$r; r=$((r + 1))
   done
   if grep -qiE '^SDLC-VERDICT: BLOCKING' "$RUN/review.md" 2>/dev/null; then
     note "converge hit cap ($MAXR) — review still BLOCKING; a human is needed."
@@ -357,6 +396,15 @@ if [ "$HAVE_JQ" = 1 ] && [ -f "$COSTS" ]; then
   note "total Claude spend: \$$TOTAL   (ceiling \$$BUDGET, per-step cap \$$STEP_BUDGET)"
   SPEND_LINE="**~\$$TOTAL** across $STEPS Claude steps (ceiling \$$BUDGET; QA free; Codex audit not tallied)"
 fi
+
+# Routing feedback (roadmap §13): one record per run — task tag, chosen build model,
+# converge rounds used, total cost, goal verdict (or '-') — so `compass policy-synth
+# --routing` can roll outcomes up into a PROPOSED router weight change (human-reviewed,
+# and re-gated by the router eval before anyone applies it). Never blocks the run.
+FEEDBACK_GOAL="-"; [ -n "$GOAL" ] && FEEDBACK_GOAL="$GOAL_V"
+{ mkdir -p "${COMPASS_HOME:-$HOME/.compass}" && printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$TASKTAG" "$BUILD_MODEL" "$ROUNDS_USED" "${TOTAL:-0}" "$FEEDBACK_GOAL" \
+    >>"${COMPASS_HOME:-$HOME/.compass}/routing-feedback.tsv"; } 2>/dev/null || true
 
 # 7 · GATE — open a PR for human merge (never auto-merge/deploy)
 log "gate  (open PR for human review)"
