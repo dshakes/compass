@@ -68,6 +68,9 @@ jobs:
           if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null 2>&1; then
             echo "tag $VERSION already on origin — skipping"
           else
+            # Runners have no git identity; annotated tags need one (empty-ident fatal).
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git tag -a "$VERSION" -m "compass $VERSION"
             git push origin "refs/tags/$VERSION"
           fi
