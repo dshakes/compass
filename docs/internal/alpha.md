@@ -17,7 +17,7 @@ Now every repo you open has the operating manual, guardrail hooks, specialist
 subagents, workflow commands (`/ship` `/review` `/tdd` …), and MCP servers.
 Prefer not to touch your global config? Install just the machinery as a plugin:
 ```bash
-/plugin marketplace add dshakes/compass && /plugin install core@compass
+/plugin marketplace add dshakes/compass && /plugin install compass@compass
 ```
 
 ## Try the autonomous SDLC (keyless — uses your subscription)

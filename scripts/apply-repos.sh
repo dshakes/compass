@@ -7,7 +7,7 @@
 #
 #   scripts/apply-repos.sh ~/work/repo-a ~/work/repo-b   # explicit list
 #   scripts/apply-repos.sh ~/work/*                       # a glob (your shell expands it)
-#   scripts/apply-repos.sh --team ~/work/*                # + pin core@compass for the team
+#   scripts/apply-repos.sh --team ~/work/*                # + pin compass@compass for the team
 #   scripts/apply-repos.sh --git-only ~/code/*            # only directories that are git repos
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

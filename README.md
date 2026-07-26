@@ -173,7 +173,7 @@ git checkout "$(git describe --tags --abbrev=0)"   # optional: pin to the latest
 **🧩 Claude Code plugin** — no terminal *(ideal for a team)*
 ```text
 /plugin marketplace add dshakes/compass
-/plugin install core@compass
+/plugin install compass@compass
 ```
 
 **🛠️ By hand:** `make dry-run` (preview) → `make install` → `make doctor`. → [Team rollout](docs/05-plugin.md)
@@ -184,7 +184,7 @@ git checkout "$(git describe --tags --abbrev=0)"   # optional: pin to the latest
 
 | Agent | Native install (no terminal) | or own the files |
 |---|---|---|
-| **Claude Code** | `/plugin marketplace add dshakes/compass` → `/plugin install core@compass` | `make install` |
+| **Claude Code** | `/plugin marketplace add dshakes/compass` → `/plugin install compass@compass` | `make install` |
 | **Codex** | `codex plugin marketplace add dshakes/compass` → `/plugin install` | `make install` (`~/.codex/AGENTS.md` + `config.toml`) |
 | **Gemini CLI** | `gemini extensions install https://github.com/dshakes/compass` | `./install.sh --gemini` (`~/.gemini/GEMINI.md`) |
 | **Cursor · Copilot · OpenCode · Windsurf** | read the repo's `AGENTS.md` ([AGENTS.md](https://agents.md/) standard) | clone + `make install` |

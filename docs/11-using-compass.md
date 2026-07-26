@@ -11,10 +11,10 @@ habits that make you fast and cheap. If you read one doc, read this one.
 |---|---|---|
 | It everywhere on my machine (**simplest**) | `git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && ./quickstart.sh` | preview → symlink `~/.claude` + `~/.codex` → validate → on-ramp (one command; re-run to repair) |
 | It everywhere, steps by hand | `… && make dry-run && make install && make doctor` | same, three explicit steps |
-| Just the machinery, no global config | `/plugin marketplace add dshakes/compass && /plugin install core@compass` | per-session plugin (no memory/permissions) |
+| Just the machinery, no global config | `/plugin marketplace add dshakes/compass && /plugin install compass@compass` | per-session plugin (no memory/permissions) |
 | Committed config in **one** repo | `make new-repo DIR=~/code/my-repo` | starter `CLAUDE.md` + `AGENTS.md` symlink |
 | Committed config across **many** repos | `make apply-many DIRS="~/code/*"` *(or `scripts/apply-repos.sh --git-only ~/code/*`)* | the per-repo pieces, in every repo at once |
-| The team to get it on a repo | `make new-repo DIR=~/code/my-repo TEAM=1` | pins `core@compass` in `.claude/settings.json` |
+| The team to get it on a repo | `make new-repo DIR=~/code/my-repo TEAM=1` | pins `compass@compass` in `.claude/settings.json` |
 
 Then **always**: `make doctor` — it validates everything and tells you what (if anything) to fix.
 Symlink install means `git -C ~/compass pull` updates every repo at once.
