@@ -82,8 +82,9 @@ PNAME="$(jq -r .name "$REPO/plugins/core/.claude-plugin/plugin.json" 2>/dev/null
 MNAME="$(jq -r '.plugins[0].name' "$REPO/.claude-plugin/marketplace.json" 2>/dev/null)"
 if [ -n "$PNAME" ] && [ "$PNAME" = "$MNAME" ]; then pass "plugin id consistent: $PNAME (manifest = marketplace)"
 else fail "plugin id mismatch: plugin.json '$PNAME' vs marketplace '$MNAME'"; fi
-if grep -rql --exclude-dir=.git --exclude=CHANGELOG.md "core@compass" "$REPO" 2>/dev/null; then
-  fail "stale install id 'core@compass' still referenced — sweep to '$PNAME@compass'"
+STALE_ID="core@""compass"   # split so this script's own source never matches the grep
+if grep -rql --exclude-dir=.git --exclude=CHANGELOG.md --exclude=doctor.sh "$STALE_ID" "$REPO" 2>/dev/null; then
+  fail "stale install id '$STALE_ID' still referenced — sweep to '$PNAME@compass'"
 else pass "no stale plugin install ids in docs/scripts"; fi
 
 # Hook behavior: format-on-edit / checkpoint-wip / inject-context must stay non-destructive.
