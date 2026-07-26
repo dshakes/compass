@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin.json",
   "name": "compass",
   "displayName": "compass",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Cost-tiered specialist subagents, workflow commands, guardrail + live-budget-ceiling + auto-quality hooks, a repo-bootstrap skill, a terse output style, and parity MCP servers — for serious polyglot software work.",
   "author": {
     "name": "Shekhar Mudarapu",
@@ -11,5 +11,17 @@
   "homepage": "https://github.com/dshakes/compass#readme",
   "repository": "https://github.com/dshakes/compass",
   "license": "MIT",
-  "keywords": ["subagents", "hooks", "code-review", "security-review", "cost-optimization", "budget-control", "mcp", "go", "rust", "typescript", "kubernetes"]
+  "keywords": [
+    "subagents",
+    "hooks",
+    "code-review",
+    "security-review",
+    "cost-optimization",
+    "budget-control",
+    "mcp",
+    "go",
+    "rust",
+    "typescript",
+    "kubernetes"
+  ]
 }

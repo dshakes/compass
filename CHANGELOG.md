@@ -5,6 +5,8 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-07-26
+
 ### Added
 
 - **`pr-shepherd` scheduled routine** — `compass schedule add pr-shepherd --twice-daily`

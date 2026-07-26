@@ -1,6 +1,6 @@
 {
   "name": "core",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Cost-tiered specialist subagents, workflow commands, guardrail + red-team + auto-quality hooks, repo-bootstrap and using-compass skills, and parity MCP servers — for serious polyglot software work.",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
@@ -12,7 +12,15 @@
   "homepage": "https://github.com/dshakes/compass#readme",
   "repository": "https://github.com/dshakes/compass",
   "license": "MIT",
-  "keywords": ["subagents", "hooks", "code-review", "security-review", "red-team", "cost-optimization", "mcp"],
+  "keywords": [
+    "subagents",
+    "hooks",
+    "code-review",
+    "security-review",
+    "red-team",
+    "cost-optimization",
+    "mcp"
+  ],
   "interface": {
     "displayName": "Core",
     "category": "Developer Tools"
