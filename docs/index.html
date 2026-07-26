@@ -464,7 +464,7 @@
       </div>
       <div class="scard ok rv"><span class="tag">YOU MERGE</span>
         <div class="ic">🔏</div><h3>Merging unverified code</h3>
-        <p>It reviews, security-checks, tests, cross-audits with a second model, and <b style="color:var(--text)">pushes its own fixes until green</b>. The one thing it never does: press merge. That gate is yours, permanently.</p>
+        <p>It reviews, security-checks, tests, and cross-audits with <b style="color:var(--text)">three cross-model gates</b> — Claude review, Codex audit, Gemini audit — then <b style="color:var(--text)">pushes its own fixes until green</b>. The one thing it never does: press merge. That gate is yours, permanently.</p>
       </div>
     </div>
   </div>
@@ -615,10 +615,11 @@
         </svg>
       </a>
       <div class="rv">
-        <p style="color:var(--muted);margin-bottom:6px;font-size:15px">The same closed loop runs at <b style="color:var(--text)">four scales</b> — each until a gate says done, then it stops at a human:</p>
+        <p style="color:var(--muted);margin-bottom:6px;font-size:15px">The same closed loop runs at <b style="color:var(--text)">five scales</b> — each until a gate says done, then it stops at a human:</p>
         <div class="scales">
           <div class="scale"><span class="em">🔁</span><div><h4>The task loop</h4><p>generate → test → critique → fix — one change driven to green.<span class="stop">stops when tests + review pass</span></div></div>
           <div class="scale"><span class="em">🔎</span><div><h4>The review loop</h4><p>review → auto-fix the Blocking findings → re-review, round-capped ×3.<span class="stop">hands to a human if still red</span></div></div>
+          <div class="scale"><span class="em">🐑</span><div><h4>The PR-shepherd loop</h4><p>every open PR diagnosed from its logs, mechanical fixes verified then pushed — on demand or twice daily, unattended.<span class="stop">stops at the server-enforced merge gate</span></div></div>
           <div class="scale"><span class="em">🛰️</span><div><h4>The fleet loop</h4><p>the whole pipeline, scheduled across every repo you own, overnight, test-gated.<span class="stop">a PR per repo — approve from your phone</span></div></div>
           <div class="scale"><span class="em">👥</span><div><h4>The workflow loops</h4><p>parallel agents that fan out, fact-check each other, and converge.<span class="stop">one synthesized answer</span></div></div>
         </div>
@@ -636,7 +637,7 @@
       <p class="lead">The whole toolkit — guardrails, the crew, the router, the CLI — is live the moment you install. The autonomous loops sit on top, opt-in.</p>
     </div>
     <div class="bento">
-      <div class="fcard span-3 rv"><span class="em">🔁</span><h3>Autonomous SDLC</h3><p>The review → security → tests → cross-audit → auto-fix → re-review loop on every PR. Parallel reviewers, round-capped fixes, a second-model audit — then it stops at your merge.</p><a class="more" href="docs.html#09-sdlc">09-sdlc →</a></div>
+      <div class="fcard span-3 rv"><span class="em">🔁</span><h3>Autonomous SDLC</h3><p>The review → security → tests → cross-audit → auto-fix → re-review loop on every PR. Parallel reviewers, round-capped fixes, three cross-model gates (Claude review · Codex audit · Gemini audit), a hard <code>SDLC_BUDGET</code> ceiling — then it stops at your merge.</p><a class="more" href="docs.html#09-sdlc">09-sdlc →</a></div>
       <div class="fcard span-3 rv"><span class="em">🛰️</span><h3>The fleet</h3><p>The loop, scheduled across all your repos through a test gate — overnight. Wake up to a PR per repo you can approve from your phone.</p><a class="more" href="docs.html#14-fleet">14-fleet →</a></div>
       <div class="fcard span-2 rv"><span class="em">🛡</span><h3>Guardrails &amp; scanning</h3><p>A hook layer that blocks disasters, catches secrets, auto-formats, and keeps a JSONL audit log.</p><a class="more" href="docs.html#16-hardening-and-frontier">16-hardening →</a></div>
       <div class="fcard span-2 rv"><span class="em">🧪</span><h3>Red-team hardening</h3><p>Eval-gated defense vs prompt-injection, config poisoning, safety-override, MCP tool-poisoning, malware &amp; insecure code.</p><a class="more" href="docs.html#17-red-team">17-red-team →</a></div>

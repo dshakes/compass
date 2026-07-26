@@ -11,7 +11,7 @@ changes the product's spine — readable config, reversible install, you always 
 > are opt-in and labeled experimental in the same honest spirit as the rest of the repo.
 
 <p align="center">
-  <img src="../assets/hardening-frontier.svg" alt="The hardening + frontier layer in three bands flowing to an unmoved human merge gate. HARDENED CORE (stable, CI-gated): policy.sh data-driven guardrail · 61-case bypass corpus · compass bench (100% precision/recall, router 96.9%) · actions audit (drift, least-privilege, SHA-pinning, injection). FRONTIER (opt-in): persistent memory · parallel SDLC + test-impact + diff-size routing · fleet brain (recurring findings to proposed rules) · cost-aware router · spec-driven interop · SBOM + signed commits. CONTROL SURFACE: compass dashboard (impact, spend, live fleet PRs) · --html/--json. Everything flows to the HUMAN MERGE GATE — unmoved by design; you always merge and deploy." width="900">
+  <img src="../assets/hardening-frontier.svg" alt="The hardening + frontier layer in three bands flowing to an unmoved human merge gate. HARDENED CORE (stable, CI-gated): policy.sh data-driven guardrail · 147-case bypass corpus · compass bench (100% precision/recall, router 96.9%) · actions audit (drift, least-privilege, SHA-pinning, injection) · 3 cross-model gates (Claude review, Codex audit, Gemini audit on every PR) · hard budget ceiling (SDLC_BUDGET halts the run; each step capped at min of step and remaining). FRONTIER (opt-in): persistent memory · parallel SDLC + test-impact + diff-size routing · fleet brain (recurring findings to proposed rules) · cost-aware router · spec-driven interop · SBOM + signed commits. CONTROL SURFACE: compass dashboard (impact, spend, live fleet PRs) · --html/--json. Everything flows to the HUMAN MERGE GATE — unmoved by design; you always merge and deploy." width="900">
 </p>
 
 <p align="center"><sub>↑ the hardening + frontier layer. Below, the same layer as a text diagram:</sub></p>
@@ -20,7 +20,7 @@ changes the product's spine — readable config, reversible install, you always 
 flowchart TB
   subgraph HARDEN["🛡️ Hardened core — stable, CI-gated"]
     pol["policy.sh<br/>data-driven guardrail<br/>(sourceable, pure)"]
-    corp["61-case bypass corpus<br/>+ benchmark<br/>100% precision / recall"]
+    corp["147-case bypass corpus<br/>+ benchmark<br/>100% precision / recall"]
     act["check-actions.sh<br/>drift · least-priv · pinning · injection"]
     pol --> corp
   end

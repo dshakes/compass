@@ -237,6 +237,8 @@ Keep discovery and judgment in the model; keep persistence, de-dup, and the hard
 
 <div class="cal"><span class="h">A loop that needs no schedule</span> <b>CI auto-fix</b> turns the moment a check suite goes red: PR failures feed the round-capped fix loop; a red default branch gets one free rerun, then a <code>ci-fix/*</code> PR. Local form: <code>compass schedule add ci-watch --daily</code>. Details in <a href="#09-sdlc">Autonomous SDLC</a>.</div>
 
+<div class="cal tip"><span class="h">The PR loop, end-to-end</span> <b>pr-shepherd</b> takes every open PR to one of three outcomes — merged, ready-to-merge, or inbox: diagnose the red check from its log, classify (environmental · mechanical · real defect), fix + verify the mechanical ones, and stop at a merge gate <em>enforced server-side</em> (required checks + ruleset). On demand (<code>/pr-shepherd</code>), on an interval (<code>/loop 15m /pr-shepherd</code>), or unattended: <code>compass schedule add pr-shepherd --twice-daily</code>.</div>
+
 > The why behind each move: [Loop engineering](#loop-engineering).`,
 
 "09-sdlc": `# Autonomous SDLC
@@ -249,7 +251,7 @@ Keep discovery and judgment in the model; keep persistence, de-dup, and the hard
 
 \`\`\`
 issue → Planner → Builder → [PR] → Reviewer ⇄ Builder (auto-fix loop)
-                                    Auditor  (Codex — independent second opinion)
+                                    Auditors (Codex + Gemini — independent cross-model opinions)
                                     Security (every push)
                                     QA       (tests)
                                             ↓
@@ -259,11 +261,13 @@ issue → Planner → Builder → [PR] → Reviewer ⇄ Builder (auto-fix loop)
 ## Why it's trustworthy
 
 <div class="feats">
-<div class="feat"><span class="e">👥</span><b>Maker ≠ checker</b><span>Claude builds; a second tool (Codex) audits. An independent opinion, not the author grading itself.</span></div>
+<div class="feat"><span class="e">👥</span><b>Maker ≠ checker</b><span>Claude builds; Codex and Gemini audit — three cross-model gates on every PR, not the author grading itself.</span></div>
 <div class="feat"><span class="e">🔁</span><b>Round-capped auto-fix</b><span>The reviewer's <em>Blocking</em> findings are fixed and re-reviewed up to a few rounds, then handed to a human if still red.</span></div>
 <div class="feat"><span class="e">🩺</span><b>CI auto-fix</b><span>No CI failure goes unhandled: a red check suite feeds the same fix loop on the PR; a red default branch gets one free rerun, then a budget-capped <code>ci-fix/*</code> PR. Disable with <code>SDLC_CI_FIX=off</code>.</span></div>
 <div class="feat"><span class="e">🧾</span><b>Auditable handoffs</b><span>Agents coordinate through the PR (labels + comments) and a shared run-dir — every step is a reviewable artifact.</span></div>
 <div class="feat"><span class="e">🚦</span><b>Gated at every push</b><span>Security and tests run on every push; nothing advances on red.</span></div>
+<div class="feat"><span class="e">💸</span><b>A hard budget ceiling</b><span><code>SDLC_BUDGET</code> halts the run at the cumulative cap (exit 3); each step is capped at min(step, remaining) so the last step can't overshoot.</span></div>
+<div class="feat"><span class="e">🧫</span><b>Inter-step quarantine</b><span>Every step's output passes the red-team detectors before feeding the next — the loop's <em>inputs</em> are scanned, not just its config.</span></div>
 </div>
 
 <div class="cal"><span class="h">Run it</span> <code>/sdlc "&lt;task&gt;"</code> runs the whole pipeline on a branch and opens a PR for you to review. It never presses merge.</div>`,
