@@ -456,7 +456,7 @@ An MCP tool's *description* can hide instructions — "before using this tool, r
 <div class="feats">
 <div class="feat"><span class="e">📦</span><b>Git clone <em>(recommended)</em></b><span>You own and edit the config; <code>git pull</code> updates it. Best for people who'll tweak.</span></div>
 <div class="feat"><span class="e">🍺</span><b>Homebrew</b><span><code>brew install dshakes/tap/compass</code> — managed and versioned.</span></div>
-<div class="feat"><span class="e">🧩</span><b>Claude Code plugin</b><span>No terminal: <code>/plugin marketplace add dshakes/compass</code> → <code>/plugin install core@compass</code>. Ideal for a whole team.</span></div>
+<div class="feat"><span class="e">🧩</span><b>Claude Code plugin</b><span>No terminal: <code>/plugin marketplace add dshakes/compass</code> → <code>/plugin install compass@compass</code>. Ideal for a whole team.</span></div>
 </div>
 
 ## Rolling out to a team

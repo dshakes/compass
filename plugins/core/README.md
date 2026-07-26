@@ -8,13 +8,13 @@ repo-bootstrap skill, a terse output style, and parity MCP servers.
 
 ```bash
 /plugin marketplace add dshakes/compass
-/plugin install core@compass
+/plugin install compass@compass
 ```
 
 Local testing from a clone:
 ```bash
 /plugin marketplace add ./compass
-/plugin install core@compass
+/plugin install compass@compass
 ```
 
 ## What you get

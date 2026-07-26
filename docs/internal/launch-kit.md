@@ -122,7 +122,7 @@ A reviewer can confirm these in ~2 minutes (guardrail claim first — it IS the 
 | **aitmpl.com** | Aggregator; gets picked up once you're in a crawled marketplace. | Passive. |
 | **anthropics/claude-plugins-official** | Highest bar — directory submission form; automated validation + safety screening. | Apply after traction. |
 
-Install path for all of them is already shipped: `/plugin marketplace add dshakes/compass` → `/plugin install core@compass`.
+Install path for all of them is already shipped: `/plugin marketplace add dshakes/compass` → `/plugin install compass@compass`.
 
 ---
 

@@ -48,6 +48,6 @@ Type "crew"
 Enter
 Sleep 2400ms
 
-Type "# install once → make install   (or:  /plugin install core@compass)"
+Type "# install once → make install   (or:  /plugin install compass@compass)"
 Enter
 Sleep 2800ms

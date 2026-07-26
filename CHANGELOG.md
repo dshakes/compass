@@ -5,6 +5,15 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING: plugin id renamed `core` → `compass`** ahead of the community-directory
+  listing (the slug is immutable once published; skills now namespace as
+  `/compass:<skill>`). Migration for existing installs:
+  `/plugin uninstall core@compass` then `/plugin install compass@compass`, and update
+  any team pin in `.claude/settings.json` (`enabledPlugins`) to `"compass@compass"`.
+  `core-lsp` is unchanged.
+
 ### Added
 
 - **Gemini third cloud auditor** — `sdlc-audit-gemini.yml`: cross-model audit #3 (Claude

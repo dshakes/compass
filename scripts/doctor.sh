@@ -76,6 +76,18 @@ else fail "vendor manifest drift — run: scripts/check-vendor.sh"; fi
 if "$REPO"/scripts/test-protect-paths.sh >/dev/null 2>&1; then pass "guardrail bypass corpus passes (protect-paths policy)"
 else fail "guardrail corpus failed — run: scripts/test-protect-paths.sh"; fi
 
+# Plugin identity: the marketplace entry name must equal plugin.json's name, and no
+# install surface may still reference a stale "<old>@compass" id (CHANGELOG history exempt).
+PNAME="$(jq -r .name "$REPO/plugins/core/.claude-plugin/plugin.json" 2>/dev/null)"
+MNAME="$(jq -r '.plugins[0].name' "$REPO/.claude-plugin/marketplace.json" 2>/dev/null)"
+if [ -n "$PNAME" ] && [ "$PNAME" = "$MNAME" ]; then pass "plugin id consistent: $PNAME (manifest = marketplace)"
+else fail "plugin id mismatch: plugin.json '$PNAME' vs marketplace '$MNAME'"; fi
+STALE_ID="core@""compass"   # split so this script's own source never matches the grep
+# Tracked files only (git grep): an untracked local draft must not fail doctor.
+if git -C "$REPO" grep -ql "$STALE_ID" -- ':!CHANGELOG.md' ':!scripts/doctor.sh' 2>/dev/null; then
+  fail "stale install id '$STALE_ID' still referenced — sweep to '$PNAME@compass'"
+else pass "no stale plugin install ids in docs/scripts"; fi
+
 # Hook behavior: format-on-edit / checkpoint-wip / inject-context must stay non-destructive.
 if "$REPO"/scripts/test-hooks.sh >/dev/null 2>&1; then pass "hook behavior corpus passes (format · checkpoint · context)"
 else fail "hook behavior corpus failed — run: scripts/test-hooks.sh"; fi
