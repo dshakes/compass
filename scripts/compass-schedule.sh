@@ -279,7 +279,10 @@ cmd_run() {
   local tools="$ALLOWED_TOOLS"
   [ "$routine" = "ci-watch" ] && tools="${ALLOWED_TOOLS}${CI_WATCH_EXTRA_TOOLS}"
   if [ "$routine" = "pr-shepherd" ]; then
-    tools="${ALLOWED_TOOLS}${PR_SHEPHERD_EXTRA_TOOLS}"
+    # Compose WITHOUT the base list's Bash(gh api:*): with merge authority granted,
+    # gh api is an escape hatch to the merge/ref REST endpoints that would defeat
+    # the squash-only enforcement below (audit finding on #83).
+    tools="${ALLOWED_TOOLS/,Bash(gh api:*)/}${PR_SHEPHERD_EXTRA_TOOLS}"
     # Fixing + testing + merging needs more room than a comment-only routine.
     maxturns="${COMPASS_ROUTINE_MAX_TURNS:-60}" budget="${COMPASS_ROUTINE_BUDGET:-3.00}" tmo="${COMPASS_ROUTINE_TIMEOUT:-45m}"
   fi

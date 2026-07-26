@@ -9,7 +9,7 @@ diagnose + comment, never check out, never push.
 PER PR, in ascending number order:
 1. Read `state/shepherd.md` first (create if absent). A PR already marked `inbox` gets at
    most ONE nudge comment per day — do not re-litigate it.
-2. All checks green → squash-merge it (`gh pr merge <n> --squash`). Done is done.
+2. All checks green → squash-merge it (`gh pr merge --squash <n>` — flags-first is the only allowlisted form). Done is done.
 3. Red checks → read the failing step's actual log (`gh run view <id> --log-failed`),
    classify, then act:
    - environmental (missing secrets, runner flake, quota): note it; if recurring, comment

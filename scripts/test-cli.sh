@@ -270,6 +270,22 @@ done
 if grep -q 'PR_SHEPHERD_EXTRA_TOOLS=' "$ROOT/scripts/compass-schedule.sh" \
    && grep -q 'gh pr merge --squash:' "$ROOT/scripts/compass-schedule.sh"; then
   ok "shepherd toolset grants squash-merge (and only squash)"; else no "shepherd toolset missing/over-broad"; fi
+# The composed toolset must strip gh api — with merge authority it's an escape hatch to
+# the merge/ref REST endpoints. Evaluate the ACTUAL composition, not the source text.
+shep_tools="$(bash -c '
+  source /dev/null
+  eval "$(grep -E "^(ALLOWED_TOOLS|CI_WATCH_EXTRA_TOOLS|PR_SHEPHERD_EXTRA_TOOLS)=" "'"$ROOT"'/scripts/compass-schedule.sh")"
+  printf "%s" "${ALLOWED_TOOLS/,Bash(gh api:*)/}${PR_SHEPHERD_EXTRA_TOOLS}"
+')"
+case "$shep_tools" in
+  *"gh api"*) no "shepherd composed toolset still contains gh api (merge escape hatch)" ;;
+  *"gh pr merge --squash"*) ok "shepherd composed toolset: squash-only, no gh api" ;;
+  *) no "shepherd composed toolset lost the squash-merge grant" ;;
+esac
+# The prompt's merge command must be the exact allowlisted prefix form (prefix matching:
+# 'gh pr merge <n> --squash' would be DENIED by 'gh pr merge --squash:*').
+if grep -q 'gh pr merge --squash <n>' "$ROOT/sdlc/routines/prompts/pr-shepherd.md"; then
+  ok "prompt uses the allowlisted flags-first merge form"; else no "prompt merge form won't match the allowlist prefix"; fi
 if grep -q -- '--twice-daily' "$ROOT/scripts/compass-schedule.sh"; then
   ok "--twice-daily cadence flag exists"; else no "--twice-daily flag missing"; fi
 
