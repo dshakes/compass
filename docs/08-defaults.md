@@ -17,7 +17,7 @@ not working-tree files. Use the scaffolder instead:
 
 ```bash
 ~/compass/scripts/new-repo.sh ./my-service          # starter CLAUDE.md + AGENTS.md symlink
-~/compass/scripts/new-repo.sh ./my-service --team   # also pins core@compass
+~/compass/scripts/new-repo.sh ./my-service --team   # also pins compass@compass
 ```
 
 Then fill `CLAUDE.md` from the real code with Claude's `/init` or the

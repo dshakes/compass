@@ -19,12 +19,12 @@ compass/                         # ← the marketplace (repo root)
 ## Install (teammates)
 ```bash
 /plugin marketplace add dshakes/compass       # GitHub owner/repo
-/plugin install core@compass
+/plugin install compass@compass
 ```
 Local testing from a clone:
 ```bash
 /plugin marketplace add ./compass
-/plugin install core@compass
+/plugin install compass@compass
 ```
 
 ## Other agents — native installs (one source)
@@ -56,7 +56,7 @@ manifest can never silently drift from the real config.
 ## What the plugin delivers
 15 subagents · 12 commands · 8 hooks (guardrail · inject-context · red-team ×3 · budget-gate · format-on-edit · notify) ·
 `bootstrap-agent-config` skill · "Concise" output style ·
-3 MCP servers. Validated via `claude plugin details core@compass`
+3 MCP servers. Validated via `claude plugin details compass@compass`
 (≈1,165 always-on tokens; agents/commands cost only when invoked).
 
 ## What the plugin **cannot** carry — and why both methods exist
