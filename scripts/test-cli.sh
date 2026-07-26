@@ -263,7 +263,7 @@ if grep -q 'VALID_ROUTINES=.*pr-shepherd' "$ROOT/scripts/compass-schedule.sh"; t
   ok "pr-shepherd is a valid routine"; else no "pr-shepherd missing from VALID_ROUTINES"; fi
 [ -f "$ROOT/sdlc/routines/prompts/pr-shepherd.md" ] && ok "pr-shepherd prompt exists" || no "pr-shepherd prompt missing"
 # every safety rail the prompt promises must actually be in the prompt
-for rail in "Never force-push" "Never merge red" "THREE STRIKES" "READ-ONLY" "no test, no push"; do
+for rail in "Never force-push" "Never merge red" "THREE STRIKES" "READ-ONLY" "no test, no push" "NEVER MERGE" "same-repo PRs only"; do
   if grep -q "$rail" "$ROOT/sdlc/routines/prompts/pr-shepherd.md"; then
     ok "prompt rail present: $rail"; else no "prompt rail missing: $rail"; fi
 done

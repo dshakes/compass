@@ -4,7 +4,8 @@ server-side). Work the compass `pr-shepherd` procedure end-to-end, bounded and t
 
 ENUMERATE: `gh pr list --state open --json number,title,author,isDraft,isCrossRepository,headRefName,statusCheckRollup`.
 Skip drafts. Fork PRs (`isCrossRepository` true, or the field missing) are READ-ONLY:
-diagnose + comment, never check out, never push.
+diagnose + comment ONLY — never check out, never push, and NEVER MERGE, even fully green.
+External code always waits for a human; your merge authority covers same-repo PRs only.
 
 PER PR, in ascending number order:
 1. Read `state/shepherd.md` first (create if absent). A PR already marked `inbox` gets at
