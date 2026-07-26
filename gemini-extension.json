@@ -1,20 +1,31 @@
 {
   "name": "compass",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "compass — one operating manual + eval-gated guardrails, red-team hardening, a cost-tier router and signed config for your coding agent. Loads the manual as GEMINI.md and wires the same version-pinned MCP servers (context7 · fetch · git) compass uses for Claude Code and Codex.",
   "contextFileName": "GEMINI.md",
   "mcpServers": {
     "context7": {
       "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp@3.1.0"]
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@3.1.0"
+      ]
     },
     "fetch": {
       "command": "uvx",
-      "args": ["--from", "mcp-server-fetch==2025.4.7", "mcp-server-fetch"]
+      "args": [
+        "--from",
+        "mcp-server-fetch==2025.4.7",
+        "mcp-server-fetch"
+      ]
     },
     "git": {
       "command": "uvx",
-      "args": ["--from", "mcp-server-git==2026.1.14", "mcp-server-git"]
+      "args": [
+        "--from",
+        "mcp-server-git==2026.1.14",
+        "mcp-server-git"
+      ]
     }
   }
 }
