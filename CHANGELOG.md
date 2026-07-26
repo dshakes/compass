@@ -5,6 +5,16 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+
+- **`pr-shepherd` scheduled routine** — `compass schedule add pr-shepherd --twice-daily`
+  runs the shepherd unattended on your machine (09:07/17:07 while awake): reads every open
+  PR's failing checks, fixes mechanical + real defects PROD-grade (tests required, gate run
+  locally before push, three-strikes cap), comments GA-tone explanations, and squash-merges
+  when all checks are green. Bounded (60 turns / $3 / 45m per run, overridable), fork PRs
+  read-only, never force-pushes, never closes unmerged PRs. Rails are asserted by
+  `test-cli.sh`, and the branch ruleset enforces required checks server-side regardless.
+
 ### Changed
 
 - **BREAKING: plugin id renamed `core` → `compass`** ahead of the community-directory

@@ -7,7 +7,7 @@
 #   remove <routine>
 #   run <routine> [DIR]
 #
-# Routines: dep-refresh  flaky-triage  doc-freshness  pr-babysit  ci-watch
+# Routines: dep-refresh  flaky-triage  doc-freshness  pr-babysit  ci-watch  pr-shepherd
 #
 # Crontab block is delimited by:
 #   # >>> compass schedule >>>
@@ -30,7 +30,7 @@ BLOCK_CLOSE="# <<< compass schedule <<<"
 # ---------------------------------------------------------------------------
 # Valid routines (space-separated; validated by validate_routine)
 # ---------------------------------------------------------------------------
-VALID_ROUTINES="dep-refresh flaky-triage doc-freshness pr-babysit ci-watch"
+VALID_ROUTINES="dep-refresh flaky-triage doc-freshness pr-babysit ci-watch pr-shepherd"
 
 # Allowed tools for each routine's claude invocation (read + git + build/test only).
 ALLOWED_TOOLS="Read,Grep,Glob,Bash(git log:*),Bash(git diff:*),Bash(git status:*),Bash(git add:*),Bash(git commit:*),Bash(go build:*),Bash(go test:*),Bash(go vet:*),Bash(cargo build:*),Bash(cargo test:*),Bash(npm:*),Bash(pnpm:*),Bash(npx tsc:*),Bash(pytest:*),Bash(ruff:*),Bash(make:*),Bash(gh run list:*),Bash(gh run view:*),Bash(gh issue list:*),Bash(gh issue view:*),Bash(gh issue create:*),Bash(gh issue comment:*),Bash(gh pr list:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(gh api:*)"
@@ -39,6 +39,12 @@ ALLOWED_TOOLS="Read,Grep,Glob,Bash(git log:*),Bash(git diff:*),Bash(git status:*
 # ponytail: allowedTools can't scope a push to non-default branches; the prompt's hard
 # rules + repo branch protection are the guard on the default branch.
 CI_WATCH_EXTRA_TOOLS=",Edit,Write,Bash(git checkout:*),Bash(git switch:*),Bash(git push:*),Bash(gh pr checkout:*),Bash(gh pr create:*)"
+
+# pr-shepherd is the full-authority scheduled loop: everything ci-watch has, plus
+# worktrees (fix on the PR branch in isolation), check reading, label edits, and —
+# uniquely — merge. Merge safety is layered: the prompt requires all checks green,
+# and the branch ruleset enforces required checks server-side regardless.
+PR_SHEPHERD_EXTRA_TOOLS="${CI_WATCH_EXTRA_TOOLS},Bash(git worktree:*),Bash(gh pr checks:*),Bash(gh pr diff:*),Bash(gh pr edit:*),Bash(gh pr merge --squash:*)"
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -54,10 +60,11 @@ Usage:
   compass schedule run <routine> [DIR]
   compass schedule -h|--help
 
-Routines: dep-refresh  flaky-triage  doc-freshness  pr-babysit  ci-watch
+Routines: dep-refresh  flaky-triage  doc-freshness  pr-babysit  ci-watch  pr-shepherd
 
 Schedule flags:
   --daily             0 6 * * *   (daily at 06:00)
+  --twice-daily       7 9,17 * * *  (09:07 + 17:07 — crontab only fires while the laptop is awake; missed slots are skipped, not caught up)
   --weekly            0 6 * * 1   (Mondays at 06:00)  [default]
   --cron "<expr>"     custom 5-field cron expression
 
@@ -167,6 +174,7 @@ cmd_add() {
   while [ $# -gt 0 ]; do
     case "$1" in
       --daily)  cron_expr="0 6 * * *";  shift ;;
+      --twice-daily) cron_expr="7 9,17 * * *"; shift ;;   # off-minute on purpose (thundering-herd kindness)
       --weekly) cron_expr="0 6 * * 1";  shift ;;
       --cron)
         [ $# -ge 2 ] || die "--cron requires an expression argument"
@@ -270,6 +278,14 @@ cmd_run() {
   local tmo="${COMPASS_ROUTINE_TIMEOUT:-30m}" rc=0 out
   local tools="$ALLOWED_TOOLS"
   [ "$routine" = "ci-watch" ] && tools="${ALLOWED_TOOLS}${CI_WATCH_EXTRA_TOOLS}"
+  if [ "$routine" = "pr-shepherd" ]; then
+    # Compose WITHOUT the base list's Bash(gh api:*): with merge authority granted,
+    # gh api is an escape hatch to the merge/ref REST endpoints that would defeat
+    # the squash-only enforcement below (audit finding on #83).
+    tools="${ALLOWED_TOOLS/,Bash(gh api:*)/}${PR_SHEPHERD_EXTRA_TOOLS}"
+    # Fixing + testing + merging needs more room than a comment-only routine.
+    maxturns="${COMPASS_ROUTINE_MAX_TURNS:-60}" budget="${COMPASS_ROUTINE_BUDGET:-3.00}" tmo="${COMPASS_ROUTINE_TIMEOUT:-45m}"
+  fi
   out="$(
     cd "$dir" || exit 1
     if command -v timeout >/dev/null 2>&1; then to() { timeout "$tmo" "$@"; }; else to() { "$@"; }; fi
