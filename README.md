@@ -54,7 +54,7 @@ git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && ./quic
 
 <div align="center">
 
-Open a PR and compass **reviews it, security-checks it, runs the tests, cross-audits it with a second model — then pushes its own fixes until it's green.** You merge. **☝ That's a real PR** — every event above is inspectable.
+Open a PR and compass **reviews it, security-checks it, runs the tests, cross-audits it with two more models — three cross-model gates (Claude review · Codex audit · Gemini audit) — then pushes its own fixes until it's green.** You merge. **☝ That's a real PR** — every event above is inspectable.
 
 **The idea in one line: the loop is the unit of work.** A one-shot agent stops at its first wrong answer. compass *loops* — **generate → test → critique → fix → repeat against a gate** — so quality comes from iteration, not one lucky prompt. → [how the loop works](docs/09-sdlc.md) · [the thesis](docs/loop-engineering.md)
 
@@ -137,7 +137,7 @@ Opus 4.8 · myrepo · main* · 45k ctx · $1.23 · 🧭 🛡1 🧹2 💡1 📉~$
 
 ## Loops all the way up
 
-Autonomy here isn't one big magic button — it's the *same closed loop* applied at four scales. Each runs until a gate says "done," then stops at a human. That's the whole trick: **iteration under a gate beats a single confident guess.**
+Autonomy here isn't one big magic button — it's the *same closed loop* applied at five scales. Each runs until a gate says "done," then stops at a human. That's the whole trick: **iteration under a gate beats a single confident guess.**
 
 | | Loop | What it drives | Where it stops |
 |---|---|---|---|
@@ -146,6 +146,12 @@ Autonomy here isn't one big magic button — it's the *same closed loop* applied
 | 🩺 | **The CI-fix loop** | any check suite goes red → failure log + auto-fix on the PR; main goes red → one free rerun, then a `ci-fix/*` PR | round cap → a human; never merges |
 | 🛰️ | **The fleet loop** | the whole pipeline, scheduled across *every repo you own*, overnight, test-gated | a PR per repo, **approve from your phone** |
 | 👥 | **The workflow loops** | parallel agents that fan out, fact-check each other, and converge | one synthesized answer |
+
+**The newest turn of the crank — `pr-shepherd`:** every open PR taken end-to-end — diagnose the red check from its log, classify it, fix + verify the mechanical ones, and stop at a merge gate that's **enforced server-side** (required checks + ruleset, not the agent's honor). Run it on demand (`/pr-shepherd`), on an interval (`/loop 15m /pr-shepherd`), or unattended: `compass schedule add pr-shepherd --twice-daily`.
+
+<p align="center">
+  <a href="docs/20-loops.md"><img src="assets/shepherd-loop.svg" alt="The PR shepherd loop: 1 enumerate every open PR (skip drafts, forks stay read-only) → 2 diagnose by reading the failing log, never guessing → 3 classify environmental / mechanical / real defect → 4 fix mechanical failures and pass the gate locally first → 5 push to the PR's own branch (three-strikes cap) → all checks green? → squash-merge (green + session authority; gate enforced server-side by required checks + ruleset) or inbox where a human decides (real defects are never auto-fixed silently — the diagnosis is already written on the PR). State persists in state/shepherd.md and the loop fires twice daily, or on an interval via /loop." width="860"></a>
+</p>
 
 A loop that runs while you sleep is five moves — **discovery → handoff → verification → persistence → scheduling** — and compass ships a primitive for each. It also guards the four costs a loop runs up *silently* (verification debt, comprehension rot, cognitive surrender, token blowout): an independent evaluator that assumes broken and *runs* it, `compass digest` to keep you understanding what merged, the permanent human gate, and per-day + live budget caps. → [the five moves & four guards](docs/20-loops.md) · [the thesis](docs/loop-engineering.md)
 
@@ -210,7 +216,7 @@ Everything below is **on after one install** or a single opt-in — the autonomo
 |---|---|---|---|
 | 🔁 | **Autonomous SDLC** | the review → security → tests → cross-audit → **auto-fix → re-review** loop; you merge | [09-sdlc](docs/09-sdlc.md) |
 | 🩺 | **CI auto-fix** | no CI failure goes unhandled: red PR checks feed the fix loop; red main gets one free rerun, then a `ci-fix/*` PR | [09-sdlc](docs/09-sdlc.md) |
-| 🔄 | **Loop engineering** | the five moves wired up: `morning-triage` discovery · `pr-shepherd` PR handoff → merge gate · an acting/skeptic evaluator · `compass digest` · per-day budget cap | [20-loops](docs/20-loops.md) |
+| 🔄 | **Loop engineering** | the five moves wired up: `morning-triage` discovery · `pr-shepherd` takes every open PR to the merge gate (on demand, `/loop 15m /pr-shepherd`, or `compass schedule add pr-shepherd --twice-daily` unattended) · an acting/skeptic evaluator · `compass digest` · per-day budget cap | [20-loops](docs/20-loops.md) |
 | 🛰️ | **The fleet** | the loop, scheduled across *all* your repos through a test gate; approve from your phone | [14-fleet](docs/14-fleet.md) |
 | 👥 | **The crew + workflows** | cost-tiered expert subagents · slash-commands · dynamic workflows that fact-check each other | [agents roster](docs/agents-roster.md) · [12](docs/12-every-agent.md) · [13](docs/13-workflows.md) |
 | 🛡 | **Guardrails & scanning** | a hook layer that blocks disasters, catches secrets (write-hook + `compass scan`), auto-formats, keeps a JSONL audit log | [16-hardening](docs/16-hardening-and-frontier.md) |

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 684" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1117"/><stop offset="1" stop-color="#0a0e14"/></linearGradient>
     <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">
@@ -17,8 +17,8 @@
       <path d="M0,-8 L7,-5 V1 C7,6 3.5,9 0,10 C-3.5,9 -7,6 -7,1 V-5 Z"/><path d="M-3,0.5 L-0.8,3 L3.4,-2.2"/>
     </g>
   </defs>
-  <rect x="1" y="1" width="1198" height="598" rx="20" fill="url(#bg)" stroke="#30363d" stroke-width="2"/>
-  <rect x="1" y="596" width="1198" height="4" fill="url(#acc)"/>
+  <rect x="1" y="1" width="1198" height="682" rx="20" fill="url(#bg)" stroke="#30363d" stroke-width="2"/>
+  <rect x="1" y="680" width="1198" height="4" fill="url(#acc)"/>
 
   <!-- header -->
   <g transform="translate(52,44)">
@@ -40,7 +40,7 @@
 
   <!-- ===================== BAND 1 · HARDENED CORE (stable) ===================== -->
   <g>
-    <rect x="40" y="84" width="796" height="146" rx="16" fill="#10161d" stroke="#2ea44f" stroke-width="1.8"/>
+    <rect x="40" y="84" width="796" height="230" rx="16" fill="#10161d" stroke="#2ea44f" stroke-width="1.8"/>
     <g color="#3fb950" transform="translate(64,108)"><use href="#ic-shield"/></g>
     <text x="80" y="106" font-size="15" font-weight="800" fill="#f0f6fc">HARDENED CORE</text>
     <text x="80" y="123" font-size="11.5" fill="#7d8590" font-weight="600">stable · gated in CI · footgun-prevention, not a security boundary</text>
@@ -51,7 +51,7 @@
         <text x="145" y="183" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">data-driven guardrail</text>
         <text x="145" y="198" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">sourceable · pure</text></g>
       <g><rect x="246" y="138" width="178" height="74" rx="11" fill="#0d1117" stroke="#3fb950" stroke-width="1.6"/>
-        <text x="335" y="164" text-anchor="middle" font-size="13.5" fill="#e6edf3">61-case corpus</text>
+        <text x="335" y="164" text-anchor="middle" font-size="13.5" fill="#e6edf3">147-case corpus</text>
         <text x="335" y="183" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">must-block / must-allow</text>
         <text x="335" y="198" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">closes every bypass</text></g>
       <g><rect x="436" y="138" width="178" height="74" rx="11" fill="#10231a" stroke="#2ea44f" stroke-width="2.2"/>
@@ -62,74 +62,82 @@
         <text x="723" y="164" text-anchor="middle" font-size="13.5" fill="#e6edf3">actions audit</text>
         <text x="723" y="183" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">drift · least-priv</text>
         <text x="723" y="198" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">SHA-pin · injection</text></g>
+      <g><rect x="56" y="222" width="178" height="74" rx="11" fill="#0d1117" stroke="#3fb950" stroke-width="1.6"/>
+        <text x="145" y="248" text-anchor="middle" font-size="13.5" fill="#e6edf3">3 cross-model gates</text>
+        <text x="145" y="267" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">Claude review · Codex audit</text>
+        <text x="145" y="282" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">· Gemini audit — every PR</text></g>
+      <g><rect x="246" y="222" width="178" height="74" rx="11" fill="#0d1117" stroke="#3fb950" stroke-width="1.6"/>
+        <text x="335" y="248" text-anchor="middle" font-size="13.5" fill="#e6edf3">hard budget ceiling</text>
+        <text x="335" y="267" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">SDLC_BUDGET halts the run</text>
+        <text x="335" y="282" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">each step: min(step, remaining)</text></g>
     </g>
   </g>
 
   <!-- ===================== BAND 2 · FRONTIER (opt-in) ===================== -->
   <g>
-    <rect x="40" y="240" width="796" height="156" rx="16" fill="#13101d" stroke="#8A63D2" stroke-width="1.8" stroke-dasharray="6 4"/>
-    <text x="64" y="264" font-size="15" font-weight="800" fill="#f0f6fc">FRONTIER</text>
-    <text x="178" y="264" font-size="11.5" fill="#7d8590" font-weight="600">opt-in · experimental · honest-labeled</text>
+    <rect x="40" y="324" width="796" height="156" rx="16" fill="#13101d" stroke="#8A63D2" stroke-width="1.8" stroke-dasharray="6 4"/>
+    <text x="64" y="348" font-size="15" font-weight="800" fill="#f0f6fc">FRONTIER</text>
+    <text x="178" y="348" font-size="11.5" fill="#7d8590" font-weight="600">opt-in · experimental · honest-labeled</text>
     <g font-weight="700" font-size="12.5" fill="#e6edf3">
       <!-- row 1 -->
-      <g><rect x="56" y="276" width="246" height="50" rx="10" fill="#0d1117" stroke="#a371f7" stroke-width="1.5"/>
-        <text x="70" y="300" font-size="13" fill="#f0f6fc">persistent memory</text>
-        <text x="70" y="316" font-size="10.5" fill="#8b949e" font-weight="600">persists across sessions and repos</text></g>
-      <g><rect x="312" y="276" width="246" height="50" rx="10" fill="#0d1117" stroke="#a371f7" stroke-width="1.5"/>
-        <text x="326" y="300" font-size="13" fill="#f0f6fc">parallel SDLC</text>
-        <text x="326" y="316" font-size="10.5" fill="#8b949e" font-weight="600">+ test-impact QA · diff-size routing</text></g>
-      <g><rect x="568" y="276" width="252" height="50" rx="10" fill="#0d1117" stroke="#a371f7" stroke-width="1.5"/>
-        <text x="582" y="300" font-size="13" fill="#f0f6fc">fleet brain</text>
-        <text x="582" y="316" font-size="10.5" fill="#8b949e" font-weight="600">recurring findings → proposed rules</text></g>
+      <g><rect x="56" y="360" width="246" height="50" rx="10" fill="#0d1117" stroke="#a371f7" stroke-width="1.5"/>
+        <text x="70" y="384" font-size="13" fill="#f0f6fc">persistent memory</text>
+        <text x="70" y="400" font-size="10.5" fill="#8b949e" font-weight="600">persists across sessions and repos</text></g>
+      <g><rect x="312" y="360" width="246" height="50" rx="10" fill="#0d1117" stroke="#a371f7" stroke-width="1.5"/>
+        <text x="326" y="384" font-size="13" fill="#f0f6fc">parallel SDLC</text>
+        <text x="326" y="400" font-size="10.5" fill="#8b949e" font-weight="600">+ test-impact QA · diff-size routing</text></g>
+      <g><rect x="568" y="360" width="252" height="50" rx="10" fill="#0d1117" stroke="#a371f7" stroke-width="1.5"/>
+        <text x="582" y="384" font-size="13" fill="#f0f6fc">fleet brain</text>
+        <text x="582" y="400" font-size="10.5" fill="#8b949e" font-weight="600">recurring findings → proposed rules</text></g>
       <!-- row 2 -->
-      <g><rect x="56" y="332" width="246" height="50" rx="10" fill="#0d1117" stroke="#a371f7" stroke-width="1.5"/>
-        <text x="70" y="356" font-size="13" fill="#f0f6fc">cost-aware router</text>
-        <text x="70" y="372" font-size="10.5" fill="#8b949e" font-weight="600">confidence + budget bias (floor kept)</text></g>
-      <g><rect x="312" y="332" width="246" height="50" rx="10" fill="#0d1117" stroke="#a371f7" stroke-width="1.5"/>
-        <text x="326" y="356" font-size="13" fill="#f0f6fc">spec-kit interop</text>
-        <text x="326" y="372" font-size="10.5" fill="#8b949e" font-weight="600">governance UNDER spec-driven dev</text></g>
-      <g><rect x="568" y="332" width="252" height="50" rx="10" fill="#0d1117" stroke="#a371f7" stroke-width="1.5"/>
-        <text x="582" y="356" font-size="13" fill="#f0f6fc">SBOM + signed commits</text>
-        <text x="582" y="372" font-size="10.5" fill="#8b949e" font-weight="600">provenance on every agent PR</text></g>
+      <g><rect x="56" y="416" width="246" height="50" rx="10" fill="#0d1117" stroke="#a371f7" stroke-width="1.5"/>
+        <text x="70" y="440" font-size="13" fill="#f0f6fc">cost-aware router</text>
+        <text x="70" y="456" font-size="10.5" fill="#8b949e" font-weight="600">confidence + budget bias (floor kept)</text></g>
+      <g><rect x="312" y="416" width="246" height="50" rx="10" fill="#0d1117" stroke="#a371f7" stroke-width="1.5"/>
+        <text x="326" y="440" font-size="13" fill="#f0f6fc">spec-kit interop</text>
+        <text x="326" y="456" font-size="10.5" fill="#8b949e" font-weight="600">governance UNDER spec-driven dev</text></g>
+      <g><rect x="568" y="416" width="252" height="50" rx="10" fill="#0d1117" stroke="#a371f7" stroke-width="1.5"/>
+        <text x="582" y="440" font-size="13" fill="#f0f6fc">SBOM + signed commits</text>
+        <text x="582" y="456" font-size="10.5" fill="#8b949e" font-weight="600">provenance on every agent PR</text></g>
     </g>
   </g>
 
   <!-- ===================== BAND 3 · CONTROL SURFACE ===================== -->
   <g>
-    <rect x="40" y="406" width="796" height="110" rx="16" fill="#0f1822" stroke="#58a6ff" stroke-width="1.8"/>
-    <text x="64" y="430" font-size="15" font-weight="800" fill="#f0f6fc">CONTROL SURFACE</text>
-    <text x="250" y="430" font-size="11.5" fill="#7d8590" font-weight="600">zero-infra · read-only · no upload</text>
+    <rect x="40" y="490" width="796" height="110" rx="16" fill="#0f1822" stroke="#58a6ff" stroke-width="1.8"/>
+    <text x="64" y="514" font-size="15" font-weight="800" fill="#f0f6fc">CONTROL SURFACE</text>
+    <text x="250" y="514" font-size="11.5" fill="#7d8590" font-weight="600">zero-infra · read-only · no upload</text>
     <g font-weight="700">
-      <g><rect x="56" y="442" width="380" height="58" rx="11" fill="#0d1117" stroke="#58a6ff" stroke-width="1.6"/>
-        <text x="246" y="468" text-anchor="middle" font-size="13.5" fill="#f0f6fc">compass dashboard</text>
-        <text x="246" y="487" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">impact · spend · live fleet PRs in one panel</text></g>
-      <g><rect x="448" y="442" width="372" height="58" rx="11" fill="#0d1117" stroke="#58a6ff" stroke-width="1.6"/>
-        <text x="634" y="468" text-anchor="middle" font-size="13.5" fill="#f0f6fc">--html / --json</text>
-        <text x="634" y="487" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">a shareable page · or feed your own tools</text></g>
+      <g><rect x="56" y="526" width="380" height="58" rx="11" fill="#0d1117" stroke="#58a6ff" stroke-width="1.6"/>
+        <text x="246" y="552" text-anchor="middle" font-size="13.5" fill="#f0f6fc">compass dashboard</text>
+        <text x="246" y="571" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">impact · spend · live fleet PRs in one panel</text></g>
+      <g><rect x="448" y="526" width="372" height="58" rx="11" fill="#0d1117" stroke="#58a6ff" stroke-width="1.6"/>
+        <text x="634" y="552" text-anchor="middle" font-size="13.5" fill="#f0f6fc">--html / --json</text>
+        <text x="634" y="571" text-anchor="middle" font-size="10.5" fill="#8b949e" font-weight="600">a shareable page · or feed your own tools</text></g>
     </g>
   </g>
 
   <!-- ===================== arrows into the human merge gate ===================== -->
-  <line x1="836" y1="157" x2="868" y2="240" stroke="#8b949e" stroke-width="2.2" marker-end="url(#ar)"/>
-  <line x1="836" y1="318" x2="868" y2="305" stroke="#8b949e" stroke-width="2.2" marker-end="url(#ar)"/>
-  <line x1="836" y1="461" x2="868" y2="372" stroke="#8b949e" stroke-width="2.2" marker-end="url(#ar)"/>
-  <circle r="3.4" fill="#3fb950" filter="url(#g)"><animateMotion path="M836,318 L866,306" dur="1.5s" begin="1.6s" repeatCount="indefinite"/></circle>
+  <line x1="836" y1="199" x2="868" y2="272" stroke="#8b949e" stroke-width="2.2" marker-end="url(#ar)"/>
+  <line x1="836" y1="402" x2="868" y2="388" stroke="#8b949e" stroke-width="2.2" marker-end="url(#ar)"/>
+  <line x1="836" y1="545" x2="868" y2="470" stroke="#8b949e" stroke-width="2.2" marker-end="url(#ar)"/>
+  <circle r="3.4" fill="#3fb950" filter="url(#g)"><animateMotion path="M836,402 L866,389" dur="1.5s" begin="1.6s" repeatCount="indefinite"/></circle>
 
   <!-- ===================== HUMAN MERGE GATE (the spine, unmoved) ===================== -->
   <g>
-    <rect x="872" y="84" width="286" height="432" rx="16" fill="#10241a" stroke="#2ea44f" stroke-width="2.6"/>
-    <g color="#58a6ff" transform="translate(1015,200) scale(2.6)"><use href="#ic-human"/></g>
-    <text x="1015" y="290" text-anchor="middle" font-size="20" font-weight="800" fill="#3fb950">HUMAN</text>
-    <text x="1015" y="316" text-anchor="middle" font-size="20" font-weight="800" fill="#3fb950">MERGE GATE</text>
-    <text x="1015" y="344" text-anchor="middle" font-size="13" fill="#7ee2a8" font-weight="700">unmoved · by design</text>
-    <line x1="912" y1="364" x2="1118" y2="364" stroke="#1f3b2a" stroke-width="1.5"/>
-    <text x="1015" y="392" text-anchor="middle" font-size="12.5" fill="#adbac7">agents prepare —</text>
-    <text x="1015" y="412" text-anchor="middle" font-size="13.5" fill="#e6edf3" font-weight="800">you always merge &amp; deploy</text>
-    <text x="1015" y="446" text-anchor="middle" font-size="11" fill="#6e7681">readable config · reversible install</text>
-    <text x="1015" y="464" text-anchor="middle" font-size="11" fill="#6e7681">nothing here moves the spine</text>
+    <rect x="872" y="84" width="286" height="516" rx="16" fill="#10241a" stroke="#2ea44f" stroke-width="2.6"/>
+    <g color="#58a6ff" transform="translate(1015,242) scale(2.6)"><use href="#ic-human"/></g>
+    <text x="1015" y="332" text-anchor="middle" font-size="20" font-weight="800" fill="#3fb950">HUMAN</text>
+    <text x="1015" y="358" text-anchor="middle" font-size="20" font-weight="800" fill="#3fb950">MERGE GATE</text>
+    <text x="1015" y="386" text-anchor="middle" font-size="13" fill="#7ee2a8" font-weight="700">unmoved · by design</text>
+    <line x1="912" y1="406" x2="1118" y2="406" stroke="#1f3b2a" stroke-width="1.5"/>
+    <text x="1015" y="434" text-anchor="middle" font-size="12.5" fill="#adbac7">agents prepare —</text>
+    <text x="1015" y="454" text-anchor="middle" font-size="13.5" fill="#e6edf3" font-weight="800">you always merge &amp; deploy</text>
+    <text x="1015" y="488" text-anchor="middle" font-size="11" fill="#6e7681">readable config · reversible install</text>
+    <text x="1015" y="506" text-anchor="middle" font-size="11" fill="#6e7681">nothing here moves the spine</text>
   </g>
 
 
   <!-- footer tagline -->
-  <text x="438" y="556" text-anchor="middle" font-size="12.5" fill="#8b949e">harden trust  ·  let the config <tspan fill="#a371f7" font-weight="700">learn</tspan>  ·  make it <tspan fill="#58a6ff" font-weight="700">cheaper &amp; visible</tspan>  ·  <tspan fill="#3fb950" font-weight="700">you still merge</tspan></text>
+  <text x="438" y="640" text-anchor="middle" font-size="12.5" fill="#8b949e">harden trust  ·  let the config <tspan fill="#a371f7" font-weight="700">learn</tspan>  ·  make it <tspan fill="#58a6ff" font-weight="700">cheaper &amp; visible</tspan>  ·  <tspan fill="#3fb950" font-weight="700">you still merge</tspan></text>
 </svg>
