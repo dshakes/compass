@@ -74,6 +74,11 @@ resumes instead of re-diagnosing. **The agent forgets; the repo does not.**
 ## Schedule
 
 - On demand: `/pr-shepherd`.
-- Interval: `/loop 15m /pr-shepherd` — each firing re-reads state, handles what changed.
+- Interval (session open): `/loop 15m /pr-shepherd` — each firing re-reads state, handles
+  what changed.
+- Unattended cadence (no session open): `compass schedule add pr-shepherd --twice-daily`
+  — a bounded headless run (turn + budget + timeout capped, spend ledgered) at 09:07 and
+  17:07 while the laptop is awake, with merge authority and the same rails
+  (`sdlc/routines/prompts/pr-shepherd.md`). Crontab skips missed slots; it doesn't catch up.
 - Every firing re-reads `state/shepherd.md` first; a PR already `inbox` stays with the human
   until they act — don't re-litigate it every run.

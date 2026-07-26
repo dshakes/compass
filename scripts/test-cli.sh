@@ -258,6 +258,21 @@ echo "compass-schedule — unattended cron run is bounded:"
 if grep -q -- '--max-turns' "$ROOT/scripts/compass-schedule.sh" && grep -q -- '--max-budget-usd' "$ROOT/scripts/compass-schedule.sh"; then
   ok "cron claude -p has turn + budget caps"; else no "cron claude -p is missing turn/budget caps"; fi
 
+echo "compass-schedule — pr-shepherd routine wiring:"
+if grep -q 'VALID_ROUTINES=.*pr-shepherd' "$ROOT/scripts/compass-schedule.sh"; then
+  ok "pr-shepherd is a valid routine"; else no "pr-shepherd missing from VALID_ROUTINES"; fi
+[ -f "$ROOT/sdlc/routines/prompts/pr-shepherd.md" ] && ok "pr-shepherd prompt exists" || no "pr-shepherd prompt missing"
+# every safety rail the prompt promises must actually be in the prompt
+for rail in "Never force-push" "Never merge red" "THREE STRIKES" "READ-ONLY" "no test, no push"; do
+  if grep -q "$rail" "$ROOT/sdlc/routines/prompts/pr-shepherd.md"; then
+    ok "prompt rail present: $rail"; else no "prompt rail missing: $rail"; fi
+done
+if grep -q 'PR_SHEPHERD_EXTRA_TOOLS=' "$ROOT/scripts/compass-schedule.sh" \
+   && grep -q 'gh pr merge --squash:' "$ROOT/scripts/compass-schedule.sh"; then
+  ok "shepherd toolset grants squash-merge (and only squash)"; else no "shepherd toolset missing/over-broad"; fi
+if grep -q -- '--twice-daily' "$ROOT/scripts/compass-schedule.sh"; then
+  ok "--twice-daily cadence flag exists"; else no "--twice-daily flag missing"; fi
+
 echo "new-repo — a dangling AGENTS.md symlink does not abort (set -e):"
 if command -v git >/dev/null 2>&1; then
   NR="$(mktemp -d)"
