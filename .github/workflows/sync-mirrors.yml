@@ -1,0 +1,80 @@
+# Mirror auto-sync — keeps sdlc/workflows/*.yml byte-identical to their .github/workflows/
+# counterparts on Dependabot PRs.
+#
+# WHY THIS EXISTS. Dependabot can only see .github/workflows/, but check-actions.sh
+# requires the sdlc/workflows/ templates to be identical mirrors. So every weekly bump
+# touching an sdlc-* workflow lands in one copy, fails `validate` on drift, and needs a
+# human to sync by hand. This does that one mechanical step.
+#
+# SCOPE, DELIBERATELY NARROW. Runs only for the dependabot actor, only on same-repo PRs,
+# commits only paths under sdlc/workflows/, and holds contents:write and nothing else.
+# It is a `pull_request` trigger (not pull_request_target), so it never runs privileged
+# against untrusted code — the write capability comes from the App token, which is minted
+# only after the actor check has already passed.
+name: "ci · sync workflow mirrors"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/sdlc-*.yml"
+      - ".github/workflows/release.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-mirrors-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    # Dependabot only. A human editing .github/workflows/ directly should get the failing
+    # drift check and decide for themselves which side is canonical — that is a real
+    # review question, not a mechanical one.
+    if: >-
+      github.actor == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Sync mirrors in the direction the change came from
+        id: sync
+        run: |
+          set -euo pipefail
+          git fetch --quiet origin main
+          bash scripts/check-actions.sh --fix
+          if git diff --quiet -- sdlc/workflows/; then
+            echo "changed=false" >>"$GITHUB_OUTPUT"
+            echo "mirrors already in sync"
+          else
+            echo "changed=true" >>"$GITHUB_OUTPUT"
+            git diff --stat -- sdlc/workflows/
+          fi
+
+      # Commit ONLY the template mirrors. If --fix ever touched anything else, the add
+      # below silently drops it and the drift check still fails — loud, not silent.
+      - name: Commit and push the sync
+        if: steps.sync.outputs.changed == 'true'
+        # HEAD_REF goes through env, never interpolated into the script body. A branch name
+        # is attacker-influenced input, and `${{ }}` inside a run: block is the classic
+        # Actions RCE — the very pattern scripts/check-actions.sh gates on. It caught this
+        # workflow's first draft, which is the gate doing its job on its own author.
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          git config user.name  "compass-sdlc-bot"
+          git config user.email "compass-sdlc-bot@users.noreply.github.com"
+          git add -- sdlc/workflows/
+          git commit -m "ci: sync sdlc/workflows mirrors with the action bump
+
+          Dependabot only sees .github/workflows/; check-actions.sh requires the
+          templates to match. Synced automatically by sync-mirrors.yml."
+          git push origin "HEAD:refs/heads/$HEAD_REF"

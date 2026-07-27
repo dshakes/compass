@@ -5,6 +5,28 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+
+- **`compass version`** (also `--version` / `-v`) — prints version, install kind
+  (git clone / homebrew / packaged), location and commit. It did not exist; it is the
+  first thing anyone types in a bug report.
+- **`compass upgrade`** (`--check` / `--yes`) — updates the install in place, detecting
+  how compass was installed. compass is not a pip/pipx/npm package, so `pipx upgrade
+  compass` fails with "Package is not installed"; this routes git clones through
+  `git pull --ff-only` + `install.sh`, defers Homebrew installs to `brew upgrade compass`,
+  and names the plugin command for plugin installs. Refuses on a dirty tree rather than
+  clobbering local config.
+- **`scripts/check-actions.sh --fix`** + **`ci · sync workflow mirrors`** — repairs
+  `.github/workflows` ↔ `sdlc/workflows` mirror drift *in the direction the change came
+  from*, and does it automatically on Dependabot PRs.
+
+### Fixed
+
+- **The drift hint told you to discard security updates.** It always printed
+  `cp sdlc/workflows/X .github/workflows/` — template → live. Dependabot only edits the
+  **live** copy, so following that advice reverted the bump. `--fix` now picks the source
+  by asking git which side actually moved, and refuses when both did.
+
 ## [2.1.0] - 2026-07-27
 
 ### Added
