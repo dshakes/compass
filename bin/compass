@@ -27,6 +27,10 @@ usage: compass <command> [args]
 
   quickstart [flags]       Install + validate + the 60-second on-ramp (idempotent;
                            re-run to repair). Pass-through: --mcp --gemini --copy --yes.
+  enable  [flags] <owner/repo|dir> ...
+                           One command → repo fully on compass: config + sdlc loop +
+                           secrets-from-env + solo ruleset + auto-merge; --schedule
+                           adds the twice-daily pr-shepherd. --dry-run to preview.
   status  [DIR]            Is compass enabled here? Global config + this-repo extras.
   drift   [--json]         Does the installed config still match the repo source?
                            Catches clobbered/stale/hand-edited installs + non-+x hooks.
@@ -107,6 +111,7 @@ run() { local s="$SCRIPTS/compass-$1.sh"; shift; [ -x "$s" ] || { echo "compass:
 
 case "$cmd" in
   quickstart) exec "$ROOT/quickstart.sh" "$@" ;;
+  enable)   run enable "$@" ;;
   status)   run status "$@" ;;
   drift)    run drift "$@" ;;
   onboard)  run onboard "$@" ;;

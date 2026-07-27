@@ -23,6 +23,7 @@ compass capability does it better — and safer.
 | See impact / spend | `compass impact` · `compass spend` · `compass dashboard` | the ledgers |
 | Find a loop's next work (discovery) | **morning-triage** skill | reads CI · issues · commits, judges, hands off |
 | Take open PRs end-to-end | **pr-shepherd** skill (`/loop 15m /pr-shepherd`) | diagnoses red checks, fixes mechanical ones, stops at the merge gate |
+| Put a repo (or many) on compass in one command | `compass enable <owner/repo|dir> ...` | config + sdlc loop + secrets-from-env + ruleset + auto-merge; `--schedule` adds twice-daily pr-shepherd |
 | Stay ahead of code you didn't write | `compass digest` | sample merged changes & explain them (comprehension guard) |
 | Cap an unattended loop's spend | `COMPASS_MAX_USD_DAY` · `compass spend --today --max-usd N` | per-day circuit breaker |
 

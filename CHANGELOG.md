@@ -5,6 +5,17 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+
+- **`compass enable`** — one command puts any repo (or list of repos / `owner/repo` slugs,
+  cloned on demand) fully on compass: per-repo config, sdlc workflows + labels committed &
+  pushed, secrets set from exported env only (never prompts, never reads credential stores),
+  a solo-friendly required-checks ruleset (review+qa, no forced human approval), auto-merge,
+  optional coverage gate, and `--schedule` for the twice-daily pr-shepherd. `--dry-run` previews.
+- **Per-repo scheduling + sleep-proof cadence** — `compass schedule add <routine> --dir REPO`
+  binds a routine to a repo (multiple repos coexist); on macOS schedules use launchd, which
+  runs a slept-through slot once on wake (crontab, kept for Linux, skips them).
+
 ## [2.0.0] - 2026-07-26
 
 ### Added

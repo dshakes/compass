@@ -258,6 +258,29 @@ echo "compass-schedule — unattended cron run is bounded:"
 if grep -q -- '--max-turns' "$ROOT/scripts/compass-schedule.sh" && grep -q -- '--max-budget-usd' "$ROOT/scripts/compass-schedule.sh"; then
   ok "cron claude -p has turn + budget caps"; else no "cron claude -p is missing turn/budget caps"; fi
 
+echo "compass enable — one-command multi-repo onboarding:"
+EN="$ROOT/scripts/compass-enable.sh"
+[ -x "$EN" ] && ok "enable script exists + executable" || no "enable script missing/not executable"
+"$EN" --help >/dev/null 2>&1 && ok "--help exits 0" || no "--help failed"
+"$EN" --bogus-flag x >/dev/null 2>&1; [ $? -eq 2 ] && ok "unknown flag exits 2" || no "unknown flag not rejected"
+"$EN" >/dev/null 2>&1; [ $? -eq 2 ] && ok "no targets exits 2" || no "no-target case not rejected"
+ETMP="$(mktemp -d "${TMPDIR:-/tmp}/compass-enable.XXXXXX")"
+git init -q "$ETMP/fake-repo"
+EOUT="$("$EN" --dry-run --schedule --coverage 70 "$ETMP/fake-repo" 2>&1)"; ERC=$?
+eq  "dry-run exits 0"                    "$ERC" 0
+has "dry-run prints the layered plan"    "$EOUT" "L1 new-repo.sh"
+has "dry-run includes schedule step"     "$EOUT" "pr-shepherd twice daily"
+has "dry-run includes coverage step"     "$EOUT" "coverage≥70"
+[ -z "$(git -C "$ETMP/fake-repo" status --porcelain)" ] && ok "dry-run changed nothing" || no "dry-run mutated the repo"
+rm -rf "$ETMP"
+grep -q "env-only" "$EN" && grep -q "never prompts" "$EN" \
+  && ok "secrets are env-only by contract (no prompting, no credential-store reads)" \
+  || no "env-only secrets contract missing"
+# secret VALUES must go via stdin — a --body arg is visible to every process (ps).
+if grep -E 'gh secret set' "$EN" | grep -q -- '--body'; then
+  no "gh secret set uses --body (secret leaks to the process list)"
+else ok "secret values flow via stdin, never argv"; fi
+
 echo "compass-schedule — pr-shepherd routine wiring:"
 if grep -q 'VALID_ROUTINES=.*pr-shepherd' "$ROOT/scripts/compass-schedule.sh"; then
   ok "pr-shepherd is a valid routine"; else no "pr-shepherd missing from VALID_ROUTINES"; fi
