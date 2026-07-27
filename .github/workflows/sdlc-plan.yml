@@ -33,6 +33,12 @@ jobs:
             Read issue #${{ github.event.issue.number }} with `gh issue view ${{ github.event.issue.number }}`,
             plus the repo's CLAUDE.md / AGENTS.md and the relevant code.
 
+            YOUR TOOLS ARE EXACTLY: Read,Grep,Glob,Bash(git log:*),Bash(gh issue view:*),Bash(gh issue comment:*),WebSearch
+            Nothing else is available. A call outside that set is DENIED and costs you a
+            turn you do not get back — you have 12. Use Read instead of cat, Glob
+            instead of find or ls, and Grep instead of grep-via-Bash. Do not probe to
+            discover what is permitted.
+
             Post ONE comment on the issue (`gh issue comment ${{ github.event.issue.number }}`)
             with a concrete, MINIMAL implementation plan: the approach in a few sentences, the
             exact files to touch and the change each needs, an ordered list of independently

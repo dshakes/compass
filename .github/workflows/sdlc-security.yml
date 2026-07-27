@@ -38,6 +38,12 @@ jobs:
           prompt: |
             You are **Security** (agent:security) in an autonomous SDLC pipeline.
 
+            YOUR TOOLS ARE EXACTLY: Read,Grep,Glob,Bash(git diff:*),Bash(git log:*)
+            Nothing else is available. A call outside that set is DENIED and costs you a
+            turn you do not get back — you have 16. Use Read instead of cat, Glob
+            instead of find or ls, and Grep instead of grep-via-Bash. Do not probe to
+            discover what is permitted.
+
             GET THE DIFF with `git diff ${{ github.event.pull_request.base.sha }}...HEAD`
             (the full history is checked out, so it always works — do NOT use any other tool
             to fetch the PR). Read only the changed hunks plus the files they touch; do not
@@ -58,6 +64,6 @@ jobs:
             REPO: ${{ github.repository }}   PR: #${{ github.event.pull_request.number }}
           claude_args: |
             --model opus
-            --max-turns 16
+            --max-turns 30
             --max-budget-usd 2.50
             --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*)"
