@@ -27,6 +27,7 @@ C_RST=$'\033[0m'; C_GREEN=$'\033[38;5;42m'; C_AMBER=$'\033[38;5;214m'; C_CYAN=$'
 log()  { printf '\n%s▶ %s%s\n' "$C_CYAN" "$*" "$C_RST"; }
 ok()   { printf '  %s✓ %s%s\n' "$C_GREEN" "$*" "$C_RST"; }
 warn() { printf '  %s! %s%s\n' "$C_AMBER" "$*" "$C_RST"; }
+note() { printf '  %s\n' "$*"; }   # plain detail line — used by the --dry-run plan
 die()  { printf 'ERROR: %s\n' "$*" >&2; exit 2; }
 
 command -v gh >/dev/null || die "gh CLI required"
@@ -95,7 +96,61 @@ enable_one() {
   nwo="$(cd "$dir" 2>/dev/null && gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)" || nwo=""
   log "enable: ${nwo:-$dir}"
   if [ "$DRYRUN" = 1 ]; then
-    ok "[dry-run] L1 new-repo.sh · L2 setup.sh --workflows --commit$([ "$TEAM_PROTECT" = 1 ] && echo ' --protect' || echo ' + solo ruleset') · secrets-from-env · auto-merge$([ -n "$COVERAGE" ] && echo " · coverage≥$COVERAGE")$([ "$SCHEDULE" = 1 ] && echo ' · pr-shepherd twice daily')"
+    # A plan that only lists step NAMES tells you nothing about THIS repo. The whole point
+    # of --dry-run here is to answer: will it reach the repo, is it already enabled, is it
+    # about to clone, and — the failure mode that actually bites — which secrets are
+    # missing from my env right now. Secrets are reported by NAME and set/missing only;
+    # values are never read, printed, or logged.
+    local plan_nwo="" reach="" default_branch="" enabled="" s n_set=0 n_missing=0
+    plan_nwo="$nwo"
+    # Not cloned yet → resolve the name from the target itself so we can still query it.
+    [ -n "$plan_nwo" ] || case "$target" in */*) [ -d "$target" ] || plan_nwo="$target" ;; esac
+
+    if [ -n "$plan_nwo" ]; then
+      # Use the REST fields, not GraphQL's defaultBranchRef: on a repo with no commits
+      # the latter returns an EMPTY name, which reads as "unreachable" and sends you off
+      # checking auth scopes for a repo that is fine and merely empty. Ask for
+      # default_branch and size instead, and report empty as its own state — it matters,
+      # because committing workflows into a repo with no commits is a different job.
+      local meta="" size=""
+      if meta="$(gh api "repos/$plan_nwo" --jq '[.default_branch, .size] | @tsv' 2>/dev/null)" && [ -n "$meta" ]; then
+        default_branch="${meta%%	*}"; size="${meta##*	}"
+        if [ "${size:-0}" -eq 0 ] 2>/dev/null; then
+          reach="reachable, but EMPTY (no commits yet; default branch will be ${default_branch:-main})"
+          enabled="nothing to update — L2 would make the first commit"
+        else
+          reach="reachable (default branch: ${default_branch:-?})"
+          if gh api "repos/$plan_nwo/contents/.github/workflows/sdlc-review.yml" >/dev/null 2>&1; then
+            enabled="already enabled — L2 would update workflows in place"
+          else
+            enabled="not yet enabled — L2 would commit + push sdlc workflows and labels"
+          fi
+        fi
+      else
+        reach="NOT reachable by gh — check the name, or your gh auth scopes"
+      fi
+      note "repo:     $plan_nwo — $reach"
+      [ -n "$enabled" ] && note "state:    $enabled"
+    else
+      note "repo:     no GitHub remote gh can see for '$target'"
+    fi
+
+    if [ -d "$dir/.git" ]; then note "checkout: $dir (exists)"
+    else                        note "checkout: $dir (would clone here)"; fi
+
+    # The load-bearing part: which of the five will actually be set.
+    for s in ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY CLAUDE_CODE_OAUTH_TOKEN SDLC_BOT_TOKEN; do
+      if [ -n "${!s:-}" ]; then n_set=$((n_set + 1)); else n_missing=$((n_missing + 1)); fi
+    done
+    note "secrets:  $n_set of 5 exported and would be set; $n_missing missing"
+    for s in ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY CLAUDE_CODE_OAUTH_TOKEN SDLC_BOT_TOKEN; do
+      if [ -n "${!s:-}" ]; then note "            set      $s"
+      else                       note "            MISSING  $s"; fi
+    done
+    [ "$n_missing" -gt 0 ] && note "          missing ones are skipped silently on a real run — agent jobs no-op green until set"
+
+    note "would do: L1 per-repo config · L2 workflows+labels$([ "$TEAM_PROTECT" = 1 ] && echo ' · branch protection' || echo ' · solo ruleset') · auto-merge$([ -n "$COVERAGE" ] && echo " · coverage≥$COVERAGE")$([ "$SCHEDULE" = 1 ] && echo ' · pr-shepherd twice daily')"
+    ok "[dry-run] nothing was changed"
     return 0
   fi
   [ -n "$nwo" ] || { warn "$dir has no GitHub remote gh can see — skipping"; return 1; }
