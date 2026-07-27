@@ -57,6 +57,18 @@ jobs:
             echo "proceed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          # Cheapest fix first: a PR behind its base can carry FALSE reds (stale-base
+          # reviews/audits — seen live on #81). Update the branch and let checks re-run
+          # before spending model tokens; this round is free (no round label consumed).
+          behind="$(gh pr view "$PR" --json mergeStateStatus --jq .mergeStateStatus 2>/dev/null || echo '')"
+          if [ "$behind" = "BEHIND" ]; then
+            if gh pr update-branch "$PR" >/dev/null 2>&1; then
+              gh pr comment "$PR" --body "🔄 Branch was behind base — updated it first; checks re-run before any model fix (stale-base reds are often false)." >/dev/null 2>&1 || true
+              echo "PR behind base — updated branch, deferring model fix to the re-run."
+              echo "proceed=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
           round=0
           for n in $(seq 1 50); do
             printf '%s\n' "$labels" | grep -qx "sdlc:round-$n" && round=$n
