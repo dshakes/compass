@@ -53,6 +53,7 @@ resolve_dir() {
   case "$t" in
     */*)
       local name="${t##*/}" dest="$CLONE_ROOT/$name"
+      mkdir -p "$CLONE_ROOT"
       if [ -d "$dest/.git" ]; then printf '%s' "$dest"; return 0; fi
       [ "$DRYRUN" = 1 ] && { printf '%s' "$dest"; return 0; }
       gh repo clone "$t" "$dest" -- --quiet >/dev/null 2>&1 || return 1
@@ -104,7 +105,7 @@ enable_one() {
     && ok "L2: sdlc workflows + labels committed & pushed" \
     || warn "L2: setup.sh reported errors — run it by hand: (cd $dir && $REPO_HOME/sdlc/setup.sh --workflows --commit)"
   local s set_any=0
-  for s in ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY CLAUDE_CODE_OAUTH_TOKEN; do
+  for s in ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY CLAUDE_CODE_OAUTH_TOKEN SDLC_BOT_TOKEN; do
     if [ -n "${!s:-}" ]; then
       gh secret set "$s" --repo "$nwo" --body "${!s}" >/dev/null 2>&1 && set_any=1
     else
