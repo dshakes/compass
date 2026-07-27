@@ -138,16 +138,32 @@ enable_one() {
     if [ -d "$dir/.git" ]; then note "checkout: $dir (exists)"
     else                        note "checkout: $dir (would clone here)"; fi
 
-    # The load-bearing part: which of the five will actually be set.
+    # The load-bearing part: what the agent jobs will ACTUALLY have to work with.
+    #
+    # Reporting only "is it in my shell?" is a lie by omission: a secret already set on
+    # the repo (by hand, or by an earlier run) needs nothing from your env, and calling
+    # it MISSING sends you hunting for a key that is sitting there. Ask the repo too, and
+    # report the three states separately. Names only — `gh secret list` cannot return
+    # values, and nothing here reads one.
+    local repo_secrets="" n_onrepo=0
+    [ -n "$plan_nwo" ] && repo_secrets="$(gh secret list --repo "$plan_nwo" --json name --jq '.[].name' 2>/dev/null || true)"
+
     for s in ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY CLAUDE_CODE_OAUTH_TOKEN SDLC_BOT_TOKEN; do
-      if [ -n "${!s:-}" ]; then n_set=$((n_set + 1)); else n_missing=$((n_missing + 1)); fi
+      if [ -n "${!s:-}" ]; then n_set=$((n_set + 1))
+      elif printf '%s\n' "$repo_secrets" | grep -qx "$s"; then n_onrepo=$((n_onrepo + 1))
+      else n_missing=$((n_missing + 1)); fi
     done
-    note "secrets:  $n_set of 5 exported and would be set; $n_missing missing"
+    note "secrets:  $n_set from env · $n_onrepo already on repo · $n_missing missing"
     for s in ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY CLAUDE_CODE_OAUTH_TOKEN SDLC_BOT_TOKEN; do
-      if [ -n "${!s:-}" ]; then note "            set      $s"
-      else                       note "            MISSING  $s"; fi
+      if [ -n "${!s:-}" ]; then
+        # env wins on a real run — enable always sets when the var is exported.
+        if printf '%s\n' "$repo_secrets" | grep -qx "$s"; then note "            from env $s  (overwrites the one on the repo)"
+        else                                                    note "            from env $s"; fi
+      elif printf '%s\n' "$repo_secrets" | grep -qx "$s"; then   note "            on repo  $s  (kept as-is)"
+      else                                                       note "            MISSING  $s"; fi
     done
     [ "$n_missing" -gt 0 ] && note "          missing ones are skipped silently on a real run — agent jobs no-op green until set"
+    [ "$n_missing" -eq 0 ] && [ "$n_set" -eq 0 ] && note "          nothing to set — the repo already has all five"
 
     # Name the scripts, not just the layers: "L1 new-repo.sh" tells you what to read if
     # you want to know exactly what it will do. test-cli.sh asserts on this, correctly.
