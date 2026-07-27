@@ -149,7 +149,9 @@ enable_one() {
     done
     [ "$n_missing" -gt 0 ] && note "          missing ones are skipped silently on a real run — agent jobs no-op green until set"
 
-    note "would do: L1 per-repo config · L2 workflows+labels$([ "$TEAM_PROTECT" = 1 ] && echo ' · branch protection' || echo ' · solo ruleset') · auto-merge$([ -n "$COVERAGE" ] && echo " · coverage≥$COVERAGE")$([ "$SCHEDULE" = 1 ] && echo ' · pr-shepherd twice daily')"
+    # Name the scripts, not just the layers: "L1 new-repo.sh" tells you what to read if
+    # you want to know exactly what it will do. test-cli.sh asserts on this, correctly.
+    note "would do: L1 new-repo.sh · L2 setup.sh --workflows --commit$([ "$TEAM_PROTECT" = 1 ] && echo ' --protect' || echo ' + solo ruleset') · secrets-from-env · auto-merge$([ -n "$COVERAGE" ] && echo " · coverage≥$COVERAGE")$([ "$SCHEDULE" = 1 ] && echo ' · pr-shepherd twice daily')"
     ok "[dry-run] nothing was changed"
     return 0
   fi
@@ -194,7 +196,8 @@ for t in "${targets[@]}"; do
   if enable_one "$t"; then okc=$((okc+1)); else failc=$((failc+1)); fi
 done
 
-printf '\n%s%d enabled, %d failed%s\n' "$C_GREEN" "$okc" "$failc" "$C_RST"
+# "1 enabled" after a dry-run is a lie about what just happened — say "planned".
+printf '\n%s%d %s, %d failed%s\n' "$C_GREEN" "$okc" "$([ "$DRYRUN" = 1 ] && echo planned || echo enabled)" "$failc" "$C_RST"
 if [ -n "$missing_secrets" ]; then
   warn "secrets NOT set (not exported in this shell) — agent jobs no-op green until you run:"
   printf '%s\n' "$missing_secrets"
