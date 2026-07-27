@@ -50,8 +50,8 @@ jobs:
         run: |
           set -euo pipefail
           git fetch --quiet origin "refs/pull/$PR/merge"
-          git diff "$BASE"...FETCH_HEAD > /tmp/pr-diff.patch
-          wc -l /tmp/pr-diff.patch
+          git diff "$BASE"...FETCH_HEAD > pr-diff.patch
+          wc -l pr-diff.patch
       - name: Gemini cross-audit
         if: steps.key.outputs.present == 'true'
         id: gemini
@@ -67,7 +67,7 @@ jobs:
           prompt: |
             You are **Auditor** (agent:audit-gemini): an INDEPENDENT third opinion to the
             Claude reviewer and Codex auditor. Audit ONLY the unified diff in
-            /tmp/pr-diff.patch (read that file; the workspace is the UNCHANGED base
+            pr-diff.patch (read that file; the workspace is the UNCHANGED base
             branch, for context only).
             Flag correctness regressions, security issues, and missed edge cases the
             first review might have. Be concise; lead with anything Blocking.
