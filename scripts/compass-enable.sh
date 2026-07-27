@@ -107,7 +107,8 @@ enable_one() {
   local s set_any=0
   for s in ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY CLAUDE_CODE_OAUTH_TOKEN SDLC_BOT_TOKEN; do
     if [ -n "${!s:-}" ]; then
-      gh secret set "$s" --repo "$nwo" --body "${!s}" >/dev/null 2>&1 && set_any=1
+      # stdin, never --body: a command-line arg is visible to every process (ps/procfs).
+      printf '%s' "${!s}" | gh secret set "$s" --repo "$nwo" >/dev/null 2>&1 && set_any=1
     else
       missing_secrets="${missing_secrets}
   gh secret set $s --repo $nwo"

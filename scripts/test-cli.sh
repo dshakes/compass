@@ -276,6 +276,10 @@ rm -rf "$ETMP"
 grep -q "env-only" "$EN" && grep -q "never prompts" "$EN" \
   && ok "secrets are env-only by contract (no prompting, no credential-store reads)" \
   || no "env-only secrets contract missing"
+# secret VALUES must go via stdin — a --body arg is visible to every process (ps).
+if grep -E 'gh secret set' "$EN" | grep -q -- '--body'; then
+  no "gh secret set uses --body (secret leaks to the process list)"
+else ok "secret values flow via stdin, never argv"; fi
 
 echo "compass-schedule — pr-shepherd routine wiring:"
 if grep -q 'VALID_ROUTINES=.*pr-shepherd' "$ROOT/scripts/compass-schedule.sh"; then
