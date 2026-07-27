@@ -8,8 +8,8 @@
 class Compass < Formula
   desc "Measured guardrails, a budget cap, and a self-fixing loop for AI coding agents"
   homepage "https://github.com/dshakes/compass"
-  url "https://github.com/dshakes/compass/archive/refs/tags/v2.1.0.tar.gz"
-  sha256 "afc8ad7837d422f53c7bc93a7b12cbaf564b55723eb4d8e1169b747f50be859e"
+  url "https://github.com/dshakes/compass/archive/refs/tags/v2.2.0.tar.gz"
+  sha256 "01e8f08ff0f999446463730cd301d9f2d548b61fcfa2affefaf0cb1a50ee924e"
   license "MIT"
   head "https://github.com/dshakes/compass.git", branch: "main"
 
