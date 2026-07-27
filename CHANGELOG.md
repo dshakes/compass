@@ -5,6 +5,8 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-07-27
+
 ### Added
 
 - **`compass version`** (also `--version` / `-v`) — prints version, install kind
