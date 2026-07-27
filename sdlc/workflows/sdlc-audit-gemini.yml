@@ -47,6 +47,7 @@ jobs:
         uses: google-github-actions/run-gemini-cli@f77273f4c914e4bf38440cf36a0369cb64a37489 # v0.1.22
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_debug: true   # TEMP: surface the raw CLI error — remove before merge
           prompt: |
             You are **Auditor** (agent:audit-gemini): an INDEPENDENT third opinion to the
             Claude reviewer and Codex auditor. Audit ONLY the changes introduced by this PR
