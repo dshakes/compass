@@ -39,12 +39,13 @@ BACKUP="$(mktemp "${TMPDIR:-/tmp}/policy.orig.XXXXXX")"
 # Ceiling on rules no corpus exercises. Not zero: a new detector legitimately lands
 # before its corpus case does. A RATCHET, not a wall — lower it whenever coverage grows,
 # never raise it to make a red build green.
-#   38 rules → 25 unmeasured (first study, before content-corpus.tsv existed)
-#           →  4 unmeasured (after)  ← the floor tracks this number down
-# The 4 that remain are redundancy, not gaps: another detector already matches the same
-# corpus case, so removing either one alone leaves recall flat. Splitting them needs a
-# case only that rule can catch — worth doing, not worth blocking a build over.
-UNMEASURED_FLOOR="${COMPASS_ABLATE_UNMEASURED_FLOOR:-4}"
+#   38 rules → 25 unmeasured  (first study, before content-corpus.tsv existed)
+#           →  4 unmeasured  (after the corpus landed)
+#           →  0 unmeasured  (after isolating cases for the last 4)  ← we are here
+# Zero is a real floor now, not an aspiration: every rule has a corpus case that ONLY it
+# matches, so every delta is independent evidence. Adding a detector without a case will
+# fail this gate — which is the point. Raise it only with a comment saying why.
+UNMEASURED_FLOOR="${COMPASS_ABLATE_UNMEASURED_FLOOR:-0}"
 
 MODE=table; ONE=""
 while [ $# -gt 0 ]; do
@@ -93,6 +94,7 @@ field() { # field <json> <group> <key>
 
 # Each corpus reports its numbers under a different JSON group.
 recall_of()    { case "$1" in redteam) field "$2" eval recall ;;    *) field "$2" content recall ;;    esac; }
+cases_of()     { field "$1" content cases; }
 precision_of() { case "$1" in redteam) field "$2" eval precision ;; *) field "$2" content precision ;; esac; }
 
 # Every detector is a `name|regex` line inside a POLICY_*_DETECTORS='...' assignment.
@@ -127,8 +129,8 @@ baseline_precision() { case "$1" in redteam) printf '%s' "$BR_PREC" ;; *) printf
 
 [ "$MODE" = json ] || {
   printf 'ablation study — every detector removed in turn, scored against the corpus that covers it\n'
-  printf 'baseline:  content %s%% P / %s%% R (39 cases)   ·   redteam %s%% P / %s%% R\n' \
-    "$BG_PREC" "$BG_REC" "$BR_PREC" "$BR_REC"
+  printf 'baseline:  content %s%% P / %s%% R (%s cases)   ·   redteam %s%% P / %s%% R\n' \
+    "$BG_PREC" "$BG_REC" "$(cases_of "$BASE_G")" "$BR_PREC" "$BR_REC"
   printf '           deterministic — no model calls, no network, no tokens\n\n'
   printf '  %-26s %-10s %8s %8s   %s\n' DETECTOR CORPUS RECALL DELTA VERDICT
   printf '  %-26s %-10s %8s %8s   %s\n' "--------------------------" "---------" "------" "-----" "-------"

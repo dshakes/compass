@@ -73,6 +73,23 @@ it exposed two further real defects, both now fixed and measured:
   detector under test, making every case a false negative. The corpus therefore stores
   credential-shaped fragments as `@TOKENS@`, materialized in memory by the scorer only.
 
+**The four that were left, and the claim that was wrong.** After the content corpus
+landed, four rules still read unmeasured. The first write-up of this ADR called all four
+"redundancy, not gaps" — that was asserted from reading the corpus, not measured, and it
+was **wrong for one of them**. Checking properly:
+
+| Rule | Why it read unmeasured | Fix |
+|---|---|---|
+| `anthropic-api-key` | genuine redundancy — the openai detector's `{32,}` body swallows a normal-length Anthropic key, so both fire on the same row | a 22-char body: over anthropic's `{20,}`, under openai's `{32,}` |
+| `hidden-html-comment` | genuine redundancy — its one row also matched `instruction-override` | an HTML-comment directive with no override phrasing |
+| `authority-spoof` | genuine redundancy — both rows also matched `permission-escalation` / `disable-safety` | an authority claim whose consequence clause is neither |
+| `c2-framework` | **not redundancy — zero corpus coverage.** It matched no row at all | its first and only case |
+
+Each of the four now has a payload matched by **exactly one** detector, so its ablation
+delta is independent evidence rather than an artefact of an overlapping neighbour. This
+is the methodology applied to its own output: the claim "these are redundant" was E3
+(argued) until a case isolated it, and one of the four did not survive the check.
+
 **Cost.** A full sweep is ~38 corpus runs, ~90s, no tokens and no network. CI gates on
 `broken` only; `unmeasured` has a ratchet floor (`COMPASS_ABLATE_UNMEASURED_FLOOR`) to
 be lowered as coverage grows, because a new detector legitimately lands before its

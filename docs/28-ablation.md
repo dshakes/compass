@@ -123,9 +123,18 @@ three steps, each of which found something:
 | Ran it | 3 genuine recall gaps: `keylogger` matched only the dotted `pynput.keyboard` form, not `from pynput import keyboard`; `credential-stealer` and `self-propagation` matched intent *words* but not the *mechanic* |
 | Widened those 3 detectors | precision held at 100% — the corpus's 16 precision cases are what made that safe to do |
 
-The scoreboard moved from **13 load-bearing / 25 unmeasured** to **34 / 4**. The four that
-remain are redundancy rather than gaps: another detector already matches the same case, so
-removing either alone leaves recall flat.
+The scoreboard moved from **13 load-bearing / 25 unmeasured** to **34 / 4** — and then the
+methodology got pointed at its own output. The first write-up called those four
+"redundancy, not gaps." That was *argued from reading the corpus*, not measured — an E3
+claim doing the job of an E1 one, which is exactly what [page 1](22-the-layers.md) says
+never to let happen. Checking it properly found **three were redundancy and one was not**:
+`c2-framework` matched no corpus row at all, a real gap hiding inside a comfortable
+summary. Each of the four now has a payload matched by exactly one detector, so its delta
+is independent evidence rather than an artefact of an overlapping neighbour.
+
+Final scoreboard: **38 load-bearing, 0 unmeasured, 0 broken.** Every rule in the policy
+now carries a number it earned. The CI floor is set to zero, so a new detector that
+arrives without a corpus case fails the gate — which is the point.
 
 ## Honest limits
 

@@ -23,7 +23,9 @@ All notable changes to this project are documented here. Format loosely follows
   never scored by anything. Now scored at 100% precision / 100% recall. Credential-shaped
   fragments are stored as `@TOKENS@` and materialised in memory only, because compass's
   own secret hook (correctly) refuses to commit them and an allowlist marker would have
-  neutralised the detectors under test.
+  neutralised the detectors under test. **Every one of the 38 policy rules now has a
+  corpus case matched by that rule alone** — final ablation: 38 load-bearing, 0
+  unmeasured, 0 broken, with the CI floor ratcheted to zero.
 - **Fundamentals docs (docs/22–29)** — eight modular, evidence-graded concept pages:
   the layers, context, harness, the gate, verification, orchestration, ablation, and a
   dated glossary. Each introduces an **E1–E4 evidence rubric** and grades its own claims;
