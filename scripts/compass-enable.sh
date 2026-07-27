@@ -180,20 +180,34 @@ enable_one() {
   ( cd "$dir" && "$REPO_HOME/sdlc/setup.sh" --workflows --commit $([ "$TEAM_PROTECT" = 1 ] && echo --protect) >/dev/null 2>&1 ) \
     && ok "L2: sdlc workflows + labels committed & pushed" \
     || warn "L2: setup.sh reported errors — run it by hand: (cd $dir && $REPO_HOME/sdlc/setup.sh --workflows --commit)"
-  local s set_any=0
+  # A secret already on the repo needs nothing from your env. Ask the repo before
+  # declaring anything missing, or a fully-configured repo gets told to set five
+  # secrets it already has — which is exactly what v2.2.0 did on dshakes/clickllm.
+  local s set_any=0 kept=0 repo_secrets=""
+  repo_secrets="$(gh secret list --repo "$nwo" --json name --jq '.[].name' 2>/dev/null || true)"
   for s in ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY CLAUDE_CODE_OAUTH_TOKEN SDLC_BOT_TOKEN; do
     if [ -n "${!s:-}" ]; then
       # stdin, never --body: a command-line arg is visible to every process (ps/procfs).
       printf '%s' "${!s}" | gh secret set "$s" --repo "$nwo" >/dev/null 2>&1 && set_any=1
+    elif printf '%s\n' "$repo_secrets" | grep -qx "$s"; then
+      kept=$((kept + 1))
     else
       missing_secrets="${missing_secrets}
   gh secret set $s --repo $nwo"
     fi
   done
   [ "$set_any" = 1 ] && ok "secrets set from env (only the exported ones)"
+  [ "$kept" -gt 0 ] && ok "$kept secret(s) already on the repo — left as-is"
   if [ "$TEAM_PROTECT" != 1 ]; then
     if apply_solo_ruleset "$nwo"; then ok "solo ruleset: required review+qa, no forced approval"
-    else warn "ruleset not applied (may already exist) — check: gh api repos/$nwo/rulesets"; fi
+    # The POST fails when the ruleset is already there, which is the common case on a
+    # re-run. "may already exist — go check" makes you do the lookup the script could
+    # do itself, and reads like a failure when nothing is wrong. Look, then say.
+    elif gh api "repos/$nwo/rulesets" --jq '.[].name' 2>/dev/null | grep -qx 'compass-protect-main'; then
+      ok "solo ruleset: already present (compass-protect-main)"
+    else
+      warn "ruleset NOT applied and not present — check: gh api repos/$nwo/rulesets"
+    fi
   fi
   gh api -X PATCH "repos/$nwo" -F allow_auto_merge=true >/dev/null 2>&1 && ok "auto-merge available (gh pr merge --auto --squash)"
   [ -n "$COVERAGE" ] && gh variable set SDLC_COVERAGE_MIN --repo "$nwo" --body "$COVERAGE" >/dev/null 2>&1 && ok "coverage gate ≥${COVERAGE}%"
