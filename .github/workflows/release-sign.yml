@@ -9,6 +9,13 @@ name: "release · sign + attest"
 on:
   push:
     tags: ["v*"]
+  # A tag pushed by release.yml's GITHUB_TOKEN never fires the tag trigger (GitHub's
+  # recursion guard), so the one-click release path dispatches this with the tag name.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to sign, e.g. v2.0.0"
+        required: true
 
 permissions:
   contents: read        # checkout only
@@ -23,7 +30,7 @@ jobs:
 
       - name: Fetch the release source tarball (what users + Homebrew download)
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.tag || github.ref_name }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
@@ -35,4 +42,4 @@ jobs:
       - name: Attest build provenance (SLSA, keyless)
         uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
-          subject-path: compass-${{ github.ref_name }}.tar.gz
+          subject-path: compass-${{ inputs.tag || github.ref_name }}.tar.gz
