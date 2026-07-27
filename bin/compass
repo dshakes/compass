@@ -58,6 +58,9 @@ usage: compass <command> [args]
   bench   [--guardrail|--router|--json]
                            Reproducible scorecard: guardrail precision/recall + router
                            accuracy (deterministic, CI-gated). --sdlc <dir> for fix-rate.
+  upgrade [--check|--yes]  Update this install in place. Detects how compass was
+                           installed (git clone / Homebrew / plugin) and does the right
+                           thing — compass is not a pip or npm package.
   ablate  [--detector NAME|--json|--gate]
                            Ablation study: remove each policy rule in turn, re-score it
                            against the corpus that covers it, and report load-bearing /
@@ -101,6 +104,7 @@ usage: compass <command> [args]
   audit-log [--since D] [-n N] [--json]
                            The security trail: every blocked footgun (secret write,
                            dangerous command, scan hit) as a queryable JSONL record.
+  version                  Print the installed version, install kind, and location.
   doctor                   Validate the compass install (make doctor).
   release [vX.Y.Z|--dry-run]
                            Finish a release: push the tag, pin the Homebrew sha, publish the
@@ -126,6 +130,7 @@ case "$cmd" in
   schedule) run schedule "$@" ;;
   route)    run route "$@" ;;
   bench)    run bench "$@" ;;
+  upgrade) run upgrade "$@" ;;
   ablate)   run ablate "$@" ;;
   policy-synth) run policy-synth "$@" ;;
   sbom)     run sbom "$@" ;;
@@ -141,6 +146,17 @@ case "$cmd" in
   audit-log) run audit-log "$@" ;;
   doctor)   exec "$SCRIPTS/doctor.sh" "$@" ;;
   release)  exec "$SCRIPTS/release.sh" "$@" ;;
+  # `compass version` is table stakes: it is the first thing anyone types in a bug report,
+  # and every spelling of it should work. The version of record is the plugin manifest —
+  # the same value the release bumps — so this can never drift from what was shipped.
+  version|--version|-v)
+    v="$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$ROOT/plugins/core/.claude-plugin/plugin.json" 2>/dev/null | head -1)"
+    kind="git clone"
+    [ -d "$ROOT/.git" ] || kind="packaged"
+    case "$ROOT" in *"/Cellar/compass/"*) kind="homebrew" ;; esac
+    printf 'compass %s (%s)\n%s\n' "${v:-unknown}" "$kind" "$ROOT"
+    [ -d "$ROOT/.git" ] && printf 'commit  %s\n' "$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo '?')"
+    exit 0 ;;
   -h|--help|help) usage ;;
   *) echo "compass: unknown command '$cmd'" >&2; echo; usage; exit 2 ;;
 esac

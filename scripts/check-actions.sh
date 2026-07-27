@@ -16,9 +16,45 @@
 # Usage:
 #   check-actions.sh                 # full repo audit (CI)
 #   check-actions.sh --lint <file…>  # per-file lint only (used by fixtures to prove the gate bites)
+#   check-actions.sh --fix           # repair mirror drift, copying in the correct direction
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# ── --fix: repair mirror drift, in the direction the change actually came from ────
+# The naive fix is `cp sdlc/workflows/X .github/workflows/` — templates are the canonical
+# source, so that is right for a hand-edited template. It is exactly WRONG for a
+# Dependabot bump: Dependabot can only see .github/workflows/, so the LIVE copy holds the
+# new SHA and the template is the stale one. Blindly copying template→live there reverts
+# a security update, and the old drift message told you to do precisely that.
+#
+# So pick the source by asking git which side actually moved, relative to the merge base
+# with origin/main. Whichever file differs from the base is the edit; the other is stale.
+fix_mirrors() {
+  local base_ref tmpl base live t_ch l_ch fixed=0
+  base_ref="$(git -C "$ROOT" merge-base HEAD origin/main 2>/dev/null || echo HEAD)"
+  for tmpl in "$ROOT"/sdlc/workflows/*.yml; do
+    base="$(basename "$tmpl")"; live="$ROOT/.github/workflows/$base"
+    [ -f "$live" ] || continue
+    diff -q "$tmpl" "$live" >/dev/null 2>&1 && continue
+
+    git -C "$ROOT" diff --quiet "$base_ref" -- "sdlc/workflows/$base"      2>/dev/null && t_ch=0 || t_ch=1
+    git -C "$ROOT" diff --quiet "$base_ref" -- ".github/workflows/$base"   2>/dev/null && l_ch=0 || l_ch=1
+
+    if   [ "$t_ch" = 1 ] && [ "$l_ch" = 0 ]; then cp -f "$tmpl" "$live"; echo "  synced template → live: $base"
+    elif [ "$l_ch" = 1 ] && [ "$t_ch" = 0 ]; then cp -f "$live" "$tmpl"; echo "  synced live → template: $base"
+    else
+      # Both moved (or neither did, and they still differ) — a human has to choose. Never
+      # guess here: picking wrong silently discards one side's change.
+      printf '  \033[31mFAIL\033[0m %s: both copies changed since %s — resolve by hand\n' "$base" "${base_ref:0:8}"
+      return 1
+    fi
+    fixed=$((fixed + 1))
+  done
+  [ "$fixed" -gt 0 ] && echo "  fixed $fixed mirror(s)" || echo "  no drift to fix"
+  return 0
+}
+if [ "${1:-}" = "--fix" ]; then fix_mirrors; exit $?; fi
 trap 'rm -f /tmp/_inj.$$' EXIT
 pass=0; fail=0
 ok() { printf '  \033[32mok\033[0m   %s\n' "$1"; pass=$((pass + 1)); }
@@ -67,7 +103,7 @@ for tmpl in "$ROOT"/sdlc/workflows/*.yml; do
   live="$ROOT/.github/workflows/$base"
   if [ ! -f "$live" ]; then no "missing dogfood copy: .github/workflows/$base"; continue; fi
   if diff -q "$tmpl" "$live" >/dev/null 2>&1; then ok "in sync: $base"
-  else no "DRIFT: .github/workflows/$base != sdlc/workflows/$base (run: cp sdlc/workflows/$base .github/workflows/)"; fi
+  else no "DRIFT: .github/workflows/$base != sdlc/workflows/$base (run: scripts/check-actions.sh --fix)"; fi
 done
 
 echo "least-privilege + pinning + injection — all workflows:"
