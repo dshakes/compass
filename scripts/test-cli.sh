@@ -289,6 +289,40 @@ if grep -q 'gh pr merge --squash <n>' "$ROOT/sdlc/routines/prompts/pr-shepherd.m
 if grep -q -- '--twice-daily' "$ROOT/scripts/compass-schedule.sh"; then
   ok "--twice-daily cadence flag exists"; else no "--twice-daily flag missing"; fi
 
+echo "compass-schedule — per-repo scheduling (--dir) + dry-run backends:"
+SCHED="$ROOT/scripts/compass-schedule.sh"
+SD1="$(cd "$(mktemp -d)" && pwd)"; SD2="$(cd "$(mktemp -d)" && pwd)"
+# pure generator: entry cds into --dir and the trailing comment key carries the dir
+SENT="$(bash -c '. "$1" && make_entry "0 6 * * *" pr-babysit "$2"' _ "$SCHED" "$SD1")"
+has "entry cds into --dir"          "$SENT" "cd \"$SD1\""
+has "entry comment key carries dir" "$SENT" "# compass:pr-babysit:$SD1"
+has "entry passes dir to run"       "$SENT" "schedule run \"pr-babysit\" \"$SD1\""
+# end-to-end under COMPASS_SCHEDULE_DRYRUN (--cron forces the crontab backend on every OS)
+COMPASS_SCHEDULE_DRYRUN=1 bash "$SCHED" add pr-babysit --cron "0 6 * * *" --dir "$SD1" >/dev/null 2>&1
+COMPASS_SCHEDULE_DRYRUN=1 bash "$SCHED" add pr-babysit --cron "0 7 * * *" --dir "$SD2" >/dev/null 2>&1
+SL1="$(COMPASS_SCHEDULE_DRYRUN=1 bash "$SCHED" list)"
+has "--dir persisted in entry text"      "$SL1" "cd \"$SD1\""
+has "same routine, two dirs coexist (1)" "$SL1" "# compass:pr-babysit:$SD1"
+has "same routine, two dirs coexist (2)" "$SL1" "# compass:pr-babysit:$SD2"
+COMPASS_SCHEDULE_DRYRUN=1 bash "$SCHED" remove pr-babysit --dir "$SD1" >/dev/null
+SL2="$(COMPASS_SCHEDULE_DRYRUN=1 bash "$SCHED" list)"
+case "$SL2" in *"compass:pr-babysit:$SD1"*) no "remove --dir should remove only that dir's entry" ;; *) ok "remove --dir removes only that dir" ;; esac
+has "the other dir's entry survives" "$SL2" "# compass:pr-babysit:$SD2"
+RALL="$(COMPASS_SCHEDULE_DRYRUN=1 bash "$SCHED" remove pr-babysit)"
+has "remove without --dir notes it removed all" "$RALL" "removed ALL entries"
+# darwin: launchd plist generation (dry-run — nothing is bootstrapped or installed)
+if [ "$(uname)" = "Darwin" ] && command -v plutil >/dev/null 2>&1; then
+  SADD="$(COMPASS_SCHEDULE_DRYRUN=1 bash "$SCHED" add pr-babysit --daily --dir "$SD1")"
+  has "darwin add says launchd catches up on wake" "$SADD" "once on wake"
+  PL="$(ls "$TMP"/dryrun-launchagents/com.compass.schedule.pr-babysit.*.plist 2>/dev/null | head -1)"
+  if [ -n "$PL" ] && plutil -lint "$PL" >/dev/null 2>&1; then ok "generated launchd plist is valid (plutil -lint)"; else no "launchd plist missing or invalid"; fi
+  has "plist cds into --dir"           "$(cat "$PL" 2>/dev/null)" "cd \"$SD1\""
+  has "list shows launchd entry + dir" "$(COMPASS_SCHEDULE_DRYRUN=1 bash "$SCHED" list)" "com.compass.schedule.pr-babysit"
+  COMPASS_SCHEDULE_DRYRUN=1 bash "$SCHED" remove pr-babysit --dir "$SD1" >/dev/null
+  if [ -f "$PL" ]; then no "remove --dir left the plist behind"; else ok "remove --dir deletes the plist"; fi
+else ok "non-darwin (or no plutil) — skipping launchd plist tests"; fi
+rm -rf "$SD1" "$SD2" "$TMP/dryrun-crontab" "$TMP/dryrun-launchagents"
+
 echo "new-repo — a dangling AGENTS.md symlink does not abort (set -e):"
 if command -v git >/dev/null 2>&1; then
   NR="$(mktemp -d)"
