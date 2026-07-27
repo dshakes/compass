@@ -64,6 +64,11 @@ jobs:
           GEMINI_CLI_TRUST_WORKSPACE: "true"
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          # The wrapper hardcodes --yolo (auto-approve). Neutralize it by ALLOWLISTING
+          # read-only tools only — no shell, no write, no web — so an untrusted diff
+          # can't talk the agent into running anything (Codex audit finding on #93).
+          settings: |
+            {"tools": {"core": ["read_file", "read_many_files", "list_directory", "glob", "search_file_content"]}}
           prompt: |
             You are **Auditor** (agent:audit-gemini): an INDEPENDENT third opinion to the
             Claude reviewer and Codex auditor. Audit ONLY the unified diff in
