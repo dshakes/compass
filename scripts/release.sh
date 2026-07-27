@@ -83,6 +83,9 @@ if [ -n "$(git ls-remote --tags origin "$VER" 2>/dev/null)" ]; then echo "  tag 
 elif confirm_push "tag $VER"; then do_or_show git push origin "$VER"; fi
 
 # ── 2 · Homebrew formula: bump url + tarball sha ──────────────────────────────────
+# Nothing in this step may abort the run. The GitHub Release (step 3) is the
+# user-visible half of a release; a failure to pin a package manager's formula must
+# never leave a published tag without its Release page. See the v2.1.0 note below.
 say "2 · Homebrew formula"
 if ! command -v curl >/dev/null; then echo "  ! curl missing — bump Formula/compass.rb by hand"
 else
@@ -98,8 +101,31 @@ else
     if git diff --quiet Formula/compass.rb; then echo "  formula already at $VER / $sha"
     else
       do_or_show git commit -q -m "chore(release): pin $VER + tarball sha in the Homebrew formula" Formula/compass.rb
-      if confirm_push "main (formula bump)"; then do_or_show git push origin main; fi
-      echo "  formula → $VER  sha256 $sha"
+      # main is protected by a ruleset requiring status checks, so pushing the bump
+      # straight to it is rejected (GH013) — as it should be; that gate is the product.
+      # Route the formula bump through a PR like any other change.
+      #
+      # Found on v2.1.0: the tag went out, this push was declined, the script exited
+      # non-zero, and step 3 never ran — leaving a public tag with no Release page.
+      # Hence both fixes: a PR here, and step 3 no longer depends on this succeeding.
+      pinbranch="chore/homebrew-pin-$VER"
+      # Every fallible call sits in an `if` so `set -e` cannot abort the run here.
+      if confirm_push "$pinbranch (formula bump, via PR)"; then
+        if do_or_show git push -q origin "HEAD:refs/heads/$pinbranch"; then
+          if ! command -v gh >/dev/null; then
+            echo "  gh missing — open a PR from $pinbranch by hand"
+          elif do_or_show gh pr create --head "$pinbranch" \
+                 --title "chore(release): pin $VER in the Homebrew formula" \
+                 --body "Pins the Homebrew formula to the \`$VER\` tarball and its sha256. Cut by scripts/release.sh — main is protected, so the bump lands via PR."; then
+            echo "  formula → $VER  sha256 $sha  (PR opened from $pinbranch)"
+          else
+            echo "  ! PR not opened — branch $pinbranch is pushed; open it by hand"
+          fi
+        else
+          echo "  ! could not push $pinbranch — pin Formula/compass.rb by hand."
+          echo "    The GitHub Release below still publishes; a formula miss must not block it."
+        fi
+      fi
     fi
   else
     echo "  (dry-run or tag not yet on remote) — sha computed from $TARBALL after the tag is pushed"
