@@ -184,6 +184,13 @@ git checkout "$(git describe --tags --abbrev=0)"   # optional: pin to the latest
 
 **🛠️ By hand:** `make dry-run` (preview) → `make install` → `make doctor`. → [Team rollout](docs/05-plugin.md)
 
+**🚀 Put your other repos on it — one command each (or a list):**
+```bash
+compass enable --schedule owner/repo ~/code/another-repo   # config + PR gates + secrets-from-env
+                                                           # + required-checks ruleset + auto-merge
+                                                           # + twice-daily pr-shepherd (--dry-run to preview)
+```
+
 > **What install actually does:** replaces your global `~/.claude` config (settings, `CLAUDE.md`, agents, skills, hooks…) with symlinks into the repo — so `git pull`/`brew upgrade` updates everything. Anything it replaces is **backed up first** to `~/.claude/backups/`; `--copy` copies instead of linking; `make uninstall` removes only what it added. Personal overrides (your model, plugins, UI prefs) live in `claude/settings.local.json` — gitignored, deep-merged at install, so your prefs never fight the shipped defaults.
 
 ### One config, every agent

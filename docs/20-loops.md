@@ -35,7 +35,7 @@ place. compass has a primitive for each:
 | **Handoff** | hand each task off, isolated | a git **worktree** per task ([dynamic workflows](13-workflows.md) take `isolation:'worktree'`; the SDLC loop uses a branch/PR); once a PR exists, the [`pr-shepherd`](../claude/skills/pr-shepherd/SKILL.md) skill carries it to the merge gate |
 | **Verification** | the move that can say **no** | an **evaluator subagent** ([code-reviewer](12-every-agent.md) / [reviewer role](09-sdlc.md)) — assumes broken, runs it |
 | **Persistence** | state that survives the conversation | a **state file** (`state/triage.md` / a pinned tracking issue) + [Serena memory](04-mcp.md) |
-| **Scheduling** | make it turn again, on its own | a **cloud routine** (`sdlc/routines/*.yml`) or local [`compass schedule`](11-using-compass.md) |
+| **Scheduling** | make it turn again, on its own | a **cloud routine** (`sdlc/routines/*.yml`) or local [`compass schedule`](11-using-compass.md) — per-repo via `--dir`; on macOS it uses launchd, so a slept-through slot runs once on wake |
 
 One loop needs no schedule at all: **CI auto-fix** ([`sdlc-ci-fix.yml`](09-sdlc.md)) turns the
 moment a check suite goes red — PR failures feed the existing fix loop (round-capped), a
