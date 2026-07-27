@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" font-family="'Space Grotesk', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="page" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#07080c"/>
+      <stop offset="1" stop-color="#0a0c12"/>
+    </linearGradient>
+
+    <linearGradient id="flow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"    stop-color="#a371f7" stop-opacity="0"/>
+      <stop offset="0.5"  stop-color="#c4a5ff" stop-opacity="0.95"/>
+      <stop offset="1"    stop-color="#2ee6cf" stop-opacity="0"/>
+      <animateTransform attributeName="gradientTransform" type="translate"
+                        values="-1 0; 1 0; -1 0" dur="7s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <radialGradient id="glowV" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#a371f7" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#a371f7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowC" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#2ee6cf" stop-opacity="0.13"/>
+      <stop offset="1" stop-color="#2ee6cf" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse">
+      <path d="M34 0H0V34" fill="none" stroke="#ffffff" stroke-opacity="0.028"/>
+    </pattern>
+
+    <marker id="tip" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#5b6478"/>
+    </marker>
+
+    <linearGradient id="edgeCyan" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2ee6cf"/><stop offset="1" stop-color="#2ee6cf" stop-opacity="0.15"/>
+    </linearGradient>
+    <linearGradient id="edgeAmber" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#febc2e"/><stop offset="1" stop-color="#febc2e" stop-opacity="0.15"/>
+    </linearGradient>
+    <linearGradient id="edgeRose" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff6b81"/><stop offset="1" stop-color="#ff6b81" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="620" fill="url(#page)"/>
+  <rect width="1200" height="620" fill="url(#grid)"/>
+  <ellipse cx="220" cy="30" rx="540" ry="300" fill="url(#glowV)"/>
+  <ellipse cx="1020" cy="610" rx="500" ry="290" fill="url(#glowC)"/>
+
+  <!-- ── header ──────────────────────────────────────────────────────────── -->
+  <text x="56" y="60" fill="#e9ecf3" font-size="27" font-weight="700" letter-spacing="-0.4">Ablation — make every config rule defend itself</text>
+  <text x="56" y="88" fill="#98a2b6" font-size="14.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">A rule is a hypothesis: “without me, this system gets worse.” Remove it, re-run the corpus, read the delta. No tokens. No model calls. Reproducible.</text>
+
+  <!-- ── the pipeline ────────────────────────────────────────────────────── -->
+  <line x1="56" y1="136" x2="1144" y2="136" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1.5"/>
+  <line x1="56" y1="136" x2="1144" y2="136" stroke="url(#flow)" stroke-width="2"/>
+
+  <!-- step 1 -->
+  <rect x="56" y="162" width="252" height="164" rx="16" fill="#0f1219" stroke="#ffffff" stroke-opacity="0.07"/>
+  <circle cx="86" cy="192" r="13" fill="#141824" stroke="#ffffff" stroke-opacity="0.12"/>
+  <text x="86" y="197" fill="#98a2b6" font-size="11.5" font-weight="700" text-anchor="middle">1</text>
+  <text x="110" y="197" fill="#e9ecf3" font-size="15.5" font-weight="600">Measure the baseline</text>
+  <rect x="78" y="216" width="208" height="90" rx="11" fill="#07080c" stroke="#ffffff" stroke-opacity="0.06"/>
+  <text x="96" y="242" fill="#6b7488" font-size="11.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">precision</text>
+  <text x="268" y="242" fill="#2ee6cf" font-size="13" font-weight="600" text-anchor="end" font-family="'JetBrains Mono', ui-monospace, monospace">100%</text>
+  <text x="96" y="268" fill="#6b7488" font-size="11.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">recall</text>
+  <text x="268" y="268" fill="#2ee6cf" font-size="13" font-weight="600" text-anchor="end" font-family="'JetBrains Mono', ui-monospace, monospace">100%</text>
+  <text x="96" y="294" fill="#6b7488" font-size="11.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">corpus cases</text>
+  <text x="268" y="294" fill="#98a2b6" font-size="13" font-weight="600" text-anchor="end" font-family="'JetBrains Mono', ui-monospace, monospace">61</text>
+
+  <!-- step 2 -->
+  <rect x="336" y="162" width="252" height="164" rx="16" fill="#0f1219" stroke="#a371f7" stroke-opacity="0.32"/>
+  <circle cx="366" cy="192" r="13" fill="#1a1030" stroke="#a371f7" stroke-opacity="0.8"/>
+  <text x="366" y="197" fill="#c4a5ff" font-size="11.5" font-weight="700" text-anchor="middle">2</text>
+  <text x="390" y="197" fill="#e9ecf3" font-size="15.5" font-weight="600">Ablate one rule</text>
+  <rect x="358" y="216" width="208" height="90" rx="11" fill="#07080c" stroke="#ffffff" stroke-opacity="0.06"/>
+  <text x="374" y="243" fill="#5b6478" font-size="10.5" font-family="'JetBrains Mono', ui-monospace, monospace">aws-access-key-id|(AKIA…</text>
+  <line x1="374" y1="239" x2="552" y2="239" stroke="#ff6b81" stroke-width="1.3" stroke-opacity="0.85"/>
+  <text x="374" y="270" fill="#2ee6cf" font-size="10.5" font-family="'JetBrains Mono', ui-monospace, monospace">aws-access-key-id|zzABLATEDzz</text>
+  <text x="374" y="294" fill="#6b7488" font-size="11" font-family="Inter, ui-sans-serif, system-ui, sans-serif">neutralised in place — file still parses</text>
+
+  <!-- step 3 -->
+  <rect x="616" y="162" width="252" height="164" rx="16" fill="#0f1219" stroke="#ffffff" stroke-opacity="0.07"/>
+  <circle cx="646" cy="192" r="13" fill="#141824" stroke="#ffffff" stroke-opacity="0.12"/>
+  <text x="646" y="197" fill="#98a2b6" font-size="11.5" font-weight="700" text-anchor="middle">3</text>
+  <text x="670" y="197" fill="#e9ecf3" font-size="15.5" font-weight="600">Re-run its corpus</text>
+  <rect x="638" y="216" width="208" height="90" rx="11" fill="#07080c" stroke="#ffffff" stroke-opacity="0.06"/>
+  <text x="656" y="242" fill="#6b7488" font-size="11.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">recall now</text>
+  <text x="828" y="242" fill="#febc2e" font-size="13" font-weight="600" text-anchor="end" font-family="'JetBrains Mono', ui-monospace, monospace">?</text>
+  <text x="656" y="268" fill="#6b7488" font-size="11.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">delta vs baseline</text>
+  <text x="828" y="268" fill="#febc2e" font-size="13" font-weight="600" text-anchor="end" font-family="'JetBrains Mono', ui-monospace, monospace">?</text>
+  <text x="656" y="294" fill="#6b7488" font-size="11" font-family="Inter, ui-sans-serif, system-ui, sans-serif">restore, then take the next rule</text>
+
+  <!-- step 4 -->
+  <rect x="896" y="162" width="248" height="164" rx="16" fill="#0f1219" stroke="#ffffff" stroke-opacity="0.07"/>
+  <circle cx="926" cy="192" r="13" fill="#141824" stroke="#ffffff" stroke-opacity="0.12"/>
+  <text x="926" y="197" fill="#98a2b6" font-size="11.5" font-weight="700" text-anchor="middle">4</text>
+  <text x="950" y="197" fill="#e9ecf3" font-size="15.5" font-weight="600">Read the verdict</text>
+  <text x="918" y="236" fill="#98a2b6" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">The score moved, or it did not.</text>
+  <text x="918" y="258" fill="#98a2b6" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">Either way you now know</text>
+  <text x="918" y="280" fill="#98a2b6" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">something you could not</text>
+  <text x="918" y="302" fill="#c4a5ff" font-size="12.5" font-weight="500" font-family="Inter, ui-sans-serif, system-ui, sans-serif">assert before.</text>
+
+  <line x1="312" y1="244" x2="332" y2="244" stroke="#5b6478" stroke-width="1.5" marker-end="url(#tip)"/>
+  <line x1="592" y1="244" x2="612" y2="244" stroke="#5b6478" stroke-width="1.5" marker-end="url(#tip)"/>
+  <line x1="872" y1="244" x2="892" y2="244" stroke="#5b6478" stroke-width="1.5" marker-end="url(#tip)"/>
+
+  <!-- ── verdicts ────────────────────────────────────────────────────────── -->
+  <text x="56" y="376" fill="#6b7488" font-size="10.5" font-weight="600" letter-spacing="1.8" font-family="'JetBrains Mono', ui-monospace, monospace">THREE VERDICTS — AND ONLY ONE OF THEM MEANS “DELETE”</text>
+
+  <rect x="56" y="392" width="352" height="138" rx="16" fill="#0c2b28" fill-opacity="0.42" stroke="#2ee6cf" stroke-opacity="0.34"/>
+  <rect x="56" y="392" width="352" height="2.5" rx="1.25" fill="url(#edgeCyan)"/>
+  <circle cx="84" cy="424" r="6" fill="#2ee6cf" filter="url(#soft)"/>
+  <text x="100" y="429" fill="#2ee6cf" font-size="16.5" font-weight="700">load-bearing</text>
+  <text x="80" y="456" fill="#e9ecf3" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">Removing it dropped a score.</text>
+  <text x="80" y="476" fill="#98a2b6" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">It has earned its context window.</text>
+  <text x="80" y="506" fill="#6b7488" font-size="12" font-family="Inter, ui-sans-serif, system-ui, sans-serif">→ Keep it. Record the delta as its receipt.</text>
+
+  <rect x="424" y="392" width="352" height="138" rx="16" fill="#332608" fill-opacity="0.42" stroke="#febc2e" stroke-opacity="0.34"/>
+  <rect x="424" y="392" width="352" height="2.5" rx="1.25" fill="url(#edgeAmber)"/>
+  <circle cx="452" cy="424" r="6" fill="#febc2e" filter="url(#soft)"/>
+  <text x="468" y="429" fill="#febc2e" font-size="16.5" font-weight="700">unmeasured</text>
+  <text x="448" y="456" fill="#e9ecf3" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">Removing it changed nothing.</text>
+  <text x="448" y="476" fill="#98a2b6" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">That is NOT the same as useless.</text>
+  <text x="448" y="506" fill="#6b7488" font-size="12" font-family="Inter, ui-sans-serif, system-ui, sans-serif">→ Add a corpus case, THEN decide.</text>
+
+  <rect x="792" y="392" width="352" height="138" rx="16" fill="#33121a" fill-opacity="0.42" stroke="#ff6b81" stroke-opacity="0.34"/>
+  <rect x="792" y="392" width="352" height="2.5" rx="1.25" fill="url(#edgeRose)"/>
+  <circle cx="820" cy="424" r="6" fill="#ff6b81" filter="url(#soft)"/>
+  <text x="836" y="429" fill="#ff6b81" font-size="16.5" font-weight="700">broken</text>
+  <text x="816" y="456" fill="#e9ecf3" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">Removing it IMPROVED a score.</text>
+  <text x="816" y="476" fill="#98a2b6" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">The rule is costing you accuracy.</text>
+  <text x="816" y="506" fill="#6b7488" font-size="12" font-family="Inter, ui-sans-serif, system-ui, sans-serif">→ Investigate now. This one is urgent.</text>
+
+  <!-- ── the honest footnote ────────────────────────────────────────────── -->
+  <rect x="56" y="552" width="1088" height="52" rx="14" fill="#0f1219" stroke="#ffffff" stroke-opacity="0.06"/>
+  <rect x="56" y="552" width="3" height="52" rx="1.5" fill="#a371f7"/>
+  <text x="80" y="576" fill="#e9ecf3" font-size="13.5" font-weight="600">Absence of evidence is not evidence of absence.</text>
+  <text x="80" y="595" fill="#98a2b6" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">A tool that conflated “unmeasured” with “useless” would delete your best-written, least-tested guardrail first — so this one never deletes anything.</text>
+</svg>

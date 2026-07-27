@@ -58,6 +58,10 @@ usage: compass <command> [args]
   bench   [--guardrail|--router|--json]
                            Reproducible scorecard: guardrail precision/recall + router
                            accuracy (deterministic, CI-gated). --sdlc <dir> for fix-rate.
+  ablate  [--detector NAME|--json|--gate]
+                           Ablation study: remove each policy rule in turn, re-score it
+                           against the corpus that covers it, and report load-bearing /
+                           unmeasured / broken. Deterministic; never deletes anything.
   policy-synth [--from <glob>|-] [--min N]
                            Fleet brain: cluster recurring review findings into PROPOSED
                            CLAUDE.md rules (human reviews & merges; never auto-applied).
@@ -122,6 +126,7 @@ case "$cmd" in
   schedule) run schedule "$@" ;;
   route)    run route "$@" ;;
   bench)    run bench "$@" ;;
+  ablate)   run ablate "$@" ;;
   policy-synth) run policy-synth "$@" ;;
   sbom)     run sbom "$@" ;;
   scan)     run scan "$@" ;;

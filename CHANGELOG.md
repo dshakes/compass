@@ -5,7 +5,44 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-07-27
+
 ### Added
+
+- **`compass ablate` — config ablation testing.** Every policy rule is a falsifiable
+  hypothesis ("without me, this system gets worse"). Ablation neutralises one rule,
+  re-runs the corpus that covers it, records the delta, and restores — the standard ML
+  ablation study pointed at config. Deterministic: no tokens, no network, no model calls.
+  Four verdicts (`load-bearing` / `unmeasured` / `broken` / `inconclusive`), and it never
+  deletes anything — `unmeasured` means "write a corpus case, then decide", because
+  absence of evidence is not evidence of absence. CI gates on `broken`; `unmeasured` has
+  a ratchet floor. See [ADR-0008](docs/adr/0008-config-ablation.md) and docs/28.
+- **`compass bench --content` + `scripts/content-corpus.tsv` (39 cases).** The first
+  ablation study found three detector families with **no eval harness at all** —
+  `secret_content_findings`, `malware_intent_findings`, `insecure_code_findings` were
+  never scored by anything. Now scored at 100% precision / 100% recall. Credential-shaped
+  fragments are stored as `@TOKENS@` and materialised in memory only, because compass's
+  own secret hook (correctly) refuses to commit them and an allowlist marker would have
+  neutralised the detectors under test.
+- **Fundamentals docs (docs/22–29)** — eight modular, evidence-graded concept pages:
+  the layers, context, harness, the gate, verification, orchestration, ablation, and a
+  dated glossary. Each introduces an **E1–E4 evidence rubric** and grades its own claims;
+  every layer is dated and attributed, including the two fabricated artifacts the field
+  produced in July 2026. Two new SVG diagrams, plus rich site renderings in content.js.
+- **`scripts/check-docs.sh`** — CI gate for four previously-manual docs invariants:
+  site-nav reachability, README index coverage, asset mirroring, and relative-link
+  resolution. Caught two live defects on first run.
+
+### Fixed
+
+- **Three guardrail detectors had genuine recall gaps**, found by the new content corpus
+  and now widened with precision held at 100%: `keylogger` matched only the dotted
+  `pynput.keyboard` form (not `from pynput import keyboard`); `credential-stealer` and
+  `self-propagation` matched intent *words* but not the *mechanic*.
+- **`docs/21-run-any-framework.md` was unreachable** from the published site — missing
+  from the docs.html NAV array. Now gated by `check-docs.sh`.
+
+### Added (previously unreleased)
 
 - **`compass enable`** — one command puts any repo (or list of repos / `owner/repo` slugs,
   cloned on demand) fully on compass: per-repo config, sdlc workflows + labels committed &

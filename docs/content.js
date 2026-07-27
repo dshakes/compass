@@ -4,6 +4,114 @@
    enough depth to grasp the concept — details live in the linked full reference. */
 window.COMPASS_DOCS = {
 
+"22-the-layers": `# The layers — what's evidenced, what's named
+
+<p class="lede">Agent engineering named a new discipline roughly <strong>every two months in 2026</strong>. Two of them carry benchmark numbers. One of them started as a joke. Here is the map — dated, attributed, and graded — plus a rubric for grading the next one before it writes a line of your config.</p>
+
+<p align="center"><img src="assets/fundamentals-layers.svg" alt="The five layers of agent engineering, dated and evidence-graded: prompt (absorbed), context (E1), harness (E1), loop (E2), graph (E4)." width="860"></p>
+
+<div class="tiles">
+<div class="tile"><b>5</b><span>named layers</span></div>
+<div class="tile"><b>2</b><span>with real benchmarks</span></div>
+<div class="tile"><b>1</b><span>began as satire</span></div>
+<div class="tile"><b>2</b><span>fabricated artifacts caught</span></div>
+</div>
+
+## The map
+
+| Layer | Named | Governs | Evidence |
+|---|---|---|---|
+| **Prompt** | ~2023 | the wording of one request | **Absorbed** — scoped down, not falsified |
+| **Context** | Jun 2025 · Lütke, Karpathy | which tokens the model sees | **E1** — context rot degrades 18 of 18 frontier models |
+| **Harness** | Feb 2026 · Hashimoto | what the system executes and permits | **E1** — harness-only: 36% → 53% |
+| **Loop** | Jun 2026 · Osmani | how many passes, judged by what | **E2** — practised a year before it was named |
+| **Graph** | 18 Jul 2026 · a joke tweet | contested, 3–4 incompatible senses | **E4** — see below |
+
+<div class="cal warn"><span class="h">Two receipts worth knowing</span>
+Within four days of the graph-engineering meme, a statistic was circulating — a "Microsoft, Stanford and Anthropic" study claiming 18% accuracy gains. It traces to an unrelated paper on industrial engineering diagrams. Separately, loop engineering's most-quoted soundbite — attributed to the creator of Claude Code — <b>could not be traced to any primary source</b>, and the transcript usually cited as its origin has him saying closer to the opposite. Neither was malicious. Both were plausible, and plausible was enough.</div>
+
+## Grade a claim before you adopt it
+
+<div class="steps">
+<div class="stp"><b>E1 — Measured</b>A number, from a named corpus, that you can reproduce. Test: can you run it and get the number?</div>
+<div class="stp"><b>E2 — Reported</b>A named source with a primary link and a date. Test: did you follow the link, or trust a summary of it?</div>
+<div class="stp"><b>E3 — Argued</b>A coherent mechanism with no measurement. Test: would you notice if it were wrong?</div>
+<div class="stp"><b>E4 — Asserted</b>Confident, popular, unsourced. Test: who first said it, and when?</div>
+</div>
+
+<div class="cal key"><span class="h">The two rules that follow</span>
+<b>Never let an E3 or E4 claim write config</b> — argument is fine for deciding what to try, not for a rule that sits in every future context window unexamined. And <b>a claim's grade is a property of your verification, not of its author</b>: Anthropic publishing something doesn't make it E1 for you. Following the link and running the corpus does.</div>
+
+## What is actually load-bearing
+
+Strip the naming and one distinction survives every source, uncontested: **what the model sees** is a different engineering problem from **what the system around it enforces, measures, and repairs.** The finer subdivisions are still being argued over by the people who coined them — one puts loop *above* harness, another nests context *inside* it, and Anthropic's own flagship context post never uses the word "harness" at all.
+
+<div class="cal"><span class="h">The takeaway</span>
+The treadmill will produce another name before this page is a quarter old. Grade it, date it, and make it earn an E1 before it earns a line of your config. <b>A discipline you can't cite is a discipline you can't delete.</b></div>
+`,
+
+"28-ablation": `# Ablation — make every config rule defend itself
+
+<p class="lede">Agent config only ever grows, because nobody can prove a rule <em>isn't</em> load-bearing. So it accretes into superstition — in the context window, where you pay for it on every single call. <strong>Ablation is how you find out:</strong> remove the rule, re-run the corpus, read the delta.</p>
+
+<p align="center"><img src="assets/ablation.svg" alt="The ablation experiment in four steps — measure baseline, ablate one rule, re-run its corpus, read the verdict — and the three verdicts: load-bearing, unmeasured, broken." width="860"></p>
+
+<div class="tiles">
+<div class="tile"><b>13</b><span>load-bearing rules</span></div>
+<div class="tile"><b>25</b><span>unmeasured — corpus gaps</span></div>
+<div class="tile"><b>0</b><span>broken</span></div>
+<div class="tile"><b>0</b><span>tokens to run it</span></div>
+</div>
+
+## Why config never shrinks
+
+The asymmetry is brutal, and entirely rational for any individual engineer:
+
+| | Adding a rule | Removing a rule |
+|---|---|---|
+| **Cost if you're wrong** | a few tokens, invisible | an incident, with your name on it |
+| **Evidence needed** | an anecdote — it failed once | proof of a negative |
+| **Who notices** | nobody | everybody, eventually |
+
+<div class="cal tip"><span class="h">The precedent</span>
+Anthropic removed <b>more than 80% of Claude Code's system prompt</b> for newer models with no measurable loss. Most teams could not attempt that, because they have no way to tell what the 80% was doing. The blocker is not courage — it's instrumentation.</div>
+
+## The experiment
+
+<div class="steps">
+<div class="stp"><b>Measure the baseline</b>From the same corpus, in the same run. This is the control.</div>
+<div class="stp"><b>Neutralise one rule in place</b>Exactly one variable changes; the rest of the file stays byte-identical and still parses.</div>
+<div class="stp"><b>Re-run the corpus that covers it</b>Secret detectors against the guardrail corpus; injection and malware against the red-team corpus. Scoring a rule against a corpus that never exercises it produces "unmeasured" for everything — true, and useless.</div>
+<div class="stp"><b>Restore, and read the delta</b>The live policy is restored on every exit path, including a kill.</div>
+</div>
+
+## Three verdicts — and only one means "delete"
+
+| Verdict | What it means | What to do |
+|---|---|---|
+| **load-bearing** | the rule earns its context; you have the receipt | keep it, record the delta beside it |
+| **unmeasured** | dead weight **or** a real defence your corpus never exercises | write the corpus case first, *then* decide |
+| **broken** | the rule is costing you accuracy right now | investigate immediately |
+| **inconclusive** | the ablated file didn't parse | a measurement failure, not a finding |
+
+<div class="cal warn"><span class="h">Why that fourth row exists</span>
+The first version of this tool deleted whole lines, which silently broke a shell <code>case</code> arm, scored 0%, and reported the rule as <b>catastrophically load-bearing</b> — the exact inverse of the truth. An instrument that can be confidently backwards is worse than no instrument, so a broken parse is now a refusal to answer rather than an answer.</div>
+
+## A real result from this repo
+
+<pre><code>DETECTOR                CORPUS      RECALL   DELTA   VERDICT
+instruction-override    redteam        85%   -15.0   load-bearing
+data-exfiltration       redteam        82%   -18.0   load-bearing</code></pre>
+
+Those rules now have receipts. Fifteen and eighteen points of injection recall depend on them, measured, on a corpus you can read — and if a future refactor weakens either one, the number moves and CI says so.
+
+<div class="cal key"><span class="h">The honest part</span>
+Nothing here deletes anything. Ablation measures a rule against <em>your corpus</em> and nothing else — it cannot see the attack you never wrote a case for. <b>Absence of evidence is not evidence of absence</b>, which is why "unmeasured" recommends writing a case rather than reaching for the delete key. The deletion stays a human decision, for the same reason the merge does.</div>
+
+<div class="cal"><span class="h">The takeaway</span>
+Config is the one part of an agent system that never gets refactored, because it's the one part nobody can measure. <b>Every line of agent config pays rent in the context window — ablation is how you collect.</b></div>
+`,
+
 "00-philosophy": `# Philosophy
 
 <p class="lede">The bottleneck in AI coding isn't the model — it's <strong>trust</strong>. Everyone can call the same frontier models. The edge is configuration you can trust to run on its own.</p>

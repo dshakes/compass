@@ -119,6 +119,15 @@ jobs:
       - name: Actions audit (mirror drift · least-privilege · SHA-pinning · run-block injection)
         run: bash scripts/check-actions.sh
 
+      - name: Docs audit (site-nav reachability · README index · asset mirror · relative links)
+        run: bash scripts/check-docs.sh
+
+      # Catches a policy rule that actively COSTS accuracy — removing it would raise a
+      # score. Deterministic and offline, like the corpora it re-scores. Does not gate on
+      # 'unmeasured': a new detector legitimately lands before its corpus case does.
+      - name: Ablation gate (no policy rule may hurt its own corpus score)
+        run: bash scripts/compass-ablate.sh --gate
+
       - name: Router eval (accuracy floor gates autoroute)
         run: bash scripts/compass-route.sh --eval
 
