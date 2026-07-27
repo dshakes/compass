@@ -44,6 +44,11 @@ jobs:
             You are **Classifier** (agent:classify). Look at this PR's diff
             (`git diff origin/${{ github.event.pull_request.base.ref }}...HEAD`) and pick the
             SINGLE best-fit work domain. Do not comment or edit; just return the verdict.
+
+            YOUR TOOLS ARE EXACTLY: Read,Grep,Glob,Bash(git diff:*),Bash(git log:*)
+            Nothing else is available. A call outside that set is DENIED and costs you a
+            turn you do not get back — you have 6. Use Read instead of cat, Glob
+            instead of find or ls, and Grep instead of grep-via-Bash. Do not probe.
             - ui: frontend / UI / styling / UX
             - api: API / SDK / public contracts / interface changes
             - infra: CI / deploy / IaC / migrations / build

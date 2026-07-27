@@ -44,3 +44,9 @@ jobs:
             --max-turns 12
             --max-budget-usd 1.50
             --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*)"
+
+            YOUR TOOLS ARE EXACTLY: Read,Grep,Glob,Bash(git diff:*),Bash(git log:*)
+            Nothing else is available. A call outside that set is DENIED and costs you a
+            turn you do not get back — you have 12. Use Read instead of cat, Glob
+            instead of find or ls, and Grep instead of grep-via-Bash. Do not probe to
+            discover what is permitted.
