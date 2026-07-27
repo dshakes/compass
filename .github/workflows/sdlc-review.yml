@@ -134,6 +134,10 @@ jobs:
             gh pr edit "$PR" --remove-label "agent:reviewed-clean" >/dev/null 2>&1 || true
             gh pr edit "$PR" --remove-label "agent:needs-fix"      >/dev/null 2>&1 || true
             gh pr edit "$PR" --add-label    "agent:needs-fix"
+            # Fail-safe: the model's own findings comment can fail to post (seen on #83 —
+            # BLOCKING verdict, no comment, blind fixer). Always land at least the summary.
+            summary="$(printf '%s' "$OUT" | jq -r '.summary // ""' 2>/dev/null || true)"
+            [ -n "$summary" ] && gh pr comment "$PR" --body "🔒 **Reviewer verdict: BLOCKING** — $summary" >/dev/null 2>&1 || true
             echo "::error::Reviewer found Blocking issues — see the PR comments. Auto-fix loop engaged."
             exit 1
           fi
