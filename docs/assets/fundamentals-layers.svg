@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" font-family="'Space Grotesk', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="page" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#07080c"/>
+      <stop offset="1" stop-color="#0a0c12"/>
+    </linearGradient>
+
+    <linearGradient id="spine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"    stop-color="#a371f7"/>
+      <stop offset="0.45" stop-color="#5b9dff"/>
+      <stop offset="1"    stop-color="#2ee6cf"/>
+    </linearGradient>
+
+    <linearGradient id="sweep" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"    stop-color="#a371f7" stop-opacity="0"/>
+      <stop offset="0.5"  stop-color="#c4a5ff" stop-opacity="0.9"/>
+      <stop offset="1"    stop-color="#2ee6cf" stop-opacity="0"/>
+      <animateTransform attributeName="gradientTransform" type="translate"
+                        values="-1 0; 1 0; -1 0" dur="9s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <radialGradient id="glowV" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#a371f7" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#a371f7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowC" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#2ee6cf" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#2ee6cf" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="7" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse">
+      <path d="M34 0H0V34" fill="none" stroke="#ffffff" stroke-opacity="0.028"/>
+    </pattern>
+
+    <!-- card top-edge accents -->
+    <linearGradient id="edgeDim" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6b7488" stop-opacity="0.5"/><stop offset="1" stop-color="#6b7488" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="edgeCyan" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2ee6cf"/><stop offset="1" stop-color="#2ee6cf" stop-opacity="0.15"/>
+    </linearGradient>
+    <linearGradient id="edgeBlue" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5b9dff"/><stop offset="1" stop-color="#5b9dff" stop-opacity="0.15"/>
+    </linearGradient>
+    <linearGradient id="edgeRose" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff6b81"/><stop offset="1" stop-color="#ff6b81" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="620" fill="url(#page)"/>
+  <rect width="1200" height="620" fill="url(#grid)"/>
+  <ellipse cx="180" cy="40" rx="520" ry="300" fill="url(#glowV)"/>
+  <ellipse cx="1080" cy="600" rx="480" ry="280" fill="url(#glowC)"/>
+
+  <!-- ── header ──────────────────────────────────────────────────────────── -->
+  <text x="56" y="60" fill="#e9ecf3" font-size="27" font-weight="700" letter-spacing="-0.4">The layers — dated, attributed, graded</text>
+  <text x="56" y="88" fill="#98a2b6" font-size="14.5" font-weight="400" font-family="Inter, ui-sans-serif, system-ui, sans-serif">A new discipline was named roughly every two months in 2026. Two carry benchmark numbers. One began as a joke.</text>
+
+  <!-- ── the spine ───────────────────────────────────────────────────────── -->
+  <line x1="56" y1="138" x2="1144" y2="138" stroke="url(#spine)" stroke-width="2" stroke-opacity="0.35"/>
+  <line x1="56" y1="138" x2="1144" y2="138" stroke="url(#sweep)" stroke-width="2.5"/>
+
+  <!-- node dots on the spine -->
+  <circle cx="140" cy="138" r="5" fill="#6b7488"/>
+  <circle cx="356" cy="138" r="5.5" fill="#2ee6cf" filter="url(#soft)"/>
+  <circle cx="572" cy="138" r="5.5" fill="#2ee6cf" filter="url(#soft)"/>
+  <circle cx="788" cy="138" r="5.5" fill="#5b9dff" filter="url(#soft)"/>
+  <circle cx="1004" cy="138" r="5.5" fill="#ff6b81" filter="url(#soft)"/>
+
+  <!-- ── PROMPT ──────────────────────────────────────────────────────────── -->
+  <rect x="56" y="168" width="168" height="196" rx="16" fill="#0f1219" stroke="#ffffff" stroke-opacity="0.07"/>
+  <rect x="56" y="168" width="168" height="2.5" rx="1.25" fill="url(#edgeDim)"/>
+  <text x="78" y="202" fill="#e9ecf3" font-size="17.5" font-weight="600">Prompt</text>
+  <text x="78" y="224" fill="#6b7488" font-size="11.5" font-family="'JetBrains Mono', ui-monospace, monospace">~2023</text>
+  <text x="78" y="258" fill="#98a2b6" font-size="13">the wording of</text>
+  <text x="78" y="276" fill="#98a2b6" font-size="13">one request</text>
+  <rect x="78" y="298" width="92" height="24" rx="12" fill="#141824" stroke="#ffffff" stroke-opacity="0.1"/>
+  <text x="124" y="314" fill="#6b7488" font-size="10.5" font-weight="600" text-anchor="middle" letter-spacing="0.8">ABSORBED</text>
+  <text x="78" y="344" fill="#6b7488" font-size="11.5">scoped down, not</text>
+  <text x="78" y="358" fill="#6b7488" font-size="11.5">falsified</text>
+
+  <!-- ── CONTEXT ─────────────────────────────────────────────────────────── -->
+  <rect x="272" y="168" width="168" height="196" rx="16" fill="#0f1219" stroke="#2ee6cf" stroke-opacity="0.28"/>
+  <rect x="272" y="168" width="168" height="2.5" rx="1.25" fill="url(#edgeCyan)"/>
+  <text x="294" y="202" fill="#e9ecf3" font-size="17.5" font-weight="600">Context</text>
+  <text x="294" y="224" fill="#6b7488" font-size="11.5" font-family="'JetBrains Mono', ui-monospace, monospace">Jun 2025</text>
+  <text x="294" y="258" fill="#98a2b6" font-size="13">which tokens the</text>
+  <text x="294" y="276" fill="#98a2b6" font-size="13">model sees</text>
+  <rect x="294" y="298" width="40" height="24" rx="12" fill="#0c2b28" stroke="#2ee6cf" stroke-opacity="0.7"/>
+  <text x="314" y="314" fill="#2ee6cf" font-size="11" font-weight="700" text-anchor="middle">E1</text>
+  <text x="294" y="344" fill="#6b7488" font-size="11.5">context rot:</text>
+  <text x="294" y="358" fill="#98a2b6" font-size="11.5">18 of 18 models</text>
+
+  <!-- ── HARNESS ─────────────────────────────────────────────────────────── -->
+  <rect x="488" y="168" width="168" height="196" rx="16" fill="#0f1219" stroke="#2ee6cf" stroke-opacity="0.28"/>
+  <rect x="488" y="168" width="168" height="2.5" rx="1.25" fill="url(#edgeCyan)"/>
+  <text x="510" y="202" fill="#e9ecf3" font-size="17.5" font-weight="600">Harness</text>
+  <text x="510" y="224" fill="#6b7488" font-size="11.5" font-family="'JetBrains Mono', ui-monospace, monospace">Feb 2026</text>
+  <text x="510" y="258" fill="#98a2b6" font-size="13">what the system</text>
+  <text x="510" y="276" fill="#98a2b6" font-size="13">executes, permits</text>
+  <rect x="510" y="298" width="40" height="24" rx="12" fill="#0c2b28" stroke="#2ee6cf" stroke-opacity="0.7"/>
+  <text x="530" y="314" fill="#2ee6cf" font-size="11" font-weight="700" text-anchor="middle">E1</text>
+  <text x="510" y="344" fill="#6b7488" font-size="11.5">harness alone:</text>
+  <text x="510" y="358" fill="#98a2b6" font-size="11.5">36% → 53%</text>
+
+  <!-- ── LOOP ────────────────────────────────────────────────────────────── -->
+  <rect x="704" y="168" width="168" height="196" rx="16" fill="#0f1219" stroke="#5b9dff" stroke-opacity="0.28"/>
+  <rect x="704" y="168" width="168" height="2.5" rx="1.25" fill="url(#edgeBlue)"/>
+  <text x="726" y="202" fill="#e9ecf3" font-size="17.5" font-weight="600">Loop</text>
+  <text x="726" y="224" fill="#6b7488" font-size="11.5" font-family="'JetBrains Mono', ui-monospace, monospace">Jun 2026</text>
+  <text x="726" y="258" fill="#98a2b6" font-size="13">how many passes,</text>
+  <text x="726" y="276" fill="#98a2b6" font-size="13">judged by what</text>
+  <rect x="726" y="298" width="40" height="24" rx="12" fill="#0d1c33" stroke="#5b9dff" stroke-opacity="0.7"/>
+  <text x="746" y="314" fill="#5b9dff" font-size="11" font-weight="700" text-anchor="middle">E2</text>
+  <text x="726" y="344" fill="#6b7488" font-size="11.5">practised a year</text>
+  <text x="726" y="358" fill="#98a2b6" font-size="11.5">before it was named</text>
+
+  <!-- ── GRAPH ───────────────────────────────────────────────────────────── -->
+  <rect x="920" y="168" width="168" height="196" rx="16" fill="#0f1219" stroke="#ff6b81" stroke-opacity="0.3"/>
+  <rect x="920" y="168" width="168" height="2.5" rx="1.25" fill="url(#edgeRose)"/>
+  <text x="942" y="202" fill="#e9ecf3" font-size="17.5" font-weight="600">Graph</text>
+  <text x="942" y="224" fill="#6b7488" font-size="11.5" font-family="'JetBrains Mono', ui-monospace, monospace">18 Jul 2026</text>
+  <text x="942" y="258" fill="#98a2b6" font-size="13">contested — 3–4</text>
+  <text x="942" y="276" fill="#98a2b6" font-size="13">incompatible senses</text>
+  <rect x="942" y="298" width="40" height="24" rx="12" fill="#33121a" stroke="#ff6b81" stroke-opacity="0.7"/>
+  <text x="962" y="314" fill="#ff6b81" font-size="11" font-weight="700" text-anchor="middle">E4</text>
+  <text x="942" y="344" fill="#6b7488" font-size="11.5">began as satire;</text>
+  <text x="942" y="358" fill="#ff8b9d" font-size="11.5">benchmark fabricated</text>
+
+  <!-- ── the durable split ───────────────────────────────────────────────── -->
+  <text x="56" y="418" fill="#6b7488" font-size="10.5" font-weight="600" letter-spacing="1.8" font-family="'JetBrains Mono', ui-monospace, monospace">WHAT SURVIVES WHEN YOU STRIP THE NAMING</text>
+
+  <rect x="56" y="432" width="500" height="66" rx="14" fill="#0d1c33" fill-opacity="0.6" stroke="#5b9dff" stroke-opacity="0.35"/>
+  <text x="80" y="461" fill="#5b9dff" font-size="15" font-weight="600">What the model sees</text>
+  <text x="80" y="482" fill="#98a2b6" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">context engineering — the one boundary nobody disputes</text>
+
+  <circle cx="600" cy="465" r="17" fill="#0f1219" stroke="#ffffff" stroke-opacity="0.1"/>
+  <text x="600" y="470" fill="#6b7488" font-size="12" text-anchor="middle" font-weight="600">vs</text>
+
+  <rect x="644" y="432" width="500" height="66" rx="14" fill="#1a1030" fill-opacity="0.6" stroke="#a371f7" stroke-opacity="0.35"/>
+  <text x="668" y="461" fill="#c4a5ff" font-size="15" font-weight="600">What the system around it enforces</text>
+  <text x="668" y="482" fill="#98a2b6" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">harness · loop · orchestration — the finer names are still argued over</text>
+
+  <!-- ── grade legend ────────────────────────────────────────────────────── -->
+  <text x="56" y="536" fill="#6b7488" font-size="10.5" font-weight="600" letter-spacing="1.8" font-family="'JetBrains Mono', ui-monospace, monospace">GRADE THE CLAIM BEFORE IT WRITES CONFIG</text>
+
+  <rect x="56" y="550" width="34" height="21" rx="10.5" fill="#0c2b28" stroke="#2ee6cf" stroke-opacity="0.7"/>
+  <text x="73" y="565" fill="#2ee6cf" font-size="10.5" font-weight="700" text-anchor="middle">E1</text>
+  <text x="100" y="565" fill="#98a2b6" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">Measured — a number you can reproduce</text>
+
+  <rect x="380" y="550" width="34" height="21" rx="10.5" fill="#0d1c33" stroke="#5b9dff" stroke-opacity="0.7"/>
+  <text x="397" y="565" fill="#5b9dff" font-size="10.5" font-weight="700" text-anchor="middle">E2</text>
+  <text x="424" y="565" fill="#98a2b6" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">Reported — named source, link, date</text>
+
+  <rect x="676" y="550" width="34" height="21" rx="10.5" fill="#332608" stroke="#febc2e" stroke-opacity="0.7"/>
+  <text x="693" y="565" fill="#febc2e" font-size="10.5" font-weight="700" text-anchor="middle">E3</text>
+  <text x="720" y="565" fill="#98a2b6" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">Argued — a mechanism, no measurement</text>
+
+  <rect x="56" y="582" width="34" height="21" rx="10.5" fill="#33121a" stroke="#ff6b81" stroke-opacity="0.7"/>
+  <text x="73" y="597" fill="#ff6b81" font-size="10.5" font-weight="700" text-anchor="middle">E4</text>
+  <text x="100" y="597" fill="#98a2b6" font-size="12.5" font-family="Inter, ui-sans-serif, system-ui, sans-serif">Asserted — confident, popular, unsourced</text>
+  <text x="380" y="597" fill="#c4a5ff" font-size="12.5" font-weight="500" font-family="Inter, ui-sans-serif, system-ui, sans-serif">Never let an E3 or E4 claim write a line of config.</text>
+</svg>

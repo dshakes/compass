@@ -442,9 +442,9 @@ settings_override_reason() {
 # by design — only unambiguous offensive constructs, never generic networking/crypto.
 POLICY_MALWARE_DETECTORS='reverse-shell|(/dev/tcp/[0-9]|nc(at)? .{0,30}-e +/?(bin/)?(ba)?sh|socket.{0,40}(connect|dup2).{0,40}(/bin/(ba)?sh|exec)|pty\.spawn\(.{0,10}/bin/(ba)?sh|sh -i .{0,10}>& */dev/tcp)
 ransomware|(encrypt|aes[_-]?(256|cbc|gcm)).{0,80}(ransom|bitcoin|btc wallet|\.locked\b|all your files (have been|are) encrypted|pay (the )?(ransom|to decrypt))
-credential-stealer|(steal|dump|harvest|exfiltrate|scrape).{0,40}(saved password|browser (password|cookie)|Login Data|cookies\.sqlite|keychain|/etc/shadow|LSASS|mimikatz)
-keylogger|(keylog|GetAsyncKeyState|SetWindowsHookEx.{0,20}WH_KEYBOARD|pynput\.keyboard.{0,30}(Listener|on_press)|/dev/input/event.{0,20}(read|capture))
-self-propagation|(self[- ]?propagat|spread (itself )?to (other|all|every) (host|machine|device|system)|worm that (spreads|propagates)|infect (other|all|nearby))
+credential-stealer|((steal|dump|harvest|exfiltrate|scrape).{0,40}(saved password|browser (password|cookie)|Login Data|cookies\.sqlite|keychain|/etc/shadow|LSASS|mimikatz)|(grep|cat|find).{0,60}(~/\.aws|~/\.ssh|\.env|credentials).{0,60}\|.{0,20}(curl|wget|nc) )
+keylogger|(keylog|GetAsyncKeyState|SetWindowsHookEx.{0,20}WH_KEYBOARD|pynput[. ].{0,40}(Listener|on_press)|/dev/input/event.{0,20}(read|capture))
+self-propagation|(self[- ]?propagat|spread (itself )?to (other|all|every) (host|machine|device|system)|worm that (spreads|propagates)|infect (other|all|nearby)|known_hosts.{0,80}(scp|rsync).{0,40}\$0)
 crypto-miner|(xmrig|coinhive|cryptonight|stratum\+tcp://|--coin monero --pool)
 c2-framework|(command[- ]and[- ]control beacon|c2 (beacon|implant|channel)|cobalt ?strike beacon|meterpreter (reverse|session)|empire (agent|stager))'
 malware_intent_findings() {

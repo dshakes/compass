@@ -35,7 +35,7 @@ BENCH_TOK_OUT="${COMPASS_BENCH_TOK_OUT:-500}"
 
 WHAT=all; JSON=0; SDLC_DIR=""
 for a in "$@"; do case "$a" in
-  --guardrail) WHAT=guardrail ;; --router) WHAT=router ;; --cost) WHAT=cost ;; --json) JSON=1 ;;
+  --guardrail) WHAT=guardrail ;; --content) WHAT=content ;; --router) WHAT=router ;; --cost) WHAT=cost ;; --json) JSON=1 ;;
   --sdlc) WHAT=sdlc ;; -h|--help) echo "usage: compass-bench.sh [--guardrail|--router|--cost|--sdlc <dir>] [--json]"; exit 0 ;;
   *) [ "$WHAT" = sdlc ] && SDLC_DIR="$a" || { echo "unknown arg: $a" >&2; exit 2; } ;;
 esac; done
@@ -55,6 +55,49 @@ bench_guardrail() {
       if [ -z "$reason" ]; then G_TN=$((G_TN+1)); else G_FP=$((G_FP+1)); printf '  FALSE POSITIVE: %s  → %s\n' "$cmd" "$reason" >&2; fi
     fi
   done < "$CORPUS"
+}
+
+# ── content: secret / malware / insecure findings over the labeled corpus ────────
+# These three families had NO eval harness until the first ablation study reported all
+# 25 of their rules as "unmeasured". Adding the corpus is the fix ablation asks for:
+# write the case, THEN decide about the rule.
+#
+# The secret rows store credential-shaped fragments as @TOKENS@ (see content-corpus.tsv
+# for why) and are materialised here, in memory only. This table is the audit surface —
+# every value below is synthetic and non-functional. The PEM header is assembled from
+# parts for the same reason the corpus is tokenised: compass's own secret hook refuses
+# to commit the literal, and suppressing it with an allowlist marker would also
+# neutralise the detector under test.
+C_TP=0; C_FP=0; C_TN=0; C_FN=0
+CONTENT_CORPUS="$ROOT/scripts/content-corpus.tsv"
+_PK="PRIV"; _PK="${_PK}ATE"; _PEM="-----BEGIN RSA ${_PK} KEY-----"
+_materialise() {
+  printf '%s' "$1" \
+    | sed -e 's/@ANT@/sk-ant-/g'                -e 's/@OAI@/sk-proj-/g' \
+          -e 's/@AWSID@/AKIA/g'                 -e 's/@AWSSEC@/aws_secret_access_key/g' \
+          -e 's/@GCP@/AIza/g'                   -e 's/@GHT@/ghp_/g' \
+          -e 's/@GHPAT@/github_pat_/g'          -e 's/@GLPAT@/glpat-/g' \
+          -e 's/@SLACK@/xoxb-/g'                -e 's/@STRIPE@/sk_live_/g' \
+          -e 's/@NPM@/npm_/g'                   -e "s|@PEMBEGIN@|${_PEM}|g"
+}
+bench_content() {
+  local family label payload text out
+  while IFS=$'\t' read -r family label payload; do
+    case "$family" in '#'*|'') continue ;; esac
+    [ -n "${payload:-}" ] || continue
+    text="$(_materialise "$payload")"
+    case "$family" in
+      secret)   out="$(secret_content_findings "$text")" ;;
+      malware)  out="$(malware_intent_findings "$text")" ;;
+      insecure) out="$(insecure_code_findings "$text")" ;;
+      *) continue ;;
+    esac
+    if [ "$label" = flag ]; then
+      if [ -n "$out" ]; then C_TP=$((C_TP+1)); else C_FN=$((C_FN+1)); printf '  MISS  (%s false negative) %s\n' "$family" "$payload" >&2; fi
+    else
+      if [ -z "$out" ]; then C_TN=$((C_TN+1)); else C_FP=$((C_FP+1)); printf '  FALSE POSITIVE (%s): %s  → %s\n' "$family" "$payload" "$out" >&2; fi
+    fi
+  done < "$CONTENT_CORPUS"
 }
 
 # ── router: reuse the deterministic accuracy eval ────────────────────────────────
@@ -115,18 +158,26 @@ if [ "$WHAT" = sdlc ]; then
   echo "SDLC fix-rate: $pass/$tot"; exit 0
 fi
 
-[ "$WHAT" = router ] || [ "$WHAT" = cost ] || bench_guardrail
-[ "$WHAT" = guardrail ] || bench_router
-[ "$WHAT" = guardrail ] || [ "$WHAT" = router ] || bench_cost
+case "$WHAT" in
+  guardrail) bench_guardrail ;;
+  content)   bench_content ;;
+  router)    bench_router ;;
+  cost)      bench_router; bench_cost ;;
+  all)       bench_guardrail; bench_content; bench_router; bench_cost ;;
+esac
 
 g_total=$((G_TP+G_FP+G_TN+G_FN))
 g_prec="$(pct "$G_TP" "$((G_TP+G_FP))")"
 g_recall="$(pct "$G_TP" "$((G_TP+G_FN))")"
 g_acc="$(pct "$((G_TP+G_TN))" "$g_total")"
+c_total=$((C_TP+C_FP+C_TN+C_FN))
+c_prec="$(pct "$C_TP" "$((C_TP+C_FP))")"
+c_recall="$(pct "$C_TP" "$((C_TP+C_FN))")"
 
 if [ "$JSON" = 1 ]; then
-  printf '{"guardrail":{"cases":%d,"tp":%d,"fp":%d,"tn":%d,"fn":%d,"precision":%s,"recall":%s,"accuracy":%s},"router":{"accuracy":%s}}\n' \
-    "$g_total" "$G_TP" "$G_FP" "$G_TN" "$G_FN" "${g_prec:-0}" "${g_recall:-0}" "${g_acc:-0}" "${R_ACC:-0}"
+  printf '{"guardrail":{"cases":%d,"tp":%d,"fp":%d,"tn":%d,"fn":%d,"precision":%s,"recall":%s,"accuracy":%s},"content":{"cases":%d,"tp":%d,"fp":%d,"tn":%d,"fn":%d,"precision":%s,"recall":%s},"router":{"accuracy":%s}}\n' \
+    "$g_total" "$G_TP" "$G_FP" "$G_TN" "$G_FN" "${g_prec:-0}" "${g_recall:-0}" "${g_acc:-0}" \
+    "$c_total" "$C_TP" "$C_FP" "$C_TN" "$C_FN" "${c_prec:-0}" "${c_recall:-0}" "${R_ACC:-0}"
   exit 0
 fi
 

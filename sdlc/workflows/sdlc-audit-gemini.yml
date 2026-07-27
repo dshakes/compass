@@ -55,8 +55,10 @@ jobs:
       - name: Gemini cross-audit
         if: steps.key.outputs.present == 'true'
         id: gemini
-        # Drives `gemini -p` non-interactively; default approval mode, so shell/write
-        # tools are never auto-approved — an effectively read-only audit pass.
+        # Drives `gemini -p` non-interactively. The workspace IS trusted (env below), so
+        # the wrapper's hardcoded --yolo really does auto-approve — approval mode is NOT
+        # a backstop here. The read-only property comes from the ALLOWLIST below plus the
+        # base-sha checkout above; loosen either and this stops being a read-only pass.
         uses: google-github-actions/run-gemini-cli@f77273f4c914e4bf38440cf36a0369cb64a37489 # v0.1.22
         env:
           # Gemini CLI 0.52+ workspace-trust refuses untrusted dirs; CI checkouts are

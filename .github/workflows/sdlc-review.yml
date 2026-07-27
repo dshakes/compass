@@ -91,6 +91,18 @@ jobs:
             LIMITED TURN BUDGET: be decisive, do not explore the repo exhaustively, and emit
             your verdict as soon as the diff is reviewed. Running out of turns fails the loop.
 
+            YOUR TOOLS ARE EXACTLY: Read, Grep, Glob, and Bash limited to `git diff …` and
+            `git log …`. Nothing else is available — no ls, cat, find, git show, or any
+            other command. A call outside that set is DENIED and costs you a turn you do
+            not get back. Use Read instead of cat, Glob instead of find or ls, and Grep
+            instead of grep-via-Bash. Do not probe to discover what is permitted.
+
+            ON A LARGE DIFF (say, more than ~20 files): do not attempt hunk-by-hunk depth on
+            everything. Get the file list first, spend your budget on the files where a
+            defect would actually matter — logic, security boundaries, CI and policy config —
+            and skim generated, vendored, or prose-only changes. A decisive verdict on the
+            risky 20% beats running out of turns at 100% coverage and returning nothing.
+
             STEP 1 — get the change set (these are the ONLY commands for it; if a command
             prints nothing, the change set is empty → return CLEAN immediately):
               git diff --name-only ${{ github.event.pull_request.base.sha }}...HEAD
@@ -115,7 +127,7 @@ jobs:
             REPO: ${{ github.repository }}   PR: #${{ github.event.pull_request.number }}
           claude_args: |
             --model sonnet
-            --max-turns 35
+            --max-turns 50
             --max-budget-usd 2.00
             --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*)"
             --json-schema '{"type":"object","properties":{"verdict":{"type":"string","enum":["BLOCKING","CLEAN"]},"summary":{"type":"string"}},"required":["verdict"]}'
