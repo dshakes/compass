@@ -272,6 +272,11 @@ has "dry-run prints the layered plan"    "$EOUT" "L1 new-repo.sh"
 has "dry-run includes schedule step"     "$EOUT" "pr-shepherd twice daily"
 has "dry-run includes coverage step"     "$EOUT" "coverage≥70"
 [ -z "$(git -C "$ETMP/fake-repo" status --porcelain)" ] && ok "dry-run changed nothing" || no "dry-run mutated the repo"
+# owner/repo slug path (the clone branch) must resolve in dry-run — caught a live
+# bash-3.2 `local` expansion bug the dir path never exercises.
+SOUT="$("$EN" --dry-run --clone-root "$ETMP/clones" owner/some-repo 2>&1)"; SRC=$?
+eq  "slug dry-run exits 0"        "$SRC" 0
+has "slug target resolves"        "$SOUT" "enable:"
 rm -rf "$ETMP"
 grep -q "env-only" "$EN" && grep -q "never prompts" "$EN" \
   && ok "secrets are env-only by contract (no prompting, no credential-store reads)" \

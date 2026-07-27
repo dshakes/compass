@@ -52,7 +52,10 @@ resolve_dir() {
   if [ -d "$t" ]; then (cd "$t" && pwd); return 0; fi
   case "$t" in
     */*)
-      local name="${t##*/}" dest="$CLONE_ROOT/$name"
+      # Two statements on purpose: bash 3.2 expands a `local` line's args before
+      # assigning any of them, so $name in dest would be unbound under set -u.
+      local name dest
+      name="${t##*/}"; dest="$CLONE_ROOT/$name"
       mkdir -p "$CLONE_ROOT"
       if [ -d "$dest/.git" ]; then printf '%s' "$dest"; return 0; fi
       [ "$DRYRUN" = 1 ] && { printf '%s' "$dest"; return 0; }
