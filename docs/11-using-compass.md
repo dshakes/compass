@@ -13,6 +13,7 @@ habits that make you fast and cheap. If you read one doc, read this one.
 | It everywhere, steps by hand | `… && make dry-run && make install && make doctor` | same, three explicit steps |
 | Just the machinery, no global config | `/plugin marketplace add dshakes/compass && /plugin install compass@compass` | per-session plugin (no memory/permissions) |
 | Committed config in **one** repo | `make new-repo DIR=~/code/my-repo` | starter `CLAUDE.md` + `AGENTS.md` symlink |
+| A repo (or many) fully onboarded — config, PR gates, ruleset, auto-merge, scheduled shepherd | `compass enable [--schedule] [--coverage N] [--dry-run] <owner/repo|dir> ...` | the one-command onboarding; secrets from exported env only |
 | Committed config across **many** repos | `make apply-many DIRS="~/code/*"` *(or `scripts/apply-repos.sh --git-only ~/code/*`)* | the per-repo pieces, in every repo at once |
 | The team to get it on a repo | `make new-repo DIR=~/code/my-repo TEAM=1` | pins `compass@compass` in `.claude/settings.json` |
 

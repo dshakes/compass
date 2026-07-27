@@ -15,6 +15,7 @@ both participate, so reviews get an independent cross-tool second opinion.
 issue ─▶ Planner ─▶ Builder ─▶ [PR] ─▶ Reviewer ⇄ Builder (auto-fix loop)
         (Claude)   (Claude)              (Claude)
                                          Auditor  (Codex, open only)
+                                         Auditor  (Gemini, open only — 3rd model)
                                          Security (Claude opus, open only)
                                          QA       (tests, every push)
                                               │
@@ -337,3 +338,20 @@ target repo's `.gitignore` — run artifacts are local scratch.
 > Reality check: the *plumbing* (issues, PRs, labels, Actions, required reviews) is
 > proven. "Fully autonomous swarm ships to prod unattended" is not reliable. compass
 > keeps humans on merge/deploy on purpose.
+
+
+## The Gemini auditor's security design (third cross-model gate)
+
+`sdlc-audit-gemini.yml` runs a third, independent model over every PR. Its wrapper action
+hardcodes auto-approval (`--yolo`), and Gemini CLI 0.52+ workspace-trust would extend that
+approval to PR-controlled files — so the workflow is deliberately shaped so neither matters:
+
+- **Trusted-base checkout** — the workspace is the base branch's tree, never the PR's; a
+  hostile PR cannot plant `.gemini/` config or `GEMINI.md` context for the agent.
+- **Diff as data** — the PR's changes arrive only as `pr-diff.patch`, fetched from the merge
+  ref and read as a file. The prompt marks it untrusted.
+- **Read-only tool allowlist** — the action's `settings` restrict core tools to
+  read/list/glob/grep; there is no shell, write, or network tool for auto-approval to approve.
+
+Skips cleanly when `GEMINI_API_KEY` is absent and for Dependabot-actor runs. This design
+survived two rounds of Codex cross-audit blocking findings before landing (#93).
