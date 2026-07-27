@@ -45,9 +45,12 @@ jobs:
         # Drives `gemini -p` non-interactively; default approval mode, so shell/write
         # tools are never auto-approved — an effectively read-only audit pass.
         uses: google-github-actions/run-gemini-cli@f77273f4c914e4bf38440cf36a0369cb64a37489 # v0.1.22
+        env:
+          # Gemini CLI 0.52+ workspace-trust refuses untrusted dirs; CI checkouts are
+          # always untrusted, so headless runs need this (the CLI's documented knob).
+          GEMINI_CLI_TRUST_WORKSPACE: "true"
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_debug: true   # TEMP: surface the raw CLI error — remove before merge
           prompt: |
             You are **Auditor** (agent:audit-gemini): an INDEPENDENT third opinion to the
             Claude reviewer and Codex auditor. Audit ONLY the changes introduced by this PR
