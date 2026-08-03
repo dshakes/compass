@@ -44,6 +44,22 @@ jobs:
       SHA: ${{ github.event.check_suite.head_sha }}
       SUITE_ID: ${{ github.event.check_suite.id }}
     steps:
+      # The label this job applies is the ONLY thing that starts sdlc-fix.yml, and
+      # GitHub raises no workflow events for actions taken with GITHUB_TOKEN. Applying
+      # `agent:needs-fix` with the default token therefore labels the PR and wakes
+      # nothing — the CI→fix chain looks wired and is inert. Mint the App token so the
+      # label comes from a real bot identity. (Job-level `env` cannot see `steps.*`,
+      # so the token is applied per-step below rather than to GH_TOKEN up top.)
+      - name: Mint GitHub App token
+        id: apptoken
+        if: ${{ vars.SDLC_APP_ID != '' }}
+        # A missing/invalid key must not fail the job — fall through to
+        # SDLC_BOT_TOKEN / github.token and say so at the end.
+        continue-on-error: true
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.SDLC_APP_ID }}
+          private-key: ${{ secrets.SDLC_APP_PRIVATE_KEY }}
       - name: Resolve failing run
         id: run
         run: |
@@ -99,6 +115,15 @@ jobs:
           RUN_ID: ${{ steps.run.outputs.run_id }}
           RUN_URL: ${{ steps.run.outputs.run_url }}
           RUN_NAME: ${{ steps.run.outputs.run_name }}
+          # Step-level override of the job's GH_TOKEN: the label applied below must come
+          # from a bot identity or sdlc-fix.yml never fires.
+          GH_TOKEN: ${{ steps.apptoken.outputs.token || secrets.SDLC_BOT_TOKEN || github.token }}
+          HAS_BOT_CRED: ${{ (steps.apptoken.outputs.token != '' || secrets.SDLC_BOT_TOKEN != '') && 'true' || 'false' }}
+          # The step's GH_TOKEN is a bot identity so the LABEL raises an event. The log
+          # fetch below must NOT use it: an App without Actions:read would fail the read,
+          # hit the `|| echo "(logs not available)"` fallback, and hand the Builder an
+          # empty failure report — silently, which is the worst version of this bug.
+          LOG_TOKEN: ${{ github.token }}
         run: |
           set -uo pipefail
           labels="$(gh pr view "$PR" --json labels --jq '.labels[].name' 2>/dev/null || true)"
@@ -119,17 +144,36 @@ jobs:
             printf '🔴 **CI failed** on this PR — workflow **%s** ([run](%s)). Failing-step log excerpt:\n\n' "$RUN_NAME" "$RUN_URL"
             printf '```\n'
             # Log text is untrusted CI output: fenced verbatim as data for the Builder.
-            gh run view "$RUN_ID" --repo "$REPO" --log-failed 2>/dev/null | tail -c 4000 || echo "(logs not available yet — see the run link)"
+            GH_TOKEN="$LOG_TOKEN" gh run view "$RUN_ID" --repo "$REPO" --log-failed 2>/dev/null | tail -c 4000 || echo "(logs not available yet — see the run link)"
             printf '\n```\n\n'
             # shellcheck disable=SC2016  # literal markdown backticks, not expansion
-            printf '%s\n' '_compass ci-fix: handing this to the auto-fix loop (`agent:needs-fix`). Disable with repo variable `SDLC_CI_FIX=off`._'
+            if [ "$HAS_BOT_CRED" = "true" ]; then
+              printf '%s\n' '_compass ci-fix: handing this to the auto-fix loop (`agent:needs-fix`). Disable with repo variable `SDLC_CI_FIX=off`._'
+            else
+              printf '%s\n' '_compass ci-fix: labelled `agent:needs-fix`, but **no auto-fix will start** — no' \
+                            'bot credential was available, so the label was applied with `GITHUB_TOKEN` and' \
+                            'GitHub raises no workflow events for it. Fix this by hand, or configure' \
+                            '`SDLC_APP_ID` + `SDLC_APP_PRIVATE_KEY` (or `SDLC_BOT_TOKEN`)._'
+            fi
           } > "$body"
           gh pr comment "$PR" --body-file "$body"
           gh label create "agent:needs-fix" --color d93f0b --force >/dev/null 2>&1 || true
           # Remove + re-add so a fresh `labeled` event fires even if a stale label lingered.
           gh pr edit "$PR" --remove-label "agent:needs-fix" >/dev/null 2>&1 || true
           gh pr edit "$PR" --add-label "agent:needs-fix"
-          echo "PR #$PR labeled agent:needs-fix — sdlc-fix.yml takes it from here."
+          if [ "$HAS_BOT_CRED" = "true" ]; then
+            echo "PR #$PR labeled agent:needs-fix — sdlc-fix.yml takes it from here."
+          else
+            # Do not repeat the mistake this repo keeps finding: a green job asserting a
+            # handoff that cannot happen. Warn instead of claiming.
+            echo "::warning::PR #$PR was labeled agent:needs-fix, but NOTHING will pick it up."
+            echo "::warning::No bot credential was available, so the label was applied with"
+            echo "::warning::GITHUB_TOKEN — GitHub raises no workflow events for that token, so"
+            echo "::warning::sdlc-fix.yml will not fire. Either no credential is configured"
+            echo "::warning::(SDLC_APP_ID + SDLC_APP_PRIVATE_KEY, or SDLC_BOT_TOKEN), or the App"
+            echo "::warning::token step failed to mint one — it runs under continue-on-error, so"
+            echo "::warning::check its log before assuming the secrets are missing."
+          fi
 
   # ---------------------------------------------------------------------------
   # Default-branch path — rerun once (flakes are free), then a bounded CI medic
