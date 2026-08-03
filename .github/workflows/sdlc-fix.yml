@@ -240,7 +240,7 @@ jobs:
 
             YOUR TOOLS ARE EXACTLY: Read,Edit,Write,Grep,Glob,Bash(cat:*),Bash(git add:*),Bash(git commit:*),Bash(go build:*),Bash(go test:*),Bash(go vet:*),Bash(cargo build:*),Bash(cargo test:*),Bash(npm:*),Bash(pnpm:*),Bash(npx tsc:*),Bash(pytest:*),Bash(ruff:*),Bash(make:*)
             Nothing else is available. A call outside that set is DENIED and costs you a
-            turn you do not get back — you have 25. Use Read instead of cat, Glob
+            turn you do not get back — you have 40. Use Read instead of cat, Glob
             instead of find or ls, and Grep instead of grep-via-Bash. Do not probe to
             discover what is permitted.
 
