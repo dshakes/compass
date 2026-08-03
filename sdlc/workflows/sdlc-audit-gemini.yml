@@ -30,6 +30,9 @@ jobs:
       && (github.event.action != 'synchronize' || !endsWith(github.actor, '[bot]'))
       && (github.event.action != 'labeled' || github.event.label.name == 'agent:audit')
     runs-on: ubuntu-latest
+    concurrency:
+      group: sdlc-audit-gemini-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     steps:
       # Secrets aren't readable in a job-level `if`, so gate every later step on this
       # first step's output — absent key means the job completes green as a no-op.
