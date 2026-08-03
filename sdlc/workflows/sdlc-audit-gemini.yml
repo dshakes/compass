@@ -7,7 +7,7 @@ name: "sdlc · audit (Gemini)"
 
 on:
   pull_request:
-    types: [opened, reopened, labeled]
+    types: [opened, reopened, synchronize, labeled]
 
 permissions:
   contents: read
@@ -17,8 +17,22 @@ jobs:
   audit-gemini:
     # Auto on open/reopen, or on the agent:audit label. (label.name is null on open events.)
     # dependabot-actor runs get Dependabot's (empty) secret store — agent can't auth, so skip
-    if: github.actor != 'dependabot[bot]' && (github.event.action != 'labeled' || github.event.label.name == 'agent:audit')
+    # 1. dependabot never audits — those runs get Dependabot's (empty) secret store,
+    #    so the agent cannot authenticate at all. Capability, not cost.
+    # 2. On `synchronize` only, bot pushes are skipped: the fix loop commits once per
+    #    round and auditing each re-spends credits for no added signal. Scoped to
+    #    synchronize deliberately — a blanket bot exclusion would also stop auditing
+    #    PRs *opened* by Renovate, Copilot and release bots.
+    # 3. A label triggers an audit only when it is `agent:audit` (label.name is null
+    #    on open events, hence the action check first).
+    if: >-
+      github.actor != 'dependabot[bot]'
+      && (github.event.action != 'synchronize' || !endsWith(github.actor, '[bot]'))
+      && (github.event.action != 'labeled' || github.event.label.name == 'agent:audit')
     runs-on: ubuntu-latest
+    concurrency:
+      group: sdlc-audit-gemini-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     steps:
       # Secrets aren't readable in a job-level `if`, so gate every later step on this
       # first step's output — absent key means the job completes green as a no-op.
