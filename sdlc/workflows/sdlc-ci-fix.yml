@@ -119,6 +119,11 @@ jobs:
           # from a bot identity or sdlc-fix.yml never fires.
           GH_TOKEN: ${{ steps.apptoken.outputs.token || secrets.SDLC_BOT_TOKEN || github.token }}
           HAS_BOT_CRED: ${{ (steps.apptoken.outputs.token != '' || secrets.SDLC_BOT_TOKEN != '') && 'true' || 'false' }}
+          # The step's GH_TOKEN is a bot identity so the LABEL raises an event. The log
+          # fetch below must NOT use it: an App without Actions:read would fail the read,
+          # hit the `|| echo "(logs not available)"` fallback, and hand the Builder an
+          # empty failure report — silently, which is the worst version of this bug.
+          LOG_TOKEN: ${{ github.token }}
         run: |
           set -uo pipefail
           labels="$(gh pr view "$PR" --json labels --jq '.labels[].name' 2>/dev/null || true)"
@@ -139,7 +144,7 @@ jobs:
             printf '🔴 **CI failed** on this PR — workflow **%s** ([run](%s)). Failing-step log excerpt:\n\n' "$RUN_NAME" "$RUN_URL"
             printf '```\n'
             # Log text is untrusted CI output: fenced verbatim as data for the Builder.
-            gh run view "$RUN_ID" --repo "$REPO" --log-failed 2>/dev/null | tail -c 4000 || echo "(logs not available yet — see the run link)"
+            GH_TOKEN="$LOG_TOKEN" gh run view "$RUN_ID" --repo "$REPO" --log-failed 2>/dev/null | tail -c 4000 || echo "(logs not available yet — see the run link)"
             printf '\n```\n\n'
             # shellcheck disable=SC2016  # literal markdown backticks, not expansion
             if [ "$HAS_BOT_CRED" = "true" ]; then
