@@ -15,7 +15,7 @@ a labeled corpus that gates in CI, the same way `compass bench` gates the guardr
 > instructions** — and the human merge/deploy gate never moves.
 
 <p align="center">
-  <img src="../assets/red-team.svg" alt="compass red-team layer: untrusted input (prompt/paste, web/MCP/tool output, CLAUDE.md/AGENTS.md, .claude/settings.json) flows into the compass red-team layer — decode & normalize (base64, hex/percent/HTML-entity, zero-width, ASCII-smuggling Unicode Tags, homoglyph, leetspeak) then detectors (prompt-injection, authority-spoof, MCP tool-poisoning, context-poisoning, safety-override, data/DNS exfiltration, malware, insecure-code, system-prompt-leak), eval-gated at 100% precision/recall and 100% adversarial-fuzz robustness — producing warn+audit (default), block (enforce), or optional webhook/Bedrock/Azure escalation, all ending at the permanent human merge/deploy gate." width="900">
+  <img src="../assets/red-team.svg" alt="compass red-team layer: untrusted input (prompt/paste, web/MCP/tool output, CLAUDE.md/AGENTS.md, .claude/settings.json) flows into the compass red-team layer — decode & normalize (base64, hex/percent/HTML-entity, zero-width, ASCII-smuggling Unicode Tags, homoglyph, leetspeak) then detectors (prompt-injection, authority-spoof, MCP tool-poisoning, context-poisoning, safety-override, data/DNS exfiltration, malware, insecure-code, system-prompt-leak), eval-gated at 100% precision/recall — producing warn+audit (default), block (enforce), or optional webhook/Bedrock/Azure escalation, all ending at the permanent human merge/deploy gate." width="900">
 </p>
 
 ---

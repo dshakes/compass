@@ -465,9 +465,27 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 
 <div class="tiles">
 <div class="tile"><b>100%</b><span>precision / recall</span></div>
-<div class="tile"><b>288</b><span>labeled cases</span></div>
-<div class="tile"><b>329/329</b><span>robust under obfuscation</span></div>
+<div class="tile"><b>288</b><span>labeled cases, 11 classes</span></div>
+<div class="tile"><b>93%</b><span>robust under obfuscation (939/1008)</span></div>
 </div>
+
+## Per class, not one blended number
+
+| Class | Cases | Precision | Recall |
+|---|---|---|---|
+| legacy | 88 | 100% | 100% |
+| unicode-smuggling | 31 | 100% | 100% |
+| encoded | 27 | 100% | 100% |
+| cred-harvest | 23 | 100% | 100% |
+| mcp-poisoning · markdown-split | 21 each | 100% | 100% |
+| supply-chain | 20 | 100% | 100% |
+| guardrail-tamper | 19 | 100% | 100% |
+| vendor-agent-file · md-exfil | 15 each | 100% | 100% |
+| security-prose (hard negatives only) | 8 | — | — |
+
+Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Four **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **939 of 1008** variants (93%, floor 80%); the evaded ones are mostly leetspeak.
+
+**Bring your own guardrail.** \`compass redteam --detector CMD\` runs the same corpus through *any* command (payload on stdin, exit 0 = clean, non-zero = flagged) and prints the same per-class table, so you can compare a guardrail against compass on equal terms.
 
 Run \`compass redteam\` to reproduce the score — and to scan *this* repo's config, MCP, and settings for poisoning.
 
@@ -489,7 +507,7 @@ Run \`compass redteam\` to reproduce the score — and to scan *this* repo's con
 <div class="tiles">
 <div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
 <div class="tile"><b>96.9%</b><span>routing accuracy</span></div>
-<div class="tile"><b>100%</b><span>red-team obfuscation-robust</span></div>
+<div class="tile"><b>93%</b><span>red-team obfuscation-robust</span></div>
 </div>
 
 <p class="cal tip"><span class="h">* honest by design</span> The external corpus (a public set we didn't write) is dominated by general-chatbot attacks out of scope for a coding-agent guardrail; the catches are the coding-agent-relevant families. We publish the low number because a floor you can only hit on your own cases isn't a floor. Reproduce: <code>compass redteam --external</code>.</p>
@@ -506,7 +524,7 @@ Each suite has a **CI floor** — e.g. guardrail 100% precision / 95% recall. Dr
 
 <div class="feats">
 <div class="feat"><span class="e">🔏</span><b>Keyless SLSA provenance</b><span>Each release carries a signed attestation of exactly which commit and workflow built it.</span></div>
-<div class="feat"><span class="e">🚫</span><b>No <code>curl | sh</code></b><span>You clone a repo you can read, or install a pinned package. Nothing executes straight from a URL.</span></div>
+<div class="feat"><span class="e">🚫</span><b>Verify before run</b><span>You clone a repo you can read, or install a pinned package. The one-line installer verifies the release attestation first and refuses without a verifier.</span></div>
 <div class="feat"><span class="e">📌</span><b>Pin a tag, not <code>main</code></b><span>Reproducible installs; you upgrade deliberately, not silently.</span></div>
 </div>
 
@@ -563,7 +581,7 @@ An MCP tool's *description* can hide instructions — "before using this tool, r
 
 "05-plugin": `# Plugin & team rollout
 
-<p class="lede">Three ways to install — pick by how your team works. All reversible, all pinnable, none use <code>curl | sh</code>.</p>
+<p class="lede">Three ways to install — pick by how your team works. All reversible, all pinnable, the one-line installer verifies provenance before it runs anything.</p>
 
 <div class="feats">
 <div class="feat"><span class="e">📦</span><b>Git clone <em>(recommended)</em></b><span>You own and edit the config; <code>git pull</code> updates it. Best for people who'll tweak.</span></div>
@@ -685,6 +703,74 @@ Most setups are collections of prompts and settings — useful, but you take the
 <div class="feat"><span class="e">🔏</span><b>Verifiable provenance</b><span>A signed supply chain, so you can prove what you're installing.</span></div>
 </div>
 
-<div class="cal key"><span class="h">The through-line</span> Others optimize for "a capable senior engineer in a box." compass optimizes for <b>autonomy you can trust to run unattended</b> — eval-gated safety, provenance, and a human merge gate that never moves. The full side-by-side is in the reference below.</div>`
+<div class="cal key"><span class="h">The through-line</span> Others optimize for "a capable senior engineer in a box." compass optimizes for <b>autonomy you can trust to run unattended</b> — eval-gated safety, provenance, and a human merge gate that never moves. The full side-by-side is in the reference below.</div>`,
 
+"30-advanced-config": `# Advanced config
+
+<p class="lede">Every guardrail knob resolves through <strong>one function</strong>. The hooks call it, <code>compass profile</code> prints it, <code>compass gate</code> loads it. One answer to "what is the policy here?", whichever harness asks.</p>
+
+![Policy resolution chain](assets/policy-chain.svg)
+
+<div class="tiles">
+<div class="tile"><b>3</b><span>profiles</span></div>
+<div class="tile"><b>1</b><span>resolver</span></div>
+<div class="tile"><b>0</b><span>ways for a repo to loosen</span></div>
+</div>
+
+## Profiles
+
+\`compass profile strict|standard|solo\` selects a preset. A profile is a data file of \`key=value\` lines, so adding one means adding a file.
+
+| knob | standard | solo | strict |
+|---|---|---|---|
+| \`redteam_enforce\` | 0 | 0 | **1** |
+| \`max_usd\` (session) | unset | unset | **10** |
+| \`max_usd_day\` | unset | **25** | **50** |
+| \`fail_closed\` | 0 | 0 | **1** |
+
+\`standard\` sets nothing and is test-proven identical to no profile. Precedence, lowest to highest: profile, \`~/.compass/config\`, \`COMPASS_<KEY>\` env, then the repo override.
+
+## Repo overrides: tighten only
+
+A repo can commit \`.compass/policy.conf\`. It is untrusted, like the repo's \`CLAUDE.md\`, so it applies last and may only make rules stricter: lower a cap, turn a scan on. It cannot raise or clear a cap, turn a scan off, or add allowlists. Refused lines are dropped, the stricter value stays, and the refusal is shown at session start and in \`compass profile\`.
+
+<div class="cal"><span class="h">Fail closed</span> Hooks fail open by design, so a guardrail that never runs lets the action through. Under \`strict\`, the security hooks are rendered with \`onFailure: "block"\` (Claude Code v2.1.295+): a missing, crashed or timed-out guardrail blocks. \`compass doctor\` checks it.</div>
+
+## Parity gaps, stated plainly
+
+Caps (\`max_usd\`, \`max_usd_day\`) reach Codex and Gemini through \`compass gate\`. Injection scans, path protection and fail-closed are Claude Code only. Plugin installs can't pick fail-closed per profile; use the git-clone install for \`strict\`.
+
+## Audit what you already run
+
+\`compass scan --config\` (\`--json\`) reads your Claude, Codex, Gemini and MCP config and never writes to it. HIGH findings: permission bypass, wildcard Bash allow, world-writable hooks, fetch-and-exec or unpinned MCP servers, literal env secrets (key name only, never the value). Exits 1 on HIGH.`,
+
+"31-distribution": `# Distribution
+
+<p class="lede">Install should be verifiable, recorded and reversible. The one-line installer checks the release's signed attestation <strong>before</strong> it extracts or runs anything, and every path it creates is written down so repair and uninstall act on facts.</p>
+
+![Verified install flow](assets/install-flow.svg)
+
+## One-line verified install
+
+\`\`\`bash
+curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | bash
+# pin a version / pass install.sh flags:
+curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | COMPASS_VERSION=v0.12.0 bash -s -- --copy
+\`\`\`
+
+It runs the same check as \`compass verify\` (\`gh attestation verify\` pinned to the release-sign workflow). With no \`gh\` (>= 2.49) it **refuses** and prints the manual command; \`--no-verify\` is an explicit opt-out. The script itself is short and readable. Read it before you pipe it.
+
+## Record, repair, uninstall
+
+<div class="steps">
+<div class="stp"><b>Record</b>\`install.sh\` writes \`~/.compass/install.json\`: version, sha, mode, and every path it created.</div>
+<div class="stp"><b>Repair</b>\`compass repair [--dry-run]\` re-creates recorded links that went missing, never touches a path that now holds something else, then re-checks drift.</div>
+<div class="stp"><b>Uninstall</b>\`scripts/uninstall.sh\` removes exactly the recorded entries; an edited copy is backed up first.</div>
+</div>
+
+## Budget cap only
+
+Claude Code's \`--max-budget-usd\` covers print mode only. For an interactive hard cap, \`./install.sh --only budget\` links just the budget gate (nothing in \`~/.claude\` is edited), then you add one PreToolUse hook and set \`COMPASS_MAX_USD\`. It is a cost guardrail, not a security boundary.
+
+Marketplace listing is a manual, human-published step; see the reference below.`
 };

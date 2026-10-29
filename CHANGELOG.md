@@ -7,6 +7,11 @@ All notable changes to this project are documented here. Format loosely follows
 
 ### Added
 
+- **Red-team v2** (`docs/17-red-team.md`): the corpus grows to 288 scored cases across 11 attack
+  classes with per-class precision/recall, hard negatives (`security-prose`) and 4 documented
+  known gaps (reported, not gating). `compass redteam --detector CMD` benchmarks any guardrail
+  on the same corpus and prints the same per-class table. Obfuscation fuzzing (`--attack`) is
+  93% (939/1008, floor 80%); earlier "100% robust" figures are superseded.
 - **Distribution**: `install-remote.sh` (one-line install; verifies the release's SLSA attestation
   before extracting or running anything, fails closed without `gh`, `--no-verify` to opt out);
   `install.sh` writes `~/.compass/install.json` (version, sha, mode, every created path);
@@ -35,6 +40,14 @@ All notable changes to this project are documented here. Format loosely follows
 - **`compass gate` follows the effective policy**, so Codex and Gemini get the same spend
   caps as the Claude hook, including any cap a repo lowered. See
   `docs/30-advanced-config.md` for the parity gaps.
+
+### Changed
+
+- **Production hardening**: quoted doc counts are computed and guarded by `scripts/check-docs.sh`;
+  budget pricing is version-aware and never under-counts spend; the Codex audit skips green when
+  no key is configured instead of reporting a pass it did not run.
+- **Site and README** present profiles, tighten-only overrides, `scan --config`, red-team v2 and
+  the verified install, with two new diagrams (`policy-chain.svg`, `install-flow.svg`).
 
 ## [2.2.0] - 2026-07-27
 
