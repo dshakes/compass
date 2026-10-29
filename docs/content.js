@@ -482,7 +482,7 @@ Run \`compass redteam\` to reproduce the score — and to scan *this* repo's con
 | Suite | Cases | Precision | Recall |
 |---|---|---|---|
 | Guardrail | 61 | 100% | 100% |
-| Red-team (internal) | 99 | 100% | 100% |
+| Red-team (internal) | 101 | 100% | 100% |
 | Red-team (external, public corpus) | 546 | 90% | 8%* |
 | Router | 32 | — | 96.9% acc |
 

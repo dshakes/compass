@@ -68,12 +68,15 @@ echo "quoted counts — red-team / router case counts must match the corpora:"
 n=$fail
 rt="$(bash scripts/test-redteam.sh 2>&1 | sed -n 's/^redteam corpus: \([0-9][0-9]*\) cases.*/\1/p')"
 rv="$(grep -vc '^#\|^[[:space:]]*$' scripts/route-evalset.tsv)"
+rf="$(grep -vc '^#\|^[[:space:]]*$' scripts/redteam-corpus.tsv)"
 [ -n "$rt" ] || no "could not compute red-team corpus size (scripts/test-redteam.sh)"
 for f in README.md docs/*.md docs/*.html docs/content.js; do
 { grep -ohiE '(red-?team|P/R|corpus:|recall on)[^<]{0,20} \(?[0-9]+ cases' "$f" | grep -oE '[0-9]+ cases' | sed "s|^|$rt |"
 grep -ohiE 'routing accuracy · [0-9]+ cases' "$f" | grep -oE '[0-9]+ cases' | sed "s|^|$rv |"
 grep -ohiE '[0-9]+-case eval set' "$f" | grep -oE '[0-9]+' | sed "s|^|$rv |; s|\$| cases|"
-grep -ohE '\| Router \| [0-9]+ \|' "$f" | grep -oE '[0-9]+' | sed "s|^|$rv |; s|\$| cases|"; } |
+grep -ohE '\| Router \| [0-9]+ \|' "$f" | grep -oE '[0-9]+' | sed "s|^|$rv |; s|\$| cases|"
+grep -ohE '\| Red-team \(internal\) \| [0-9]+ \||= [0-9]+ scored|\([0-9]+ total: ' "$f" | grep -oE '[0-9]+' | sed "s|^|$rt |; s|\$| cases|"
+grep -ohE '[0-9]+ file(-based rows)? \+' "$f" | grep -oE '^[0-9]+' | sed "s|^|$rf |; s|\$| corpus-rows|"; } |
 while read -r want got _; do [ "$want" = "$got" ] || echo "$f quotes $got cases, corpus has $want"; done
 done > /tmp/_counts.$$
 while IFS= read -r bad; do no "stale count: $bad"; done < /tmp/_counts.$$
