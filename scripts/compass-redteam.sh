@@ -185,7 +185,9 @@ if [ "$MODE" != eval ]; then
 fi
 
 if [ "$JSON" = 1 ]; then
-  printf '{"eval":{%s"precision":%s,"recall":%s,"pass":%s,"classes":%s},"detector":%s,"scan":{"flagged":%d},"backend":%s}\n' \
+  # "classes" stays OUTSIDE "eval": compass-ablate.sh reads "eval":{…"recall":N} with a
+  # flat [^}]* match, and nested objects inside "eval" would hand it a per-class recall.
+  printf '{"eval":{%s"precision":%s,"recall":%s,"pass":%s},"classes":%s,"detector":%s,"scan":{"flagged":%d},"backend":%s}\n' \
     "$EVAL_COUNTS" "${EVAL_PREC:-null}" "${EVAL_REC:-null}" "$EVAL_PASS" "$EVAL_CLASSES" \
     "$(json_string "${COMPASS_REDTEAM_DETECTOR:-compass}")" "$SCAN_FILES" "$(json_string "${COMPASS_GUARDRAIL_BACKEND:-none}")"
 else
