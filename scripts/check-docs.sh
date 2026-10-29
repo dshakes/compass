@@ -66,6 +66,7 @@ rm -f /tmp/_links.$$
 
 echo "quoted counts — red-team / router case counts must match the corpora:"
 n=$fail
+CNT="$(mktemp "${TMPDIR:-/tmp}/compass-counts.XXXXXX")" || { no "mktemp failed — count check cannot run"; CNT=/dev/null; }
 rt="$(bash scripts/test-redteam.sh 2>&1 | sed -n 's/^redteam corpus: \([0-9][0-9]*\) cases.*/\1/p')"
 rv="$(grep -vc '^#\|^[[:space:]]*$' scripts/route-evalset.tsv)"
 rf="$(grep -vc '^#\|^[[:space:]]*$' scripts/redteam-corpus.tsv)"
@@ -78,7 +79,7 @@ grep -ohE '\| Router \| [0-9]+ \|' "$f" | grep -oE '[0-9]+' | sed "s|^|$rv |; s|
 grep -ohE '\| Red-team \(internal\) \| [0-9]+ \||= [0-9]+ scored|\([0-9]+ total: ' "$f" | grep -oE '[0-9]+' | sed "s|^|$rt |; s|\$| cases|"
 grep -ohE '[0-9]+ file(-based)?( rows)? \+' "$f" | grep -oE '^[0-9]+' | sed "s|^|$rf |; s|\$| corpus-rows|"; } |
 while read -r want got _; do [ "$want" = "$got" ] || echo "$f quotes $got cases, corpus has $want"; done
-done > /tmp/_counts.$$
+done > "$CNT"
 # Catch-all for phrasings the per-corpus patterns above don't know: every "N cases" /
 # "N labeled cases" / "N-case" must be the size of SOME live corpus. 28-ablation.md is a
 # dated experiment log, so its counts are history, not claims.
@@ -93,9 +94,9 @@ for f in README.md docs/*.md docs/*.html docs/content.js; do
   while read -r got; do
     case " $rt $rf $rv $rr $rg $rb " in *" $got "*) ;; *) echo "$f quotes $got cases, no live corpus has that size ($rt/$rv/$rr/$rg/$rb)" ;; esac
   done
-done >> /tmp/_counts.$$
-while IFS= read -r bad; do no "stale count: $bad"; done < /tmp/_counts.$$
-rm -f /tmp/_counts.$$
+done >> "$CNT"
+while IFS= read -r bad; do no "stale count: $bad"; done < "$CNT"
+rm -f "$CNT"
 [ "$fail" -eq "$n" ] && [ -n "$rt" ] && ok "quoted red-team ($rt) and router ($rv) case counts match the corpora"
 echo
 printf 'docs audit: %d passed, %d failed\n' "$pass" "$fail"

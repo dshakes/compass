@@ -147,6 +147,18 @@ export COMPASS_MAX_USD=0.01;  block_t "transcript \$0.0105 >= \$0.01 cap → blo
 export COMPASS_MAX_USD=0.05;  allow_t "transcript \$0.0105 < \$0.05 cap → allow"
 unset COMPASS_MAX_USD
 
+# Same tokens on legacy Opus 4.1 ($15/$75) = $0.07875; flat newest-Opus pricing ($4/$20)
+# would say $0.021 and let it through. An unknown id must price at the max too.
+for mid in claude-opus-4-1-20250805 some-future-model; do
+  sed "s/claude-sonnet-5-20251201/$mid/" "$TFILE" > "$TFILE.$$" && mv "$TFILE.$$" "$TFILE.$mid"
+done
+TFILE0="$TFILE"
+echo 'transcript fallback: legacy / unknown model ids never under-count:'
+export COMPASS_MAX_USD=0.05; clear_spent
+TFILE="$TFILE0.claude-opus-4-1-20250805"; block_t "legacy Opus 4.1 \$0.07875 >= \$0.05 cap → block"
+TFILE="$TFILE0.some-future-model";       block_t "unknown model priced at max → block"
+TFILE="$TFILE0"; unset COMPASS_MAX_USD
+
 echo "transcript fallback: missing transcript file → fail open:"
 export COMPASS_MAX_USD=0.005; clear_spent
 out_no_tfile="$(input "$SID" "$HOME_TMP/no-such-file.jsonl" | bash "$HOOK" 2>/dev/null)"; rc_no=$?

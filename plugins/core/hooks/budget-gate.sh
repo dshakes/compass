@@ -66,10 +66,10 @@ fi
 # the transcript is the ground truth. PreToolUse payloads always include transcript_path.
 # Single pass, jq-first with python3 fallback; neither available → skip (fail-open, no change).
 # ponytail: pricing table is a local copy — no shared table in the repo yet.
-# Rates (USD/MTok in/out; Claude 5.5 list prices, platform.claude.com/docs/en/about-claude/pricing):
-# haiku $0.50/$2.50 (>100k-prompt tier, conservative), sonnet $2/$10, opus $4/$20, fable $10/$50.
-# Cache write 5m / read (per MTok): haiku $0.625/$0.05, sonnet $2.50/$0.10, opus $5/$0.20, fable $12.50/$0.25.
-# Older model ids are priced as their family (legacy Opus 4/4.1 was $15/$75 — now under-counted).
+# Rates: USD per token (in, out, cache-write-5m, cache-read), platform.claude.com/docs/en/
+# about-claude/pricing, 2026-10. Exact version first; an id that matches no version is priced
+# at its FAMILY'S MAX, and an unknown family at the overall max — a spend cap must over-count,
+# never under-count. Haiku 5.5 uses its >100k-prompt tier (conservative).
 TPATH="$(json_get "$INPUT" '.transcript_path')"
 TUSD=""
 if [ -n "$TPATH" ] && [ -f "$TPATH" ]; then
@@ -81,20 +81,24 @@ if [ -n "$TPATH" ] && [ -f "$TPATH" ]; then
       (.usage.output_tokens // 0) as $out |
       (.usage.cache_creation_input_tokens // 0) as $cw |
       (.usage.cache_read_input_tokens // 0) as $cr |
-      if ($m | contains("haiku")) then
-        $in*0.0000005 + $out*0.0000025 + $cw*0.000000625 + $cr*0.00000005
-      elif ($m | contains("opus")) then
-        $in*0.000004 + $out*0.00002 + $cw*0.000005 + $cr*0.0000002
-      elif ($m | contains("fable")) then
-        $in*0.00001 + $out*0.00005 + $cw*0.0000125 + $cr*0.00000025
-      else
-        $in*0.000002 + $out*0.00001 + $cw*0.0000025 + $cr*0.0000001
-      end
+      (if   ($m|test("opus-5-5")) then [4,20,5,0.2]
+       elif ($m|test("opus-(5|4-[5-8])")) then [5,25,6.25,0.5]
+       elif ($m|test("opus")) then [15,75,18.75,1.5]
+       elif ($m|test("sonnet-5-5")) then [2,10,2.5,0.1]
+       elif ($m|test("sonnet-5")) then [2,10,2.5,0.2]
+       elif ($m|test("sonnet")) then [3,15,3.75,0.3]
+       elif ($m|test("haiku-5-5")) then [0.5,2.5,0.625,0.05]
+       elif ($m|test("haiku")) then [1,5,1.25,0.1]
+       elif ($m|test("(fable|mythos)-5-1")) then [10,50,12.5,0.25]
+       elif ($m|test("fable|mythos")) then [10,50,12.5,1]
+       else [15,75,18.75,1.5] end) as $r |
+      ($in*$r[0] + $out*$r[1] + $cw*$r[2] + $cr*$r[3]) / 1000000
     ' "$TPATH" 2>/dev/null | awk '{t+=$1} END{printf "%.6f",t+0}' 2>/dev/null)" || TUSD=""
   elif have python3; then
     TUSD="$(python3 -c '
 import sys,json
-P={"haiku":(5e-7,2.5e-6,6.25e-7,5e-8),"opus":(4e-6,2e-5,5e-6,2e-7),"fable":(1e-5,5e-5,1.25e-5,2.5e-7),"sonnet":(2e-6,1e-5,2.5e-6,1e-7)}
+import re
+P=[("opus-5-5",(4,20,5,.2)),("opus-(5|4-[5-8])",(5,25,6.25,.5)),("opus",(15,75,18.75,1.5)),("sonnet-5-5",(2,10,2.5,.1)),("sonnet-5",(2,10,2.5,.2)),("sonnet",(3,15,3.75,.3)),("haiku-5-5",(.5,2.5,.625,.05)),("haiku",(1,5,1.25,.1)),("(fable|mythos)-5-1",(10,50,12.5,.25)),("fable|mythos",(10,50,12.5,1)),("",(15,75,18.75,1.5))]
 t=0.0
 try:
  with open(sys.argv[1]) as f:
@@ -104,10 +108,9 @@ try:
    if obj.get("type")!="assistant": continue
    msg=obj.get("message") or {}
    m=(msg.get("model") or "").lower()
-   k=next((x for x in ("opus","haiku","fable") if x in m),"sonnet")
+   r=next(v for k,v in P if re.search(k,m))
    u=msg.get("usage") or {}
-   r=P[k]
-   t+=u.get("input_tokens",0)*r[0]+u.get("output_tokens",0)*r[1]+u.get("cache_creation_input_tokens",0)*r[2]+u.get("cache_read_input_tokens",0)*r[3]
+   t+=(u.get("input_tokens",0)*r[0]+u.get("output_tokens",0)*r[1]+u.get("cache_creation_input_tokens",0)*r[2]+u.get("cache_read_input_tokens",0)*r[3])/1e6
 except: pass
 print("%.6f"%t)
 ' "$TPATH" 2>/dev/null)" || TUSD=""
