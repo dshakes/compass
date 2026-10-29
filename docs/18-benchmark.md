@@ -58,7 +58,7 @@ Payloads are single-line untrusted content as it might appear in a poisoned
 
 ### 3. Router eval set — `router/evalset.tsv`
 
-Tests the deterministic model-tier router (haiku / sonnet / opus). **32 labeled cases.**
+Tests the deterministic model-tier router (haiku / sonnet / opus). **62 labeled cases** (32 base · 15 holdout · 15 adversarial); `router/bench.sh` gates on base + holdout. The cost-routing figure `compass bench` prints (96.9%, ~62% cheaper) comes from the separate 32-case `scripts/route-evalset.tsv`.
 
 ```
 # Columns (TAB-separated):
@@ -104,7 +104,7 @@ compass redteam --json
 | Guardrail | 61 | 100% | 100% | floor: 100% P / 95% R |
 | Red-team | 101 | 100% | 100% | floor: 100% P / 90% R |
 | Red-team adversarial | 155+ transforms | 100% | 100% | floor: 80% robustness |
-| Router | 62 (32 base · 15 holdout · 15 adversarial) | — | — | accuracy 96.9%; floor 90% |
+| Router | 62 (32 base · 15 holdout · 15 adversarial) | — | — | gated accuracy 97.9% (base + holdout); floor 90% |
 
 Run with `--json` to get machine-readable results for your own tooling or dashboards.
 
