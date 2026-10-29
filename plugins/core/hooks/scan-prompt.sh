@@ -12,11 +12,12 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$HERE/lib/policy.sh"
 . "$HERE/lib/guardrail-remote.sh"
 
-# Feature flags (all default ON). COMPASS_REDTEAM=0 disables the whole layer;
+# Feature flags (all default ON; resolved by compass_policy — env, config, profile,
+# tighten-only repo policy). COMPASS_REDTEAM=0 disables the whole layer;
 # COMPASS_REDTEAM_PROMPT=0 disables just this hook. COMPASS_REDTEAM_ENFORCE=1 turns
 # local detections from a warning into a hard block (exit 2) on this prompt.
-[ "${COMPASS_REDTEAM:-1}" = 0 ] && exit 0
-[ "${COMPASS_REDTEAM_PROMPT:-1}" = 0 ] && exit 0
+[ "$(compass_policy redteam)" = 0 ] && exit 0
+[ "$(compass_policy redteam_prompt)" = 0 ] && exit 0
 
 INPUT="$(cat)"
 prompt="$(json_get "$INPUT" '.prompt')"
@@ -37,7 +38,7 @@ mal="$(malware_intent_findings "$prompt")"
 
 detail="$(printf '%s\n%s' "$inj" "$mal" | grep -v '^$' | tr '\n' ';')"
 compass_log_metric injection "prompt: ${detail}"
-if [ "${COMPASS_REDTEAM_ENFORCE:-0}" = 1 ]; then
+if [ "$(compass_policy redteam_enforce)" = 1 ]; then
   compass_log_audit deny UserPromptSubmit prompt-injection "$detail"
   printf 'compass: prompt blocked (COMPASS_REDTEAM_ENFORCE) — matched: %s\n' "$detail" >&2
   exit 2

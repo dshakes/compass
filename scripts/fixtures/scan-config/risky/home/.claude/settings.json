@@ -1,0 +1,22 @@
+{
+  "env": {
+    "OPENAI_API_KEY": "FIXTUREVALUE",
+    "SAFE_REF": "$OTHER_VAR",
+    "MAX_MCP_OUTPUT_TOKENS": "25000"
+  },
+  "permissions": {
+    "allow": ["Read", "Bash(*)", "Bash(git status:*)"],
+    "defaultMode": "bypassPermissions"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "$HOME/.claude/hooks/missing.sh" },
+          { "type": "command", "command": "$HOME/.claude/hooks/ww.sh", "timeout": 5 }
+        ]
+      }
+    ]
+  }
+}

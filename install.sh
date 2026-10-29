@@ -10,6 +10,10 @@
 #   ./install.sh --claude-only    # skip Codex
 #   ./install.sh --codex-only     # skip Claude
 #   ./install.sh --gemini         # ALSO feed the same manual to Gemini CLI (~/.gemini/GEMINI.md)
+#   ./install.sh --only budget    # ONLY the interactive-session spend cap (see docs/31-distribution.md)
+#
+# Every path it creates is written to ${COMPASS_HOME:-~/.compass}/install.json — the record
+# `compass repair` and scripts/uninstall.sh work from (needs jq to write).
 set -euo pipefail
 
 # COMPASS_REPO_ROOT lets a packaged install (Homebrew) point the symlink sources at a
@@ -24,9 +28,12 @@ STAMP="$(date +%Y%m%d-%H%M%S)-$$"   # PID suffix: same-second re-runs get distin
 BACKUP="$HOME/.claude/backups/compass-$STAMP"
 trap 'printf "\ninstall aborted midway — nothing is lost: anything replaced is in %s\nre-run ./install.sh to finish (idempotent).\n" "$BACKUP" >&2' ERR
 
-MODE="symlink"; DRY=0; DO_CLAUDE=1; DO_CODEX=1; DO_GEMINI=0; DO_CLI=1
+MODE="symlink"; ONLY=""; DRY=0; DO_CLAUDE=1; DO_CODEX=1; DO_GEMINI=0; DO_CLI=1
+want_only=0
 for arg in "$@"; do
+  if [ "$want_only" = 1 ]; then ONLY="$arg"; want_only=0; continue; fi
   case "$arg" in
+    --only) want_only=1 ;;
     --copy) MODE="copy" ;;
     --dry-run) DRY=1 ;;
     --claude-only) DO_CODEX=0 ;;
@@ -37,10 +44,34 @@ for arg in "$@"; do
     *) echo "unknown flag: $arg" >&2; exit 1 ;;
   esac
 done
+[ "$want_only" = 1 ] && { echo "install: --only takes: budget" >&2; exit 1; }
+case "$ONLY" in ""|budget) ;; *) echo "install: --only takes: budget" >&2; exit 1 ;; esac
 
 say()  { printf '  %s\n' "$*"; }
 hdr()  { printf '\n\033[1m%s\033[0m\n' "$*"; }
 run()  { if [ "$DRY" = 1 ]; then say "[dry-run] $*"; else "$@"; fi; }
+
+# Install record: one "type<TAB>path<TAB>src" line per thing we create (symlink|copy|rcline|block).
+RECORD=""
+rec() { [ "$DRY" = 1 ] || RECORD="$RECORD$1"$'\t'"$2"$'\t'"$3"$'\n'; }
+write_record() {
+  [ "$DRY" = 1 ] && return
+  local home="${COMPASS_HOME:-$HOME/.compass}" f ver sha old
+  f="$home/install.json"
+  command -v jq >/dev/null 2>&1 || { say "warn: jq missing — install record not written (repair/uninstall fall back to legacy behavior)"; return; }
+  ver="$(jq -r .version "$REPO/plugins/core/.claude-plugin/plugin.json" 2>/dev/null)"
+  sha="$(git -C "$REPO" rev-parse HEAD 2>/dev/null || echo "${COMPASS_INSTALL_SHA:-}")"
+  old="$(cat "$f" 2>/dev/null || true)"; [ -n "$old" ] || old='{}'
+  # A corrupt record must not abort an install that already changed files: keep it aside, start fresh.
+  printf '%s' "$old" | jq -e 'type == "object"' >/dev/null 2>&1 || { mv "$f" "$f.corrupt.$$" 2>/dev/null; say "warn: install record was not valid JSON — moved aside"; old='{}'; }
+  mkdir -p "$home"
+  # Re-install updates the record; entries from earlier runs (e.g. a prior --codex-only) are kept.
+  printf '%s' "$RECORD" | jq -R -s --argjson old "$old" --arg v "$ver" --arg sha "$sha" --arg mode "$MODE" \
+    --arg repo "$REPO" --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    '{version:$v, sha:$sha, mode:$mode, repo:$repo, installed_at:$ts,
+      paths: (((split("\n") | map(select(length>0) | split("\t") | {type:.[0], path:.[1], src:.[2]})) + ($old.paths // [])) | unique_by(.path))}' \
+    >"$f.tmp.$$" && mv "$f.tmp.$$" "$f" && say "install record: ${f#$HOME/}"
+}
 
 # Link or copy SRC -> DST, backing up an existing real DST first.
 # Only removes symlinks that point into this repo; anything else — a real
@@ -56,31 +87,34 @@ place() {
     say "backed up: ${dst#$HOME/}"
   fi
   run mkdir -p "$(dirname "$dst")"
-  if [ "$MODE" = "symlink" ]; then run ln -s "$src" "$dst"; say "linked: ${dst#$HOME/} -> ${src#$REPO/}"
-  else run cp -R "$src" "$dst"; say "copied: ${dst#$HOME/}"; fi
+  if [ "$MODE" = "symlink" ]; then run ln -s "$src" "$dst"; rec symlink "$dst" "$src"; say "linked: ${dst#$HOME/} -> ${src#$REPO/}"
+  else run cp -R "$src" "$dst"; rec copy "$dst" "$src"; say "copied: ${dst#$HOME/}"; fi
 }
 
 # Shipped settings + optional personal overlay (claude/settings.local.json,
 # gitignored). Overlay present → deep-merge into settings.merged.json (also
 # gitignored) and place that; absent → place the shipped file untouched.
+# The active `compass profile` can also re-render it (fail_closed → onFailure:"block" on
+# the security hooks); scripts/compass-profile.sh owns that render so both paths agree.
 place_settings() {
-  local shipped="$CLAUDE_SRC/settings.json" overlay="$CLAUDE_SRC/settings.local.json"
-  local merged="$CLAUDE_SRC/settings.merged.json"
-  if [ ! -f "$overlay" ]; then place "$shipped" "$CLAUDE_DST/settings.json"; return; fi
+  local shipped="$CLAUDE_SRC/settings.json" overlay="$CLAUDE_SRC/settings.local.json" src
+  local fc; fc="$("$REPO/scripts/compass-profile.sh" --get fail_closed 2>/dev/null)"
+  if [ ! -f "$overlay" ] && [ "$fc" != 1 ]; then place "$shipped" "$CLAUDE_DST/settings.json"; return; fi
   if ! command -v jq >/dev/null 2>&1; then
-    say "warn: settings.local.json present but jq missing — installing shipped defaults only"
+    say "warn: settings.local.json or a fail-closed profile present but jq missing — installing shipped defaults only"
     place "$shipped" "$CLAUDE_DST/settings.json"; return
   fi
   if [ "$DRY" = 1 ]; then
-    say "[dry-run] merge settings.json + settings.local.json -> settings.merged.json, then link it"
+    say "[dry-run] render settings.json (+ settings.local.json, profile) -> settings.merged.json, then link it"
     return
   fi
-  jq -s '.[0] * .[1]' "$shipped" "$overlay" >"$merged"
-  say "merged personal overlay: settings.local.json"
-  place "$merged" "$CLAUDE_DST/settings.json"
+  src="$("$REPO/scripts/compass-profile.sh" --settings-file)"
+  [ -f "$overlay" ] && say "merged personal overlay: settings.local.json"
+  [ "$fc" = 1 ] && say "profile is fail-closed: security hooks get onFailure=block"
+  place "$src" "$CLAUDE_DST/settings.json"
 }
 
-chmodx() { [ "$DRY" = 1 ] && return; find "$1" -name '*.sh' -exec chmod +x {} + 2>/dev/null || true; }
+chmodx() { [ "$DRY" = 1 ] && return; find "$1" -name '*.sh' -not -path '*/fixtures/*' -exec chmod +x {} + 2>/dev/null || true; }
 
 # Bake the `compass` CLI onto PATH: symlink into ~/.local/bin (repo-location-independent)
 # and, if that dir isn't on PATH, add it to the shell rc once (marker-tagged for clean removal).
@@ -92,7 +126,7 @@ install_cli() {
   chmodx "$REPO/scripts"; [ "$DRY" = 1 ] || chmod +x "$src" 2>/dev/null || true
   if [ -L "$dst" ] && readlink "$dst" | grep -qF "$REPO"; then run rm -f "$dst"
   elif [ -e "$dst" ] || [ -L "$dst" ]; then run mkdir -p "$BACKUP"; run mv "$dst" "$BACKUP/compass"; say "backed up: ~/.local/bin/compass"; fi
-  run ln -s "$src" "$dst"; say "linked: ~/.local/bin/compass -> ${src#$REPO/}"
+  run ln -s "$src" "$dst"; rec symlink "$dst" "$src"; say "linked: ~/.local/bin/compass -> ${src#$REPO/}"
   case ":$PATH:" in
     *":$bindir:"*) say "~/.local/bin already on PATH ✓  — try: compass impact" ;;
     *)
@@ -106,8 +140,9 @@ install_cli() {
           [ -n "$rc" ] || rc="$HOME/.profile" ;;
       esac
       if [ -n "$rc" ] && [ "$DRY" = 0 ]; then
-        if grep -q 'compass CLI on PATH' "$rc" 2>/dev/null; then say "PATH line already in ${rc#$HOME/}"
+        if grep -q 'compass CLI on PATH' "$rc" 2>/dev/null; then rec rcline "$rc" -; say "PATH line already in ${rc#$HOME/}"
         else printf '\n# compass CLI on PATH (added by compass install)\nexport PATH="$HOME/.local/bin:$PATH"\n' >>"$rc"
+          rec rcline "$rc" -
           say "added ~/.local/bin to PATH in ${rc#$HOME/} — run: source ${rc#$HOME/}"; fi
       else say "add ~/.local/bin to your PATH, then: compass impact"; fi ;;
   esac
@@ -124,6 +159,7 @@ merge_codex_profiles() {
   if grep -qF "$MARK_BEGIN" "$dst" 2>/dev/null; then say "profiles already present: ${dst#$HOME/}"; return; fi
   say "appending cost profiles to existing config (preserving plugins/projects): ${dst#$HOME/}"
   [ "$DRY" = 1 ] && return
+  rec block "$dst" -
   cat >>"$dst" <<TOML
 
 $MARK_BEGIN
@@ -143,6 +179,23 @@ approval_policy = "on-failure"
 $MARK_END
 TOML
 }
+
+# Standalone spend cap: just budget-gate.sh (+ the lib/profiles it sources) under
+# ~/.compass/budget/. Touches NOTHING in ~/.claude — you paste the hook snippet yourself.
+if [ "$ONLY" = budget ]; then
+  B="${COMPASS_HOME:-$HOME/.compass}/budget"
+  hdr "compass budget cap only  →  $B"
+  run mkdir -p "$B"
+  for n in budget-gate.sh lib profiles; do place "$CLAUDE_SRC/hooks/$n" "$B/$n"; done
+  [ "$DRY" = 1 ] || chmod +x "$CLAUDE_SRC/hooks/budget-gate.sh" 2>/dev/null || true
+  write_record
+  hdr "Next"
+  say "1. add to ~/.claude/settings.json under hooks:"
+  say '   "PreToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": "$HOME/.compass/budget/budget-gate.sh"}]}]'
+  say "2. set a cap:  export COMPASS_MAX_USD=5   (session)   COMPASS_MAX_USD_DAY=20   (daily)"
+  say "details: docs/31-distribution.md"
+  exit 0
+fi
 
 hdr "compass installer  (mode: $MODE$( [ "$DRY" = 1 ] && printf ', dry-run' ))"
 say "repo:   $REPO"
@@ -184,6 +237,7 @@ fi
 
 [ "$DO_CLI" = 1 ] && install_cli
 
+write_record
 hdr "Done."
 [ -d "$BACKUP" ] && say "Backups of anything replaced: $BACKUP"
 say "Next: open Claude Code and run /agents, /status, and /doctor to confirm."

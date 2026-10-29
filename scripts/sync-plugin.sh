@@ -28,21 +28,22 @@ for d in agents commands skills output-styles; do sync_one "$d" || rc=1; done
 # Hooks: copy scripts + lib, but never touch the authored hooks.json.
 if [ "$CHECK" = 1 ]; then
   # forward: every source hook must match the plugin copy
-  for f in "$SRC"/hooks/*.sh "$SRC"/hooks/lib/*.sh; do
+  for f in "$SRC"/hooks/*.sh "$SRC"/hooks/lib/*.sh "$SRC"/hooks/profiles/*.conf; do
     rel="hooks/${f#"$SRC"/hooks/}"
     diff -q "$f" "$DST/$rel" >/dev/null 2>&1 || { echo "out-of-date: plugins/core/$rel"; rc=1; }
   done
   # reverse: a hook DELETED from source must not linger in the plugin (else --check
   # reports "in sync" while the plugin ships a stale script). hooks.json is authored — skip it.
-  for f in "$DST"/hooks/*.sh "$DST"/hooks/lib/*.sh; do
+  for f in "$DST"/hooks/*.sh "$DST"/hooks/lib/*.sh "$DST"/hooks/profiles/*.conf; do
     [ -e "$f" ] || continue
     rel="hooks/${f#"$DST"/hooks/}"
     [ -e "$SRC/$rel" ] || { echo "stale (deleted from source): plugins/core/$rel"; rc=1; }
   done
 else
-  mkdir -p "$DST/hooks/lib"
+  mkdir -p "$DST/hooks/lib" "$DST/hooks/profiles"
   cp "$SRC"/hooks/*.sh "$DST/hooks/"
   cp "$SRC"/hooks/lib/*.sh "$DST/hooks/lib/"
+  cp "$SRC"/hooks/profiles/*.conf "$DST/hooks/profiles/"   # profile data the hooks resolve
   chmod +x "$DST"/hooks/*.sh "$DST"/hooks/lib/*.sh "$DST"/skills/*/*.sh 2>/dev/null || true
   echo "synced: hooks scripts (+lib), preserved hooks.json"
 fi

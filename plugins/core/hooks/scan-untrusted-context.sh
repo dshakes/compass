@@ -9,10 +9,11 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$HERE/lib/common.sh"
 . "$HERE/lib/policy.sh"
 
-# Feature flags (default ON): COMPASS_REDTEAM=0 disables the layer;
+# Feature flags (default ON; env, ~/.compass/config, the profile or a tighten-only repo
+# policy — see compass_policy in lib/common.sh): COMPASS_REDTEAM=0 disables the layer;
 # COMPASS_REDTEAM_CONTEXT=0 disables just this session-start context scan.
-[ "${COMPASS_REDTEAM:-1}" = 0 ] && exit 0
-[ "${COMPASS_REDTEAM_CONTEXT:-1}" = 0 ] && exit 0
+[ "$(compass_policy redteam)" = 0 ] && exit 0
+[ "$(compass_policy redteam_context)" = 0 ] && exit 0
 
 root="$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD")"
 findings=""
@@ -34,6 +35,13 @@ for s in "$root/.claude/settings.json" "$root/.claude/settings.local.json"; do
   [ -n "$r" ] && findings="${findings}
   • .claude/$(basename "$s"): $r"
 done
+# …and the compass repo policy, which may only tighten (the loosening lines are already ignored).
+while IFS= read -r r; do
+  [ -n "$r" ] && findings="${findings}
+  • .compass/policy.conf: $r"
+done <<EOF
+$(compass_repo_policy_rejections "$root")
+EOF
 
 [ -n "$findings" ] || exit 0
 compass_log_metric injection "context-scan: $(printf '%s' "$findings" | tr '\n' ' ' | cut -c1-120)"
