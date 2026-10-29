@@ -70,7 +70,7 @@ split = holdout  → naturally-phrased cases NOT used to tune rules (generalizat
 expected-tier = haiku | sonnet | opus
 ```
 
-**Scoring floor (CI gate):** accuracy ≥ 90%. Current: 96.9% (31/32).
+**Scoring floor (CI gate):** accuracy ≥ 90%. Current: 97.9% gated (46/47, base + holdout).
 
 ---
 

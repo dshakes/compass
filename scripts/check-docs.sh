@@ -66,7 +66,7 @@ rm -f /tmp/_links.$$
 
 echo "quoted counts — red-team / router case counts must match the corpora:"
 n=$fail
-CNT="$(mktemp "${TMPDIR:-/tmp}/compass-counts.XXXXXX")" || { no "mktemp failed — count check cannot run"; CNT=/dev/null; }
+CNT="$(mktemp "${TMPDIR:-/tmp}/compass-counts.XXXXXX")" || { no "mktemp failed — count check cannot run"; printf 'docs audit: %d passed, %d failed\n' "$pass" "$fail"; exit 1; }
 rt="$(bash scripts/test-redteam.sh 2>&1 | sed -n 's/^redteam corpus: \([0-9][0-9]*\) cases.*/\1/p')"
 rv="$(grep -vc '^#\|^[[:space:]]*$' scripts/route-evalset.tsv)"
 rf="$(grep -vc '^#\|^[[:space:]]*$' scripts/redteam-corpus.tsv)"
