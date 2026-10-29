@@ -44,6 +44,7 @@ for arg in "$@"; do
     *) echo "unknown flag: $arg" >&2; exit 1 ;;
   esac
 done
+[ "$want_only" = 1 ] && { echo "install: --only takes: budget" >&2; exit 1; }
 case "$ONLY" in ""|budget) ;; *) echo "install: --only takes: budget" >&2; exit 1 ;; esac
 
 say()  { printf '  %s\n' "$*"; }

@@ -83,6 +83,8 @@ cd "$REPO" || exit 1
 rm -rf "$HOME/.compass"
 
 echo "standalone budget cap (--only budget)"
+out="$("$REPO/install.sh" --only 2>&1)"; rc=$?
+test "$rc" -ne 0 && echo "$out" | grep -q -- '--only takes' && ok "bare --only is a usage error, not a full install" || no "bare --only is a usage error, not a full install"
 "$REPO/install.sh" --only budget >/dev/null 2>&1
 G="$HOME/.compass/budget/budget-gate.sh"
 chk "gate installed, nothing in ~/.claude" test -x "$G" -a ! -e "$HOME/.claude/settings.json"
