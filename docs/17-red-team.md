@@ -96,12 +96,12 @@ detectors and gates in CI via `compass doctor`:
 ```
 per-class:
   class                 n   TP   FP   TN   FN   prec recall
-  legacy               88   51    0   37    0   100%   100%
+  legacy               94   55    0   39    0   100%   100%
   mcp-poisoning        21   12    0    9    0   100%   100%
   …
-redteam corpus: 288 cases — TP=… FP=0 TN=… FN=0
+redteam corpus: 303 cases — TP=… FP=0 TN=… FN=0
 precision=100% (floor 100%)  recall=100% (floor 90%)
-known gaps (reported, not gating): 4 (0 now caught)
+known gaps (reported, not gating): 5 (0 now caught)
 ```
 
 Run `compass redteam --eval` to reproduce the live numbers. The corpus is TSV:
@@ -218,7 +218,7 @@ CI — so you can measure your own setup, not take a vendor's word:
 
 | Dataset | Cases | What it proves | Run |
 |---|---|---|---|
-| `scripts/redteam-corpus.tsv` | 288 scored (11 classes) + 4 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
+| `scripts/redteam-corpus.tsv` | 303 scored (11 classes) + 5 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
 | `scripts/guardrail-corpus.tsv` | 61 | catastrophic-command + secret-write precision & recall | `compass bench --guardrail` |
 | deepset/prompt-injections (external) | 546 train rows (203 inject, 343 safe) | external, unbiased precision & recall; how compass fares against attacks it did not author | `compass redteam --external` |
 
