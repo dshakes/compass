@@ -72,6 +72,7 @@ rv="$(grep -vc '^#\|^[[:space:]]*$' scripts/route-evalset.tsv)"
 for f in README.md docs/*.md docs/*.html docs/content.js; do
 { grep -ohiE '(red-?team|P/R|corpus:|recall on)[^<]{0,20} \(?[0-9]+ cases' "$f" | grep -oE '[0-9]+ cases' | sed "s|^|$rt |"
 grep -ohiE 'routing accuracy · [0-9]+ cases' "$f" | grep -oE '[0-9]+ cases' | sed "s|^|$rv |"
+grep -ohiE '[0-9]+-case eval set' "$f" | grep -oE '[0-9]+' | sed "s|^|$rv |; s|\$| cases|"
 grep -ohE '\| Router \| [0-9]+ \|' "$f" | grep -oE '[0-9]+' | sed "s|^|$rv |; s|\$| cases|"; } |
 while read -r want got _; do [ "$want" = "$got" ] || echo "$f quotes $got cases, corpus has $want"; done
 done > /tmp/_counts.$$
