@@ -97,6 +97,12 @@ case "${1:-}" in
     if [ -L "$live" ] && case "$(readlink "$live")" in "$ROOT/claude/"*|"${COMPASS_SETTINGS_MERGED:-//}") true ;; *) false ;; esac; then
       src="$(settings_file)"; ln -sfn "$src" "$live"
       echo "settings: ~/.claude/settings.json -> ${src#"$ROOT"/}"
+      # Keep the install record truthful, or repair/uninstall treat the repointed link as foreign.
+      rec="${COMPASS_HOME:-$HOME/.compass}/install.json"
+      if [ -f "$rec" ] && command -v jq >/dev/null 2>&1; then
+        jq --arg p "$live" --arg s "$src" '(.paths[]? | select(.path == $p) | .src) = $s' "$rec" >"$rec.tmp.$$" \
+          && mv "$rec.tmp.$$" "$rec" || rm -f "$rec.tmp.$$"
+      fi
     else
       echo "settings: ~/.claude/settings.json is not a compass symlink — re-run ./install.sh to apply fail_closed"
     fi

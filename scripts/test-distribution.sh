@@ -27,6 +27,14 @@ echo '{not json' >"$REC"
 chk "corrupt record → install still completes with a fresh record" test "$rc" = 0 -a "$(jq '.paths | length' "$REC" 2>/dev/null)" = "$n1"
 rm -f "$HOME/.compass"/install.json.corrupt.*
 
+echo "profile switch keeps the record truthful"
+export COMPASS_SETTINGS_MERGED="$HOME/settings.merged.json"
+"$REPO/scripts/compass-profile.sh" strict >/dev/null 2>&1
+chk "record src follows the repointed settings.json" jq -e --arg p "$HOME/.claude/settings.json" --arg s "$COMPASS_SETTINGS_MERGED" '.paths[] | select(.path == $p and .src == $s)' "$REC"
+out="$("$REPO/scripts/compass-repair.sh" --dry-run 2>&1)"; rc=$?
+test "$rc" = 0 && ! echo "$out" | grep -q 'settings.json' && ok "repair leaves the strict settings link alone" || no "repair leaves the strict settings link alone ($rc)"
+"$REPO/scripts/compass-profile.sh" standard >/dev/null 2>&1; unset COMPASS_SETTINGS_MERGED
+
 echo "repair"
 rm "$HOME/.claude/hooks" "$HOME/.claude/skills"; ln -s "$T/nowhere" "$HOME/.claude/skills"      # missing + dangling
 rm "$HOME/.claude/agents"; mkdir "$HOME/.claude/agents"                  # user's own dir now
