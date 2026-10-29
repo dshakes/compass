@@ -7,6 +7,13 @@ All notable changes to this project are documented here. Format loosely follows
 
 ### Added
 
+- **Distribution**: `install-remote.sh` (one-line install; verifies the release's SLSA attestation
+  before extracting or running anything, fails closed without `gh`, `--no-verify` to opt out);
+  `install.sh` writes `~/.compass/install.json` (version, sha, mode, every created path);
+  `compass repair [--dry-run]` restores recorded links; `scripts/uninstall.sh` removes exactly the
+  recorded entries (edited copies backed up; legacy behavior without a record);
+  `install.sh --only budget` installs just the interactive-session spend cap. See
+  `docs/31-distribution.md`.
 - **`compass profile <strict|standard|solo>`**: guardrail presets stored as data files
   (`claude/hooks/profiles/*.conf`), resolved by one function (`compass_policy`) that every
   hook, `compass profile` and `compass gate` share. `standard` sets nothing and is

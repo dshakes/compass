@@ -109,6 +109,8 @@ usage: compass <command> [args]
   audit-log [--since D] [-n N] [--json]
                            The security trail: every blocked footgun (secret write,
                            dangerous command, scan hit) as a queryable JSONL record.
+  repair  [--dry-run]      Re-create missing/dangling links + files listed in the install
+                           record (~/.compass/install.json), then re-check drift.
   version                  Print the installed version, install kind, and location.
   doctor                   Validate the compass install (make doctor).
   release [vX.Y.Z|--dry-run]
@@ -135,6 +137,7 @@ case "$cmd" in
   schedule) run schedule "$@" ;;
   route)    run route "$@" ;;
   bench)    run bench "$@" ;;
+  repair)   run repair "$@" ;;
   upgrade) run upgrade "$@" ;;
   ablate)   run ablate "$@" ;;
   policy-synth) run policy-synth "$@" ;;
