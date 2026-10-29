@@ -58,7 +58,7 @@ jobs:
           echo "formula pins $pinned = latest tag $latest, sha256 verified ✓"
 
       - name: shellcheck (errors fail the build)
-        run: shellcheck -S error claude/hooks/*.sh claude/hooks/lib/*.sh claude/statusline.sh scripts/*.sh bin/compass install.sh quickstart.sh claude/skills/*/*.sh sdlc/*.sh router/*.sh
+        run: shellcheck -S error claude/hooks/*.sh claude/hooks/lib/*.sh claude/statusline.sh scripts/*.sh bin/compass install.sh install-remote.sh quickstart.sh claude/skills/*/*.sh sdlc/*.sh router/*.sh
 
       - name: shellcheck (style — informational)
         run: shellcheck -S style claude/hooks/*.sh scripts/*.sh install.sh || true
@@ -83,6 +83,12 @@ jobs:
       - name: Budget ceiling (live spend hard-gate eval — session + daily)
         run: bash scripts/test-budget-gate.sh
 
+      - name: Profiles + tighten-only repo overrides (standard == today, loosening rejected)
+        run: bash scripts/test-profile.sh
+
+      - name: Harness config audit (compass scan --config against fixtures)
+        run: bash scripts/test-scan-config.sh
+
       - name: Comprehension-rot guard (compass digest sampling + ledger)
         run: bash scripts/test-digest.sh
 
@@ -103,6 +109,9 @@ jobs:
 
       - name: compass CLI tests (route · spend · impact · notify · listen parser)
         run: bash scripts/test-cli.sh
+
+      - name: Distribution (install record · repair · uninstall · verified remote install · budget-only)
+        run: bash scripts/test-distribution.sh
 
       - name: Agent Trace provenance (emit · attach · verify round-trip)
         run: bash scripts/test-trace.sh

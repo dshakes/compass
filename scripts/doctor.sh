@@ -124,6 +124,20 @@ for n in settings.json CLAUDE.md statusline.sh agents commands skills workflows 
   elif [ -e "$t" ]; then note "exists but not our symlink: ~/.claude/$n"
   else note "not installed: ~/.claude/$n (run make install)"; fi
 done
+# Guardrail profile. fail_closed needs BOTH the rendered settings (onFailure:"block" on the
+# security hooks) and a Claude Code that honors the field (v2.1.295+, per the hooks reference);
+# either missing means a crashed or absent guardrail still fails open.
+prof="$("$REPO"/scripts/compass-profile.sh --get fail_closed 2>/dev/null)"
+pname="$(bash -c ". '$REPO/claude/hooks/lib/common.sh'; compass_profile_name" 2>/dev/null)"
+if [ "$prof" = 1 ]; then
+  n="$(jq '[.hooks[][]?.hooks[]? | select(.onFailure == "block")] | length' "$HOME/.claude/settings.json" 2>/dev/null)"
+  if [ "${n:-0}" -ge 3 ]; then pass "profile $pname: $n security hooks fail closed (onFailure=block)"
+  else note "profile $pname is fail-closed but ~/.claude/settings.json has no onFailure — run: compass profile $pname"; fi
+  cv="$(claude --version 2>/dev/null | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+  if [ -z "$cv" ]; then note "claude not on PATH — can't confirm it supports onFailure (needs v2.1.295+)"
+  elif printf '%s\n2.1.295\n' "$cv" | awk -F. '{v[NR]=$1*1e8+$2*1e4+$3} END{exit !(v[1]>=v[2])}'; then pass "Claude Code $cv honors onFailure"
+  else note "Claude Code $cv predates onFailure (v2.1.295) — hooks still fail open; upgrade claude"; fi
+else pass "profile ${pname:-standard}: hooks fail open by design (compass profile strict to fail closed)"; fi
 if command -v compass >/dev/null 2>&1; then pass "compass CLI on PATH: $(command -v compass)"
 elif [ -L "$HOME/.local/bin/compass" ]; then note "compass CLI installed but ~/.local/bin not on PATH — add it or open a new shell"
 else note "compass CLI not on PATH (run make install, then open a new shell)"; fi

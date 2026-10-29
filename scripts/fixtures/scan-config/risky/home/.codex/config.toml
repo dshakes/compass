@@ -1,0 +1,15 @@
+# fixture for scripts/test-scan-config.sh — deliberately risky
+model = "gpt-5"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[mcp_servers.floaty]
+command = "npx"
+args = ["-y", "some-mcp-server@latest"]
+
+[mcp_servers.floaty.env]
+GITHUB_TOKEN = "FIXTUREVALUE"
+
+[mcp_servers.pinned]
+command = "npx"
+args = ["-y", "@scope/pinned-server@1.2.3"]

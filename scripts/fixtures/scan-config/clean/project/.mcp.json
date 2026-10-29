@@ -1,0 +1,6 @@
+{
+  "mcpServers": {
+    "context7": { "command": "npx", "args": ["-y", "@upstash/context7-mcp@3.1.0"] },
+    "fetch": { "command": "uvx", "args": ["--from", "mcp-server-fetch==2025.4.7", "mcp-server-fetch"] }
+  }
+}
