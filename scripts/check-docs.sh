@@ -79,6 +79,21 @@ grep -ohE '\| Red-team \(internal\) \| [0-9]+ \||= [0-9]+ scored|\([0-9]+ total:
 grep -ohE '[0-9]+ file(-based rows)? \+' "$f" | grep -oE '^[0-9]+' | sed "s|^|$rf |; s|\$| corpus-rows|"; } |
 while read -r want got _; do [ "$want" = "$got" ] || echo "$f quotes $got cases, corpus has $want"; done
 done > /tmp/_counts.$$
+# Catch-all for phrasings the per-corpus patterns above don't know: every "N cases" /
+# "N labeled cases" / "N-case" must be the size of SOME live corpus. 28-ablation.md is a
+# dated experiment log, so its counts are history, not claims.
+# ponytail: can't tell WHICH corpus a bare count means — a red-team page quoting the
+# router size passes. Per-corpus patterns above cover the precise cases.
+rg="$(grep -vc '^#\|^[[:space:]]*$' scripts/guardrail-corpus.tsv)"
+rr="$(grep -vc '^#\|^[[:space:]]*$' router/evalset.tsv)"
+rb="$(bash scripts/test-protect-paths.sh 2>&1 | sed -n 's/^guardrail corpus: \([0-9][0-9]*\) passed.*/\1/p')"
+for f in README.md docs/*.md docs/*.html docs/content.js; do
+  [ "$f" = docs/28-ablation.md ] && continue
+  grep -ohE '[0-9]+(-case|( labeled)? cases|</b><span>labeled cases)' "$f" | grep -oE '^[0-9]+' |
+  while read -r got; do
+    case " $rt $rf $rv $rr $rg $rb " in *" $got "*) ;; *) echo "$f quotes $got cases, no live corpus has that size ($rt/$rv/$rr/$rg/$rb)" ;; esac
+  done
+done >> /tmp/_counts.$$
 while IFS= read -r bad; do no "stale count: $bad"; done < /tmp/_counts.$$
 rm -f /tmp/_counts.$$
 [ "$fail" -eq "$n" ] && [ -n "$rt" ] && ok "quoted red-team ($rt) and router ($rv) case counts match the corpora"

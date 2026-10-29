@@ -39,7 +39,7 @@ that some novel phrasings will slip — they should be contributed back as new c
 ### 2. Red-team corpus — `scripts/redteam-corpus.tsv`
 
 Tests the `injection_findings` detector (prompt-injection, context-poisoning,
-safety-override, malware-intent, insecure-code patterns). **99 labeled cases**
+safety-override, malware-intent, insecure-code patterns). **101 labeled cases**
 (83 file-based + 16 programmatic assertions covering invisible unicode, encoding evasions,
 config-override, malware-intent, and insecure-code families).
 
@@ -58,7 +58,7 @@ Payloads are single-line untrusted content as it might appear in a poisoned
 
 ### 3. Router eval set — `router/evalset.tsv`
 
-Tests the deterministic model-tier router (haiku / sonnet / opus). **86 labeled cases.**
+Tests the deterministic model-tier router (haiku / sonnet / opus). **32 labeled cases.**
 
 ```
 # Columns (TAB-separated):
@@ -102,9 +102,9 @@ compass redteam --json
 | Corpus | Cases | Precision | Recall | Notes |
 |---|---|---|---|---|
 | Guardrail | 61 | 100% | 100% | floor: 100% P / 95% R |
-| Red-team | 99 | 100% | 100% | floor: 100% P / 90% R |
+| Red-team | 101 | 100% | 100% | floor: 100% P / 90% R |
 | Red-team adversarial | 155+ transforms | 100% | 100% | floor: 80% robustness |
-| Router | 86 (32 holdout) | — | — | accuracy 96.9%; floor 90% |
+| Router | 62 (32 base · 15 holdout · 15 adversarial) | — | — | accuracy 96.9%; floor 90% |
 
 Run with `--json` to get machine-readable results for your own tooling or dashboards.
 

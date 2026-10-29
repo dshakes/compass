@@ -88,7 +88,7 @@ export COMPASS_MAX_USD=5     # this session hard-stops at $5 — blocked, not wa
 compass spend --max-usd 5    # the same ceiling on the ledger, for scheduled / fleet runs
 ```
 
-**📉 Cost routing that's measured.** Cheap work goes to cheap models — **~62% cheaper than all-Opus at 96.9% routing accuracy** on the 44-case routing evalset, with the pricing table and token assumptions stated in the output. Run the number, don't take it.
+**📉 Cost routing that's measured.** Cheap work goes to cheap models — **~62% cheaper than all-Opus at 96.9% routing accuracy** on the 32-case routing evalset, with the pricing table and token assumptions stated in the output. Run the number, don't take it.
 
 ```bash
 compass route "redesign the auth model"    # → opus

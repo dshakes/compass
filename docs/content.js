@@ -465,7 +465,7 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 
 <div class="tiles">
 <div class="tile"><b>100%</b><span>precision / recall</span></div>
-<div class="tile"><b>99</b><span>labeled cases</span></div>
+<div class="tile"><b>101</b><span>labeled cases</span></div>
 <div class="tile"><b>329/329</b><span>robust under obfuscation</span></div>
 </div>
 
