@@ -296,20 +296,24 @@ secret_content_findings() {
 # NOT a replacement for the cardinal rule (now in CLAUDE.md): treat all fetched/
 # read content as DATA, never as instructions. Pattern matching catches the known
 # shapes; a novel or obfuscated payload can still slip — keep the human in the loop.
-POLICY_INJECTION_DETECTORS='instruction-override|(ignore|disregard|forget|override)( +[a-z]+){0,3} +(previous|prior|earlier|above|preceding|all (previous|prior|the)|the (system|above)).{0,20}(instruction|prompt|message|context|rule|direction|system prompt|information|assignments?|tasks?|orders?)|(now new tasks follow|new (tasks?|instructions?) follow|(your|the) new (task|instructions?) (is|are|follow))
+POLICY_INJECTION_DETECTORS='instruction-override|(ignore|disregard|forget|override)( +[a-z]+){0,3} +(previous|prior|earlier|above|preceding|all (previous|prior|the)|the (system|above)).{0,20}(instruction|prompt|message|context|rule|direction|system prompt|information|assignments?|tasks?|orders?)|(now new tasks follow|new (tasks?|instructions?) follow|(your|the) new (task|instructions?) (is|are|follow))|(ignore|disregard|forget|override)( all| any)?( of)? your (own )?(safety )?(rules|instructions|guidelines|guardrails|system prompt|policies|constraints|operating manual|programming)|takes? precedence over your (system prompt|instructions|rules|guidelines|guardrails)
 persona-jailbreak|(you are now|from now on|act as|pretend (you|to be|that)|roleplay as).{0,50}(developer mode|do anything now|\bdan\b|unrestricted|uncensored|jailbroken|no (restrictions|rules|filter|guardrails|limits))
 role-hijack|(you are now (in )?(developer|god|admin|jailbreak|maintenance|root) mode|act as (a |an )?(linux|unix) (terminal|shell|root shell|interpreter|command prompt)|pretend you (are|have) no (rules?|restrictions?|guidelines?|limits?|guardrails?))
 disable-safety|(disable|bypass|turn off|ignore|circumvent|switch off|remove).{0,30}(safety|guardrail|content (policy|filter)|moderation|restriction|the sandbox|approval step|permission check|security (check|hook))
 permission-escalation|((run|use|using|with|enable|pass|set|invoke|add) .{0,20}--dangerously-skip-permissions|skip( the)? permission (check|prompt)|grant (yourself|me|all|full)|give (yourself|me) (admin|root|full)|add .{0,40}(allow ?list|allowlist))
 data-exfiltration|(send|post|upload|exfiltrate|transmit|e-?mail|forward|leak).{0,60}(\.env\b|secret|credential|password|api[ _-]?key|access[ _-]?token|private key|env(ironment)? variable|ssh key|\.aws|conversation history|chat history|system prompt|id_rsa|id_ed25519|authorized_keys|\.pem\b|\.p12\b|\.git-credentials|\.netrc|kubeconfig|/etc/(passwd|shadow))
-exfil-channel|(dig|nslookup|host) +[^ ]*\$\(|(curl|wget) .{0,60}(--data(-binary|-raw)?|--upload-file|--form|-d |-T |-F ).{0,25}@?[^ ]*(id_rsa|id_ed25519|\.ssh/|\.env\b|\.aws/|/etc/(passwd|shadow)|\.git-credentials|kubeconfig)
+exfil-channel|(dig|nslookup|host) +[^ ]*\$\(|(curl|wget) .{0,60}(--data(-binary|-raw)?|--upload-file|--form|-d |-T |-F ).{0,25}@?[^ ]*(id_rsa|id_ed25519|\.ssh/|\.env\b|\.aws/|/etc/(passwd|shadow)|\.git-credentials|kubeconfig)|(cat|base64|tar|zip|gzip)[^|;]{0,40}(\.env\b|id_rsa|id_ed25519|\.ssh/|\.aws/|\.netrc|\.git-credentials|/etc/(passwd|shadow)|kubeconfig)[^|;]{0,20}\| *(curl|wget|nc|ncat|socat)\b
+sensitive-read|(read|cat|open|load|copy) .{0,30}(\.ssh/|id_rsa|id_ed25519|\.netrc|\.git-credentials|\.aws/credentials|\.env([^.a-z]|$)|\.npmrc|\.pypirc|\.kube/config).{0,60}(include|append|put|pass|add|insert|attach|embed)[a-z]* .{0,40}(argument|parameter|param|field|query|request|header|reply|response|message|summary|comment)
+cred-harvest|(^|[.:;,!] *|\b(and|then|please|now|first|also|must|should|to|run|you) )(print|dump|echo|paste|output|reveal|display|leak|show me|tell me|share)\b[^.]{0,30}\b(env(ironment)? (variables|vars)|secrets|credentials|api[ _-]?keys|access tokens)\b|(gh auth token|aws configure export-credentials|gcloud auth print-(access|identity)-token|az account get-access-token|printenv|\benv *\|)[^.]{0,40}\b(paste|print|show|share|post|include|reply|send|output|comment|summar)|\b(cat|less|head|more)\b[^;|]{0,40}(\.env([^.a-z]|$)|\.aws/credentials|\.git-credentials|\.netrc|\.npmrc|\.pypirc|\.docker/config\.json|\.kube/config|gh/hosts\.yml)[^|]{0,40}\b(show|print|paste|share|post|include|reply|summar|send|output|tell)|(output|print|show|paste|share|reveal|dump|display)( me)? the contents of [^ ]*(\.env([^.a-z]|$)|\.aws/credentials|\.ssh/id_|\.git-credentials|\.netrc|\.npmrc|\.pypirc|\.kube/config)|\b(echo|print) +\$\{?[A-Z_]*(TOKEN|SECRET|API_KEY|PASSWORD)\}?( *$| +(and|then|to|in|into)\b)|reply with the value of [A-Z_]*(TOKEN|SECRET|KEY|PASSWORD)
+guardrail-tamper|(set|switch|change|flip|put|enable|turn on|use)[^.]{0,60}(bypassPermissions|disableAllHooks|dangerouslySkipPermissions|enableAllProjectMcpServers)|(remove|delete|disable|comment out|stub out|neuter|unregister|empty|strip)( all)?( of)?( the| your| my)? (pre-?tool-?use|post-?tool-?use|session-?start|user-?prompt-?submit|guardrail|safety|security|compass|claude) hooks?|(delete|remove|rm( -[a-z]+)?|wipe) [^ ]*\.claude/hooks|(>>?|\btee( -a)?|sed +-i[^ ]*( [^ ]+)?) *[^ ]*\.claude/(settings(\.local)?\.json|hooks/)|\.claude/hooks/[^ ]* (that|which) (just |only |simply |always )?(exits?|returns?) (0|zero|success)|\bCOMPASS_(REDTEAM|GUARDRAIL)[A-Z_]*=0
+remote-exec|(curl|wget)[^|]*\| *base64 +(-d|--decode|-D)[^|]*\| *(sudo +)?[a-z]*sh\b|(curl|wget)[^|]*https?://[0-9]{1,3}(\.[0-9]{1,3}){3}[^|]*\| *(sudo +)?[a-z]*sh\b|(curl|wget) [^|]*( -[a-z]*k[a-z]*| --insecure| --no-check-certificate) [^|]*\| *(sudo +)?[a-z]*sh\b|[a-z]*sh +<\( *(curl|wget)[^)]*( -[a-z]*k[a-z]*| --insecure| --no-check-certificate)|(pip3?|uv pip|pipx) install[^;|&]*(--index-url|--extra-index-url|-i) +http://
 covert-instruction|do not (tell|inform|warn|mention .{0,15}to|reveal .{0,15}to|notify|alert) (the )?(user|human|operator|developer|owner)
 fake-role-tag|</?(system|assistant)>|\[/?INST\]|<\|(im_start|im_end|system)\|>|(^|\n)#{2,3} *system *:
-markdown-exfil|!\[[^]]*\]\( *https?://[^)]*(\$\{|secret|token|api[_-]?key)
+markdown-exfil|!\[[^]]*\]\( *https?://[^)]*(\$\{|secret|token|api[_-]?key)|(<(img|link|source|iframe|script)[^>]*|url\( *.?|\]\( *|^ *\[[^]]+\]: *)https?://[^" )>]*[?&][^" )>]*(\$\{|\$\(|\{\{|\$[A-Z_]*(TOKEN|SECRET|KEY|PASSWORD)|secret|token|api[_-]?key|passw)
 hidden-html-comment|<!--[^>]*(ignore (previous|above|all|the)|you are now|system prompt|assistant *:|do the following|run this|execute the)[^>]*-->
 system-prompt-leak|((repeat|reveal|print|show me|disclose|output|dump|leak|give me) .{0,20}your (system |initial )?(prompt|instructions|rules|configuration|directive)|what (is|are) your (system |initial )?(prompt|instructions|rules|directive|configuration))
 prompt-leak|(show|print|reveal|repeat)( me)?( all)?( of)? your (system )?(prompt|instructions?|initial message)|output (everything|all of it) above
-tool-poisoning|<(important|secret|system|instructions?)>.{0,80}(ignore|do not (tell|mention|reveal|disclose)|read|send|fetch|exfiltrat|before (using|calling))|before (using|calling|invoking|running) (this|the) (tool|function|mcp|command).{0,60}(read|cat|send|fetch|exfiltrat|pass|include|append).{0,40}(~?/|\.ssh|id_rsa|\.env|secret|credential|token|password|api[ _-]?key)
+tool-poisoning|<(important|secret|system|instructions?)>.{0,80}(ignore|do not (tell|mention|reveal|disclose)|read|send|fetch|exfiltrat|before (using|calling))|before (using|calling|invoking|running) (this|the) (tool|function|mcp|command).{0,60}(read|cat|send|fetch|exfiltrat|pass|include|append).{0,40}(~/|\$HOME/|/etc/|\.ssh|id_rsa|\.env|secret|credential|token|password|api[ _-]?key)
 authority-spoof|(the (user|developer|owner|operator|human|admin)|anthropic|your (creator|developer|maker)) (has|have|already) ?(been )?(authoriz|approv|pre-?approv|sanction|permit|allow|consent|clear)[a-z]* (you to|this action|bypass|skip|disabl|full access|admin(istrator)? access|root|the permission|without (asking|confirm))|(i am|this is|acting as) (the|an|your) (admin(istrator)?|developer|creator|owner|system administrator|anthropic (staff|employee)).{0,25}(so |therefore |now )?(you (must|should|can|are|will)|override|disable|bypass|grant|ignore)'
 
 # Lines carrying one of these markers are NOT flagged — so the corpus, this file,
@@ -317,29 +321,75 @@ authority-spoof|(the (user|developer|owner|operator|human|admin)|anthropic|your 
 # Neutralisers: our own pragma, the corpus/docs that quote patterns, NEGATED mentions
 # ("never exfiltrate", "do not reveal" — an instruction NOT to do it, not an attack), and
 # the benign compound "safety-critical". Keeps precision high on security prose.
-POLICY_INJECTION_ALLOW='allowlist[ _-]?injection|redteam[ _-]?corpus|injection[ _-]?(example|sample|payload|pattern|test|detector)|POLICY_INJECTION|safety[- ]critical|(never|not|dont|do not|don.t|avoid|without|cannot|can.t|won.t|refuse to|must not|should not) +(exfiltrat|leak|disab|bypass|reveal|print|remov|send|email|forward|grant|comply)'
+POLICY_INJECTION_ALLOW='allowlist[ _-]?injection|redteam[ _-]?corpus|injection[ _-]?(example|sample|payload|pattern|test|detector)|POLICY_INJECTION|safety[- ]critical|(never|not|dont|do not|don.t|avoid|without|cannot|can.t|won.t|refuse to|must not|should not) +(exfiltrat|leak|disab|bypass|reveal|print|remov|send|email|forward|grant|comply|set|enable|switch|share|paste|output|dump|echo)'
+
+# The decode/fold pass of normalize_untrusted, as ONE perl program (one fork, not one per
+# channel — this runs on every tool call). Reads the zero-width-stripped text on stdin and
+# prints it back followed by every readable rendering it can recover, one block per line:
+#   · Unicode Tags (U+E0000–E007F) "ASCII smuggling" decoded back to ASCII
+#   · \xHH, %HH, &#NN;, &#xHH;, JSON \uHHHH escapes; form-encoded '+' as space
+#   · base64 / url-safe base64 tokens (incl. a blob wrapped over several lines) and runs of
+#     plain hex — kept only when they decode to >=80% printable text, so hashes/IDs/binary
+#     blobs never add noise
+#   · rot13, only when the text names it (the decode hint)
+#   · multi-line HTML comments collapsed to one line; soft-wrapped prose (and > quotes)
+#     re-joined, so a phrase split across lines matches like the one-line form
+#   · homoglyph fold (Cyrillic/Greek lookalikes, fullwidth, math-alphanumeric -> ASCII)
+#     plus two leetspeak folds ('$'->'s', and one keeping '$' so shell "$(" survives)
+POLICY_NORMALIZE_PL='
+local $/; my $t = <STDIN>; $t = "" unless defined $t;
+$t =~ s/([\x{E0020}-\x{E007E}])/chr(ord($1)-0xE0000)/ge; $t =~ s/[\x{E0000}-\x{E007F}]//g;
+my @o = ($t);
+sub pr { my $c = shift; $c =~ s/[^\t\n\r\x20-\x7e]//g; return $c }
+sub keep { my $r = shift; my $c = pr($r); push @o, $c if length($c) >= 6 && length($c) >= 0.8 * length($r) }
+(my $d = $t) =~ s/(?:\\x|%)([0-9A-Fa-f]{2})/chr(hex($1))/ge;
+$d =~ s/&#(\d{1,7});/$1 < 0x110000 ? chr($1) : ""/ge; $d =~ s/&#x([0-9A-Fa-f]{1,6});/hex($1) < 0x110000 ? chr(hex($1)) : ""/ge;
+$d =~ s/\\u([0-9A-Fa-f]{4})/chr(hex($1))/ge;
+$d =~ tr/+/ / if $d =~ /\w\+\w+\+\w/;
+push @o, pr($d) if $d ne $t;
+(my $j = $t) =~ s/([A-Za-z0-9+\/]{16,})[ \t]*\r?\n[ \t>]*(?=[A-Za-z0-9+\/=]{4,}[ \t]*(?:\r?\n|$))/$1/g;
+my $k = 0;
+while ($j =~ /([A-Za-z0-9+\/_-]{16,}={0,2})/g) { last if ++$k > 20; (my $b = $1) =~ tr/-_/+\//; keep(MIME::Base64::decode_base64($b)) }
+while ($t =~ /\b((?:[0-9A-Fa-f]{2}){8,})\b/g) { keep(pack("H*", $1)) }
+if ($t =~ /\brot[- ]?13\b/i) { (my $r = $t) =~ tr/A-Za-z/N-ZA-Mn-za-m/; push @o, $r }
+for my $c ($t =~ /<!--(.*?)-->/gs) { next unless $c =~ /\n/; (my $x = $c) =~ s/\s+/ /g; push @o, "<!-- $x -->" }
+my ($acc, $joined, @jl);
+for my $line (split /\n/, $t) {
+  (my $s = $line) =~ s/^[ \t]*>[ \t]?//;
+  if (defined $acc && $acc =~ /\S[ \t]+\S.*[a-z,][ \t]*$/ && $s =~ /^[ \t]*[a-z]/) { $acc .= " $s"; $joined = 1 }
+  else { push @jl, $acc if defined $acc; $acc = $s }
+}
+push @jl, $acc if defined $acc; push @o, join("\n", @jl) if $joined;
+(my $f = $t) =~ tr/\x{0430}\x{0435}\x{043e}\x{0440}\x{0441}\x{0445}\x{0443}\x{0456}\x{03bf}\x{03b1}\x{03b5}\x{0455}\x{0458}\x{0501}\x{04bb}\x{0261}\x{03b9}\x{03bd}\x{03c1}\x{0410}\x{0415}\x{041e}\x{0420}\x{0421}\x{0425}\x{0406}\x{0405}\x{0408}\x{0391}\x{0392}\x{0395}\x{0397}\x{0399}\x{039a}\x{039c}\x{039d}\x{039f}\x{03a1}\x{03a4}\x{03a7}/aeopcxyioaesjdhgivpAEOPCXISJABEHIKMNOPTX/;
+$f =~ s/([\x{FF01}-\x{FF5E}])/chr(ord($1)-0xFEE0)/ge;
+$f =~ s/([\x{1D400}-\x{1D6A3}])/my $m = (ord($1)-0x1D400) % 52; chr($m < 26 ? 65+$m : 71+$m)/ge;
+push @o, $f if $f ne $t;
+(my $l1 = $f) =~ tr/013457@$/oieastas/; (my $l2 = $f) =~ tr/013457@/oieasta/;
+push @o, $l1 if $l1 ne $f; push @o, $l2 if $l2 ne $l1;
+print join("\n", @o);
+'
 
 # normalize_untrusted "<text>"  -> a de-obfuscated rendering for detection: strips
-# invisible chars, decodes base64 blobs, and folds leetspeak + homoglyph lookalikes,
-# so an encoded/disguised payload is scanned in its readable form too. Best-effort and
-# fail-safe (always echoes something; never errors). Output is the cleaned text plus
-# any decoded/folded variants appended — it is for MATCHING only, never shown to a user.
+# invisible chars, decodes encoded blobs, re-joins split lines, and folds leetspeak +
+# homoglyph lookalikes, so an encoded/disguised payload is scanned in its readable form
+# too. Best-effort and fail-safe (always echoes something; never errors). Output is the
+# cleaned text plus any decoded/folded variants appended — for MATCHING only, never shown.
 normalize_untrusted() {
-  local text="$1" out extra tok dec folded
+  local text="$1" out extra tok dec folded folded2
   [ -n "$text" ] || return 0
-  # 1 · drop zero-width / bidi control chars so split/hidden words rejoin.
-  out="$(printf '%s' "$text" | LC_ALL=C sed 's/'$'\342\200''[\213-\217\252-\256]//g; s/'$'\342\201''[\246-\251]//g; s/'$'\357\273\277''//g' 2>/dev/null)"
+  # 1 · drop invisible format chars so split/hidden words rejoin: zero-width + LRM/RLM
+  # (U+200B–200F), bidi embeds/overrides (U+202A–202E), word joiner + invisible operators
+  # (U+2060–2064), isolates (U+2066–2069), BOM/ZWNBSP, soft hyphen, Mongolian vowel sep.
+  out="$(printf '%s' "$text" | LC_ALL=C sed 's/'$'\342\200''[\213-\217\252-\256]//g; s/'$'\342\201''[\240-\244\246-\251]//g; s/'$'\357\273\277''//g; s/'$'\302\255''//g; s/'$'\341\240\216''//g' 2>/dev/null)"
   [ -n "$out" ] || out="$text"
-  # 1b · Unicode Tags block (U+E0000–E007F) "ASCII smuggling": invisible tag chars map
-  # 1:1 onto ASCII. Decode the printable ones back to readable text (recovers the hidden
-  # payload for matching) and strip the rest; fall back to stripping when perl is absent.
+  # 2 · decode + fold in a single perl pass (see POLICY_NORMALIZE_PL).
   if command -v perl >/dev/null 2>&1; then
-    out="$(printf '%s' "$out" | perl -CSAD -pe 's/([\x{E0020}-\x{E007E}])/chr(ord($1)-0xE0000)/ge; s/[\x{E0000}-\x{E007F}]//g' 2>/dev/null || printf '%s' "$out")"
-  else
-    out="$(printf '%s' "$out" | LC_ALL=C sed 's/'$'\363\240''[\200-\201][\200-\277]//g' 2>/dev/null || printf '%s' "$out")"
+    dec="$(printf '%s' "$out" | perl -CS -MMIME::Base64 -e "$POLICY_NORMALIZE_PL" 2>/dev/null)"
+    [ -n "$dec" ] && { printf '%s' "$dec"; return 0; }
   fi
+  # Fallback without perl: strip Tags chars, decode base64 tokens, leetspeak fold.
+  out="$(printf '%s' "$out" | LC_ALL=C sed 's/'$'\363\240''[\200-\201][\200-\277]//g' 2>/dev/null || printf '%s' "$out")"
   [ -n "$out" ] || out="$text"
-  # 2 · decode base64-looking tokens (>=16 chars), append printable plaintext.
   extra=""
   while IFS= read -r tok; do
     [ -n "$tok" ] || continue
@@ -349,27 +399,34 @@ $dec"
   done <<EOF
 $(printf '%s' "$out" | grep -oE '[A-Za-z0-9+/]{16,}={0,2}' 2>/dev/null | head -20)
 EOF
-  # 2b · decode hex (\xHH), percent (%HH) and HTML numeric entities (&#NN; / &#xHH;) so
-  # instructions escaped through any of those channels are scanned in readable form too.
-  if command -v perl >/dev/null 2>&1; then
-    dec="$(printf '%s' "$out" | perl -pe 's/(?:\\x|%)([0-9A-Fa-f]{2})/chr(hex($1))/ge; s/&#(\d{1,7});/chr($1)/ge; s/&#x([0-9A-Fa-f]{1,6});/chr(hex($1))/ge' 2>/dev/null | LC_ALL=C tr -dc '\11\12\15\40-\176' 2>/dev/null)"
-    [ ${#dec} -ge 6 ] && [ "$dec" != "$out" ] && extra="$extra
-$dec"
-  fi
-  # 3 · leetspeak fold + homoglyph fold (Cyrillic/Greek lookalikes -> Latin via perl).
-  # Two leet variants: `folded` maps '$'->'s' (catches "di$able safety"); `folded2`
-  # keeps '$' (so shell "$(" survives for the exfil-channel detector). Emitting both
-  # loses nothing and closes the leet/homoglyph evasion of '$('-keyed patterns.
-  local folded2=""
   folded="$(printf '%s' "$out" | LC_ALL=C tr '013457@$' 'oieastas' 2>/dev/null)"
   folded2="$(printf '%s' "$out" | LC_ALL=C tr '013457@' 'oieasta' 2>/dev/null)"
-  if command -v perl >/dev/null 2>&1; then
-    local homoglyph='tr/\x{0430}\x{0435}\x{043e}\x{0440}\x{0441}\x{0445}\x{0443}\x{0456}\x{03bf}\x{03b1}\x{03b5}/aeopcxyioae/'
-    folded="$(printf '%s' "$folded" | perl -CSAD -pe "$homoglyph" 2>/dev/null || printf '%s' "$folded")"
-    folded2="$(printf '%s' "$folded2" | perl -CSAD -pe "$homoglyph" 2>/dev/null || printf '%s' "$folded2")"
-  fi
   printf '%s%s\n%s\n%s' "$out" "$extra" "$folded" "$folded2"
 }
+
+# Typo'd ("slopsquat") package installs: an install command naming a package one edit
+# (insert/delete/substitute/transpose) away from a popular one. Prints the first hit.
+# ponytail: a small popular-name list + a few real near-miss names; a registry-backed
+# check (download counts, package age) belongs in `compass scan`, off the hot path.
+POLICY_SLOPSQUAT_PL='
+BEGIN {
+  @P = qw(requests numpy pandas scipy matplotlib flask django fastapi pydantic boto3 urllib3 setuptools colorama python-dateutil pyyaml pillow lodash express react axios chalk commander moment dotenv webpack typescript eslint jquery serde tokio reqwest);
+  %P = map { $_ => 1 } @P; %OK = map { $_ => 1 } qw(request preact tslint scapy boto dotenvx);
+}
+sub d1 { my ($x, $y) = @_; my ($lx, $ly) = (length $x, length $y); return 0 if abs($lx - $ly) > 1;
+  if ($lx == $ly) { my @d = grep { substr($x, $_, 1) ne substr($y, $_, 1) } 0 .. $lx - 1;
+    return 1 if @d == 1;
+    return (@d == 2 && $d[1] == $d[0] + 1 && substr($x, $d[0], 1) eq substr($y, $d[1], 1) && substr($x, $d[1], 1) eq substr($y, $d[0], 1)) ? 1 : 0 }
+  my ($s, $l) = $lx < $ly ? ($x, $y) : ($y, $x);
+  for my $i (0 .. length($l) - 1) { return 1 if substr($l, 0, $i) . substr($l, $i + 1) eq $s } return 0 }
+while (/\b(?:pip3?|uv pip|uv|pipx|poetry|npm|pnpm|yarn|bun|gem|cargo) +(?:install|add|i)\b([^;|&\n]*)/gi) {
+  for my $w (split " ", $1) {
+    last if $w =~ /^(to|and|then|for|if|so|in|on|with|first|before|after|or|the|a|it)$/i;
+    next if $w =~ /^-/; $w =~ s/[=<>~!,.:].*$//; $w =~ s/(.)@.*$/$1/; $w = lc $w;
+    next if length($w) < 4 || $P{$w} || $OK{$w};
+    for my $p (@P) { if (d1($w, $p)) { print "$w (one edit from $p)\n"; exit } }
+  }
+}'
 
 # injection_findings "<text>"  -> one "rule: snippet…" line per likely injection
 # pattern (empty output = clean). Scans the raw text AND its de-obfuscated rendering
@@ -378,9 +435,12 @@ injection_findings() {
   local text="$1" name re hit scan
   [ -n "$text" ] || return 0
 
-  # Invisible instructions: zero-width (U+200B–200F), bidi overrides (U+202A–202E,
-  # U+2066–2069) and a stray BOM (U+FEFF) — matched as raw UTF-8 bytes under C locale.
-  local zwpat; zwpat="$(printf '\342\200[\213-\217\252-\256]|\342\201[\246-\251]|\357\273\277')"
+  # Invisible instructions, matched as raw UTF-8 bytes under the C locale: ZWSP (U+200B),
+  # bidi embeds/overrides (U+202A–202E) and isolates (U+2066–2069) anywhere; a BOM only
+  # mid-line (at the start of a file it is just a BOM). ZWNJ/ZWJ/LRM/RLM/word-joiner only
+  # when they split two ASCII letters — emoji ZWJ sequences and Persian/Indic/Arabic text
+  # use them legitimately, a keyword split ("ig<ZWJ>nore") does not.
+  local zwpat; zwpat="$(printf '\342\200\213|\342\200[\252-\256]|\342\201[\246-\251]|.\357\273\277|[A-Za-z]\342(\200[\214-\217]|\201\240)[A-Za-z]')"
   if printf '%s' "$text" | LC_ALL=C grep -Eq "$zwpat" 2>/dev/null; then
     printf 'hidden-unicode: zero-width/bidirectional control character\n'
   fi
@@ -391,16 +451,23 @@ injection_findings() {
     printf 'ascii-smuggling: invisible Unicode Tags-block characters (U+E0000-E007F)\n'
   fi
 
-  # scan raw + de-obfuscated rendering in one pass (a match in either fires the rule).
-  scan="$text
-$(normalize_untrusted "$text")"
+  # raw + de-obfuscated rendering, allowlisted lines dropped ONCE up front (so each
+  # detector below is a single grep, not a three-process pipeline).
+  scan="$(printf '%s\n%s\n' "$text" "$(normalize_untrusted "$text")" | grep -Eiv -- "$POLICY_INJECTION_ALLOW" 2>/dev/null)"
+  [ -n "$scan" ] || return 0
   printf '%s\n' "$POLICY_INJECTION_DETECTORS" | while IFS='|' read -r name re; do
     [ -n "$name" ] || continue
-    hit="$(printf '%s\n' "$scan" \
-      | grep -Ei -- "$re" 2>/dev/null \
-      | grep -Eiv -- "$POLICY_INJECTION_ALLOW" 2>/dev/null | head -1)"
+    hit="$(printf '%s\n' "$scan" | grep -Ei -m1 -- "$re" 2>/dev/null)"
     [ -n "$hit" ] && printf '%s: %s\n' "$name" "$(printf '%s' "$hit" | sed 's/^[[:space:]]*//' | cut -c1-72)"
   done
+  # slopsquat: only pay for the perl fork when the text has an install/add verb.
+  case "$scan" in
+    *[Ii]nstall*|*" add "*|*" i "*)
+      command -v perl >/dev/null 2>&1 || return 0
+      hit="$(printf '%s\n' "$scan" | perl -ne "$POLICY_SLOPSQUAT_PL" 2>/dev/null)"
+      [ -n "$hit" ] && printf 'slopsquat: %s\n' "$hit" ;;
+  esac
+  return 0
 }
 
 # ── local config that tries to weaken safety ───────────────────────────────────
