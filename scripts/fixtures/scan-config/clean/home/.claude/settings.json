@@ -1,0 +1,9 @@
+{
+  "env": { "MAX_MCP_OUTPUT_TOKENS": "25000", "GITHUB_TOKEN": "${GITHUB_TOKEN}" },
+  "permissions": { "allow": ["Read", "Bash(git status:*)"], "defaultMode": "acceptEdits" },
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "*", "hooks": [ { "type": "command", "command": "$HOME/.claude/hooks/ok.sh", "timeout": 10 } ] }
+    ]
+  }
+}

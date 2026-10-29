@@ -10,10 +10,11 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$HERE/lib/policy.sh"
 . "$HERE/lib/guardrail-remote.sh"
 
-# Feature flags (default ON): COMPASS_REDTEAM=0 disables the layer;
+# Feature flags (default ON; env, ~/.compass/config, the profile or a tighten-only repo
+# policy — see compass_policy in lib/common.sh): COMPASS_REDTEAM=0 disables the layer;
 # COMPASS_REDTEAM_TOOL_OUTPUT=0 disables just this indirect-injection scan.
-[ "${COMPASS_REDTEAM:-1}" = 0 ] && exit 0
-[ "${COMPASS_REDTEAM_TOOL_OUTPUT:-1}" = 0 ] && exit 0
+[ "$(compass_policy redteam)" = 0 ] && exit 0
+[ "$(compass_policy redteam_tool_output)" = 0 ] && exit 0
 
 INPUT="$(cat)"
 tool="$(json_get "$INPUT" '.tool_name')"

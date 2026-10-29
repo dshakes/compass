@@ -34,16 +34,15 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$DIR/lib/common.sh"
 
 INPUT="$(cat)"
-CONFIG="${COMPASS_HOME:-$HOME/.compass}/config"
-cfg_val() { [ -f "$CONFIG" ] && grep -E "^$1=" "$CONFIG" 2>/dev/null | head -1 | cut -d= -f2 | tr -d '[:space:]'; }
 is_pos()  { awk -v c="$1" 'BEGIN{exit !(c+0>0)}'; }
 
-# --- Resolve the two ceilings (env wins over config; junk/non-positive → treated as unset).
-CAP="${COMPASS_MAX_USD:-}"; [ -z "$CAP" ] && CAP="$(cfg_val max_usd)"
+# --- Resolve the two ceilings (env > config > profile; a repo policy may only lower them —
+# compass_policy in lib/common.sh). Junk/non-positive → treated as unset.
+CAP="$(compass_policy max_usd)"
 case "$CAP" in ''|*[!0-9.]*) CAP="" ;; esac
 [ -n "$CAP" ] && { is_pos "$CAP" || CAP=""; }
 
-DAY_CAP="${COMPASS_MAX_USD_DAY:-}"; [ -z "$DAY_CAP" ] && DAY_CAP="$(cfg_val max_usd_day)"
+DAY_CAP="$(compass_policy max_usd_day)"
 case "$DAY_CAP" in ''|*[!0-9.]*) DAY_CAP="" ;; esac
 [ -n "$DAY_CAP" ] && { is_pos "$DAY_CAP" || DAY_CAP=""; }
 

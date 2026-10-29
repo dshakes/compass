@@ -83,6 +83,12 @@ jobs:
       - name: Budget ceiling (live spend hard-gate eval — session + daily)
         run: bash scripts/test-budget-gate.sh
 
+      - name: Profiles + tighten-only repo overrides (standard == today, loosening rejected)
+        run: bash scripts/test-profile.sh
+
+      - name: Harness config audit (compass scan --config against fixtures)
+        run: bash scripts/test-scan-config.sh
+
       - name: Comprehension-rot guard (compass digest sampling + ledger)
         run: bash scripts/test-digest.sh
 

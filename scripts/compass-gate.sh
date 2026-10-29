@@ -9,4 +9,8 @@ if ! command -v python3 >/dev/null 2>&1; then
 fi
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# One policy for every harness: load the effective caps (profile → config → env, tightened by
+# this repo's .compass/policy.conf) so Codex/Gemini/SDKs behind the gate get the same ceiling
+# the Claude budget hook enforces.
+eval "$("$DIR/compass-profile.sh" --env)"
 exec python3 "$DIR/compass-gate.py" "$@"

@@ -63,21 +63,24 @@ place() {
 # Shipped settings + optional personal overlay (claude/settings.local.json,
 # gitignored). Overlay present → deep-merge into settings.merged.json (also
 # gitignored) and place that; absent → place the shipped file untouched.
+# The active `compass profile` can also re-render it (fail_closed → onFailure:"block" on
+# the security hooks); scripts/compass-profile.sh owns that render so both paths agree.
 place_settings() {
-  local shipped="$CLAUDE_SRC/settings.json" overlay="$CLAUDE_SRC/settings.local.json"
-  local merged="$CLAUDE_SRC/settings.merged.json"
-  if [ ! -f "$overlay" ]; then place "$shipped" "$CLAUDE_DST/settings.json"; return; fi
+  local shipped="$CLAUDE_SRC/settings.json" overlay="$CLAUDE_SRC/settings.local.json" src
+  local fc; fc="$("$REPO/scripts/compass-profile.sh" --get fail_closed 2>/dev/null)"
+  if [ ! -f "$overlay" ] && [ "$fc" != 1 ]; then place "$shipped" "$CLAUDE_DST/settings.json"; return; fi
   if ! command -v jq >/dev/null 2>&1; then
-    say "warn: settings.local.json present but jq missing — installing shipped defaults only"
+    say "warn: settings.local.json or a fail-closed profile present but jq missing — installing shipped defaults only"
     place "$shipped" "$CLAUDE_DST/settings.json"; return
   fi
   if [ "$DRY" = 1 ]; then
-    say "[dry-run] merge settings.json + settings.local.json -> settings.merged.json, then link it"
+    say "[dry-run] render settings.json (+ settings.local.json, profile) -> settings.merged.json, then link it"
     return
   fi
-  jq -s '.[0] * .[1]' "$shipped" "$overlay" >"$merged"
-  say "merged personal overlay: settings.local.json"
-  place "$merged" "$CLAUDE_DST/settings.json"
+  src="$("$REPO/scripts/compass-profile.sh" --settings-file)"
+  [ -f "$overlay" ] && say "merged personal overlay: settings.local.json"
+  [ "$fc" = 1 ] && say "profile is fail-closed: security hooks get onFailure=block"
+  place "$src" "$CLAUDE_DST/settings.json"
 }
 
 chmodx() { [ "$DRY" = 1 ] && return; find "$1" -name '*.sh' -exec chmod +x {} + 2>/dev/null || true; }

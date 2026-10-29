@@ -75,6 +75,11 @@ usage: compass <command> [args]
                            Find secrets before they're committed (pre-commit / CI).
                            Built-in detectors gate; uses gitleaks for depth if present.
                            --injection also scans for prompt-injection / context poisoning.
+                           --config [--json] audits YOUR Claude/Codex/Gemini config + .mcp.json
+                           (bypass modes, wildcard Bash, unsafe hooks, unpinned MCP, env secrets).
+  profile [strict|standard|solo] [--get K|--env]
+                           Guardrail presets (data files) + the one effective policy. A repo's
+                           .compass/policy.conf may only TIGHTEN it. No arg = show.
   redteam [--eval|--scan] [--json]
                            Measure prompt-injection resistance: score the detectors
                            against the corpus (CI-gated) + scan this repo's untrusted
@@ -135,6 +140,7 @@ case "$cmd" in
   policy-synth) run policy-synth "$@" ;;
   sbom)     run sbom "$@" ;;
   scan)     run scan "$@" ;;
+  profile)  run profile "$@" ;;
   redteam)  run redteam "$@" ;;
   verify)   exec "$SCRIPTS/verify-release.sh" "$@" ;;
   trace)    run trace "$@" ;;
