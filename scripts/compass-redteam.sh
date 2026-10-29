@@ -32,7 +32,11 @@ usage: compass redteam [--eval | --scan | --attack] [--json]
               catch (robustness %). Notes garak/promptfoo for live-agent attacks.
   --external  score the detectors against a pinned PUBLIC corpus we didn't write
               (downloads once, sha256-verified; report-only — never gates CI)
-  --json      machine-readable summary
+  --detector CMD
+              benchmark ANY guardrail on the corpus instead of compass's detectors:
+              CMD reads the payload on stdin, exits 0 = clean, non-zero = flagged.
+              Implies --eval; prints the per-class precision/recall table.
+  --json      machine-readable summary (with --eval/--detector: totals + per-class)
 
 Optional managed-guardrail escalation (the hooks use these at runtime):
   COMPASS_GUARDRAIL_BACKEND = none | bedrock | azure | webhook
@@ -42,16 +46,18 @@ Optional managed-guardrail escalation (the hooks use these at runtime):
 EOF
 }
 TARGET="$ROOT"   # which repo's context --scan inspects (default: the compass install)
-for a in "$@"; do case "$a" in
+while [ $# -gt 0 ]; do a="$1"; case "$a" in
   --json) JSON=1 ;;
   --eval) MODE=eval ;;
   --scan) MODE=scan ;;
   --attack) MODE=attack ;;
+  --detector) [ $# -ge 2 ] && [ -n "$2" ] || { echo "compass redteam: --detector needs a command" >&2; exit 2; }
+              export COMPASS_REDTEAM_DETECTOR="$2"; MODE=eval; shift ;;
   --external) exec "$(dirname "${BASH_SOURCE[0]}")/compass-redteam-external.sh" ;;
   -h|--help) usage; exit 0 ;;
   --*) echo "compass redteam: unknown arg: $a" >&2; usage; exit 2 ;;
   *) TARGET="$a" ;;   # positional: a directory to scan (for CI / fleet sweeps)
-esac; done
+esac; shift; done
 
 # Files that legitimately contain the patterns (the policy, the corpus, the docs) —
 # never flag our own machinery when scanning the compass repo itself.
@@ -62,13 +68,22 @@ is_self() { case "$1" in
 */docs/17-red-team.md) return 0 ;;
 esac; return 1; }
 
-EVAL_PREC=""; EVAL_REC=""; EVAL_PASS=true
+EVAL_PREC=""; EVAL_REC=""; EVAL_PASS=true; EVAL_COUNTS=""; EVAL_CLASSES="[]"
 run_eval() {
   local out rc
   out="$(bash "$ROOT/scripts/test-redteam.sh" 2>&1)"; rc=$?
+  [ "$rc" -eq 2 ] && { printf '%s\n' "$out" >&2; exit 2; }   # detector not runnable
   [ "$rc" -eq 0 ] || EVAL_PASS=false
   EVAL_PREC="$(printf '%s\n' "$out" | sed -n 's/.*precision=\([0-9]*\)%.*/\1/p' | head -1)"
   EVAL_REC="$(printf '%s\n' "$out"  | sed -n 's/.*recall=\([0-9]*\)%.*/\1/p'    | head -1)"
+  # "TP=1 FP=0 TN=2 FN=0" → "tp":1,"fp":0,…   and the per-class table → a JSON array
+  EVAL_COUNTS="$(printf '%s\n' "$out" | sed -n 's/.*TP=\([0-9]*\) FP=\([0-9]*\) TN=\([0-9]*\) FN=\([0-9]*\).*/"tp":\1,"fp":\2,"tn":\3,"fn":\4,/p' | head -1)"
+  EVAL_CLASSES="$(printf '%s\n' "$out" | awk '
+    /^per-class:/ { on = 1; getline; next }
+    on && NF == 0 { on = 0 }
+    on && NF == 8 { p = ($7 == "-") ? "null" : $7 + 0; r = ($8 == "-") ? "null" : $8 + 0
+      s = s (s ? "," : "") sprintf("{\"class\":\"%s\",\"n\":%d,\"tp\":%d,\"fp\":%d,\"tn\":%d,\"fn\":%d,\"precision\":%s,\"recall\":%s}", $1, $2, $3, $4, $5, $6, p, r) }
+    END { printf "[%s]", s }')"
   [ "$JSON" = 1 ] || printf '%s\n' "$out"
 }
 
@@ -125,9 +140,13 @@ run_attack() {
   transforms="identity base64 zerowidth leet homoglyph"
   # tags + hex decode rely on perl (see normalize_untrusted); only fuzz them when present.
   command -v perl >/dev/null 2>&1 && transforms="$transforms tags hex"
-  while IFS=$'\t' read -r label payload; do
+  while IFS=$'\t' read -r label payload _class; do
     case "$label" in inject) ;; *) continue ;; esac
     [ -n "$payload" ] || continue
+    case "$payload" in *'\u{'*)   # \u{XXXX} escapes, expanded as in test-redteam.sh
+      command -v perl >/dev/null 2>&1 || continue
+      payload="$(printf '%s' "$payload" | perl -CS -pe 's/\\u\{([0-9A-Fa-f]{1,6})\}/chr(hex($1))/ge')" ;;
+    esac
     for t in $transforms; do
       mut="$(_mutate "$t" "$payload")"
       ATTACK_TOTAL=$((ATTACK_TOTAL + 1))
@@ -166,8 +185,9 @@ if [ "$MODE" != eval ]; then
 fi
 
 if [ "$JSON" = 1 ]; then
-  printf '{"eval":{"precision":%s,"recall":%s,"pass":%s},"scan":{"flagged":%d},"backend":%s}\n' \
-    "${EVAL_PREC:-null}" "${EVAL_REC:-null}" "$EVAL_PASS" "$SCAN_FILES" "$(json_string "${COMPASS_GUARDRAIL_BACKEND:-none}")"
+  printf '{"eval":{%s"precision":%s,"recall":%s,"pass":%s,"classes":%s},"detector":%s,"scan":{"flagged":%d},"backend":%s}\n' \
+    "$EVAL_COUNTS" "${EVAL_PREC:-null}" "${EVAL_REC:-null}" "$EVAL_PASS" "$EVAL_CLASSES" \
+    "$(json_string "${COMPASS_REDTEAM_DETECTOR:-compass}")" "$SCAN_FILES" "$(json_string "${COMPASS_GUARDRAIL_BACKEND:-none}")"
 else
   echo
   echo "guardrail backend: ${COMPASS_GUARDRAIL_BACKEND:-none}  ·  adversarial fuzz: compass redteam --attack  ·  live-agent: garak / promptfoo"
