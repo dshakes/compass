@@ -83,7 +83,7 @@ data) and **log** to the audit trail (`compass audit-log`). They never silently 
 detectors and gates in CI via `compass doctor`:
 
 ```
-redteam corpus: 99 cases — TP=... FP=0 TN=... FN=0
+redteam corpus: 101 cases — TP=... FP=0 TN=... FN=0
 precision=100% (floor 100%)  recall=100% (floor 90%)
 ```
 

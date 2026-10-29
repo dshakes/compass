@@ -64,6 +64,20 @@ while IFS= read -r bad; do no "broken relative link: $bad"; done < /tmp/_links.$
 rm -f /tmp/_links.$$
 [ "$fail" -eq "$n" ] && ok "all relative links in README.md + docs/*.md resolve"
 
+echo "quoted counts — red-team / router case counts must match the corpora:"
+n=$fail
+rt="$(bash scripts/test-redteam.sh 2>&1 | sed -n 's/^redteam corpus: \([0-9][0-9]*\) cases.*/\1/p')"
+rv="$(grep -vc '^#\|^[[:space:]]*$' scripts/route-evalset.tsv)"
+[ -n "$rt" ] || no "could not compute red-team corpus size (scripts/test-redteam.sh)"
+for f in README.md docs/*.md docs/*.html docs/content.js; do
+{ grep -ohiE '(red-?team|P/R|corpus:|recall on)[^<]{0,20} \(?[0-9]+ cases' "$f" | grep -oE '[0-9]+ cases' | sed "s|^|$rt |"
+grep -ohiE 'routing accuracy · [0-9]+ cases' "$f" | grep -oE '[0-9]+ cases' | sed "s|^|$rv |"
+grep -ohE '\| Router \| [0-9]+ \|' "$f" | grep -oE '[0-9]+' | sed "s|^|$rv |; s|\$| cases|"; } |
+while read -r want got _; do [ "$want" = "$got" ] || echo "$f quotes $got cases, corpus has $want"; done
+done > /tmp/_counts.$$
+while IFS= read -r bad; do no "stale count: $bad"; done < /tmp/_counts.$$
+rm -f /tmp/_counts.$$
+[ "$fail" -eq "$n" ] && [ -n "$rt" ] && ok "quoted red-team ($rt) and router ($rv) case counts match the corpora"
 echo
 printf 'docs audit: %d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

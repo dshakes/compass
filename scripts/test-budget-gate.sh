@@ -121,11 +121,11 @@ unset COMPASS_MAX_USD COMPASS_MAX_USD_DAY; rm -f "$LEDGER"
 
 # ── Transcript JSONL fallback (headless / no statusline breadcrumb) ───────────────────────────
 # Fixture: 1 assistant message, claude-sonnet-5, 1000 input + 500 output tokens.
-# Cost: 1000×$0.000003 + 500×$0.000015 = $0.003 + $0.0075 = $0.010500
+# Cost: 1500×$0.000002 + 750×$0.00001 = $0.003 + $0.0075 = $0.010500
 TFILE="$HOME_TMP/transcript-fixture.jsonl"
 cat > "$TFILE" <<'EOF'
 {"type":"user","message":{"role":"user","content":"hello"}}
-{"type":"assistant","message":{"model":"claude-sonnet-5-20251201","role":"assistant","usage":{"input_tokens":1000,"output_tokens":500,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
+{"type":"assistant","message":{"model":"claude-sonnet-5-20251201","role":"assistant","usage":{"input_tokens":1500,"output_tokens":750,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
 EOF
 
 allow_t() {

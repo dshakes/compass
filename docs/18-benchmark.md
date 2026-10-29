@@ -269,7 +269,7 @@ leetspeak and homoglyph lookalikes before matching — so the five standard
 transforms score 100% on the corpus. A sixth, novel transform can still slip.
 
 **Corpus recall is on the corpus, not the real-world attack distribution.** 100%
-recall on 99 cases does not mean 100% real-world catch rate — as the external
+recall on 101 cases does not mean 100% real-world catch rate — as the external
 corpus (`compass redteam --external`, ~8% recall on a public set) makes plain.
 The internal corpus is the fast, always-on floor; the external run and periodic
 deep sweeps against a running agent endpoint provide complementary, honest coverage.

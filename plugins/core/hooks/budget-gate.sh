@@ -66,8 +66,10 @@ fi
 # the transcript is the ground truth. PreToolUse payloads always include transcript_path.
 # Single pass, jq-first with python3 fallback; neither available → skip (fail-open, no change).
 # ponytail: pricing table is a local copy — no shared table in the repo yet.
-# Rates (USD/token): haiku-4-5 $0.80/$4 MTok, sonnet/fable $3/$15 MTok, opus $15/$75 MTok.
-# Cache-write/read (per MTok): haiku $1.00/$0.08, sonnet $3.75/$0.30, opus $18.75/$1.50.
+# Rates (USD/MTok in/out; Claude 5.5 list prices, platform.claude.com/docs/en/about-claude/pricing):
+# haiku $0.50/$2.50 (>100k-prompt tier, conservative), sonnet $2/$10, opus $4/$20, fable $10/$50.
+# Cache write 5m / read (per MTok): haiku $0.625/$0.05, sonnet $2.50/$0.10, opus $5/$0.20, fable $12.50/$0.25.
+# Older model ids are priced as their family (legacy Opus 4/4.1 was $15/$75 — now under-counted).
 TPATH="$(json_get "$INPUT" '.transcript_path')"
 TUSD=""
 if [ -n "$TPATH" ] && [ -f "$TPATH" ]; then
@@ -80,17 +82,19 @@ if [ -n "$TPATH" ] && [ -f "$TPATH" ]; then
       (.usage.cache_creation_input_tokens // 0) as $cw |
       (.usage.cache_read_input_tokens // 0) as $cr |
       if ($m | contains("haiku")) then
-        $in*0.0000008 + $out*0.000004 + $cw*0.000001 + $cr*0.00000008
+        $in*0.0000005 + $out*0.0000025 + $cw*0.000000625 + $cr*0.00000005
       elif ($m | contains("opus")) then
-        $in*0.000015 + $out*0.000075 + $cw*0.00001875 + $cr*0.0000015
+        $in*0.000004 + $out*0.00002 + $cw*0.000005 + $cr*0.0000002
+      elif ($m | contains("fable")) then
+        $in*0.00001 + $out*0.00005 + $cw*0.0000125 + $cr*0.00000025
       else
-        $in*0.000003 + $out*0.000015 + $cw*0.000003750 + $cr*0.0000003
+        $in*0.000002 + $out*0.00001 + $cw*0.0000025 + $cr*0.0000001
       end
     ' "$TPATH" 2>/dev/null | awk '{t+=$1} END{printf "%.6f",t+0}' 2>/dev/null)" || TUSD=""
   elif have python3; then
     TUSD="$(python3 -c '
 import sys,json
-P={"haiku":(8e-7,4e-6,1e-6,8e-8),"opus":(1.5e-5,7.5e-5,1.875e-5,1.5e-6),"sonnet":(3e-6,1.5e-5,3.75e-6,3e-7)}
+P={"haiku":(5e-7,2.5e-6,6.25e-7,5e-8),"opus":(4e-6,2e-5,5e-6,2e-7),"fable":(1e-5,5e-5,1.25e-5,2.5e-7),"sonnet":(2e-6,1e-5,2.5e-6,1e-7)}
 t=0.0
 try:
  with open(sys.argv[1]) as f:
@@ -100,7 +104,7 @@ try:
    if obj.get("type")!="assistant": continue
    msg=obj.get("message") or {}
    m=(msg.get("model") or "").lower()
-   k="opus" if "opus" in m else ("haiku" if "haiku" in m else "sonnet")
+   k=next((x for x in ("opus","haiku","fable") if x in m),"sonnet")
    u=msg.get("usage") or {}
    r=P[k]
    t+=u.get("input_tokens",0)*r[0]+u.get("output_tokens",0)*r[1]+u.get("cache_creation_input_tokens",0)*r[2]+u.get("cache_read_input_tokens",0)*r[3]

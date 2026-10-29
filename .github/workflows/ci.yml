@@ -110,6 +110,15 @@ jobs:
       - name: CI auto-fix eval (ci-watch routine + sdlc-ci-fix rails)
         run: bash scripts/test-ci-watch.sh
 
+      - name: Plugin auditor (fixtures + core baseline)
+        run: bash scripts/test-audit-plugin.sh
+
+      - name: Context pack
+        run: bash scripts/test-context-pack.sh
+
+      - name: Vendor manifests (marketplace + plugin shape)
+        run: bash scripts/check-vendor.sh
+
       - name: Listener command parser (compass listen)
         run: node scripts/test-listen.mjs
 
