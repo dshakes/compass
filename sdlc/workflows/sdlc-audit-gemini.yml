@@ -2,7 +2,7 @@
 # independent third opinion alongside the Claude reviewer and Codex auditor) and on
 # demand via the `agent:audit` label. Read-only; posts Gemini's verdict as a PR comment.
 # Needs secret GEMINI_API_KEY — skips cleanly (no failure) when it is absent.
-# Not on `synchronize`, so the fix loop's pushes don't re-spend Gemini credits each round.
+# Also on `synchronize` (human pushes only — bot pushes skipped, see the `if:` below).
 name: "sdlc · audit (Gemini)"
 
 on:
@@ -15,8 +15,6 @@ permissions:
 
 jobs:
   audit-gemini:
-    # Auto on open/reopen, or on the agent:audit label. (label.name is null on open events.)
-    # dependabot-actor runs get Dependabot's (empty) secret store — agent can't auth, so skip
     # 1. dependabot never audits — those runs get Dependabot's (empty) secret store,
     #    so the agent cannot authenticate at all. Capability, not cost.
     # 2. On `synchronize` only, bot pushes are skipped: the fix loop commits once per

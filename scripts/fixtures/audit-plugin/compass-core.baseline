@@ -16,3 +16,6 @@ skills/harden/SKILL.md	permission-escalation
 hooks/lib/policy.sh	hook-remote-exec
 hooks/lib/policy.sh	settings-manipulation
 hooks/lib/policy.sh	hook-config-write
+# pr-shepherd documents a human-granted merge authority ("--merge to grant merge");
+# that is the intended, gated feature, not an escalation by the plugin.
+commands/pr-shepherd.md	permission-escalation

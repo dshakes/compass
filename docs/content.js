@@ -118,7 +118,7 @@ Config is the one part of an agent system that never gets refactored, because it
 
 <div class="tiles">
 <div class="tile"><b>100/100</b><span>guardrail P/R</span></div>
-<div class="tile"><b>100/100</b><span>red-team · 99 cases</span></div>
+<div class="tile"><b>100/100</b><span>red-team · 101 cases</span></div>
 <div class="tile"><b>96.9%</b><span>router accuracy</span></div>
 <div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
 </div>
@@ -465,7 +465,7 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 
 <div class="tiles">
 <div class="tile"><b>100%</b><span>precision / recall</span></div>
-<div class="tile"><b>99</b><span>labeled cases</span></div>
+<div class="tile"><b>101</b><span>labeled cases</span></div>
 <div class="tile"><b>329/329</b><span>robust under obfuscation</span></div>
 </div>
 
@@ -482,9 +482,9 @@ Run \`compass redteam\` to reproduce the score — and to scan *this* repo's con
 | Suite | Cases | Precision | Recall |
 |---|---|---|---|
 | Guardrail | 61 | 100% | 100% |
-| Red-team (internal) | 99 | 100% | 100% |
+| Red-team (internal) | 101 | 100% | 100% |
 | Red-team (external, public corpus) | 546 | 90% | 8%* |
-| Router | 44 | — | 96.9% acc |
+| Router | 32 | — | 96.9% acc |
 
 <div class="tiles">
 <div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
@@ -538,7 +538,7 @@ compass route "fix a typo"                 # → haiku
 \`\`\`
 
 <div class="tiles">
-<div class="tile"><b>96.9%</b><span>routing accuracy · 86 cases</span></div>
+<div class="tile"><b>96.9%</b><span>routing accuracy · 32 cases</span></div>
 <div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
 <div class="tile"><b>96.9%</b><span>routing accuracy</span></div>
 </div>

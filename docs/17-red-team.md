@@ -83,11 +83,11 @@ data) and **log** to the audit trail (`compass audit-log`). They never silently 
 detectors and gates in CI via `compass doctor`:
 
 ```
-redteam corpus: 99 cases — TP=... FP=0 TN=... FN=0
+redteam corpus: 101 cases — TP=... FP=0 TN=... FN=0
 precision=100% (floor 100%)  recall=100% (floor 90%)
 ```
 
-(99 total: 83 file-based rows + 16 programmatic assertions covering invisible unicode, encoding
+(101 total: 85 file-based rows + 16 programmatic assertions covering invisible unicode, encoding
 evasions, config-override, malware-intent, and insecure-code families. Run
 `compass redteam --eval` to reproduce the live numbers.)
 
@@ -160,7 +160,7 @@ CI — so you can measure your own setup, not take a vendor's word:
 
 | Dataset | Cases | What it proves | Run |
 |---|---|---|---|
-| `scripts/redteam-corpus.tsv` | 83 file + 16 programmatic = 99 scored | injection / override / malware / insecure-code precision & recall | `compass redteam --eval` |
+| `scripts/redteam-corpus.tsv` | 85 file + 16 programmatic = 101 scored | injection / override / malware / insecure-code precision & recall | `compass redteam --eval` |
 | `scripts/guardrail-corpus.tsv` | 61 | catastrophic-command + secret-write precision & recall | `compass bench --guardrail` |
 | deepset/prompt-injections (external) | 546 train rows (203 inject, 343 safe) | external, unbiased precision & recall; how compass fares against attacks it did not author | `compass redteam --external` |
 

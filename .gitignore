@@ -33,3 +33,8 @@ router/classifier.model
 router/router.local.json
 router/*.model
 claude/settings.merged.json.bak-*
+
+# local clutter that makes sync-plugin --check dirty
+claude/skills/synced/
+*.bak-distil
+.enable-dry.txt

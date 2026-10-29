@@ -121,11 +121,11 @@ unset COMPASS_MAX_USD COMPASS_MAX_USD_DAY; rm -f "$LEDGER"
 
 # ── Transcript JSONL fallback (headless / no statusline breadcrumb) ───────────────────────────
 # Fixture: 1 assistant message, claude-sonnet-5, 1000 input + 500 output tokens.
-# Cost: 1000×$0.000003 + 500×$0.000015 = $0.003 + $0.0075 = $0.010500
+# Cost: 1500×$0.000002 + 750×$0.00001 = $0.003 + $0.0075 = $0.010500
 TFILE="$HOME_TMP/transcript-fixture.jsonl"
 cat > "$TFILE" <<'EOF'
 {"type":"user","message":{"role":"user","content":"hello"}}
-{"type":"assistant","message":{"model":"claude-sonnet-5-20251201","role":"assistant","usage":{"input_tokens":1000,"output_tokens":500,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
+{"type":"assistant","message":{"model":"claude-sonnet-5-20251201","role":"assistant","usage":{"input_tokens":1500,"output_tokens":750,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
 EOF
 
 allow_t() {
@@ -146,6 +146,18 @@ unset COMPASS_MAX_USD; clear_spent
 export COMPASS_MAX_USD=0.01;  block_t "transcript \$0.0105 >= \$0.01 cap → block"
 export COMPASS_MAX_USD=0.05;  allow_t "transcript \$0.0105 < \$0.05 cap → allow"
 unset COMPASS_MAX_USD
+
+# Same tokens on legacy Opus 4.1 ($15/$75) = $0.07875; flat newest-Opus pricing ($4/$20)
+# would say $0.021 and let it through. An unknown id must price at the max too.
+for mid in claude-opus-4-1-20250805 some-future-model; do
+  sed "s/claude-sonnet-5-20251201/$mid/" "$TFILE" > "$TFILE.$$" && mv "$TFILE.$$" "$TFILE.$mid"
+done
+TFILE0="$TFILE"
+echo 'transcript fallback: legacy / unknown model ids never under-count:'
+export COMPASS_MAX_USD=0.05; clear_spent
+TFILE="$TFILE0.claude-opus-4-1-20250805"; block_t "legacy Opus 4.1 \$0.07875 >= \$0.05 cap → block"
+TFILE="$TFILE0.some-future-model";       block_t "unknown model priced at max → block"
+TFILE="$TFILE0"; unset COMPASS_MAX_USD
 
 echo "transcript fallback: missing transcript file → fail open:"
 export COMPASS_MAX_USD=0.005; clear_spent
