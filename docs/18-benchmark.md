@@ -39,8 +39,8 @@ that some novel phrasings will slip — they should be contributed back as new c
 ### 2. Red-team corpus — `scripts/redteam-corpus.tsv`
 
 Tests the `injection_findings` detector (prompt-injection, context-poisoning,
-safety-override, malware-intent, insecure-code patterns). **101 labeled cases**
-(85 file-based + 16 programmatic assertions covering invisible unicode, encoding evasions,
+safety-override, malware-intent, insecure-code patterns). **288 labeled cases**
+(file-based rows across 11 attack classes + programmatic assertions covering invisible unicode, encoding evasions,
 config-override, malware-intent, and insecure-code families).
 
 ```
@@ -102,7 +102,7 @@ compass redteam --json
 | Corpus | Cases | Precision | Recall | Notes |
 |---|---|---|---|---|
 | Guardrail | 61 | 100% | 100% | floor: 100% P / 95% R |
-| Red-team | 101 | 100% | 100% | floor: 100% P / 90% R |
+| Red-team | 288 | 100% | 100% | floor: 100% P / 90% R |
 | Red-team adversarial | 155+ transforms | 100% | 100% | floor: 80% robustness |
 | Router | 62 (32 base · 15 holdout · 15 adversarial) | — | — | gated accuracy 97.9% (base + holdout); floor 90% |
 
@@ -269,7 +269,7 @@ leetspeak and homoglyph lookalikes before matching — so the five standard
 transforms score 100% on the corpus. A sixth, novel transform can still slip.
 
 **Corpus recall is on the corpus, not the real-world attack distribution.** 100%
-recall on 101 cases does not mean 100% real-world catch rate — as the external
+recall on 288 cases does not mean 100% real-world catch rate — as the external
 corpus (`compass redteam --external`, ~8% recall on a public set) makes plain.
 The internal corpus is the fast, always-on floor; the external run and periodic
 deep sweeps against a running agent endpoint provide complementary, honest coverage.
