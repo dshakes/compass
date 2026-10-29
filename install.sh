@@ -111,7 +111,7 @@ place_settings() {
   place "$src" "$CLAUDE_DST/settings.json"
 }
 
-chmodx() { [ "$DRY" = 1 ] && return; find "$1" -name '*.sh' -exec chmod +x {} + 2>/dev/null || true; }
+chmodx() { [ "$DRY" = 1 ] && return; find "$1" -name '*.sh' -not -path '*/fixtures/*' -exec chmod +x {} + 2>/dev/null || true; }
 
 # Bake the `compass` CLI onto PATH: symlink into ~/.local/bin (repo-location-independent)
 # and, if that dir isn't on PATH, add it to the shell rc once (marker-tagged for clean removal).

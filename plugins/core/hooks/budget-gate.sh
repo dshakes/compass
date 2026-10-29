@@ -109,7 +109,7 @@ try:
    m=(msg.get("model") or "").lower()
    r=next(v for k,v in P if re.search(k,m))
    u=msg.get("usage") or {}
-   t+=(u.get("input_tokens",0)*r[0]+u.get("output_tokens",0)*r[1]+u.get("cache_creation_input_tokens",0)*r[2]+u.get("cache_read_input_tokens",0)*r[3])/1e6
+   t+=((u.get("input_tokens") or 0)*r[0]+(u.get("output_tokens") or 0)*r[1]+(u.get("cache_creation_input_tokens") or 0)*r[2]+(u.get("cache_read_input_tokens") or 0)*r[3])/1e6
 except: pass
 print("%.6f"%t)
 ' "$TPATH" 2>/dev/null)" || TUSD=""
