@@ -22,6 +22,10 @@ chk "record lists ~/.claude/hooks symlink" jq -e --arg p "$HOME/.claude/hooks" '
 n1="$(jq '.paths | length' "$REC")"
 "$REPO/install.sh" --claude-only >/dev/null 2>&1
 chk "re-install is idempotent (same path count)" test "$(jq '.paths | length' "$REC")" = "$n1"
+echo '{not json' >"$REC"
+"$REPO/install.sh" --claude-only >/dev/null 2>&1; rc=$?
+chk "corrupt record → install still completes with a fresh record" test "$rc" = 0 -a "$(jq '.paths | length' "$REC" 2>/dev/null)" = "$n1"
+rm -f "$HOME/.compass"/install.json.corrupt.*
 
 echo "repair"
 rm "$HOME/.claude/hooks" "$HOME/.claude/skills"; ln -s "$T/nowhere" "$HOME/.claude/skills"      # missing + dangling
