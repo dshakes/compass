@@ -56,7 +56,7 @@ Run first: `claude plugin validate plugins/core`, `scripts/sync-plugin.sh --chec
 `make doctor`, and `compass verify` on the tag you are listing.
 
 - **Claude Code**: users add the repo as a marketplace (`/plugin marketplace add dshakes/compass`,
-  then `/plugin install core@compass`). For a curated directory, submit through that directory's
+  then `/plugin install compass@compass`). For a curated directory, submit through that directory's
   own form; the manifests are `.claude-plugin/marketplace.json` and `plugins/core/.claude-plugin/plugin.json`.
 - **Codex**: users add the repo with `codex plugin marketplace add dshakes/compass`, then `/plugin install`.
   Confirm that path works against the tag you are listing before pointing anyone at it.
