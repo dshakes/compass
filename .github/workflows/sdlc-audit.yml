@@ -1,7 +1,7 @@
 # Auditor (Codex) — independent cross-audit. Runs automatically when a PR opens (an
 # independent second opinion to the Claude reviewer) and on demand via the `agent:audit`
 # label. Read-only; posts Codex's verdict as a PR comment. Needs secret OPENAI_API_KEY.
-# Not on `synchronize`, so the fix loop's pushes don't re-spend Codex credits each round.
+# Also on `synchronize` (human pushes only — bot pushes skipped, see the `if:` below).
 name: "sdlc · audit (Codex)"
 
 on:
@@ -14,8 +14,6 @@ permissions:
 
 jobs:
   audit:
-    # Auto on open/reopen, or on the agent:audit label. (label.name is null on open events.)
-    # dependabot-actor runs get Dependabot's (empty) secret store — agent can't auth, so skip
     # 1. dependabot never audits — those runs get Dependabot's (empty) secret store,
     #    so the agent cannot authenticate at all. Capability, not cost.
     # 2. On `synchronize` only, bot pushes are skipped: the fix loop commits once per
