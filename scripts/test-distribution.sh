@@ -40,8 +40,10 @@ echo mine >"$HOME/.claude/my-notes.txt"
 rm "$HOME/.claude/commands"; mkdir "$HOME/.claude/commands"; echo mine >"$HOME/.claude/commands/x.md"
 "$REPO/scripts/uninstall.sh" --dry-run >/dev/null 2>&1
 test -L "$HOME/.claude/hooks" && test -f "$REC" && ok "uninstall --dry-run changes nothing" || no "uninstall --dry-run changes nothing"
+ln -sfn "$REPO/claude/settings.merged.json" "$HOME/.claude/settings.json"   # what `compass profile strict` does
 "$REPO/scripts/uninstall.sh" >/dev/null 2>&1
 test ! -e "$HOME/.claude/hooks" && test ! -e "$HOME/.local/bin/compass" && ok "recorded links removed" || no "recorded links removed"
+test ! -L "$HOME/.claude/settings.json" && ok "profile-repointed settings.json still removed" || no "profile-repointed settings.json still removed"
 test -f "$HOME/.claude/my-notes.txt" && test -f "$HOME/.claude/commands/x.md" && ok "user files + replaced dirs untouched" || no "user files + replaced dirs untouched"
 test ! -e "$REC" && ok "record removed" || no "record removed"
 chmod -R u+w "$HOME" 2>/dev/null; rm -rf "$HOME/.claude" "$HOME/.local" "$HOME/.compass"
