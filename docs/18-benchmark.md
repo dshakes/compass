@@ -40,7 +40,7 @@ that some novel phrasings will slip — they should be contributed back as new c
 
 Tests the `injection_findings` detector (prompt-injection, context-poisoning,
 safety-override, malware-intent, insecure-code patterns). **101 labeled cases**
-(83 file-based + 16 programmatic assertions covering invisible unicode, encoding evasions,
+(85 file-based + 16 programmatic assertions covering invisible unicode, encoding evasions,
 config-override, malware-intent, and insecure-code families).
 
 ```

@@ -76,7 +76,7 @@ grep -ohiE 'routing accuracy · [0-9]+ cases' "$f" | grep -oE '[0-9]+ cases' | s
 grep -ohiE '[0-9]+-case eval set' "$f" | grep -oE '[0-9]+' | sed "s|^|$rv |; s|\$| cases|"
 grep -ohE '\| Router \| [0-9]+ \|' "$f" | grep -oE '[0-9]+' | sed "s|^|$rv |; s|\$| cases|"
 grep -ohE '\| Red-team \(internal\) \| [0-9]+ \||= [0-9]+ scored|\([0-9]+ total: ' "$f" | grep -oE '[0-9]+' | sed "s|^|$rt |; s|\$| cases|"
-grep -ohE '[0-9]+ file(-based rows)? \+' "$f" | grep -oE '^[0-9]+' | sed "s|^|$rf |; s|\$| corpus-rows|"; } |
+grep -ohE '[0-9]+ file(-based)?( rows)? \+' "$f" | grep -oE '^[0-9]+' | sed "s|^|$rf |; s|\$| corpus-rows|"; } |
 while read -r want got _; do [ "$want" = "$got" ] || echo "$f quotes $got cases, corpus has $want"; done
 done > /tmp/_counts.$$
 # Catch-all for phrasings the per-corpus patterns above don't know: every "N cases" /
