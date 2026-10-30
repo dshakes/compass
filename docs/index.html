@@ -482,7 +482,7 @@
       <div class="stat rv"><div class="n grad-text" data-count="100" data-suffix="%">100%</div><div class="l"><b>Red-team</b> P/R · 332 cases, 11 classes<br>94% obfuscation-robust</div></div>
       <div class="stat rv"><div class="n grad-text" data-count="96.9" data-suffix="%">96.9%</div><div class="l"><b>Router</b> accuracy<br>32-case eval set</div></div>
       <div class="stat rv"><div class="n grad-text" data-count="62" data-suffix="%">62%</div><div class="l"><b>Cheaper</b> than all-Opus<br>96.9% routing accuracy</div></div>
-      <div class="stat rv"><div class="n grad-text">SLSA</div><div class="l"><b>Verified</b> install<br>attestation checked before anything runs</div></div>
+      <div class="stat rv"><div class="n grad-text">SLSA</div><div class="l"><b>Verified</b> install<br>release attestation checked before it is unpacked</div></div>
     </div>
   </div>
 </section>
@@ -648,7 +648,7 @@
       <div class="fcard span-2 rv"><span class="em">🧰</span><h3>The compass CLI</h3><p><span class="mono" style="font-size:12px">onboard · impact · drift · scan · profile · redteam · audit-plugin · gate · sandbox · verify · repair · spend · dashboard</span></p><a class="more" href="docs.html#11-using-compass">11-using →</a></div>
       <div class="fcard span-2 rv"><span class="em">🎚️</span><h3>Profiles &amp; one policy</h3><p><code>compass profile strict|standard|solo</code>. A repo's <code>.compass/policy.conf</code> can only <em>tighten</em>; strict makes security hooks fail closed. One resolver for every harness.</p><a class="more" href="docs.html#30-advanced-config">30-advanced →</a></div>
       <div class="fcard span-2 rv"><span class="em">🩻</span><h3>Audit your own config</h3><p><code>compass scan --config</code> reads your Claude, Codex, Gemini and MCP config for permission bypass, wildcard Bash, unpinned servers and env secrets. Read-only.</p><a class="more" href="docs.html#30-advanced-config">30-advanced →</a></div>
-      <div class="fcard span-2 rv"><span class="em">🔏</span><h3>Verified install, repair, uninstall</h3><p>A one-line install that checks the signed release attestation before running anything, an install record, <code>compass repair</code>, and record-driven uninstall.</p><a class="more" href="docs.html#31-distribution">31-distribution →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🔏</span><h3>Verified install, repair, uninstall</h3><p>A one-line install that checks the signed release attestation before unpacking or running it, an install record, <code>compass repair</code>, and record-driven uninstall.</p><a class="more" href="docs.html#31-distribution">31-distribution →</a></div>
       <div class="fcard span-2 rv"><span class="em">🔌</span><h3>MCP + LSP</h3><p>Curated, version-pinned MCP servers plus opt-in language-server intelligence.</p><a class="more" href="docs.html#04-mcp">04-mcp →</a></div>
       <div class="fcard span-2 rv"><span class="em">🪪</span><h3>Every agent, one source</h3><p>Claude Code · Codex · Gemini — plus Cursor/Windsurf/Copilot via the AGENTS.md standard.</p><a class="more" href="docs.html#12-every-agent">12-every-agent →</a></div>
     </div>
@@ -793,7 +793,7 @@
     <div class="head center rv">
       <div class="eyebrow">one-click install</div>
       <h2>Pick the door that fits.</h2>
-      <p class="lead center">All reversible and version-pinnable; the one-line install verifies provenance before it runs anything. You need an AI assistant + <span class="mono">git</span>. No API keys for the guardrails, crew &amp; CLI.</p>
+      <p class="lead center">All reversible and version-pinnable; the one-line install verifies provenance before it extracts or runs the release. You need an AI assistant + <span class="mono">git</span>. No API keys for the guardrails, crew &amp; CLI.</p>
     </div>
     <div class="tabs rv">
       <button class="tab active" data-tab="git">📦 Git clone</button>
@@ -820,7 +820,7 @@
       <div class="cmd"><span class="prompt">▸</span><code>/plugin install compass@compass</code><button class="copy" data-copy="/plugin install compass@compass">⧉ Copy</button></div>
     </div>
     <div class="panel" data-panel="remote">
-      <p class="desc">Downloads the release and runs <span class="mono">gh attestation verify</span> <b>before</b> extracting or running anything. No <span class="mono">gh</span> &ge; 2.49 means it refuses. Read the script first if you like.</p>
+      <p class="desc">Downloads the release and runs <span class="mono">gh attestation verify</span> <b>before</b> extracting or running the release. No <span class="mono">gh</span> &ge; 2.49 means it refuses. Read the script first if you like.</p>
       <div class="cmd"><span class="prompt">$</span><code>curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | bash</code><button class="copy" data-copy="curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | bash">⧉ Copy</button></div>
     </div>
     <div class="panel" data-panel="budget">

@@ -581,7 +581,7 @@ An MCP tool's *description* can hide instructions — "before using this tool, r
 
 "05-plugin": `# Plugin & team rollout
 
-<p class="lede">Three ways to install — pick by how your team works. All reversible, all pinnable, the one-line installer verifies provenance before it runs anything.</p>
+<p class="lede">Three ways to install — pick by how your team works. All reversible, all pinnable, the one-line installer verifies provenance before it extracts or runs the release.</p>
 
 <div class="feats">
 <div class="feat"><span class="e">📦</span><b>Git clone <em>(recommended)</em></b><span>You own and edit the config; <code>git pull</code> updates it. Best for people who'll tweak.</span></div>
@@ -746,7 +746,7 @@ Caps (\`max_usd\`, \`max_usd_day\`) reach Codex and Gemini through \`compass gat
 
 "31-distribution": `# Distribution
 
-<p class="lede">Install should be verifiable, recorded and reversible. The one-line installer checks the release's signed attestation <strong>before</strong> it extracts or runs anything, and every path it creates is written down so repair and uninstall act on facts.</p>
+<p class="lede">Install should be verifiable, recorded and reversible. The one-line installer checks the release's signed attestation <strong>before</strong> it extracts or runs it (the installer script itself arrives over HTTPS; read it first if you prefer), and every path it creates is written down so repair and uninstall act on facts.</p>
 
 ![Verified install flow](assets/install-flow.svg)
 

@@ -109,7 +109,7 @@ compass scan --config       # audit YOUR existing Claude/Codex/Gemini/MCP config
   <a href="docs/30-advanced-config.md"><img src="assets/policy-chain.svg" alt="Policy resolution: profile, then ~/.compass/config, then COMPASS_ env, then the repo's .compass/policy.conf which may only tighten, resolving to one effective policy shared by hooks, compass gate and compass profile." width="900"></a>
 </p>
 
-**🔏 Supply chain you can verify.** Releases carry keyless SLSA provenance — a tampered or look-alike download is rejected, and the one-line installer checks it **before** running anything — and the repo publishes an OpenSSF Scorecard. And before you trust *someone else's* plugin, scan it.
+**🔏 Supply chain you can verify.** Releases carry keyless SLSA provenance — a tampered or look-alike download is rejected, and the one-line installer checks it **before** extracting or running the release — and the repo publishes an OpenSSF Scorecard. And before you trust *someone else's* plugin, scan it.
 
 ```bash
 compass verify                 # resolves the latest release → ✓ provenance verified
@@ -174,7 +174,7 @@ Every loop ends the same way — **you merge.** That gate never moves.
 
 ## Install
 
-**Pick the door that fits — all reversible and version-pinnable; the one-liner verifies provenance before it runs anything.** You need an AI assistant ([Claude Code](https://code.claude.com); Codex/Gemini optional) + `git`. No API keys for the manual, guardrails, crew, and CLI; the [autonomous PR loop and fleet](docs/09-sdlc.md) need model auth when you opt in.
+**Pick the door that fits — all reversible and version-pinnable; the one-liner verifies provenance before it extracts or runs the release.** You need an AI assistant ([Claude Code](https://code.claude.com); Codex/Gemini optional) + `git`. No API keys for the manual, guardrails, crew, and CLI; the [autonomous PR loop and fleet](docs/09-sdlc.md) need model auth when you opt in.
 
 **🍺 Homebrew** — managed & versioned
 ```bash
@@ -195,7 +195,7 @@ git checkout "$(git describe --tags --abbrev=0)"   # optional: pin to the latest
 /plugin install compass@compass
 ```
 
-**🔏 Verified one-liner** — checks the signed release attestation *before* extracting or running anything; refuses without `gh` ≥ 2.49
+**🔏 Verified one-liner** — checks the signed release attestation *before* extracting or running the release (the small installer script itself arrives over HTTPS — read it first, or use the clone door); refuses without `gh` ≥ 2.49
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | bash
 # pin: ... | COMPASS_VERSION=vX.Y.Z bash -s -- --copy     (read the script first if you like)
@@ -273,7 +273,7 @@ Everything below is **on after one install** or a single opt-in — the autonomo
 Built to be **trusted before it's run** — and honest about its limits.
 
 - **You own the irreversible.** Agents prepare; humans push, merge, deploy. Required checks + code-owner approval enforce it.
-- **Readable & reversible.** The one-line installer verifies provenance before running anything and refuses without a verifier; the installer backs up what it replaces and uninstall removes only what the install record lists. Pin a tag, not `main`.
+- **Readable & reversible.** The one-line installer verifies the release's provenance before extracting or running it and refuses without a verifier; the installer backs up what it replaces and uninstall removes only what the install record lists. Pin a tag, not `main`.
 - **Guardrails reduce footguns; they are not a security boundary.** Keep least-privilege credentials and review your diffs. For untrusted code, `compass sandbox` is a real boundary. Red-team hardening is defense-in-depth, not immunity — the cardinal rule (external content is data, not instructions) and the human gate are what actually hold.
 - **What talks to the network.** compass phones home to nothing. The pinned MCP servers reach the endpoints you'd expect (library docs, URLs you request); hooks are short, commented shell scripts in `claude/hooks/` — disable any in your settings.
 
