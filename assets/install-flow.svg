@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 320" width="920" font-family="'Space Grotesk',system-ui,sans-serif" role="img" aria-label="compass verified install: download the release tarball, verify its signed attestation before extracting anything, refuse and install nothing if verification fails, otherwise install.sh writes an install record that repair and uninstall use.">
+  <defs>
+    <linearGradient id="rail" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a371f7"/><stop offset=".5" stop-color="#5b9dff"/><stop offset="1" stop-color="#2ee6cf"/></linearGradient>
+    <radialGradient id="pulse" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="rgba(196,165,255,.7)"/><stop offset="1" stop-color="rgba(91,157,255,0)"/></radialGradient>
+    <style>text{fill:#e9ecf3}.m{font-family:ui-monospace,'JetBrains Mono',monospace}.mut{fill:#98a2b6}.dim{fill:#6b7488}</style>
+  </defs>
+
+  <rect x="1" y="1" width="918" height="318" rx="18" fill="#0b0d13" stroke="rgba(255,255,255,.09)"/>
+  <text x="30" y="42" font-size="17" font-weight="700">🧭 compass · verified install</text>
+  <text x="30" y="63" class="m mut" font-size="12">install-remote.sh — verify BEFORE extracting or running; fail closed; every created path is recorded</text>
+  <line x1="110" y1="205" x2="830" y2="205" stroke="url(#rail)" stroke-width="3" opacity=".45"/>
+  <line x1="110" y1="205" x2="830" y2="205" stroke="url(#rail)" stroke-width="3" stroke-dasharray="1.5 11" opacity=".9"/>
+  <circle r="15" fill="url(#pulse)"><animateMotion dur="3.4s" repeatCount="indefinite" path="M110,205 H830"/></circle>
+  <circle r="3.5" fill="#fff"><animateMotion dur="3.4s" repeatCount="indefinite" path="M110,205 H830"/></circle>
+  <path d="M830,175 L830,120" stroke="#3ad07f" stroke-width="1.4" opacity=".7"/>
+  <g><rect x="168" y="282" width="244" height="28" rx="9" fill="rgba(255,107,107,.10)" stroke="#ff6b6b" stroke-width="1.3"/><text x="290" y="300" text-anchor="middle" class="m" font-size="11.5" fill="#ff6b6b">no gh / bad attestation → refuse</text></g>
+  <g><rect x="686" y="86" width="218" height="34" rx="9" fill="rgba(58,208,127,.10)" stroke="#3ad07f" stroke-width="1.3"/><text x="795" y="108" text-anchor="middle" class="m" font-size="11.5" fill="#3ad07f">compass repair · uninstall</text></g>
+  <g text-anchor="middle">
+    <g><circle cx="110" cy="205" r="30" fill="#0f1219" stroke="url(#rail)" stroke-width="2.5"/><text x="110" y="213" font-size="20">📦</text><text x="110" y="252" font-size="13.5" font-weight="600">Download</text><text x="110" y="270" class="m dim" font-size="9.5">release tarball</text></g>
+    <g><circle cx="290" cy="205" r="30" fill="#0f1219" stroke="url(#rail)" stroke-width="2.5"/><text x="290" y="213" font-size="20">🔏</text><text x="290" y="252" font-size="13.5" font-weight="600">Verify</text><text x="290" y="270" class="m dim" font-size="9.5">gh attestation</text></g>
+    <g><circle cx="470" cy="205" r="30" fill="#0f1219" stroke="url(#rail)" stroke-width="2.5"/><text x="470" y="213" font-size="20">📂</text><text x="470" y="252" font-size="13.5" font-weight="600">Unpack</text><text x="470" y="270" class="m dim" font-size="9.5">~/.compass/src</text></g>
+    <g><circle cx="650" cy="205" r="30" fill="#0f1219" stroke="url(#rail)" stroke-width="2.5"/><text x="650" y="213" font-size="20">🛠️</text><text x="650" y="252" font-size="13.5" font-weight="600">install.sh</text><text x="650" y="270" class="m dim" font-size="9.5">symlink or copy</text></g>
+    <g><circle cx="830" cy="205" r="33" fill="#0f1219" stroke="url(#rail)" stroke-width="2.5"/><text x="830" y="213" font-size="20">🧾</text><text x="830" y="252" font-size="13.5" font-weight="600">Record</text><text x="830" y="270" class="m dim" font-size="9.5">install.json</text></g>
+  </g>
+</svg>

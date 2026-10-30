@@ -31,7 +31,7 @@ Guardrails, a hard budget cap, and a self-fixing PR loop for your AI coding agen
 **compass is a local-first config layer for Claude Code, Codex & Gemini that stops your agent from doing three things it shouldn't** — burning your budget, running unsafe commands, and merging unverified code. Set `COMPASS_MAX_USD=5` and the session hard-stops at the cap; catastrophic commands are blocked before they run — and the guardrail policy is scored **100/100 in CI against a labeled corpus, not asserted.** You install it once, and **you always merge.**
 
 ```bash
-# no curl|sh, fully reversible — then just open any repo in your agent
+# read-then-run, fully reversible — then just open any repo in your agent
 git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && ./quickstart.sh
 # or, inside Claude Code:   /plugin marketplace add dshakes/compass
 ```
@@ -73,10 +73,11 @@ compass bench     # → guardrail 100% precision/recall (61-case bench corpus; a
 # then ask the agent to `rm -rf /` or write a .env → denied; `rm -rf ./build` → allowed
 ```
 
-**🧪 Red-team resistance, measured.** Prompt-injection (direct/indirect/paste), agent-config poisoning, local safety-override, malware & insecure-code — scored against a labeled corpus that gates CI, obfuscation-resistant (`--attack`), with optional escalation to a managed guardrails backend. *A poisoned repo or web page can't quietly turn your agent against you — and you can measure how well that holds.*
+**🧪 Red-team resistance, measured.** Prompt-injection (direct/indirect/paste), agent-config poisoning, local safety-override, malware & insecure-code — scored against a labeled corpus that gates CI, obfuscation-resistant (`--attack`), with optional escalation to a managed guardrails backend. *A poisoned repo or web page can't quietly turn your agent against you — and you can measure how well that holds.* 332 cases across 11 attack classes, scored **per class** (not one blended number), with hard negatives and 5 documented known gaps.
 
 ```bash
-compass redteam            # → injection corpus 100% P/R (332 cases) + 100% obfuscation-robust, then scans THIS repo's config/MCP/settings
+compass redteam            # → injection corpus 100% P/R (332 cases) + 94% obfuscation-robust (1211/1281), then scans THIS repo's config/MCP/settings
+compass redteam --detector ./my-guardrail.sh   # → benchmark ANY guardrail on the same corpus (stdin payload, exit 0 = clean), same per-class table
 compass redteam --external # → score the detectors against a public corpus we DIDN'T write (honest: 90% precision, and we tell you why recall is what it is)
 ```
 <sub>Most tools show you 100% on their own test set. We show that too — <b>and</b> the number against someone else's corpus, because a floor you can only hit on your own cases isn't a floor.</sub>
@@ -86,6 +87,7 @@ compass redteam --external # → score the detectors against a public corpus we 
 ```bash
 export COMPASS_MAX_USD=5     # this session hard-stops at $5 — blocked, not warned
 compass spend --max-usd 5    # the same ceiling on the ledger, for scheduled / fleet runs
+./install.sh --only budget   # just the interactive-session cap, nothing else touched (docs/31)
 ```
 
 **📉 Cost routing that's measured.** Cheap work goes to cheap models — **~62% cheaper than all-Opus at 96.9% routing accuracy** on the 32-case routing evalset, with the pricing table and token assumptions stated in the output. Run the number, don't take it.
@@ -96,7 +98,18 @@ compass route "fix a typo"                 # → haiku
 compass bench                              # → routed vs all-Opus: ~62% cheaper (assumptions printed)
 ```
 
-**🔏 Supply chain you can verify.** Releases carry keyless SLSA provenance — a tampered or look-alike download is rejected — and the repo publishes an OpenSSF Scorecard. And before you trust *someone else's* plugin, scan it.
+**🎚 One policy, tighten-only.** `compass profile strict|standard|solo` picks a preset; a repo's `.compass/policy.conf` can only make rules **stricter** (lower a cap, turn a scan on) — a project can't grant itself an exception. Under `strict`, security hooks **fail closed**: a guardrail that crashes or times out blocks instead of waving the action through. One resolver serves every harness, so `compass gate` holds Codex and Gemini to the same spend caps.
+
+```bash
+compass profile strict      # show/select; REJECTED lists any repo override that tried to loosen
+compass scan --config       # audit YOUR existing Claude/Codex/Gemini/MCP config (read-only; exits 1 on HIGH)
+```
+
+<p align="center">
+  <a href="docs/30-advanced-config.md"><img src="assets/policy-chain.svg" alt="Policy resolution: profile, then ~/.compass/config, then COMPASS_ env, then the repo's .compass/policy.conf which may only tighten, resolving to one effective policy shared by hooks, compass gate and compass profile." width="900"></a>
+</p>
+
+**🔏 Supply chain you can verify.** Releases carry keyless SLSA provenance — a tampered or look-alike download is rejected, and the one-line installer checks it **before** extracting or running the release — and the repo publishes an OpenSSF Scorecard. And before you trust *someone else's* plugin, scan it.
 
 ```bash
 compass verify                 # resolves the latest release → ✓ provenance verified
@@ -161,7 +174,7 @@ Every loop ends the same way — **you merge.** That gate never moves.
 
 ## Install
 
-**Pick the door that fits — all reversible, version-pinnable, no `curl | sh`.** You need an AI assistant ([Claude Code](https://code.claude.com); Codex/Gemini optional) + `git`. No API keys for the manual, guardrails, crew, and CLI; the [autonomous PR loop and fleet](docs/09-sdlc.md) need model auth when you opt in.
+**Pick the door that fits — all reversible and version-pinnable; the one-liner verifies provenance before it extracts or runs the release.** You need an AI assistant ([Claude Code](https://code.claude.com); Codex/Gemini optional) + `git`. No API keys for the manual, guardrails, crew, and CLI; the [autonomous PR loop and fleet](docs/09-sdlc.md) need model auth when you opt in.
 
 **🍺 Homebrew** — managed & versioned
 ```bash
@@ -182,6 +195,17 @@ git checkout "$(git describe --tags --abbrev=0)"   # optional: pin to the latest
 /plugin install compass@compass
 ```
 
+**🔏 Verified one-liner** — checks the signed release attestation *before* extracting or running the release (the small installer script itself arrives over HTTPS — read it first, or use the clone door); refuses without `gh` ≥ 2.49
+```bash
+curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | bash
+# pin: ... | COMPASS_VERSION=vX.Y.Z bash -s -- --copy     (read the script first if you like)
+```
+
+**💸 Budget cap only** — the interactive-session spend cap and nothing else (edits nothing in `~/.claude`; add one hook, see [docs/31](docs/31-distribution.md))
+```bash
+./install.sh --only budget && export COMPASS_MAX_USD=5
+```
+
 **🛠️ By hand:** `make dry-run` (preview) → `make install` → `make doctor`. → [Team rollout](docs/05-plugin.md)
 
 **🚀 Put your other repos on it — one command each (or a list):**
@@ -191,7 +215,11 @@ compass enable --schedule owner/repo ~/code/another-repo   # config + PR gates +
                                                            # + twice-daily pr-shepherd (--dry-run to preview)
 ```
 
-> **What install actually does:** replaces your global `~/.claude` config (settings, `CLAUDE.md`, agents, skills, hooks…) with symlinks into the repo — so `git pull`/`brew upgrade` updates everything. Anything it replaces is **backed up first** to `~/.claude/backups/`; `--copy` copies instead of linking; `make uninstall` removes only what it added. Personal overrides (your model, plugins, UI prefs) live in `claude/settings.local.json` — gitignored, deep-merged at install, so your prefs never fight the shipped defaults.
+> **What install actually does:** replaces your global `~/.claude` config (settings, `CLAUDE.md`, agents, skills, hooks…) with symlinks into the repo — so `git pull`/`brew upgrade` updates everything. Anything it replaces is **backed up first** to `~/.claude/backups/`; `--copy` copies instead of linking; `make uninstall` removes exactly what the install record (`~/.compass/install.json`) lists; `compass repair` restores missing links. Personal overrides (your model, plugins, UI prefs) live in `claude/settings.local.json` — gitignored, deep-merged at install, so your prefs never fight the shipped defaults.
+
+<p align="center">
+  <a href="docs/31-distribution.md"><img src="assets/install-flow.svg" alt="Verified install: download the release tarball, verify its attestation before extracting, refuse and install nothing on failure, then install.sh writes an install record used by repair and uninstall." width="900"></a>
+</p>
 
 ### One config, every agent
 
@@ -227,9 +255,11 @@ Everything below is **on after one install** or a single opt-in — the autonomo
 | 🛰️ | **The fleet** | the loop, scheduled across *all* your repos through a test gate; approve from your phone | [14-fleet](docs/14-fleet.md) |
 | 👥 | **The crew + workflows** | cost-tiered expert subagents · slash-commands · dynamic workflows that fact-check each other | [agents roster](docs/agents-roster.md) · [12](docs/12-every-agent.md) · [13](docs/13-workflows.md) |
 | 🛡 | **Guardrails & scanning** | a hook layer that blocks disasters, catches secrets (write-hook + `compass scan`), auto-formats, keeps a JSONL audit log | [16-hardening](docs/16-hardening-and-frontier.md) |
-| 🧪 | **Red-team hardening** | eval-gated defense vs prompt-injection, config poisoning, safety-override, malware & insecure code | [17-red-team](docs/17-red-team.md) |
+| 🧪 | **Red-team hardening** | 332-case, 11-class corpus with per-class P/R; `--detector` benchmarks any guardrail; defends vs prompt-injection, config poisoning, safety-override, malware & insecure code | [17-red-team](docs/17-red-team.md) |
 | 🧭 | **Cost-tier router** | a standalone, reusable module — keyword heuristic → optional classifier → judge cascade; eval-gated | [router/](router/) |
-| 🧰 | **The compass CLI** | `onboard · impact · drift · scan · redteam · audit-plugin · gate · sandbox · verify · audit-log · spend · dashboard` | [11-using](docs/11-using-compass.md) |
+| 🎚 | **Profiles & one policy** | `compass profile strict\|standard\|solo` · tighten-only `.compass/policy.conf` · fail-closed hooks · `compass scan --config` audits your own agent config | [30-advanced](docs/30-advanced-config.md) |
+| 🔏 | **Verified install** | one-line install that verifies the attestation first · install record · `compass repair` · record-driven uninstall · `--only budget` | [31-distribution](docs/31-distribution.md) |
+| 🧰 | **The compass CLI** | `onboard · impact · drift · scan · profile · redteam · audit-plugin · gate · sandbox · verify · repair · audit-log · spend · dashboard` | [11-using](docs/11-using-compass.md) |
 | 🚦 | **Cross-agent enforcement** | `compass gate` — a localhost proxy that hard-caps spend for Codex/Gemini/any SDK, not just Claude Code | [02-cost](docs/02-cost-and-models.md) |
 | 🔍 | **Plugin-security scanner** | `compass audit-plugin` — vet a third-party plugin/marketplace (injection · tool-poisoning · unpinned MCP · fetch-exec) before you install it | [17-red-team](docs/17-red-team.md) |
 | 🔌 | **MCP + LSP** | curated, **version-pinned** MCP servers + opt-in language-server intelligence | [04](docs/04-mcp.md) · [06](docs/06-lsp.md) |
@@ -243,7 +273,7 @@ Everything below is **on after one install** or a single opt-in — the autonomo
 Built to be **trusted before it's run** — and honest about its limits.
 
 - **You own the irreversible.** Agents prepare; humans push, merge, deploy. Required checks + code-owner approval enforce it.
-- **Readable & reversible.** No `curl | sh`; the installer backs up what it replaces and `make uninstall` removes only what it added. Pin a tag, not `main`.
+- **Readable & reversible.** The one-line installer verifies the release's provenance before extracting or running it and refuses without a verifier; the installer backs up what it replaces and uninstall removes only what the install record lists. Pin a tag, not `main`.
 - **Guardrails reduce footguns; they are not a security boundary.** Keep least-privilege credentials and review your diffs. For untrusted code, `compass sandbox` is a real boundary. Red-team hardening is defense-in-depth, not immunity — the cardinal rule (external content is data, not instructions) and the human gate are what actually hold.
 - **What talks to the network.** compass phones home to nothing. The pinned MCP servers reach the endpoints you'd expect (library docs, URLs you request); hooks are short, commented shell scripts in `claude/hooks/` — disable any in your settings.
 
@@ -256,6 +286,8 @@ Built to be **trusted before it's run** — and honest about its limits.
 **[Start here → Using compass](docs/11-using-compass.md)** — install, the pieces in plain language, the daily workflow.
 **[The thesis → Loop engineering](docs/loop-engineering.md)** — why iteration-under-a-gate beats a one-shot guess.
 **[In practice → The five moves](docs/20-loops.md)** — each move of a self-running loop, mapped to the primitive that builds it.
+**[Config → Advanced config](docs/30-advanced-config.md)** — profiles, tighten-only repo overrides, fail-closed hooks, one policy for every harness, `compass scan --config`.
+**[Install → Distribution](docs/31-distribution.md)** — verified one-line install, install record, repair, uninstall, budget-only install.
 **[Fundamentals → The layers](docs/22-the-layers.md)** — prompt/context/harness/loop/graph, dated and evidence-graded, with a rubric for the next one.
 **[Fundamentals → Context](docs/23-context.md)** — the context window as a budget you spend, not a container you fill.
 **[Fundamentals → Harness](docs/24-harness.md)** — everything around the model that isn't the model, and the evidence it moves outcomes more than the model does.

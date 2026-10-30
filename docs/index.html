@@ -407,7 +407,7 @@
           <div class="cmd"><span class="prompt">$</span><code>git clone https://github.com/dshakes/compass ~/compass &amp;&amp; cd ~/compass &amp;&amp; ./quickstart.sh</code><button class="copy" data-copy="git clone https://github.com/dshakes/compass ~/compass && cd ~/compass && ./quickstart.sh">⧉ Copy</button></div>
         </div>
       </div>
-      <div class="cmd-note">native package managers · no <code>curl | sh</code> · fully reversible · asks first</div>
+      <div class="cmd-note">native package managers · verify-first · fully reversible · asks first</div>
       <div class="hero-cta" style="margin-top:26px">
         <a class="btn primary" href="#install">One-click install ↓</a>
         <a class="btn ghost" href="https://github.com/dshakes/compass" target="_blank" rel="noopener">View on GitHub →</a>
@@ -479,10 +479,10 @@
     </div>
     <div class="stats">
       <div class="stat rv"><div class="n grad-text" data-count="100" data-suffix="/100">100/100</div><div class="l"><b>Guardrail</b> precision/recall<br>61-case corpus, in CI</div></div>
-      <div class="stat rv"><div class="n grad-text" data-count="100" data-suffix="%">100%</div><div class="l"><b>Red-team</b> P/R · 332 cases<br>100% obfuscation-robust</div></div>
+      <div class="stat rv"><div class="n grad-text" data-count="100" data-suffix="%">100%</div><div class="l"><b>Red-team</b> P/R · 332 cases, 11 classes<br>94% obfuscation-robust</div></div>
       <div class="stat rv"><div class="n grad-text" data-count="96.9" data-suffix="%">96.9%</div><div class="l"><b>Router</b> accuracy<br>32-case eval set</div></div>
       <div class="stat rv"><div class="n grad-text" data-count="62" data-suffix="%">62%</div><div class="l"><b>Cheaper</b> than all-Opus<br>96.9% routing accuracy</div></div>
-      <div class="stat rv"><div class="n grad-text">SLSA</div><div class="l"><b>Verified</b> supply chain<br>keyless provenance</div></div>
+      <div class="stat rv"><div class="n grad-text">SLSA</div><div class="l"><b>Verified</b> install<br>release attestation checked before it is unpacked</div></div>
     </div>
   </div>
 </section>
@@ -510,10 +510,10 @@
         <div class="term"><div class="bar"><i></i><i></i><i></i></div><div class="body">
           <span class="c">$</span> compass redteam<br>
           <span class="o">→ injection corpus </span><span class="g">100% P/R</span><span class="o"> (332 cases) + 90% on a public corpus</span><br>
-          <span class="o">→ adversarial robustness </span><span class="g">100%</span><span class="o"> (273/273)</span><br>
+          <span class="o">→ adversarial robustness </span><span class="g">94%</span><span class="o"> (1211/1281)</span><br>
           <span class="o">→ scans THIS repo's config · MCP · settings</span>
         </div></div>
-        <p>A poisoned repo or web page can't quietly turn your agent against you — and you can measure how well that holds.</p>
+        <p>A poisoned repo or web page can't quietly turn your agent against you — and you can measure how well that holds. <span class="mono">compass redteam --detector CMD</span> scores <em>any</em> guardrail on the same corpus, per class.</p>
       </div>
       <div class="pcard rv">
         <div class="ph"><span class="e">💸</span><h3>A ceiling that actually stops it</h3></div>
@@ -640,12 +640,15 @@
       <div class="fcard span-3 rv"><span class="em">🔁</span><h3>Autonomous SDLC</h3><p>The review → security → tests → cross-audit → auto-fix → re-review loop on every PR. Parallel reviewers, round-capped fixes, three cross-model gates (Claude review · Codex audit · Gemini audit), a hard <code>SDLC_BUDGET</code> ceiling — then it stops at your merge.</p><a class="more" href="docs.html#09-sdlc">09-sdlc →</a></div>
       <div class="fcard span-3 rv"><span class="em">🛰️</span><h3>The fleet</h3><p>The loop, scheduled across all your repos through a test gate — overnight. Wake up to a PR per repo you can approve from your phone.</p><a class="more" href="docs.html#14-fleet">14-fleet →</a></div>
       <div class="fcard span-2 rv"><span class="em">🛡</span><h3>Guardrails &amp; scanning</h3><p>A hook layer that blocks disasters, catches secrets, auto-formats, and keeps a JSONL audit log.</p><a class="more" href="docs.html#16-hardening-and-frontier">16-hardening →</a></div>
-      <div class="fcard span-2 rv"><span class="em">🧪</span><h3>Red-team hardening</h3><p>Eval-gated defense vs prompt-injection, config poisoning, safety-override, MCP tool-poisoning, malware &amp; insecure code.</p><a class="more" href="docs.html#17-red-team">17-red-team →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🧪</span><h3>Red-team hardening</h3><p>332 labeled cases across 11 attack classes with per-class precision/recall, hard negatives and 5 documented known gaps. Benchmark any guardrail with <code>--detector</code>.</p><a class="more" href="docs.html#17-red-team">17-red-team →</a></div>
       <div class="fcard span-2 rv"><span class="em">🧭</span><h3>Cost-tier router</h3><p>Standalone, reusable: a deterministic keyword tier-picker (eval-gated 96.9%), with an opt-in 9-stage cost-aware engine. Measured, not vibes.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/router">router/ →</a></div>
       <div class="fcard span-2 rv"><span class="em">👥</span><h3>The crew + workflows</h3><p>Cost-tiered expert subagents, slash-commands, and dynamic workflows that fact-check each other.</p><a class="more" href="docs.html#agents-roster">roster →</a></div>
       <div class="fcard span-2 rv"><span class="em">🚦</span><h3>Cross-agent enforcement</h3><p><code>compass gate</code> — a localhost proxy that hard-caps spend for Codex, Gemini, and any SDK, not just Claude Code. The budget wall for every agent.</p><a class="more" href="docs.html#02-cost-and-models">02-cost →</a></div>
       <div class="fcard span-2 rv"><span class="em">🔍</span><h3>Plugin-security scanner</h3><p><code>compass audit-plugin</code> — vet a third-party plugin or marketplace (injection · tool-poisoning · unpinned MCP · fetch-and-execute hooks) <em>before</em> you install it.</p><a class="more" href="docs.html#17-red-team">17-red-team →</a></div>
-      <div class="fcard span-2 rv"><span class="em">🧰</span><h3>The compass CLI</h3><p><span class="mono" style="font-size:12px">onboard · impact · drift · scan · redteam · audit-plugin · gate · sandbox · verify · spend · dashboard</span></p><a class="more" href="docs.html#11-using-compass">11-using →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🧰</span><h3>The compass CLI</h3><p><span class="mono" style="font-size:12px">onboard · impact · drift · scan · profile · redteam · audit-plugin · gate · sandbox · verify · repair · spend · dashboard</span></p><a class="more" href="docs.html#11-using-compass">11-using →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🎚️</span><h3>Profiles &amp; one policy</h3><p><code>compass profile strict|standard|solo</code>. A repo's <code>.compass/policy.conf</code> can only <em>tighten</em>; strict makes security hooks fail closed. One resolver for every harness.</p><a class="more" href="docs.html#30-advanced-config">30-advanced →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🩻</span><h3>Audit your own config</h3><p><code>compass scan --config</code> reads your Claude, Codex, Gemini and MCP config for permission bypass, wildcard Bash, unpinned servers and env secrets. Read-only.</p><a class="more" href="docs.html#30-advanced-config">30-advanced →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🔏</span><h3>Verified install, repair, uninstall</h3><p>A one-line install that checks the signed release attestation before unpacking or running it, an install record, <code>compass repair</code>, and record-driven uninstall.</p><a class="more" href="docs.html#31-distribution">31-distribution →</a></div>
       <div class="fcard span-2 rv"><span class="em">🔌</span><h3>MCP + LSP</h3><p>Curated, version-pinned MCP servers plus opt-in language-server intelligence.</p><a class="more" href="docs.html#04-mcp">04-mcp →</a></div>
       <div class="fcard span-2 rv"><span class="em">🪪</span><h3>Every agent, one source</h3><p>Claude Code · Codex · Gemini — plus Cursor/Windsurf/Copilot via the AGENTS.md standard.</p><a class="more" href="docs.html#12-every-agent">12-every-agent →</a></div>
     </div>
@@ -790,12 +793,14 @@
     <div class="head center rv">
       <div class="eyebrow">one-click install</div>
       <h2>Pick the door that fits.</h2>
-      <p class="lead center">All reversible, version-pinnable, no <span class="mono">curl | sh</span>. You need an AI assistant + <span class="mono">git</span>. No API keys for the guardrails, crew &amp; CLI.</p>
+      <p class="lead center">All reversible and version-pinnable; the one-line install verifies provenance before it extracts or runs the release. You need an AI assistant + <span class="mono">git</span>. No API keys for the guardrails, crew &amp; CLI.</p>
     </div>
     <div class="tabs rv">
       <button class="tab active" data-tab="git">📦 Git clone</button>
       <button class="tab" data-tab="brew">🍺 Homebrew</button>
       <button class="tab" data-tab="plugin">🧩 Claude plugin</button>
+      <button class="tab" data-tab="remote">🔏 Verified one-liner</button>
+      <button class="tab" data-tab="budget">💸 Budget cap only</button>
       <button class="tab" data-tab="hand">🛠️ By hand</button>
     </div>
 
@@ -808,12 +813,20 @@
       <p class="desc">Managed &amp; versioned via Homebrew.</p>
       <div class="cmd"><span class="prompt">$</span><code>brew install dshakes/tap/compass</code><button class="copy" data-copy="brew install dshakes/tap/compass">⧉ Copy</button></div>
       <div class="cmd"><span class="prompt">$</span><code>compass quickstart</code><button class="copy" data-copy="compass quickstart">⧉ Copy</button></div>
-      <div class="cmd"><span class="prompt">$</span><code>compass quickstart</code><button class="copy" data-copy="compass quickstart">⧉ Copy</button></div>
     </div>
     <div class="panel" data-panel="plugin">
       <p class="desc">No terminal — ideal for a team. Run these inside Claude Code.</p>
       <div class="cmd"><span class="prompt">▸</span><code>/plugin marketplace add dshakes/compass</code><button class="copy" data-copy="/plugin marketplace add dshakes/compass">⧉ Copy</button></div>
       <div class="cmd"><span class="prompt">▸</span><code>/plugin install compass@compass</code><button class="copy" data-copy="/plugin install compass@compass">⧉ Copy</button></div>
+    </div>
+    <div class="panel" data-panel="remote">
+      <p class="desc">Downloads the release and runs <span class="mono">gh attestation verify</span> <b>before</b> extracting or running the release. No <span class="mono">gh</span> &ge; 2.49 means it refuses. Read the script first if you like.</p>
+      <div class="cmd"><span class="prompt">$</span><code>curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | bash</code><button class="copy" data-copy="curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | bash">⧉ Copy</button></div>
+    </div>
+    <div class="panel" data-panel="budget">
+      <p class="desc">Just the interactive-session spend cap — touches nothing in <span class="mono">~/.claude</span>. Then add the hook from <a href="docs.html#31-distribution">31-distribution</a>.</p>
+      <div class="cmd"><span class="prompt">$</span><code>./install.sh --only budget</code><button class="copy" data-copy="./install.sh --only budget">⧉ Copy</button></div>
+      <div class="cmd"><span class="prompt">$</span><code>export COMPASS_MAX_USD=5</code><button class="copy" data-copy="export COMPASS_MAX_USD=5">⧉ Copy</button></div>
     </div>
     <div class="panel" data-panel="hand">
       <p class="desc">Full control — preview, install, validate.</p>
@@ -836,7 +849,7 @@
     </div>
     <div class="safety">
       <div class="sf rv"><span class="em">🔒</span><div><h4>You own the irreversible</h4><p>Agents prepare; humans push, merge, deploy. Required checks + code-owner approval enforce it.</p></div></div>
-      <div class="sf rv"><span class="em">↩️</span><div><h4>Readable &amp; reversible</h4><p>No <span class="mono">curl | sh</span>. The installer backs up what it replaces; <span class="mono">make uninstall</span> removes only what it added. Pin a tag, not main.</p></div></div>
+      <div class="sf rv"><span class="em">↩️</span><div><h4>Readable &amp; reversible</h4><p>The installer backs up what it replaces; uninstall removes exactly what its install record lists, and <span class="mono">compass repair</span> restores it. Pin a tag, not main.</p></div></div>
       <div class="sf rv"><span class="em">🛡️</span><div><h4>Guardrails ≠ a security boundary</h4><p>They reduce footguns. Keep least-privilege creds and review diffs. For untrusted code, <span class="mono">compass sandbox</span> is a real boundary.</p></div></div>
       <div class="sf rv"><span class="em">🌐</span><div><h4>Phones home to nothing</h4><p>No telemetry. Pinned MCP servers reach only the endpoints you'd expect; hooks are short, commented shell scripts you can disable.</p></div></div>
     </div>

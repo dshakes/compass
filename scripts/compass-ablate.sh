@@ -30,11 +30,7 @@
 #   compass-ablate.sh --gate             # CI mode: fail if unmeasured exceeds the floor
 set -uo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-POLICY="$ROOT/claude/hooks/lib/policy.sh"
-BENCH="$ROOT/scripts/compass-bench.sh"
-REDTEAM="$ROOT/scripts/compass-redteam.sh"
-BACKUP="$(mktemp "${TMPDIR:-/tmp}/policy.orig.XXXXXX")"
+SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Ceiling on rules no corpus exercises. Not zero: a new detector legitimately lands
 # before its corpus case does. A RATCHET, not a wall — lower it whenever coverage grows,
@@ -59,13 +55,27 @@ while [ $# -gt 0 ]; do
   shift
 done
 
+# Ablate a scratch COPY of the repo, never the live policy the hooks source: a killed
+# run (Ctrl-C, SIGKILL, a dropped session) used to leave claude/hooks/lib/policy.sh
+# empty and lose uncommitted edits, because an EXIT trap does not run on SIGKILL.
+ROOT="$(mktemp -d "${TMPDIR:-/tmp}/compass-ablate.XXXXXX")" || { echo "mktemp failed" >&2; exit 1; }
+# Copy tracked + untracked-but-not-ignored files only: a bare --exclude=.git still pulls in
+# venv/, backups/, .sdlc/ and any other gitignored local clutter, which can be slow, pull in
+# machine-local config, or leave a large scratch copy behind on a SIGKILL.
+(cd "$SRC" && tar --exclude-from=<(printf '.git\n'; git ls-files --others --ignored --exclude-standard --directory) -cf - .) \
+  | (cd "$ROOT" && tar -xf -) || { echo "could not copy repo" >&2; rm -rf "$ROOT"; exit 1; }
+POLICY="$ROOT/claude/hooks/lib/policy.sh"
+BENCH="$ROOT/scripts/compass-bench.sh"
+REDTEAM="$ROOT/scripts/compass-redteam.sh"
+BACKUP="$(mktemp "${TMPDIR:-/tmp}/policy.orig.XXXXXX")"
+
 [ -f "$POLICY" ] || { echo "no policy at $POLICY" >&2; exit 1; }
 [ -x "$BENCH" ] || [ -f "$BENCH" ] || { echo "no bench at $BENCH" >&2; exit 1; }
 
 cp "$POLICY" "$BACKUP"
-# The policy file is live config the hooks source. Restore it on ANY exit path —
-# success, failure, or interrupt — or an aborted sweep leaves the guardrail degraded.
-restore() { cp "$BACKUP" "$POLICY"; rm -f "$BACKUP"; }
+# Restore between iterations still matters (each measures one rule against the rest);
+# the scratch copy itself is discarded on exit.
+restore() { cp "$BACKUP" "$POLICY"; rm -f "$BACKUP"; rm -rf "$ROOT"; }
 trap restore EXIT INT TERM
 
 # compass has TWO disjoint corpora, and a detector is only exercised by one of them.

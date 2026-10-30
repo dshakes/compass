@@ -493,7 +493,7 @@ injection_findings() {
   [ -n "$scan" ] || return 0
   local act="$scan"
   case "$scan" in
-    *[Nn]ever*|*[Nn]ot\ *|*"n't"*|*"n’t"*|*[Nn]ont\ *|*[Aa]void*|*[Nn]o\ need*|*afety?[Cc]ritical*)
+    *[Nn]ever*|*[Nn]ot\ *|*"n't"*|*"n’t"*|*[Dd]ont\ *|*[Aa]void*|*[Nn]o\ need*|*afety?[Cc]ritical*)
       if command -v perl >/dev/null 2>&1; then
         act="$(printf '%s\n' "$scan" | perl -ne "$POLICY_NEGATION_EXEMPT_PL" 2>/dev/null)"
         [ -n "$act" ] || act="$scan"

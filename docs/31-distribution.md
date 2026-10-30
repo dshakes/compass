@@ -5,13 +5,17 @@
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | bash
 # pin a version / pass install.sh flags:
-curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | COMPASS_VERSION=v0.12.0 bash -s -- --copy
+curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | COMPASS_VERSION=v2.2.0 bash -s -- --copy
 ```
 
 `install-remote.sh` downloads the release tarball and runs the same check as `compass verify`
 (`gh attestation verify … --signer-workflow …/release-sign.yml`) **before** extracting or running
-anything. It fails closed: with no `gh` (>= 2.49) it refuses, and prints the manual verify command.
+it. It fails closed: with no `gh` (>= 2.49) it refuses, and prints the manual verify command.
 `--no-verify` skips the check explicitly. It unpacks to `~/.compass/src` and runs `install.sh`.
+
+What this does *not* cover: the installer script itself. `curl | bash` runs `install-remote.sh`
+straight from GitHub over HTTPS, before any attestation check. Read it first
+(`curl -fsSL …/install-remote.sh | less`), or clone the repo and run `compass verify` yourself.
 
 ## Install record, repair, uninstall
 

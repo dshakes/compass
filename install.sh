@@ -156,7 +156,7 @@ MARK_END="# <<< compass profiles <<<"
 merge_codex_profiles() {
   local dst="$1"
   if [ ! -e "$dst" ]; then place "$CODEX_SRC/config.toml" "$dst"; return; fi
-  if grep -qF "$MARK_BEGIN" "$dst" 2>/dev/null; then say "profiles already present: ${dst#$HOME/}"; return; fi
+  if grep -qF "$MARK_BEGIN" "$dst" 2>/dev/null; then [ "$DRY" = 1 ] || rec block "$dst" -; say "profiles already present: ${dst#$HOME/}"; return; fi
   say "appending cost profiles to existing config (preserving plugins/projects): ${dst#$HOME/}"
   [ "$DRY" = 1 ] && return
   rec block "$dst" -
