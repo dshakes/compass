@@ -59,7 +59,11 @@ done
 # run (Ctrl-C, SIGKILL, a dropped session) used to leave claude/hooks/lib/policy.sh
 # empty and lose uncommitted edits, because an EXIT trap does not run on SIGKILL.
 ROOT="$(mktemp -d "${TMPDIR:-/tmp}/compass-ablate.XXXXXX")" || { echo "mktemp failed" >&2; exit 1; }
-(cd "$SRC" && tar --exclude=.git -cf - .) | (cd "$ROOT" && tar -xf -) || { echo "could not copy repo" >&2; rm -rf "$ROOT"; exit 1; }
+# Copy tracked + untracked-but-not-ignored files only: a bare --exclude=.git still pulls in
+# venv/, backups/, .sdlc/ and any other gitignored local clutter, which can be slow, pull in
+# machine-local config, or leave a large scratch copy behind on a SIGKILL.
+(cd "$SRC" && tar --exclude-from=<(printf '.git\n'; git ls-files --others --ignored --exclude-standard --directory) -cf - .) \
+  | (cd "$ROOT" && tar -xf -) || { echo "could not copy repo" >&2; rm -rf "$ROOT"; exit 1; }
 POLICY="$ROOT/claude/hooks/lib/policy.sh"
 BENCH="$ROOT/scripts/compass-bench.sh"
 REDTEAM="$ROOT/scripts/compass-redteam.sh"

@@ -8,7 +8,7 @@ All notable changes to this project are documented here. Format loosely follows
 ### Added
 
 - **Red-team v2** (`docs/17-red-team.md`): the corpus grows to 332 scored cases across 11 attack
-  classes with per-class precision/recall, hard negatives (`security-prose`) and 4 documented
+  classes with per-class precision/recall, hard negatives (`security-prose`) and 5 documented
   known gaps (reported, not gating). `compass redteam --detector CMD` benchmarks any guardrail
   on the same corpus and prints the same per-class table. Obfuscation fuzzing (`--attack`) is
   94% (1211/1281, floor 80%); earlier "100% robust" figures are superseded.

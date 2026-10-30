@@ -45,7 +45,7 @@ if [ -f "$REC" ] && command -v jq >/dev/null 2>&1; then
           b="${begin%%:*}"; e="${begin##*:}"
           if [ -f "$path" ] && grep -qF "$b" "$path"; then
             act "stripped '$b' block from ${path#"$HOME"/}"
-            [ "$DRY" = 1 ] || { tmp="$(mktemp)"; sed "/$b/,/$e/d" "$path" >"$tmp" && mv "$tmp" "$path"; }
+            [ "$DRY" = 1 ] || { tmp="$(mktemp)"; sed "/$b/,/$e/d" "$path" >"$tmp" && cat "$tmp" >"$path"; rm -f "$tmp"; }
             removed=$((removed+1))
           fi
         done ;;
@@ -81,7 +81,7 @@ elif [ -f "$HOME/.codex/config.toml" ]; then
                "# >>> compass mcp >>>:# <<< compass mcp <<<"; do
     b="${begin%%:*}"; e="${begin##*:}"
     if grep -qF "$b" "$HOME/.codex/config.toml"; then
-      tmp="$(mktemp)"; sed "/$b/,/$e/d" "$HOME/.codex/config.toml" >"$tmp" && mv "$tmp" "$HOME/.codex/config.toml"
+      tmp="$(mktemp)"; sed "/$b/,/$e/d" "$HOME/.codex/config.toml" >"$tmp" && cat "$tmp" >"$HOME/.codex/config.toml"; rm -f "$tmp"
       echo "stripped '$b' block from ~/.codex/config.toml"; removed=$((removed+1))
     fi
   done
