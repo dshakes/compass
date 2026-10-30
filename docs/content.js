@@ -118,7 +118,7 @@ Config is the one part of an agent system that never gets refactored, because it
 
 <div class="tiles">
 <div class="tile"><b>100/100</b><span>guardrail P/R</span></div>
-<div class="tile"><b>100/100</b><span>red-team · 361 cases</span></div>
+<div class="tile"><b>100/100</b><span>red-team · 373 cases</span></div>
 <div class="tile"><b>96.9%</b><span>router accuracy</span></div>
 <div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
 </div>
@@ -256,8 +256,8 @@ compass doctor      # expect "0 error"
   <a href="#09-sdlc">
     <rect class="card" x="290" y="594" width="320" height="66" rx="14" fill="rgba(46,230,207,.10)" stroke="#2ee6cf" stroke-width="1.8"/>
     <text x="330" y="626" font-size="24">🧑‍💻</text>
-    <text x="368" y="622" font-size="15" font-weight="700" class="hh">Human gate</text>
-    <text x="368" y="642" class="m dim" font-size="10.5">you merge · deploy · publish — always</text>
+    <text x="373" y="622" font-size="15" font-weight="700" class="hh">Human gate</text>
+    <text x="373" y="642" class="m dim" font-size="10.5">you merge · deploy · publish — always</text>
   </a>
   <g fill="url(#sa-pulse)">
     <circle r="5"><animateMotion dur="3.2s" repeatCount="indefinite" path="M450,120 C450,150 220,150 220,192"/></circle>
@@ -465,8 +465,8 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 
 <div class="tiles">
 <div class="tile"><b>100%</b><span>precision / recall</span></div>
-<div class="tile"><b>361</b><span>labeled cases, 11 classes</span></div>
-<div class="tile"><b>94%</b><span>robust under obfuscation (1295/1365)</span></div>
+<div class="tile"><b>373</b><span>labeled cases, 11 classes</span></div>
+<div class="tile"><b>95%</b><span>robust under obfuscation (1330/1400)</span></div>
 </div>
 
 ## Per class, not one blended number
@@ -476,14 +476,14 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 | legacy | 108 | 100% | 100% |
 | unicode-smuggling | 31 | 100% | 100% |
 | encoded | 27 | 100% | 100% |
-| cred-harvest | 61 | 100% | 100% |
+| cred-harvest | 73 | 100% | 100% |
 | mcp-poisoning · markdown-split | 21 each | 100% | 100% |
 | supply-chain | 21 | 100% | 100% |
 | guardrail-tamper | 30 | 100% | 100% |
 | vendor-agent-file · md-exfil | 15 each | 100% | 100% |
 | security-prose (hard negatives only) | 8 | — | — |
 
-Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Five **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **1295 of 1365** variants (94%, floor 80%); the evaded ones are mostly leetspeak.
+Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Five **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **1330 of 1400** variants (95%, floor 80%); the evaded ones are mostly leetspeak.
 
 **Bring your own guardrail.** \`compass redteam --detector CMD\` runs the same corpus through *any* command (payload on stdin, exit 0 = clean, non-zero = flagged) and prints the same per-class table, so you can compare a guardrail against compass on equal terms.
 
@@ -500,14 +500,14 @@ Run \`compass redteam\` to reproduce the score — and to scan *this* repo's con
 | Suite | Cases | Precision | Recall |
 |---|---|---|---|
 | Guardrail | 61 | 100% | 100% |
-| Red-team (internal) | 361 | 100% | 100% |
+| Red-team (internal) | 373 | 100% | 100% |
 | Red-team (external, public corpus) | 546 | 90% | 8%* |
 | Router | 32 | — | 96.9% acc |
 
 <div class="tiles">
 <div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
 <div class="tile"><b>96.9%</b><span>routing accuracy</span></div>
-<div class="tile"><b>94%</b><span>red-team obfuscation-robust</span></div>
+<div class="tile"><b>95%</b><span>red-team obfuscation-robust</span></div>
 </div>
 
 <p class="cal tip"><span class="h">* honest by design</span> The external corpus (a public set we didn't write) is dominated by general-chatbot attacks out of scope for a coding-agent guardrail; the catches are the coding-agent-relevant families. We publish the low number because a floor you can only hit on your own cases isn't a floor. Reproduce: <code>compass redteam --external</code>.</p>
@@ -755,7 +755,7 @@ Caps (\`max_usd\`, \`max_usd_day\`) reach Codex and Gemini through \`compass gat
 \`\`\`bash
 curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | bash
 # pin a version / pass install.sh flags:
-curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | COMPASS_VERSION=v2.2.0 bash -s -- --copy
+curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | COMPASS_VERSION=v2.3.0 bash -s -- --copy
 \`\`\`
 
 It runs the same check as \`compass verify\` (\`gh attestation verify\` pinned to the release-sign workflow). With no \`gh\` (>= 2.49) it **refuses** and prints the manual command; \`--no-verify\` is an explicit opt-out. The script itself is short and readable. Read it before you pipe it.
