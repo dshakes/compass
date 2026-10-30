@@ -483,7 +483,7 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 | vendor-agent-file · md-exfil | 15 each | 100% | 100% |
 | security-prose (hard negatives only) | 8 | — | — |
 
-Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Five **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **939 of 1008** variants (93%, floor 80%); the evaded ones are mostly leetspeak.
+Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Five **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **1211 of 1281** variants (94%, floor 80%); the evaded ones are mostly leetspeak.
 
 **Bring your own guardrail.** \`compass redteam --detector CMD\` runs the same corpus through *any* command (payload on stdin, exit 0 = clean, non-zero = flagged) and prints the same per-class table, so you can compare a guardrail against compass on equal terms.
 
