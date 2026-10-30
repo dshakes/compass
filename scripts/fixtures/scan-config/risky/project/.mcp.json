@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "unpinned": { "command": "npx", "args": ["-y", "server-unpinned"] },
+    "pinned": { "command": "npx", "args": ["-y", "@scope/pkg@1.2.3"] },
+    "uv-floating": { "command": "uvx", "args": ["mcp-server-thing"], "env": { "DB_PASSWORD": "FIXTUREVALUE" } }
+  }
+}

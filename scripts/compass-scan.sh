@@ -31,6 +31,10 @@ usage: compass scan [--staged|--diff|--all] [PATH...]
   --diff     scan unstaged working-tree changes
   --all      scan every tracked file in the repo
   --injection  also scan for prompt-injection / context-poisoning patterns
+  --config [--json] [--home D] [--project D]
+             audit your OWN harness config (Claude/Codex/Gemini settings, .mcp.json):
+             permission bypass, wildcard Bash, unsafe/missing hooks, unpinned MCP,
+             plaintext env secrets (names only). Exits 1 on HIGH.
   PATH...    scan specific files or directories
   -h|--help  this message
 
@@ -48,6 +52,7 @@ while [ $# -gt 0 ]; do
     --diff|--unstaged)   mode=diff ;;
     --all)               mode=all ;;
     --injection)         inj=1 ;;      # also scan for prompt-injection / context poisoning
+    --config)            shift; exec "$ROOT/scripts/compass-scan-config.sh" "$@" ;;  # audit your own harness config
     --strict)            strict=1 ;;   # let gitleaks findings gate too (non-deterministic)
     --gate|-q|--quiet)   : ;;   # accepted for symmetry with other compass cmds
     -h|--help)           usage; exit 0 ;;

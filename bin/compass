@@ -75,6 +75,11 @@ usage: compass <command> [args]
                            Find secrets before they're committed (pre-commit / CI).
                            Built-in detectors gate; uses gitleaks for depth if present.
                            --injection also scans for prompt-injection / context poisoning.
+                           --config [--json] audits YOUR Claude/Codex/Gemini config + .mcp.json
+                           (bypass modes, wildcard Bash, unsafe hooks, unpinned MCP, env secrets).
+  profile [strict|standard|solo] [--get K|--env]
+                           Guardrail presets (data files) + the one effective policy. A repo's
+                           .compass/policy.conf may only TIGHTEN it. No arg = show.
   redteam [--eval|--scan] [--json]
                            Measure prompt-injection resistance: score the detectors
                            against the corpus (CI-gated) + scan this repo's untrusted
@@ -104,6 +109,8 @@ usage: compass <command> [args]
   audit-log [--since D] [-n N] [--json]
                            The security trail: every blocked footgun (secret write,
                            dangerous command, scan hit) as a queryable JSONL record.
+  repair  [--dry-run]      Re-create missing/dangling links + files listed in the install
+                           record (~/.compass/install.json), then re-check drift.
   version                  Print the installed version, install kind, and location.
   doctor                   Validate the compass install (make doctor).
   release [vX.Y.Z|--dry-run]
@@ -130,11 +137,13 @@ case "$cmd" in
   schedule) run schedule "$@" ;;
   route)    run route "$@" ;;
   bench)    run bench "$@" ;;
+  repair)   run repair "$@" ;;
   upgrade) run upgrade "$@" ;;
   ablate)   run ablate "$@" ;;
   policy-synth) run policy-synth "$@" ;;
   sbom)     run sbom "$@" ;;
   scan)     run scan "$@" ;;
+  profile)  run profile "$@" ;;
   redteam)  run redteam "$@" ;;
   verify)   exec "$SCRIPTS/verify-release.sh" "$@" ;;
   trace)    run trace "$@" ;;

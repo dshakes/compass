@@ -5,6 +5,37 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+### Added
+
+- **Distribution**: `install-remote.sh` (one-line install; verifies the release's SLSA attestation
+  before extracting or running anything, fails closed without `gh`, `--no-verify` to opt out);
+  `install.sh` writes `~/.compass/install.json` (version, sha, mode, every created path);
+  `compass repair [--dry-run]` restores recorded links; `scripts/uninstall.sh` removes exactly the
+  recorded entries (edited copies backed up; legacy behavior without a record);
+  `install.sh --only budget` installs just the interactive-session spend cap. See
+  `docs/31-distribution.md`.
+- **`compass profile <strict|standard|solo>`**: guardrail presets stored as data files
+  (`claude/hooks/profiles/*.conf`), resolved by one function (`compass_policy`) that every
+  hook, `compass profile` and `compass gate` share. `standard` sets nothing and is
+  test-proven identical to today's behavior. `strict` blocks prompt-injection hits, turns
+  on session and daily spend ceilings, and makes the security hooks fail closed.
+- **Tighten-only repo overrides** (`.compass/policy.conf`): a repo can lower caps and turn
+  scans on. It can't disable a hook, raise or clear a cap, or add keys compass doesn't know
+  (no allowlists). Refused lines are dropped, the stricter value wins, and the refusal is
+  surfaced at session start and in `compass profile`.
+- **Fail-closed security hooks** under `fail_closed=1` (strict): `onFailure: "block"` on
+  protect-paths, budget-gate and scan-prompt, rendered into the installed settings so that a
+  missing, crashed or timed-out guardrail blocks instead of waving the action through.
+  Requires Claude Code v2.1.295+. `compass doctor` checks both the settings and the version.
+- **`compass scan --config`** (`--json`): audits the harness config you already run
+  (Claude settings, `.mcp.json`, Codex `config.toml`, Gemini `settings.json`) for
+  permission bypass, wildcard Bash, world-writable or missing hooks, unpinned or
+  fetch-and-exec MCP servers, and literal env secrets. Secrets are reported by key name
+  only. Exits 1 on HIGH.
+- **`compass gate` follows the effective policy**, so Codex and Gemini get the same spend
+  caps as the Claude hook, including any cap a repo lowered. See
+  `docs/30-advanced-config.md` for the parity gaps.
+
 ## [2.2.0] - 2026-07-27
 
 ### Added
