@@ -111,7 +111,7 @@ non-converging loop from spending forever lives in the budget hook — see
 
 A gate raises the floor; it doesn't guarantee the ceiling. The corpora above measure
 *policy* correctness — did the detector fire on this labeled case — not task success, and
-[18-benchmark.md](18-benchmark.md) says so plainly: 100% recall on 101 cases is not a
+[18-benchmark.md](18-benchmark.md) says so plainly: 100% recall on 332 cases is not a
 real-world catch rate, only a floor. The default fresh-context evaluator (Reviewer,
 goal-judge) is usually a different *context*, not always a different *vendor* — the
 stronger, cross-model version (Codex/Gemini auditing a Claude-built PR) exists in the SDLC
