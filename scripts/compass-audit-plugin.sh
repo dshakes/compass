@@ -68,7 +68,7 @@ BASELINE=""
 if [ -n "$BASELINE_FILE" ]; then
   [ -f "$BASELINE_FILE" ] || { printf 'compass audit-plugin: baseline not found: %s\n' "$BASELINE_FILE" >&2; exit 2; }
   # Strip comment lines and blanks; entries are "path<TAB>rule[<TAB>evidence-substring]"
-  BASELINE="$(grep -v '^[[:space:]]*#' "$BASELINE_FILE" 2>/dev/null | grep -v '^[[:space:]]*$' || true)"
+  BASELINE="$(tr -d '\r' <"$BASELINE_FILE" 2>/dev/null | grep -v '^[[:space:]]*#' | grep -v '^[[:space:]]*$' || true)"
 fi
 
 # Returns 0 (true) if this finding is covered by the baseline. Path and rule must
@@ -121,13 +121,15 @@ _scan_inj_file() {   # <rel_path> <full_path>
   # hit's line from its evidence, blank that line, and re-scan until no new hit
   # can be placed. A hit that cannot be placed (decoded or multi-line) is reported
   # once for the whole file.
-  local i ev key ln placed unplaced=" "
+  local i ev key ln placed unplaced=" " orig="$text"
   for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
     placed=0
     while IFS= read -r one; do
       [ -n "$one" ] || continue
       ev="${one#*: }"; key="${ev:0:40}"
       ln="$(printf '%s\n' "$text" | grep -nF -- "$key" 2>/dev/null | head -1)"; ln="${ln%%:*}"
+      # a second class hit on a line this pass already blanked: recover it from the original
+      [ -n "$ln" ] || { ln="$(printf '%s\n' "$orig" | grep -nF -- "$key" 2>/dev/null | head -1)"; ln="${ln%%:*}"; }
       if [ -n "$key" ] && [ -n "$ln" ]; then
         add_finding "$rel_f" "$ln" "HIGH" "${one%%:*}" "$ev"
         text="$(printf '%s\n' "$text" | awk -v n="$ln" 'NR == n { print ""; next } { print }')"

@@ -39,7 +39,7 @@ that some novel phrasings will slip — they should be contributed back as new c
 ### 2. Red-team corpus — `scripts/redteam-corpus.tsv`
 
 Tests the `injection_findings` detector (prompt-injection, context-poisoning,
-safety-override, malware-intent, insecure-code patterns). **355 labeled cases**
+safety-override, malware-intent, insecure-code patterns). **361 labeled cases**
 (file-based rows across 11 attack classes + programmatic assertions covering invisible unicode, encoding evasions,
 config-override, malware-intent, and insecure-code families).
 
@@ -88,8 +88,8 @@ compass bench --guardrail
 # Red-team injection detectors:
 compass redteam --eval
 
-# Adversarial fuzz — obfuscate every inject payload with five transforms
-# (identity · base64 · zero-width · leetspeak · homoglyph) and re-score:
+# Adversarial fuzz — obfuscate every inject payload with seven transforms
+# (identity · base64 · zero-width · leetspeak · homoglyph · Unicode tags · hex) and re-score:
 compass redteam --attack
 
 # Machine-readable output for all of the above:
@@ -102,8 +102,8 @@ compass redteam --json
 | Corpus | Cases | Precision | Recall | Notes |
 |---|---|---|---|---|
 | Guardrail | 61 | 100% | 100% | floor: 100% P / 95% R |
-| Red-team | 355 | 100% | 100% | floor: 100% P / 90% R |
-| Red-team adversarial | 1337 transforms | — | — | 94% caught (1267/1337); floor 80% |
+| Red-team | 361 | 100% | 100% | floor: 100% P / 90% R |
+| Red-team adversarial | 1365 transforms | — | — | 94% caught (1295/1365); floor 80% |
 | Router | 62 (32 base · 15 holdout · 15 adversarial) | — | — | gated accuracy 97.9% (base + holdout); floor 90% |
 
 Run with `--json` to get machine-readable results for your own tooling or dashboards.
@@ -136,9 +136,9 @@ exposes as a miss), open the PR, and note that it's currently a false negative
 — the fix can be a separate PR or bundled, your call.
 
 Adversarial contributions — novel obfuscation, unusual unicode, multi-step
-injections — are especially welcome. `compass redteam --attack` applies five
-transforms to every `inject` payload automatically; a case that uses a sixth
-transform not yet in the rotate is exactly the kind of finding to contribute.
+injections — are especially welcome. `compass redteam --attack` applies seven
+transforms to every `inject` payload automatically (tags and hex need perl); a case that uses
+an eighth transform not yet in the rotate is exactly the kind of finding to contribute.
 
 ---
 
@@ -269,7 +269,7 @@ leetspeak and homoglyph lookalikes before matching — so the five standard
 transforms score 100% on the corpus. A sixth, novel transform can still slip.
 
 **Corpus recall is on the corpus, not the real-world attack distribution.** 100%
-recall on 355 cases does not mean 100% real-world catch rate — as the external
+recall on 361 cases does not mean 100% real-world catch rate — as the external
 corpus (`compass redteam --external`, ~8% recall on a public set) makes plain.
 The internal corpus is the fast, always-on floor; the external run and periodic
 deep sweeps against a running agent endpoint provide complementary, honest coverage.

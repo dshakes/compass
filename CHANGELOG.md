@@ -7,11 +7,11 @@ All notable changes to this project are documented here. Format loosely follows
 
 ### Added
 
-- **Red-team v2** (`docs/17-red-team.md`): the corpus grows to 355 scored cases across 11 attack
+- **Red-team v2** (`docs/17-red-team.md`): the corpus grows to 361 scored cases across 11 attack
   classes with per-class precision/recall, hard negatives (`security-prose`) and 5 documented
   known gaps (reported, not gating). `compass redteam --detector CMD` benchmarks any guardrail
   on the same corpus and prints the same per-class table. Obfuscation fuzzing (`--attack`) is
-  94% (1267/1337, floor 80%); earlier "100% robust" figures are superseded.
+  94% (1295/1365, floor 80%); earlier "100% robust" figures are superseded.
 - **Distribution**: `install-remote.sh` (one-line install; verifies the release's SLSA attestation
   before extracting or running anything, fails closed without `gh`, `--no-verify` to opt out);
   `install.sh` writes `~/.compass/install.json` (version, sha, mode, every created path);
@@ -52,6 +52,9 @@ All notable changes to this project are documented here. Format loosely follows
   line number instead of one hit per file.
 - **`permission-escalation`** no longer matches "grant **me**rge" (word boundary on `grant me`); the
   pr-shepherd baseline entry that hid it is gone.
+- **Plugin scanner**: a second detector hit on an already-located line keeps its line number;
+  baseline files with CRLF line endings match. `sync-plugin.sh --check` fails if gitignored local
+  content is present in the mirror and no longer prefix-matches ignored paths.
 - **`check-docs`** also guards the obfuscation-fuzz totals (`caught/total`, `N transforms`), computed
   as inject rows × 7 transforms without running the fuzz.
 - **`sync-plugin.sh`** no longer copies gitignored local files (e.g. `claude/skills/synced/`) into

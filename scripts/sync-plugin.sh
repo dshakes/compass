@@ -28,7 +28,13 @@ sync_one() { # copy SRC/$1 -> DST/$1 (full replace)
     local d; d="$(diff -rq "$SRC/$rel" "$DST/$rel" 2>&1)" || true
     while IFS= read -r p; do
       [ -n "$p" ] || continue
-      d="$(printf '%s\n' "$d" | grep -vF -e "$SRC/$p" -e "Only in $SRC/$(dirname "$p"): $(basename "$p")" || true)"
+      # ignored content in the mirror is drift: a real sync would delete it
+      [ -e "$DST/$p" ] && { echo "out-of-date: plugins/core/$p (gitignored local content)"; return 1; }
+      # drop only diff lines about exactly this source path (or below it), never a prefix match
+      d="$(printf '%s\n' "$d" | awk -v s="$SRC/$p" -v o="Only in $SRC/$(dirname "$p"): $(basename "$p")" '
+        $0 == o { next }
+        index($0, "Only in " s "/") == 1 || index($0, "Only in " s ":") == 1 { next }
+        { print }')"
     done <<EOF
 $ign
 EOF
