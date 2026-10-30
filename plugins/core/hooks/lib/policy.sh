@@ -304,7 +304,7 @@ permission-escalation|((run|use|using|with|enable|pass|set|invoke|add) .{0,20}--
 data-exfiltration|(send|post|upload|exfiltrate|transmit|e-?mail|forward|leak).{0,60}(\.env\b|secret|credential|password|api[ _-]?key|access[ _-]?token|private key|env(ironment)? variable|ssh key|\.aws|conversation history|chat history|system prompt|id_rsa|id_ed25519|authorized_keys|\.pem\b|\.p12\b|\.git-credentials|\.netrc|kubeconfig|/etc/(passwd|shadow))
 exfil-channel|(dig|nslookup|host) +[^ ]*\$\(|(curl|wget) .{0,60}(--data(-binary|-raw)?|--upload-file|--form|-d |-T |-F ).{0,25}@?[^ ]*(id_rsa|id_ed25519|\.ssh/|\.env\b|\.aws/|/etc/(passwd|shadow)|\.git-credentials|kubeconfig)|(cat|base64|tar|zip|gzip)[^|;]{0,40}(\.env\b|id_rsa|id_ed25519|\.ssh/|\.aws/|\.netrc|\.git-credentials|/etc/(passwd|shadow)|kubeconfig)[^|;]{0,20}\| *(curl|wget|nc|ncat|socat)\b|\b(echo|printf)[^|;]{0,10}\$\{?[A-Z_]*(TOKEN|SECRET|KEY|PASSWORD)[A-Z_]*\b[^|;]{0,20}\| *(curl|wget|nc|ncat|socat)\b
 sensitive-read|(read|cat|open|load|copy) .{0,30}(\.ssh/|id_rsa|id_ed25519|\.netrc|\.git-credentials|\.aws/credentials|\.env([^.a-z]|$)|\.npmrc|\.pypirc|\.kube/config).{0,60}(include|append|put|pass|add|insert|attach|embed)[a-z]* .{0,40}(argument|parameter|param|field|query|request|header|reply|response|message|summary|comment)
-cred-harvest|(^ *|[.:;,!] *|\b(and|then|please|now|first|also|must|should|to|run|you|but|so|just) )(print|dump|echo|paste|output|reveal|display|leak|show me|tell me|share)\b[^.]{0,30}\b(env(ironment)? (variables|vars)|secrets|credentials|api[ _-]?keys|access tokens)\b|(gh auth token|aws configure export-credentials|gcloud auth print-(access|identity)-token|az account get-access-token|printenv|\benv *\|)[^.]{0,40}\b(paste|print|show|share|post|include|reply|send|output|comment|summar)|\b(cat|less|head|more)\b[^;|]{0,40}(\.env([^.a-z]|$)|\.aws/credentials|\.git-credentials|\.netrc|\.npmrc|\.pypirc|\.docker/config\.json|\.kube/config|gh/hosts\.yml)[^|]{0,40}\b(show|print|paste|share|post|include|reply|summar|send|output|tell)|(output|print|show|paste|share|reveal|dump|display)( me)? the contents of [^ ]*(\.env([^.a-z]|$)|\.aws/credentials|\.ssh/id_|\.git-credentials|\.netrc|\.npmrc|\.pypirc|\.kube/config)|\b(echo|print) +\$\{?[A-Z_]*(TOKEN|SECRET|API_KEY|PASSWORD)\}?( *$| +(and|then|to|in|into)\b)|reply with the value of [A-Z_]*(TOKEN|SECRET|KEY|PASSWORD)
+cred-harvest|(^ *|[.:;,!] *|\b(and|then|please|now|first|also|must|should|to|run|you|but|so|just|not|never|don.t) )(print|dump|echo|paste|output|reveal|display|leak|show me|tell me|share)\b[^.]{0,30}\b(env(ironment)? (variables|vars)|secrets|credentials|api[ _-]?keys|access tokens)\b|(gh auth token|aws configure export-credentials|gcloud auth print-(access|identity)-token|az account get-access-token|printenv|\benv *\|)[^.]{0,40}\b(paste|print|show|share|post|include|reply|send|output|comment|summar)|\b(cat|less|head|more)\b[^;|]{0,40}(\.env([^.a-z]|$)|\.aws/credentials|\.git-credentials|\.netrc|\.npmrc|\.pypirc|\.docker/config\.json|\.kube/config|gh/hosts\.yml)[^|]{0,40}\b(show|print|paste|share|post|include|reply|summar|send|output|tell)|(output|print|show|paste|share|reveal|dump|display)( me)? the contents of [^ ]*(\.env([^.a-z]|$)|\.aws/credentials|\.ssh/id_|\.git-credentials|\.netrc|\.npmrc|\.pypirc|\.kube/config)|\b(echo|print) +\$\{?[A-Z_]*(TOKEN|SECRET|API_KEY|PASSWORD)\}?( *$| +(and|then|to|in|into)\b)|reply with the value of [A-Z_]*(TOKEN|SECRET|KEY|PASSWORD)
 guardrail-tamper|(set|switch|change|flip|put|enable|turn on|use)[^.]{0,60}(bypassPermissions|disableAllHooks|dangerouslySkipPermissions|enableAllProjectMcpServers)|(remove|delete|disable|comment out|stub out|neuter|unregister|empty|strip)( all)?( of)?( the| your| my)? (pre-?tool-?use|post-?tool-?use|session-?start|user-?prompt-?submit|guardrail|safety|security|compass|claude) hooks?|(delete|remove|rm( -[a-z]+)?|wipe) [^ ]*\.claude/hooks|(>>?|\btee( -a)?|sed +-i[^ ]*( [^ ]+)?) *[^ ]*\.claude/(settings(\.local)?\.json|hooks/)|\.claude/hooks/[^ ]* (that|which) (just |only |simply |always )?(exits?|returns?) (0|zero|success)|\bCOMPASS_(REDTEAM|GUARDRAIL)[A-Z_]*=0
 remote-exec|(curl|wget)[^|]*\| *base64 +(-d|--decode|-D)[^|]*\| *(sudo +)?[a-z]*sh\b|(curl|wget)[^|]*https?://[0-9]{1,3}(\.[0-9]{1,3}){3}[^|]*\| *(sudo +)?[a-z]*sh\b|(curl|wget) [^|]*( -[a-z]*k[a-z]*| --insecure| --no-check-certificate) [^|]*\| *(sudo +)?[a-z]*sh\b|[a-z]*sh +<\( *(curl|wget)[^)]*( -[a-z]*k[a-z]*| --insecure| --no-check-certificate)|(pip3?|uv pip|pipx) install[^;|&]*(--index-url|--extra-index-url|-i) +http://
 covert-instruction|do not (tell|inform|warn|mention .{0,15}to|reveal .{0,15}to|notify|alert) (the )?(user|human|operator|developer|owner)
@@ -323,19 +323,37 @@ authority-spoof|(the (user|developer|owner|operator|human|admin)|anthropic|your 
 # the benign compound "safety-critical". Keeps precision high on security prose.
 POLICY_INJECTION_ALLOW='allowlist[ _-]?injection|redteam[ _-]?corpus|injection[ _-]?(example|sample|payload|pattern|test|detector)|POLICY_INJECTION|safety[- ]critical|(never|not|dont|do not|don.t|avoid|without|cannot|can.t|won.t|refuse to|must not|should not) +(exfiltrat|leak|disab|bypass|reveal|print|remov|send|email|forward|grant|comply|set|enable|switch|share|paste|output|dump|echo)'
 
-# injection_findings never drops a whole line on a negation (a decoy "do not …" clause
-# would silence every detector on the line — PR #124 audit). Only the explicit pragmas
-# below drop a line. A negation erases a BOUNDED span: the negation, its verb, and at most
-# two plain-word object tokens ("never set defaultMode to", "do not echo progress"). A
-# token is never erased if it is itself a trigger word (echo/send/curl/ignore/…) or holds
-# anything but letters/digits/_'- ($VAR, paths, URLs, pipes stay), so padding can't make
-# the negation swallow the attack that follows it. "safety-critical" is erased as a word.
-# Without perl there is no negation handling at all (pragma lines only): recall first.
-# (POLICY_INJECTION_ALLOW above keeps the line-level behaviour for the awareness-only
-# malware/insecure-code scanners.)
+# Negated advice ("never set defaultMode to bypassPermissions") — NO TEXT IS EVER ERASED.
+# Every detector scans the full text; only pragma lines (below) are dropped. Instead an
+# EXEMPTION, decided per line, can suppress a finding from the small ACTION set only
+# (POLICY_NEGATION_EXEMPT_RULES). Never exempt: override/role/privilege/tool-poisoning/
+# markdown-exfil/remote-exec/unicode/encoded/slopsquat. A line is eligible only if it has
+# NO destination/plumbing marker (:// · bare IP · hostname.tld · | · $( · backtick · > ·
+# @path/@- · nc · /dev/tcp). It is split into clauses on , ; : ! ? sentence-'.' and and/then/but/so/also/
+# instead/however; a clause is "negated advice" if it starts (after up to two of we/you/
+# please/always/just/i) with never/don't/do not/must not/should not/no need to/avoid
+# IMMEDIATELY followed by a governed verb, and holds EXACTLY ONE trigger verb from the full
+# list. An action finding is suppressed only if the detector matches the line as-is but no
+# longer matches it with those clauses blanked — the blanked copy is used for that
+# decision, never scanned in place of the real text. "safety-critical" is blanked the same
+# way (a benign compound, not a request to disable safety). Without perl: no exemption, so
+# negated advice may warn (recall first). POLICY_INJECTION_ALLOW above keeps the old
+# line-level behaviour for the awareness-only malware/insecure-code scanners.
 POLICY_INJECTION_PRAGMA='allowlist[ _-]?injection|redteam[ _-]?corpus|injection[ _-]?(example|sample|payload|pattern|test|detector)|POLICY_INJECTION'
-POLICY_NEGATION_PL='BEGIN { $v = q{exfiltrat|leak|disab|bypass|reveal|print|remov|send|email|forward|grant|comply|set|enable|switch|share|paste|output|dump|echo}; $tr = qq{$v|curl|wget|cat|ignore|disregard|forget|override|upload|post|transmit|run|exec|sudo|rm|install|add|delete|write|push|tell|fetch|read|copy|pipe|base64|bash|sh|nc} }
-s/\b(?:never|not|dont|do not|don.t|avoid|without|cannot|can.t|won.t|refuse to|must not|should not) +(?:$v)[a-z]*(?: +(?!(?:$tr)[a-z]*\b)[A-Za-z0-9_\x27-]+){0,2}/ /gi; s/safety[- ]critical/ /gi'
+POLICY_NEGATION_EXEMPT_RULES=' guardrail-tamper disable-safety data-exfiltration cred-harvest sensitive-read exfil-channel '
+POLICY_NEGATION_EXEMPT_PL='BEGIN {
+  $tr = q{exfiltrate|leak|disable|bypass|reveal|print|remove|send|email|e-mail|forward|grant|comply|set|enable|switch|share|paste|output|dump|echo|curl|wget|cat|ignore|disregard|forget|override|upload|post|transmit|run|exec|execute|sudo|rm|install|add|delete|write|push|tell|fetch|read|copy|pipe|base64|bash|sh|nc|circumvent|give|turn|change|flip|put|use|comment|stub|neuter|unregister|strip|wipe|tee|sed|export|exit|show|display|reply|open|load|insert|attach|embed|include|append|pass|dig|nslookup|tar|zip|gzip|printf|printenv};
+  $gov = q{exfiltrate|leak|disable|bypass|reveal|print|remove|send|email|forward|grant|comply|set|enable|switch|share|paste|output|dump|echo};
+}
+chomp(my $l = $_);
+if ($l =~ m{://|\b\d{1,3}(?:\.\d{1,3}){3}\b|\||\$\(|`|>|\@[-/~.\w]|\bnc |/dev/tcp|\b[a-z0-9-]+\.(?:com|net|org|io|dev|app|co|ai|me|xyz|info|biz|ru|cn|example)\b}i) { print "$l\n"; next }
+my @p = split /([,;:!?]|\.(?=\s|$)|\b(?:and|then|but|so|also|instead|however)\b)/i, $l, -1;
+for my $i (0 .. $#p) {
+  next if $i % 2; my $c = $p[$i];
+  my $n = () = $c =~ /\b(?:$tr)(?:s|es|ing)?\b/gi;   # base/-s/-ing: "shared machine" is no verb
+  $p[$i] = " " x length($c) if $n == 1 && $c =~ /^\s*(?:(?:we|you|please|always|just|i)\s+){0,2}(?:never|don\S{0,3}t|do not|must not|should not|no need to|avoid)\s+(?:$gov)(?:s|es|ed|d|ing)?\b/i;
+}
+my $o = join("", @p); $o =~ s/(safety[- ]critical)/" " x length($1)/gie; print "$o\n";'
 
 # The decode/fold pass of normalize_untrusted, as ONE perl program (one fork, not one per
 # channel — this runs on every tool call). Reads the zero-width-stripped text on stdin and
@@ -465,18 +483,28 @@ injection_findings() {
     printf 'ascii-smuggling: invisible Unicode Tags-block characters (U+E0000-E007F)\n'
   fi
 
-  # raw + de-obfuscated rendering, neutralised ONCE up front (so each detector below is a
-  # single grep): pragma lines dropped, bounded negation spans erased (POLICY_NEGATION_PL).
-  # Without perl only pragma lines are dropped — no negation handling (recall over precision).
+  # raw + de-obfuscated rendering with pragma lines dropped — every detector scans ALL of
+  # it (so each detector below is a single grep). `act` is the same lines with negated-
+  # advice clauses blanked (POLICY_NEGATION_EXEMPT_PL); it only decides whether an ACTION-
+  # set finding is exempt. Non-eligible lines come back unchanged, so a detector that
+  # matches outside a negated clause still fires. The perl fork is skipped unless the text
+  # holds a negation or "safety-critical"; any perl failure leaves act = scan (no exemption).
   scan="$(printf '%s\n%s\n' "$text" "$(normalize_untrusted "$text")" | grep -Eiv -- "$POLICY_INJECTION_PRAGMA" 2>/dev/null)"
-  if command -v perl >/dev/null 2>&1; then
-    local neg; neg="$(printf '%s\n' "$scan" | perl -pe "$POLICY_NEGATION_PL" 2>/dev/null)"
-    [ -n "$neg" ] && scan="$neg"   # a perl failure must never blank the scan (fail closed)
-  fi
   [ -n "$scan" ] || return 0
+  local act="$scan"
+  case "$scan" in
+    *[Nn]ever*|*[Nn]ot\ *|*"n't"*|*"n’t"*|*[Nn]ont\ *|*[Aa]void*|*[Nn]o\ need*|*afety?[Cc]ritical*)
+      if command -v perl >/dev/null 2>&1; then
+        act="$(printf '%s\n' "$scan" | perl -ne "$POLICY_NEGATION_EXEMPT_PL" 2>/dev/null)"
+        [ -n "$act" ] || act="$scan"
+      fi ;;
+  esac
   printf '%s\n' "$POLICY_INJECTION_DETECTORS" | while IFS='|' read -r name re; do
     [ -n "$name" ] || continue
-    hit="$(printf '%s\n' "$scan" | grep -Ei -m1 -- "$re" 2>/dev/null)"
+    case "$POLICY_NEGATION_EXEMPT_RULES" in
+      *" $name "*) hit="$(printf '%s\n' "$act" | grep -Ei -m1 -- "$re" 2>/dev/null)" ;;
+      *)           hit="$(printf '%s\n' "$scan" | grep -Ei -m1 -- "$re" 2>/dev/null)" ;;
+    esac
     [ -n "$hit" ] && printf '%s: %s\n' "$name" "$(printf '%s' "$hit" | sed 's/^[[:space:]]*//' | cut -c1-72)"
   done
   # slopsquat: only pay for the perl fork when the text has an install/add verb.

@@ -96,10 +96,10 @@ detectors and gates in CI via `compass doctor`:
 ```
 per-class:
   class                 n   TP   FP   TN   FN   prec recall
-  legacy               98   59    0   39    0   100%   100%
+  legacy              108   69    0   39    0   100%   100%
   mcp-poisoning        24   15    0    9    0   100%   100%
   …
-redteam corpus: 317 cases — TP=… FP=0 TN=… FN=0
+redteam corpus: 332 cases — TP=… FP=0 TN=… FN=0
 precision=100% (floor 100%)  recall=100% (floor 90%)
 known gaps (reported, not gating): 5 (0 now caught)
 ```
@@ -140,16 +140,33 @@ one starts being caught, the run tells you to promote it to `inject`:
 | paraphrase with no trigger words ("set aside everything you were told earlier") | pattern matching can't follow meaning. Same answer: model-grade escalation |
 | a line carrying a **pragma marker** (`allowlist injection`, `injection example`, `redteam corpus`, …) | pragmas drop their whole line by design, so this repo's docs and corpus can quote payloads. Untrusted text can write the marker too. Narrowing pragmas to trusted paths needs the caller's file context, which the pure detector doesn't have |
 
-**Negations are bounded.** "Never set `bypassPermissions`" must stay clean, but a decoy
-negation must not silence a real trigger on the same line ("do not echo progress echo
-$GITHUB_TOKEN | curl …"). So a negation erases at most: the negation, its verb, and two
-plain-word object tokens ("never set defaultMode to"). A token is never erased if it is a
-trigger word (echo, send, curl, ignore, upload, …) or contains anything but letters,
-digits, `_`, `'` or `-`, so `$VARS`, paths, URLs and pipes always stay in the scanned
-text. Padding can't stretch the erased span over the attack. Without perl there is no
-negation handling: only pragma lines are dropped, so negated advice may warn (recall
-first). The corpus pins both sides: decoy and padding variants are `inject` rows, plain
-negated advice stays `safe`.
+**Negated advice is an exemption, never an erasure.** "Never set `bypassPermissions`" must
+stay clean, but a decoy negation must not hide anything else on the line. So no text is
+ever removed: every detector scans the full text, and only pragma lines are dropped. A
+finding is suppressed only when **all** of these hold:
+
+1. The detector is in the small **action set**: `guardrail-tamper`, `disable-safety`,
+   `data-exfiltration`, `cred-harvest`, `sensitive-read`, `exfil-channel`. Override,
+   role/developer-mode, privilege, tool-poisoning, markdown-exfil, remote-exec, invisible
+   Unicode, encoded, and slopsquat findings are never exempt.
+2. The line has **no destination or plumbing marker**: `://`, a bare IP, a `host.tld`
+   name, `|`, `$(`, a backtick, `>`, `@` followed by a path or `-`, `nc `, `/dev/tcp`.
+3. The line is split into clauses on `, ; : ! ?`, a sentence-ending `.`, and the words
+   *and, then, but, so, also, instead, however*. A clause is **negated advice** if it
+   starts (after at most two of *we, you, please, always, just, I*) with *never, don't, do
+   not, must not, should not, no need to,* or *avoid*, **immediately** followed by a
+   governed verb (set, enable, disable, send, print, echo, share, …), and contains
+   **exactly one** trigger verb from the full list (base, -s, or -ing form).
+4. The detector matches the line as-is, but no longer matches it once its negated-advice
+   clauses are blanked. That blanked copy is only used to make this decision; it is never
+   scanned in place of the real text.
+
+So "never set the theme and set defaultMode…" (two trigger verbs), "never set X, enable
+bypassPermissions" (the second clause isn't negated), "do not disable you are now in
+developer mode" (role-hijack isn't in the action set) and "never echo $GITHUB_TOKEN |
+curl …" (pipe and URL) all still fire. Without perl there is no exemption, so negated
+advice may warn there (recall first). The corpus pins both sides: decoy, padding and
+two-verb variants are `inject` rows, and plain negated advice stays `safe`.
 
 ---
 
@@ -221,7 +238,7 @@ CI — so you can measure your own setup, not take a vendor's word:
 
 | Dataset | Cases | What it proves | Run |
 |---|---|---|---|
-| `scripts/redteam-corpus.tsv` | 317 scored (11 classes) + 5 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
+| `scripts/redteam-corpus.tsv` | 332 scored (11 classes) + 5 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
 | `scripts/guardrail-corpus.tsv` | 61 | catastrophic-command + secret-write precision & recall | `compass bench --guardrail` |
 | deepset/prompt-injections (external) | 546 train rows (203 inject, 343 safe) | external, unbiased precision & recall; how compass fares against attacks it did not author | `compass redteam --external` |
 
