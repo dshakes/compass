@@ -31,15 +31,6 @@
 set -uo pipefail
 
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-# Ablate a scratch COPY of the repo, never the live policy the hooks source: a killed
-# run (Ctrl-C, SIGKILL, a dropped session) used to leave claude/hooks/lib/policy.sh
-# empty and lose uncommitted edits, because an EXIT trap does not run on SIGKILL.
-ROOT="$(mktemp -d "${TMPDIR:-/tmp}/compass-ablate.XXXXXX")" || { echo "mktemp failed" >&2; exit 1; }
-(cd "$SRC" && tar --exclude=.git -cf - .) | (cd "$ROOT" && tar -xf -) || { echo "could not copy repo" >&2; rm -rf "$ROOT"; exit 1; }
-POLICY="$ROOT/claude/hooks/lib/policy.sh"
-BENCH="$ROOT/scripts/compass-bench.sh"
-REDTEAM="$ROOT/scripts/compass-redteam.sh"
-BACKUP="$(mktemp "${TMPDIR:-/tmp}/policy.orig.XXXXXX")"
 
 # Ceiling on rules no corpus exercises. Not zero: a new detector legitimately lands
 # before its corpus case does. A RATCHET, not a wall — lower it whenever coverage grows,
@@ -63,6 +54,16 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
+
+# Ablate a scratch COPY of the repo, never the live policy the hooks source: a killed
+# run (Ctrl-C, SIGKILL, a dropped session) used to leave claude/hooks/lib/policy.sh
+# empty and lose uncommitted edits, because an EXIT trap does not run on SIGKILL.
+ROOT="$(mktemp -d "${TMPDIR:-/tmp}/compass-ablate.XXXXXX")" || { echo "mktemp failed" >&2; exit 1; }
+(cd "$SRC" && tar --exclude=.git -cf - .) | (cd "$ROOT" && tar -xf -) || { echo "could not copy repo" >&2; rm -rf "$ROOT"; exit 1; }
+POLICY="$ROOT/claude/hooks/lib/policy.sh"
+BENCH="$ROOT/scripts/compass-bench.sh"
+REDTEAM="$ROOT/scripts/compass-redteam.sh"
+BACKUP="$(mktemp "${TMPDIR:-/tmp}/policy.orig.XXXXXX")"
 
 [ -f "$POLICY" ] || { echo "no policy at $POLICY" >&2; exit 1; }
 [ -x "$BENCH" ] || [ -f "$BENCH" ] || { echo "no bench at $BENCH" >&2; exit 1; }

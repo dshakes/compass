@@ -755,7 +755,7 @@ Caps (\`max_usd\`, \`max_usd_day\`) reach Codex and Gemini through \`compass gat
 \`\`\`bash
 curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | bash
 # pin a version / pass install.sh flags:
-curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | COMPASS_VERSION=v0.12.0 bash -s -- --copy
+curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | COMPASS_VERSION=v2.2.0 bash -s -- --copy
 \`\`\`
 
 It runs the same check as \`compass verify\` (\`gh attestation verify\` pinned to the release-sign workflow). With no \`gh\` (>= 2.49) it **refuses** and prints the manual command; \`--no-verify\` is an explicit opt-out. The script itself is short and readable. Read it before you pipe it.
