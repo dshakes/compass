@@ -67,16 +67,20 @@ TARGET="$(cd "$TARGET" && pwd)"
 BASELINE=""
 if [ -n "$BASELINE_FILE" ]; then
   [ -f "$BASELINE_FILE" ] || { printf 'compass audit-plugin: baseline not found: %s\n' "$BASELINE_FILE" >&2; exit 2; }
-  # Strip comment lines and blanks; entries are "path<TAB>rule"
+  # Strip comment lines and blanks; entries are "path<TAB>rule[<TAB>evidence-substring]"
   BASELINE="$(grep -v '^[[:space:]]*#' "$BASELINE_FILE" 2>/dev/null | grep -v '^[[:space:]]*$' || true)"
 fi
 
-# Returns 0 (true) if this finding is covered by the baseline
-_is_baselined() {  # <file> <rule>
+# Returns 0 (true) if this finding is covered by the baseline. Path and rule must
+# match exactly; an optional third column pins the entry to findings whose evidence
+# contains that fixed string, so one accepted FP does not hide every other finding
+# of the same rule in the same file.
+_is_baselined() {  # <file> <rule> [evidence]
   [ -n "$BASELINE" ] || return 1
-  # ponytail: grep -F substring match; a path that is a prefix of another could
-  # spuriously match — acceptable given typical short baseline files
-  printf '%s\n' "$BASELINE" | grep -qF "$(printf '%s\t%s' "$1" "$2")"
+  printf '%s\n' "$BASELINE" | BL_F="$1" BL_R="$2" BL_E="${3:-}" awk -F'\t' '
+    $1 == ENVIRON["BL_F"] && $2 == ENVIRON["BL_R"] &&
+      ($3 == "" || index(ENVIRON["BL_E"], $3) > 0) { found = 1; exit }
+    END { exit !found }'
 }
 
 # ── Finding accumulator ────────────────────────────────────────────────────
@@ -112,13 +116,34 @@ _scan_inj_file() {   # <rel_path> <full_path>
   local rel_f="$1" full="$2" text out one
   text="$(cat "$full" 2>/dev/null)" || return 0
   out="$(injection_findings "$text")" || true
-  [ -n "$out" ] || return 0
-  while IFS= read -r one; do
-    [ -n "$one" ] || continue
-    add_finding "$rel_f" "-" "HIGH" "${one%%:*}" "${one#*: }"
-  done <<EOF
+  # A pass reports one hit per class, so a second hit of the same class would hide
+  # behind the first (and behind an evidence-pinned baseline entry). Locate each
+  # hit's line from its evidence, blank that line, and re-scan until no new hit
+  # can be placed. A hit that cannot be placed (decoded or multi-line) is reported
+  # once for the whole file.
+  local i ev key ln placed unplaced=" "
+  for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+    placed=0
+    while IFS= read -r one; do
+      [ -n "$one" ] || continue
+      ev="${one#*: }"; key="${ev:0:40}"
+      ln="$(printf '%s\n' "$text" | grep -nF -- "$key" 2>/dev/null | head -1)"; ln="${ln%%:*}"
+      if [ -n "$key" ] && [ -n "$ln" ]; then
+        add_finding "$rel_f" "$ln" "HIGH" "${one%%:*}" "$ev"
+        text="$(printf '%s\n' "$text" | awk -v n="$ln" 'NR == n { print ""; next } { print }')"
+        placed=1
+      else
+        case "$unplaced" in *" ${one%%:*} "*) ;; *)
+          add_finding "$rel_f" "-" "HIGH" "${one%%:*}" "$ev"; unplaced="$unplaced${one%%:*} " ;;
+        esac
+      fi
+    done <<EOF
 $out
 EOF
+    [ "$placed" = 1 ] || break
+    out="$(injection_findings "$text")" || true
+    [ -n "$out" ] || break
+  done
 }
 
 scan_injections() {
@@ -374,9 +399,9 @@ fi
 # ── Tally severities (baseline-accepted findings excluded from counts) ─────
 count_high=0; count_med=0; count_info=0; count_accepted=0
 if [ -n "$FINDINGS" ]; then
-  while IFS=$'\t' read -r file _l sev rule _e; do
+  while IFS=$'\t' read -r file _l sev rule evidence; do
     [ -n "${sev:-}" ] || continue
-    if _is_baselined "$file" "$rule"; then
+    if _is_baselined "$file" "$rule" "$evidence"; then
       count_accepted=$((count_accepted + 1))
     else
       case "$sev" in
@@ -401,7 +426,7 @@ if [ "$JSON" = 1 ]; then
       [ -n "${file:-}" ] || continue
       [ "$first" = 1 ] || printf ','
       first=0
-      accepted=false; _is_baselined "$file" "$rule" && accepted=true || true
+      accepted=false; _is_baselined "$file" "$rule" "$evidence" && accepted=true || true
       printf '{"file":"%s","line":"%s","severity":"%s","rule":"%s","evidence":"%s","accepted":%s}' \
         "$(_json_esc "$file")" "$(_json_esc "$line")" "$sev" \
         "$(_json_esc "$rule")" "$(_json_esc "$evidence")" "$accepted"
@@ -428,7 +453,7 @@ fi
 if [ -n "$FINDINGS" ]; then
   while IFS=$'\t' read -r file line sev rule evidence; do
     [ -n "${file:-}" ] || continue
-    if _is_baselined "$file" "$rule"; then
+    if _is_baselined "$file" "$rule" "$evidence"; then
       # shellcheck disable=SC2059
       if [ "$line" = "-" ]; then
         printf "  \033[2m%-4s\033[0m  %-42s  %s: %s \033[2m(accepted: baseline)\033[0m\n" \

@@ -42,6 +42,9 @@ for n in settings.json CLAUDE.md statusline.sh agents commands skills workflows 
     case "$tgt" in /*) ;; *) tgt="$(cd "$(dirname "$t")" 2>/dev/null && cd "$(dirname "$tgt")" 2>/dev/null && pwd -P)/$(basename "$tgt")" ;; esac
     if [ ! -e "$t" ]; then drift "$n: dangling symlink -> $tgt"; continue; fi
     if [ "$(abspath "$tgt")" = "$(abspath "$src")" ]; then ok "$n: linked to source"
+    # an overlay or a fail_closed profile renders settings.json into settings.merged.json
+    elif [ "$n" = settings.json ] && [ "$(abspath "$tgt")" = "$(abspath "$REPO/claude/settings.merged.json" 2>/dev/null)" ]; then
+      ok "$n: linked to the rendered profile settings (settings.merged.json)"
     else warn "$n: linked to a DIFFERENT source ($tgt) — not this repo"; fi
   elif [ -e "$t" ]; then
     if diff -r -q "$src" "$t" >/dev/null 2>&1; then ok "$n: copy in sync"

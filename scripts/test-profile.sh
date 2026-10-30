@@ -24,6 +24,8 @@ eq() { if [ "$2" = "$3" ]; then ok "$1"; else no "$1 — want '$3', got '$2'"; f
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 export COMPASS_HOME="$TMP/compass" HOME="$TMP/home" COMPASS_SETTINGS_MERGED="$TMP/settings.merged.json"
+# hermetic: a developer's own claude/settings.local.json overlay must not change the result
+export COMPASS_SETTINGS_OVERLAY="$TMP/no-overlay.json"
 mkdir -p "$COMPASS_HOME/sessions" "$HOME/.claude" "$TMP/repo"
 git -C "$TMP/repo" init -q
 cd "$TMP/repo" || exit 1

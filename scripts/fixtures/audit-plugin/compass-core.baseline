@@ -18,9 +18,9 @@ hooks/lib/policy.sh	settings-manipulation
 hooks/lib/policy.sh	hook-config-write
 # pr-shepherd documents a human-granted merge authority ("--merge to grant merge");
 # that is the intended, gated feature, not an escalation by the plugin.
-commands/pr-shepherd.md	permission-escalation
+commands/pr-shepherd.md	permission-escalation	--merge to grant m
 # security-auditor.md says "Never exfiltrate or print actual secret values" — negated advice,
 # but the clause carries TWO trigger verbs, so the negated-advice exemption (policy.sh,
 # PR #124) deliberately does not cover it: "exactly one trigger verb" keeps decoy
 # clauses like "never set X and set bypassPermissions" from being exempt. Accepted FP.
-agents/security-auditor.md	data-exfiltration
+agents/security-auditor.md	data-exfiltration	Never exfiltrate or print actual secret values

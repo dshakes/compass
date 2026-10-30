@@ -49,7 +49,7 @@ render() {
 # no personal overlay and the profile is fail-open (today's behavior), else a rendered
 # settings.merged.json (gitignored). install.sh calls this, so a reinstall keeps the profile.
 settings_file() {
-  local shipped="$ROOT/claude/settings.json" overlay="$ROOT/claude/settings.local.json"
+  local shipped="$ROOT/claude/settings.json" overlay="${COMPASS_SETTINGS_OVERLAY:-$ROOT/claude/settings.local.json}"
   local merged="${COMPASS_SETTINGS_MERGED:-$ROOT/claude/settings.merged.json}"   # override: tests
   if [ ! -f "$overlay" ] && [ "$(compass_policy fail_closed)" != 1 ]; then echo "$shipped"; return; fi
   if ! have jq; then

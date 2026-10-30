@@ -7,11 +7,11 @@ All notable changes to this project are documented here. Format loosely follows
 
 ### Added
 
-- **Red-team v2** (`docs/17-red-team.md`): the corpus grows to 332 scored cases across 11 attack
+- **Red-team v2** (`docs/17-red-team.md`): the corpus grows to 344 scored cases across 11 attack
   classes with per-class precision/recall, hard negatives (`security-prose`) and 5 documented
   known gaps (reported, not gating). `compass redteam --detector CMD` benchmarks any guardrail
   on the same corpus and prints the same per-class table. Obfuscation fuzzing (`--attack`) is
-  94% (1211/1281, floor 80%); earlier "100% robust" figures are superseded.
+  94% (1253/1323, floor 80%); earlier "100% robust" figures are superseded.
 - **Distribution**: `install-remote.sh` (one-line install; verifies the release's SLSA attestation
   before extracting or running anything, fails closed without `gh`, `--no-verify` to opt out);
   `install.sh` writes `~/.compass/install.json` (version, sha, mode, every created path);
@@ -43,6 +43,15 @@ All notable changes to this project are documented here. Format loosely follows
 
 ### Changed
 
+- **`secret-disclosure` detector**: a bare "print / echo / reveal the token" instruction, with no
+  pipe, URL or credential-file read, is now flagged (it was a blind spot). Negated advice ("never
+  print the token") stays clean; "token count" and "API key name" are not secrets.
+- **Plugin scanner baseline**: an entry may take a third column, an evidence substring, so it accepts
+  one known false positive instead of every finding of that rule in the file. Path and rule now match
+  exactly (was a substring match), and injection findings report every offending line with its
+  line number instead of one hit per file.
+- **`sync-plugin.sh`** no longer copies gitignored local files (e.g. `claude/skills/synced/`) into
+  the plugin mirror, and `--check` no longer reports them as drift.
 - **Production hardening**: quoted doc counts are computed and guarded by `scripts/check-docs.sh`;
   budget pricing is version-aware and never under-counts spend; the Codex audit skips green when
   no key is configured instead of reporting a pass it did not run.

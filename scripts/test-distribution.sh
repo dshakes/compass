@@ -12,6 +12,9 @@ command -v jq >/dev/null 2>&1 || { echo "test-distribution: jq required" >&2; ex
 T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
 export HOME="$T/home"; mkdir -p "$HOME"
 unset COMPASS_HOME COMPASS_REPO_ROOT
+# hermetic: never render into the developer's live claude/settings.merged.json (which their
+# ~/.claude/settings.json may point at) or read their claude/settings.local.json overlay.
+export COMPASS_SETTINGS_MERGED="$T/settings.merged.json" COMPASS_SETTINGS_OVERLAY="$T/no-overlay.json"
 REC="$HOME/.compass/install.json"
 
 echo "install record"

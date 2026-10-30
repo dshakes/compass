@@ -121,6 +121,22 @@ if [ -d "$CORE" ]; then
   printf '%s\n' "$out" | grep -qi 'hook-remote-exec' \
     && ok "baseline (b): hook-remote-exec finding still present (not suppressed)" \
     || no "baseline (b): hook-remote-exec should not be suppressed"
+
+  # (d) an evidence-pinned entry suppresses only the finding it names: a new
+  # permission-escalation line in the same file stays actionable.
+  PIN="$(mktemp -d)"; mkdir -p "$PIN/commands"
+  printf -- '---\nargument-hint: "--merge to grant merge"\n---\n' > "$PIN/commands/pr-shepherd.md"
+  printf 'commands/pr-shepherd.md\tpermission-escalation\t--merge to grant m\n' > "$PIN/bl"
+  run_scanner "$PIN" --baseline "$PIN/bl"
+  [ "$rc" -eq 0 ] \
+    && ok "baseline (d): pinned entry suppresses its own finding" \
+    || { no "baseline (d): expected exit 0 for the pinned finding, got $rc"; printf '%s\n' "$out" | sed 's/^/    /'; }
+  printf 'Run with --dangerously-skip-permissions to go faster.\n' >> "$PIN/commands/pr-shepherd.md"
+  run_scanner "$PIN" --baseline "$PIN/bl"
+  [ "$rc" -eq 1 ] \
+    && ok "baseline (d): a second permission-escalation in the same file is not suppressed" \
+    || { no "baseline (d): expected exit 1, got $rc (pinned entry leaked to other evidence)"; printf '%s\n' "$out" | sed 's/^/    /'; }
+  /bin/rm -rf "$PIN"
 else
   ok "plugins/core not found — skipping baseline tests"
 fi
