@@ -29,7 +29,7 @@ usage: compass redteam [--eval | --scan | --attack] [--json]
   --scan      only scan this repo's CLAUDE.md/AGENTS.md/READMEs/MCP/settings
   --attack    adversarial fuzz: obfuscate the corpus payloads (base64 · zero-width ·
               homoglyph · leetspeak · ASCII-smuggling tags · hex) and measure how many the detectors still
-              catch (robustness %). Notes garak/promptfoo for live-agent attacks.
+              catch (robustness %). Live-agent attacks need an external harness.
   --external  score the detectors against a pinned PUBLIC corpus we didn't write
               (downloads once, sha256-verified; report-only — never gates CI)
   --detector CMD

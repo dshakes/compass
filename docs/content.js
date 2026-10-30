@@ -118,7 +118,7 @@ Config is the one part of an agent system that never gets refactored, because it
 
 <div class="tiles">
 <div class="tile"><b>100/100</b><span>guardrail P/R</span></div>
-<div class="tile"><b>100/100</b><span>red-team · 332 cases</span></div>
+<div class="tile"><b>100/100</b><span>red-team · 361 cases</span></div>
 <div class="tile"><b>96.9%</b><span>router accuracy</span></div>
 <div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
 </div>
@@ -465,25 +465,25 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 
 <div class="tiles">
 <div class="tile"><b>100%</b><span>precision / recall</span></div>
-<div class="tile"><b>332</b><span>labeled cases, 11 classes</span></div>
-<div class="tile"><b>94%</b><span>robust under obfuscation (1211/1281)</span></div>
+<div class="tile"><b>361</b><span>labeled cases, 11 classes</span></div>
+<div class="tile"><b>94%</b><span>robust under obfuscation (1295/1365)</span></div>
 </div>
 
 ## Per class, not one blended number
 
 | Class | Cases | Precision | Recall |
 |---|---|---|---|
-| legacy | 88 | 100% | 100% |
+| legacy | 108 | 100% | 100% |
 | unicode-smuggling | 31 | 100% | 100% |
 | encoded | 27 | 100% | 100% |
-| cred-harvest | 23 | 100% | 100% |
+| cred-harvest | 61 | 100% | 100% |
 | mcp-poisoning · markdown-split | 21 each | 100% | 100% |
-| supply-chain | 20 | 100% | 100% |
-| guardrail-tamper | 19 | 100% | 100% |
+| supply-chain | 21 | 100% | 100% |
+| guardrail-tamper | 30 | 100% | 100% |
 | vendor-agent-file · md-exfil | 15 each | 100% | 100% |
 | security-prose (hard negatives only) | 8 | — | — |
 
-Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Five **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **1211 of 1281** variants (94%, floor 80%); the evaded ones are mostly leetspeak.
+Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Five **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **1295 of 1365** variants (94%, floor 80%); the evaded ones are mostly leetspeak.
 
 **Bring your own guardrail.** \`compass redteam --detector CMD\` runs the same corpus through *any* command (payload on stdin, exit 0 = clean, non-zero = flagged) and prints the same per-class table, so you can compare a guardrail against compass on equal terms.
 
@@ -500,7 +500,7 @@ Run \`compass redteam\` to reproduce the score — and to scan *this* repo's con
 | Suite | Cases | Precision | Recall |
 |---|---|---|---|
 | Guardrail | 61 | 100% | 100% |
-| Red-team (internal) | 332 | 100% | 100% |
+| Red-team (internal) | 361 | 100% | 100% |
 | Red-team (external, public corpus) | 546 | 90% | 8%* |
 | Router | 32 | — | 96.9% acc |
 

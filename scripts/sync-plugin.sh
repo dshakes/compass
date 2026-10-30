@@ -11,14 +11,40 @@ SRC="$REPO/claude"
 DST="$REPO/plugins/core"
 CHECK=0; [ "${1:-}" = "--check" ] && CHECK=1
 
+# Gitignored paths under claude/$1 (e.g. skills/synced/, machine-local skill caches),
+# relative to claude/. They are never part of the plugin: copying them would ship
+# local-only content, and diffing them reports drift that is not in git.
+ignored_under() {
+  git -C "$REPO" ls-files --others --ignored --exclude-standard --directory -- "claude/$1" 2>/dev/null \
+    | sed 's#^claude/##; s#/$##'
+}
+
 sync_one() { # copy SRC/$1 -> DST/$1 (full replace)
-  local rel="$1"
+  local rel="$1" ign p
+  ign="$(ignored_under "$rel")"
   if [ "$CHECK" = 1 ]; then
     # diff -rq on directories also reports files present in only one side, so a
     # deleted/added agent/command/skill is caught here.
-    diff -rq "$SRC/$rel" "$DST/$rel" >/dev/null 2>&1 || { echo "out-of-date: plugins/core/$rel"; return 1; }
+    local d; d="$(diff -rq "$SRC/$rel" "$DST/$rel" 2>&1)" || true
+    while IFS= read -r p; do
+      [ -n "$p" ] || continue
+      # ignored content in the mirror is drift: a real sync would delete it
+      [ -e "$DST/$p" ] && { echo "out-of-date: plugins/core/$p (gitignored local content)"; return 1; }
+      # drop only diff lines about exactly this source path (or below it), never a prefix match
+      d="$(printf '%s\n' "$d" | awk -v s="$SRC/$p" -v o="Only in $SRC/$(dirname "$p"): $(basename "$p")" '
+        $0 == o { next }
+        index($0, "Only in " s "/") == 1 || index($0, "Only in " s ":") == 1 { next }
+        { print }')"
+    done <<EOF
+$ign
+EOF
+    [ -z "$d" ] || { echo "out-of-date: plugins/core/$rel"; return 1; }
   else
-    rm -rf "$DST/$rel"; cp -R "$SRC/$rel" "$DST/$rel"; echo "synced: $rel"
+    rm -rf "$DST/$rel"; cp -R "$SRC/$rel" "$DST/$rel"
+    while IFS= read -r p; do if [ -n "$p" ]; then rm -rf "${DST:?}/$p"; fi; done <<EOF
+$ign
+EOF
+    echo "synced: $rel"
   fi
 }
 

@@ -437,7 +437,7 @@
         </div>
         <div class="term-foot">
           <div class="s"><b class="grad-text">100/100</b><span>guardrail P/R</span></div>
-          <div class="s"><b class="grad-text">100%</b><span>red-team · 332</span></div>
+          <div class="s"><b class="grad-text">100%</b><span>red-team · 361</span></div>
           <div class="s"><b class="grad-text">~62%</b><span>cheaper</span></div>
         </div>
       </div>
@@ -479,7 +479,7 @@
     </div>
     <div class="stats">
       <div class="stat rv"><div class="n grad-text" data-count="100" data-suffix="/100">100/100</div><div class="l"><b>Guardrail</b> precision/recall<br>61-case corpus, in CI</div></div>
-      <div class="stat rv"><div class="n grad-text" data-count="100" data-suffix="%">100%</div><div class="l"><b>Red-team</b> P/R · 332 cases, 11 classes<br>94% obfuscation-robust</div></div>
+      <div class="stat rv"><div class="n grad-text" data-count="100" data-suffix="%">100%</div><div class="l"><b>Red-team</b> P/R · 361 cases, 11 classes<br>94% obfuscation-robust</div></div>
       <div class="stat rv"><div class="n grad-text" data-count="96.9" data-suffix="%">96.9%</div><div class="l"><b>Router</b> accuracy<br>32-case eval set</div></div>
       <div class="stat rv"><div class="n grad-text" data-count="62" data-suffix="%">62%</div><div class="l"><b>Cheaper</b> than all-Opus<br>96.9% routing accuracy</div></div>
       <div class="stat rv"><div class="n grad-text">SLSA</div><div class="l"><b>Verified</b> install<br>release attestation checked before it is unpacked</div></div>
@@ -509,8 +509,8 @@
         <div class="ph"><span class="e">🧪</span><h3>Red-team resistance</h3></div>
         <div class="term"><div class="bar"><i></i><i></i><i></i></div><div class="body">
           <span class="c">$</span> compass redteam<br>
-          <span class="o">→ injection corpus </span><span class="g">100% P/R</span><span class="o"> (332 cases) + 90% on a public corpus</span><br>
-          <span class="o">→ adversarial robustness </span><span class="g">94%</span><span class="o"> (1211/1281)</span><br>
+          <span class="o">→ injection corpus </span><span class="g">100% P/R</span><span class="o"> (361 cases) + 90% on a public corpus</span><br>
+          <span class="o">→ adversarial robustness </span><span class="g">94%</span><span class="o"> (1295/1365)</span><br>
           <span class="o">→ scans THIS repo's config · MCP · settings</span>
         </div></div>
         <p>A poisoned repo or web page can't quietly turn your agent against you — and you can measure how well that holds. <span class="mono">compass redteam --detector CMD</span> scores <em>any</em> guardrail on the same corpus, per class.</p>
@@ -640,7 +640,7 @@
       <div class="fcard span-3 rv"><span class="em">🔁</span><h3>Autonomous SDLC</h3><p>The review → security → tests → cross-audit → auto-fix → re-review loop on every PR. Parallel reviewers, round-capped fixes, three cross-model gates (Claude review · Codex audit · Gemini audit), a hard <code>SDLC_BUDGET</code> ceiling — then it stops at your merge.</p><a class="more" href="docs.html#09-sdlc">09-sdlc →</a></div>
       <div class="fcard span-3 rv"><span class="em">🛰️</span><h3>The fleet</h3><p>The loop, scheduled across all your repos through a test gate — overnight. Wake up to a PR per repo you can approve from your phone.</p><a class="more" href="docs.html#14-fleet">14-fleet →</a></div>
       <div class="fcard span-2 rv"><span class="em">🛡</span><h3>Guardrails &amp; scanning</h3><p>A hook layer that blocks disasters, catches secrets, auto-formats, and keeps a JSONL audit log.</p><a class="more" href="docs.html#16-hardening-and-frontier">16-hardening →</a></div>
-      <div class="fcard span-2 rv"><span class="em">🧪</span><h3>Red-team hardening</h3><p>332 labeled cases across 11 attack classes with per-class precision/recall, hard negatives and 5 documented known gaps. Benchmark any guardrail with <code>--detector</code>.</p><a class="more" href="docs.html#17-red-team">17-red-team →</a></div>
+      <div class="fcard span-2 rv"><span class="em">🧪</span><h3>Red-team hardening</h3><p>361 labeled cases across 11 attack classes with per-class precision/recall, hard negatives and 5 documented known gaps. Benchmark any guardrail with <code>--detector</code>.</p><a class="more" href="docs.html#17-red-team">17-red-team →</a></div>
       <div class="fcard span-2 rv"><span class="em">🧭</span><h3>Cost-tier router</h3><p>Standalone, reusable: a deterministic keyword tier-picker (eval-gated 96.9%), with an opt-in 9-stage cost-aware engine. Measured, not vibes.</p><a class="more" href="https://github.com/dshakes/compass/tree/main/router">router/ →</a></div>
       <div class="fcard span-2 rv"><span class="em">👥</span><h3>The crew + workflows</h3><p>Cost-tiered expert subagents, slash-commands, and dynamic workflows that fact-check each other.</p><a class="more" href="docs.html#agents-roster">roster →</a></div>
       <div class="fcard span-2 rv"><span class="em">🚦</span><h3>Cross-agent enforcement</h3><p><code>compass gate</code> — a localhost proxy that hard-caps spend for Codex, Gemini, and any SDK, not just Claude Code. The budget wall for every agent.</p><a class="more" href="docs.html#02-cost-and-models">02-cost →</a></div>

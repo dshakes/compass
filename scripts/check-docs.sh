@@ -95,6 +95,18 @@ for f in README.md docs/*.md docs/*.html docs/content.js; do
     case " $rt $rf $rv $rr $rg $rb " in *" $got "*) ;; *) echo "$f quotes $got cases, no live corpus has that size ($rt/$rv/$rr/$rg/$rb)" ;; esac
   done
 done >> "$CNT"
+# Obfuscation-fuzz denominator: --attack mutates every inject row through 7 transforms
+# (identity base64 zerowidth leet homoglyph tags hex), so the total is computable without
+# the slow fuzz run. Every quoted "caught/total" pair and "N transforms" must use it.
+ra=$(( $(grep -c '^inject	.' scripts/redteam-corpus.tsv) * 7 ))
+for f in README.md docs/*.md docs/*.html docs/content.js CHANGELOG.md; do
+  [ "$f" = docs/28-ablation.md ] && continue
+  # CHANGELOG: only [Unreleased] makes current claims; released sections are history.
+  if [ "$f" = CHANGELOG.md ]; then awk '/^## \[/ { if (seen++) exit } { print }' "$f"; else cat "$f"; fi |
+    grep -ohE '\b[0-9]{4,} ?/ ?[0-9]{4,}\b|\b[0-9]{4,}\*?\*? of \*?\*?[0-9]{4,}\b|[0-9]+ transforms \|' |
+    sed -E 's/ transforms.*//; s/.*[^0-9]([0-9]+)$/\1/' |
+  while read -r got; do [ "$got" = "$ra" ] || echo "$f quotes a fuzz total of $got, the corpus fuzzes $ra"; done
+done >> "$CNT"
 while IFS= read -r bad; do no "stale count: $bad"; done < "$CNT"
 rm -f "$CNT"
 [ "$fail" -eq "$n" ] && [ -n "$rt" ] && ok "quoted red-team ($rt) and router ($rv) case counts match the corpora"
