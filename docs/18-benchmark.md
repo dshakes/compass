@@ -103,7 +103,7 @@ compass redteam --json
 |---|---|---|---|---|
 | Guardrail | 61 | 100% | 100% | floor: 100% P / 95% R |
 | Red-team | 344 | 100% | 100% | floor: 100% P / 90% R |
-| Red-team adversarial | 1281 transforms | — | — | 94% caught (1253/1323); floor 80% |
+| Red-team adversarial | 1323 transforms | — | — | 94% caught (1253/1323); floor 80% |
 | Router | 62 (32 base · 15 holdout · 15 adversarial) | — | — | gated accuracy 97.9% (base + holdout); floor 90% |
 
 Run with `--json` to get machine-readable results for your own tooling or dashboards.

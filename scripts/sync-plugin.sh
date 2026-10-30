@@ -35,7 +35,7 @@ EOF
     [ -z "$d" ] || { echo "out-of-date: plugins/core/$rel"; return 1; }
   else
     rm -rf "$DST/$rel"; cp -R "$SRC/$rel" "$DST/$rel"
-    while IFS= read -r p; do [ -n "$p" ] && rm -rf "${DST:?}/$p"; done <<EOF
+    while IFS= read -r p; do if [ -n "$p" ]; then rm -rf "${DST:?}/$p"; fi; done <<EOF
 $ign
 EOF
     echo "synced: $rel"

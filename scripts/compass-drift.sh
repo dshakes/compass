@@ -42,9 +42,19 @@ for n in settings.json CLAUDE.md statusline.sh agents commands skills workflows 
     case "$tgt" in /*) ;; *) tgt="$(cd "$(dirname "$t")" 2>/dev/null && cd "$(dirname "$tgt")" 2>/dev/null && pwd -P)/$(basename "$tgt")" ;; esac
     if [ ! -e "$t" ]; then drift "$n: dangling symlink -> $tgt"; continue; fi
     if [ "$(abspath "$tgt")" = "$(abspath "$src")" ]; then ok "$n: linked to source"
-    # an overlay or a fail_closed profile renders settings.json into settings.merged.json
+    # an overlay or a fail_closed profile renders settings.json into settings.merged.json;
+    # it is generated, so re-render what it SHOULD be now and compare content, not path.
     elif [ "$n" = settings.json ] && [ "$(abspath "$tgt")" = "$(abspath "$REPO/claude/settings.merged.json" 2>/dev/null)" ]; then
-      ok "$n: linked to the rendered profile settings (settings.merged.json)"
+      exp_dir="$(mktemp -d)"
+      exp="$(COMPASS_SETTINGS_MERGED="$exp_dir/settings.merged.json" "$REPO/scripts/compass-profile.sh" --settings-file 2>/dev/null)"
+      if [ -z "$exp" ] || [ ! -f "$exp" ]; then
+        warn "$n: linked to settings.merged.json but the expected settings could not be rendered"
+      elif cmp -s "$exp" "$t"; then
+        ok "$n: linked to the rendered profile settings (settings.merged.json, current)"
+      else
+        drift "$n: settings.merged.json is stale for the current settings/overlay/profile — run 'compass profile <name>' or re-run the installer"
+      fi
+      rm -rf "$exp_dir"
     else warn "$n: linked to a DIFFERENT source ($tgt) — not this repo"; fi
   elif [ -e "$t" ]; then
     if diff -r -q "$src" "$t" >/dev/null 2>&1; then ok "$n: copy in sync"
