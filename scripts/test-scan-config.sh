@@ -38,6 +38,7 @@ has HIGH hook-world-writable .claude/settings.json
 has MED  hook-missing        .claude/settings.json
 has LOW  hook-no-timeout     .claude/settings.json
 has HIGH mcp-unpinned        .mcp.json
+has HIGH mcp-unpinned        .claude.json
 has MED  mcp-unpinned        .mcp.json
 has HIGH plaintext-secret    .mcp.json
 has HIGH bypass-permissions  .codex/config.toml

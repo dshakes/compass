@@ -116,12 +116,12 @@ EOF
   while IFS='	' read -r n c; do
     [ -n "$n" ] && mcp_check "$f" "$n" "$c"
   done <<EOF
-$(jq -r '.mcpServers // {} | to_entries[] | select(.value.command) | [.key, ([.value.command] + (.value.args // []) | join(" "))] | @tsv' "$f" 2>/dev/null)
+$(jq -r '([.mcpServers, (.projects // {} | .[]?.mcpServers)] | map(. // {}) | add) | to_entries[] | select(.value.command) | [.key, ([.value.command] + (.value.args // []) | join(" "))] | @tsv' "$f" 2>/dev/null)
 EOF
   while IFS='	' read -r n k v; do
     [ -n "$k" ] && env_check "$f" "MCP server '$n'" "$k" "$v"
   done <<EOF
-$(jq -r '.mcpServers // {} | to_entries[] | .key as $n | (.value.env // {}) | to_entries[] | [$n, .key, (.value | tostring)] | @tsv' "$f" 2>/dev/null)
+$(jq -r '([.mcpServers, (.projects // {} | .[]?.mcpServers)] | map(. // {}) | add) | to_entries[] | .key as $n | (.value.env // {}) | to_entries[] | [$n, .key, (.value | tostring)] | @tsv' "$f" 2>/dev/null)
 EOF
 }
 
@@ -159,7 +159,7 @@ EOF
   flush
 }
 
-for f in "$H/.claude/settings.json" "$H/.claude/settings.local.json" \
+for f in "$H/.claude.json" "$H/.claude/settings.json" "$H/.claude/settings.local.json" \
          "$P/.claude/settings.json" "$P/.claude/settings.local.json" \
          "$P/.mcp.json" "$H/.gemini/settings.json"; do
   scan_json "$f"

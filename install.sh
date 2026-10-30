@@ -44,6 +44,7 @@ for arg in "$@"; do
     *) echo "unknown flag: $arg" >&2; exit 1 ;;
   esac
 done
+[ "$want_only" = 1 ] && { echo "install: --only takes: budget" >&2; exit 1; }
 case "$ONLY" in ""|budget) ;; *) echo "install: --only takes: budget" >&2; exit 1 ;; esac
 
 say()  { printf '  %s\n' "$*"; }
@@ -61,6 +62,8 @@ write_record() {
   ver="$(jq -r .version "$REPO/plugins/core/.claude-plugin/plugin.json" 2>/dev/null)"
   sha="$(git -C "$REPO" rev-parse HEAD 2>/dev/null || echo "${COMPASS_INSTALL_SHA:-}")"
   old="$(cat "$f" 2>/dev/null || true)"; [ -n "$old" ] || old='{}'
+  # A corrupt record must not abort an install that already changed files: keep it aside, start fresh.
+  printf '%s' "$old" | jq -e 'type == "object"' >/dev/null 2>&1 || { mv "$f" "$f.corrupt.$$" 2>/dev/null; say "warn: install record was not valid JSON — moved aside"; old='{}'; }
   mkdir -p "$home"
   # Re-install updates the record; entries from earlier runs (e.g. a prior --codex-only) are kept.
   printf '%s' "$RECORD" | jq -R -s --argjson old "$old" --arg v "$ver" --arg sha "$sha" --arg mode "$MODE" \
@@ -137,7 +140,7 @@ install_cli() {
           [ -n "$rc" ] || rc="$HOME/.profile" ;;
       esac
       if [ -n "$rc" ] && [ "$DRY" = 0 ]; then
-        if grep -q 'compass CLI on PATH' "$rc" 2>/dev/null; then say "PATH line already in ${rc#$HOME/}"
+        if grep -q 'compass CLI on PATH' "$rc" 2>/dev/null; then rec rcline "$rc" -; say "PATH line already in ${rc#$HOME/}"
         else printf '\n# compass CLI on PATH (added by compass install)\nexport PATH="$HOME/.local/bin:$PATH"\n' >>"$rc"
           rec rcline "$rc" -
           say "added ~/.local/bin to PATH in ${rc#$HOME/} — run: source ${rc#$HOME/}"; fi

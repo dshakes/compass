@@ -19,7 +19,10 @@ if [ -f "$REC" ] && command -v jq >/dev/null 2>&1; then
     case "$type" in
       symlink)
         # Only a symlink that still points where we put it; a user-replaced file is left alone.
-        if [ -L "$path" ] && [ "$(readlink "$path")" = "$src" ]; then
+        # `compass profile` may have repointed settings.json to the generated
+        # settings.merged.json beside the recorded source — still ours.
+        lt="$(readlink "$path" 2>/dev/null)" || lt=""
+        if [ -L "$path" ] && { [ "$lt" = "$src" ] || [ "$lt" = "${src%/settings.json}/settings.merged.json" ]; }; then
           act "removed ${path#"$HOME"/}"; [ "$DRY" = 1 ] || rm -f "$path"; removed=$((removed+1))
         elif [ -e "$path" ] || [ -L "$path" ]; then echo "kept ${path#"$HOME"/} (no longer our symlink)"; fi ;;
       copy)

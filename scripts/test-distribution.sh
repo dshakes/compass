@@ -22,6 +22,18 @@ chk "record lists ~/.claude/hooks symlink" jq -e --arg p "$HOME/.claude/hooks" '
 n1="$(jq '.paths | length' "$REC")"
 "$REPO/install.sh" --claude-only >/dev/null 2>&1
 chk "re-install is idempotent (same path count)" test "$(jq '.paths | length' "$REC")" = "$n1"
+echo '{not json' >"$REC"
+"$REPO/install.sh" --claude-only >/dev/null 2>&1; rc=$?
+chk "corrupt record → install still completes with a fresh record" test "$rc" = 0 -a "$(jq '.paths | length' "$REC" 2>/dev/null)" = "$n1"
+rm -f "$HOME/.compass"/install.json.corrupt.*
+
+echo "profile switch keeps the record truthful"
+export COMPASS_SETTINGS_MERGED="$HOME/settings.merged.json"
+"$REPO/scripts/compass-profile.sh" strict >/dev/null 2>&1
+chk "record src follows the repointed settings.json" jq -e --arg p "$HOME/.claude/settings.json" --arg s "$COMPASS_SETTINGS_MERGED" '.paths[] | select(.path == $p and .src == $s)' "$REC"
+out="$("$REPO/scripts/compass-repair.sh" --dry-run 2>&1)"; rc=$?
+test "$rc" = 0 && ! echo "$out" | grep -q 'settings.json' && ok "repair leaves the strict settings link alone" || no "repair leaves the strict settings link alone ($rc)"
+"$REPO/scripts/compass-profile.sh" standard >/dev/null 2>&1; unset COMPASS_SETTINGS_MERGED
 
 echo "repair"
 rm "$HOME/.claude/hooks" "$HOME/.claude/skills"; ln -s "$T/nowhere" "$HOME/.claude/skills"      # missing + dangling
@@ -40,8 +52,10 @@ echo mine >"$HOME/.claude/my-notes.txt"
 rm "$HOME/.claude/commands"; mkdir "$HOME/.claude/commands"; echo mine >"$HOME/.claude/commands/x.md"
 "$REPO/scripts/uninstall.sh" --dry-run >/dev/null 2>&1
 test -L "$HOME/.claude/hooks" && test -f "$REC" && ok "uninstall --dry-run changes nothing" || no "uninstall --dry-run changes nothing"
+ln -sfn "$REPO/claude/settings.merged.json" "$HOME/.claude/settings.json"   # what `compass profile strict` does
 "$REPO/scripts/uninstall.sh" >/dev/null 2>&1
 test ! -e "$HOME/.claude/hooks" && test ! -e "$HOME/.local/bin/compass" && ok "recorded links removed" || no "recorded links removed"
+test ! -L "$HOME/.claude/settings.json" && ok "profile-repointed settings.json still removed" || no "profile-repointed settings.json still removed"
 test -f "$HOME/.claude/my-notes.txt" && test -f "$HOME/.claude/commands/x.md" && ok "user files + replaced dirs untouched" || no "user files + replaced dirs untouched"
 test ! -e "$REC" && ok "record removed" || no "record removed"
 chmod -R u+w "$HOME" 2>/dev/null; rm -rf "$HOME/.claude" "$HOME/.local" "$HOME/.compass"
@@ -81,6 +95,8 @@ cd "$REPO" || exit 1
 rm -rf "$HOME/.compass"
 
 echo "standalone budget cap (--only budget)"
+out="$("$REPO/install.sh" --only 2>&1)"; rc=$?
+test "$rc" -ne 0 && echo "$out" | grep -q -- '--only takes' && ok "bare --only is a usage error, not a full install" || no "bare --only is a usage error, not a full install"
 "$REPO/install.sh" --only budget >/dev/null 2>&1
 G="$HOME/.compass/budget/budget-gate.sh"
 chk "gate installed, nothing in ~/.claude" test -x "$G" -a ! -e "$HOME/.claude/settings.json"
