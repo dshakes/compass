@@ -99,7 +99,7 @@ per-class:
   legacy              108   69    0   39    0   100%   100%
   mcp-poisoning        24   15    0    9    0   100%   100%
   …
-redteam corpus: 368 cases — TP=… FP=0 TN=… FN=0
+redteam corpus: 373 cases — TP=… FP=0 TN=… FN=0
 precision=100% (floor 100%)  recall=100% (floor 90%)
 known gaps (reported, not gating): 5 (0 now caught)
 ```
@@ -238,7 +238,7 @@ CI — so you can measure your own setup, not take a vendor's word:
 
 | Dataset | Cases | What it proves | Run |
 |---|---|---|---|
-| `scripts/redteam-corpus.tsv` | 368 scored (11 classes) + 5 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
+| `scripts/redteam-corpus.tsv` | 373 scored (11 classes) + 5 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
 | `scripts/guardrail-corpus.tsv` | 61 | catastrophic-command + secret-write precision & recall | `compass bench --guardrail` |
 | deepset/prompt-injections (external) | 546 train rows (203 inject, 343 safe) | external, unbiased precision & recall; how compass fares against attacks it did not author | `compass redteam --external` |
 
@@ -399,7 +399,7 @@ extraction* (system-prompt-leak), AML.T0010 *Supply-chain compromise* (provenanc
 
 - Pattern detection is best-effort. The decode/normalize layer catches base64, zero-width/
   bidi, homoglyph, and leetspeak evasions (`compass redteam --attack` measures this: 100% on
-  the original rows, 94% overall. The misses are mostly a second obfuscation stacked on an
+  the original rows, 95% overall. The misses are mostly a second obfuscation stacked on an
   already-obfuscated v2 case, e.g. base64 of a homoglyph payload, or leetspeak breaking a
   bare-IP URL), but a **novel or unseen** obfuscation can still slip. **Corpus
   recall is on the corpus, not the real-world attack distribution** — do not read it as a

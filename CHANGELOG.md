@@ -9,11 +9,11 @@ All notable changes to this project are documented here. Format loosely follows
 
 ### Added
 
-- **Red-team v2** (`docs/17-red-team.md`): the corpus grows to 368 scored cases across 11 attack
+- **Red-team v2** (`docs/17-red-team.md`): the corpus grows to 373 scored cases across 11 attack
   classes with per-class precision/recall, hard negatives (`security-prose`) and 5 documented
   known gaps (reported, not gating). `compass redteam --detector CMD` benchmarks any guardrail
   on the same corpus and prints the same per-class table. Obfuscation fuzzing (`--attack`) is
-  94% (1323/1393, floor 80%); earlier "100% robust" figures are superseded.
+  95% (1330/1400, floor 80%); earlier "100% robust" figures are superseded.
 - **Distribution**: `install-remote.sh` (one-line install; verifies the release's SLSA attestation
   before extracting or running anything, fails closed without `gh`, `--no-verify` to opt out);
   `install.sh` writes `~/.compass/install.json` (version, sha, mode, every created path);
