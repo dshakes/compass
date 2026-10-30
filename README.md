@@ -76,7 +76,7 @@ compass bench     # → guardrail 100% precision/recall (61-case bench corpus; a
 **🧪 Red-team resistance, measured.** Prompt-injection (direct/indirect/paste), agent-config poisoning, local safety-override, malware & insecure-code — scored against a labeled corpus that gates CI, obfuscation-resistant (`--attack`), with optional escalation to a managed guardrails backend. *A poisoned repo or web page can't quietly turn your agent against you — and you can measure how well that holds.* 355 cases across 11 attack classes, scored **per class** (not one blended number), with hard negatives and 5 documented known gaps.
 
 ```bash
-compass redteam            # → injection corpus 100% P/R (355 cases) + 94% obfuscation-robust (1253/1323), then scans THIS repo's config/MCP/settings
+compass redteam            # → injection corpus 100% P/R (355 cases) + 94% obfuscation-robust (1267/1337), then scans THIS repo's config/MCP/settings
 compass redteam --detector ./my-guardrail.sh   # → benchmark ANY guardrail on the same corpus (stdin payload, exit 0 = clean), same per-class table
 compass redteam --external # → score the detectors against a public corpus we DIDN'T write (honest: 90% precision, and we tell you why recall is what it is)
 ```

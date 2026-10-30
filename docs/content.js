@@ -466,24 +466,24 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 <div class="tiles">
 <div class="tile"><b>100%</b><span>precision / recall</span></div>
 <div class="tile"><b>355</b><span>labeled cases, 11 classes</span></div>
-<div class="tile"><b>94%</b><span>robust under obfuscation (1253/1323)</span></div>
+<div class="tile"><b>94%</b><span>robust under obfuscation (1267/1337)</span></div>
 </div>
 
 ## Per class, not one blended number
 
 | Class | Cases | Precision | Recall |
 |---|---|---|---|
-| legacy | 88 | 100% | 100% |
+| legacy | 108 | 100% | 100% |
 | unicode-smuggling | 31 | 100% | 100% |
 | encoded | 27 | 100% | 100% |
-| cred-harvest | 23 | 100% | 100% |
+| cred-harvest | 55 | 100% | 100% |
 | mcp-poisoning · markdown-split | 21 each | 100% | 100% |
-| supply-chain | 20 | 100% | 100% |
-| guardrail-tamper | 19 | 100% | 100% |
+| supply-chain | 21 | 100% | 100% |
+| guardrail-tamper | 30 | 100% | 100% |
 | vendor-agent-file · md-exfil | 15 each | 100% | 100% |
 | security-prose (hard negatives only) | 8 | — | — |
 
-Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Five **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **1253 of 1323** variants (94%, floor 80%); the evaded ones are mostly leetspeak.
+Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Five **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **1267 of 1337** variants (94%, floor 80%); the evaded ones are mostly leetspeak.
 
 **Bring your own guardrail.** \`compass redteam --detector CMD\` runs the same corpus through *any* command (payload on stdin, exit 0 = clean, non-zero = flagged) and prints the same per-class table, so you can compare a guardrail against compass on equal terms.
 

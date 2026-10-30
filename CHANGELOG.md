@@ -11,7 +11,7 @@ All notable changes to this project are documented here. Format loosely follows
   classes with per-class precision/recall, hard negatives (`security-prose`) and 5 documented
   known gaps (reported, not gating). `compass redteam --detector CMD` benchmarks any guardrail
   on the same corpus and prints the same per-class table. Obfuscation fuzzing (`--attack`) is
-  94% (1253/1323, floor 80%); earlier "100% robust" figures are superseded.
+  94% (1267/1337, floor 80%); earlier "100% robust" figures are superseded.
 - **Distribution**: `install-remote.sh` (one-line install; verifies the release's SLSA attestation
   before extracting or running anything, fails closed without `gh`, `--no-verify` to opt out);
   `install.sh` writes `~/.compass/install.json` (version, sha, mode, every created path);
@@ -50,6 +50,10 @@ All notable changes to this project are documented here. Format loosely follows
   one known false positive instead of every finding of that rule in the file. Path and rule now match
   exactly (was a substring match), and injection findings report every offending line with its
   line number instead of one hit per file.
+- **`permission-escalation`** no longer matches "grant **me**rge" (word boundary on `grant me`); the
+  pr-shepherd baseline entry that hid it is gone.
+- **`check-docs`** also guards the obfuscation-fuzz totals (`caught/total`, `N transforms`), computed
+  as inject rows × 7 transforms without running the fuzz.
 - **`sync-plugin.sh`** no longer copies gitignored local files (e.g. `claude/skills/synced/`) into
   the plugin mirror, and `--check` no longer reports them as drift.
 - **Production hardening**: quoted doc counts are computed and guarded by `scripts/check-docs.sh`;
