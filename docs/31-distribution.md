@@ -5,7 +5,7 @@
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | bash
 # pin a version / pass install.sh flags:
-curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | COMPASS_VERSION=v2.2.0 bash -s -- --copy
+curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | COMPASS_VERSION=v2.3.0 bash -s -- --copy
 ```
 
 `install-remote.sh` downloads the release tarball and runs the same check as `compass verify`
