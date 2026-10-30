@@ -48,6 +48,11 @@ test "$rc" -ne 0 && ok "repair exits non-zero while something needs attention" |
 rmdir "$HOME/.claude/agents"; ln -s "$REPO/claude/agents" "$HOME/.claude/agents"
 
 echo "uninstall from record"
+# A dotfile manager's symlinked rc must survive uninstall as a symlink, minus our PATH line.
+rcf="$(jq -r '.paths[] | select(.type == "rcline") | .path' "$REC" | head -1)"
+if [ -n "$rcf" ] && [ -f "$rcf" ] && [ ! -L "$rcf" ]; then
+  mv "$rcf" "$HOME/dotfiles-rc"; ln -s "$HOME/dotfiles-rc" "$rcf"
+fi
 echo mine >"$HOME/.claude/my-notes.txt"
 rm "$HOME/.claude/commands"; mkdir "$HOME/.claude/commands"; echo mine >"$HOME/.claude/commands/x.md"
 "$REPO/scripts/uninstall.sh" --dry-run >/dev/null 2>&1
@@ -58,6 +63,9 @@ test ! -e "$HOME/.claude/hooks" && test ! -e "$HOME/.local/bin/compass" && ok "r
 test ! -L "$HOME/.claude/settings.json" && ok "profile-repointed settings.json still removed" || no "profile-repointed settings.json still removed"
 test -f "$HOME/.claude/my-notes.txt" && test -f "$HOME/.claude/commands/x.md" && ok "user files + replaced dirs untouched" || no "user files + replaced dirs untouched"
 test ! -e "$REC" && ok "record removed" || no "record removed"
+if [ -n "$rcf" ]; then
+  test -L "$rcf" && ! grep -q 'compass CLI on PATH' "$HOME/dotfiles-rc" && ok "symlinked rc kept as symlink, PATH line removed" || no "symlinked rc kept as symlink, PATH line removed"
+else no "no rcline recorded to test against"; fi
 chmod -R u+w "$HOME" 2>/dev/null; rm -rf "$HOME/.claude" "$HOME/.local" "$HOME/.compass"
 
 echo "uninstall: copy mode backs up edited copies"

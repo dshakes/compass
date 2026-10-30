@@ -36,7 +36,7 @@ if [ -f "$REC" ] && command -v jq >/dev/null 2>&1; then
       rcline)
         if [ -f "$path" ] && grep -q '# compass CLI' "$path"; then
           act "stripped compass PATH line from ${path#"$HOME"/}"
-          [ "$DRY" = 1 ] || { tmp="$(mktemp)"; sed '/# compass CLI/,+1d' "$path" >"$tmp" && mv "$tmp" "$path"; }
+          [ "$DRY" = 1 ] || { tmp="$(mktemp)"; awk '/# compass CLI/{s=2} s>0{s--;next} 1' "$path" >"$tmp" && cat "$tmp" >"$path"; rm -f "$tmp"; }
           removed=$((removed+1))
         fi ;;
       block)
@@ -69,7 +69,7 @@ if [ -L "$HOME/.local/bin/compass" ]; then rm -f "$HOME/.local/bin/compass"; ech
 for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile"; do
   [ -f "$rc" ] || continue
   if grep -q '# compass CLI' "$rc"; then
-    tmp="$(mktemp)"; sed '/# compass CLI/,+1d' "$rc" >"$tmp" && mv "$tmp" "$rc"
+    tmp="$(mktemp)"; awk '/# compass CLI/{s=2} s>0{s--;next} 1' "$rc" >"$tmp" && cat "$tmp" >"$rc"; rm -f "$tmp"
     echo "stripped compass PATH line from ${rc#"$HOME"/}"; removed=$((removed+1))
   fi
 done
