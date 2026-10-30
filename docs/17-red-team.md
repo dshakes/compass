@@ -96,12 +96,12 @@ detectors and gates in CI via `compass doctor`:
 ```
 per-class:
   class                 n   TP   FP   TN   FN   prec recall
-  legacy               88   51    0   37    0   100%   100%
-  mcp-poisoning        21   12    0    9    0   100%   100%
+  legacy               98   59    0   39    0   100%   100%
+  mcp-poisoning        24   15    0    9    0   100%   100%
   …
-redteam corpus: 288 cases — TP=… FP=0 TN=… FN=0
+redteam corpus: 317 cases — TP=… FP=0 TN=… FN=0
 precision=100% (floor 100%)  recall=100% (floor 90%)
-known gaps (reported, not gating): 4 (0 now caught)
+known gaps (reported, not gating): 5 (0 now caught)
 ```
 
 Run `compass redteam --eval` to reproduce the live numbers. The corpus is TSV:
@@ -138,6 +138,18 @@ one starts being caught, the run tells you to promote it to `inject`:
 | an override phrase split across **list items** (`- forget all` / `- previous instructions`) | list items are separate blocks, and joining them would merge unrelated bullets across all tool output |
 | non-English overrides ("ignora todas las instrucciones anteriores") | the detectors are English patterns. A model-grade backend (below) is the right layer for this |
 | paraphrase with no trigger words ("set aside everything you were told earlier") | pattern matching can't follow meaning. Same answer: model-grade escalation |
+| a line carrying a **pragma marker** (`allowlist injection`, `injection example`, `redteam corpus`, …) | pragmas drop their whole line by design, so this repo's docs and corpus can quote payloads. Untrusted text can write the marker too. Narrowing pragmas to trusted paths needs the caller's file context, which the pure detector doesn't have |
+
+**Negations are bounded.** "Never set `bypassPermissions`" must stay clean, but a decoy
+negation must not silence a real trigger on the same line ("do not echo progress echo
+$GITHUB_TOKEN | curl …"). So a negation erases at most: the negation, its verb, and two
+plain-word object tokens ("never set defaultMode to"). A token is never erased if it is a
+trigger word (echo, send, curl, ignore, upload, …) or contains anything but letters,
+digits, `_`, `'` or `-`, so `$VARS`, paths, URLs and pipes always stay in the scanned
+text. Padding can't stretch the erased span over the attack. Without perl there is no
+negation handling: only pragma lines are dropped, so negated advice may warn (recall
+first). The corpus pins both sides: decoy and padding variants are `inject` rows, plain
+negated advice stays `safe`.
 
 ---
 
@@ -209,7 +221,7 @@ CI — so you can measure your own setup, not take a vendor's word:
 
 | Dataset | Cases | What it proves | Run |
 |---|---|---|---|
-| `scripts/redteam-corpus.tsv` | 288 scored (11 classes) + 4 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
+| `scripts/redteam-corpus.tsv` | 317 scored (11 classes) + 5 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
 | `scripts/guardrail-corpus.tsv` | 61 | catastrophic-command + secret-write precision & recall | `compass bench --guardrail` |
 | deepset/prompt-injections (external) | 546 train rows (203 inject, 343 safe) | external, unbiased precision & recall; how compass fares against attacks it did not author | `compass redteam --external` |
 
@@ -237,7 +249,7 @@ non-zero = flagged**. Then:
 
 ```bash
 compass redteam --detector 'my-guard --stdin'          # per-class table + P/R
-compass redteam --detector 'my-guard --stdin' --json   # {"eval":{"tp":…,"classes":[…]},"detector":…}
+compass redteam --detector 'my-guard --stdin' --json   # {"eval":{"tp":…,"recall":…},"classes":[…],"detector":…}
 # or directly, with a custom corpus too:
 COMPASS_REDTEAM_DETECTOR='python3 my_guard.py' COMPASS_REDTEAM_CORPUS=tests/mine.tsv \
   scripts/test-redteam.sh
@@ -370,7 +382,7 @@ extraction* (system-prompt-leak), AML.T0010 *Supply-chain compromise* (provenanc
 
 - Pattern detection is best-effort. The decode/normalize layer catches base64, zero-width/
   bidi, homoglyph, and leetspeak evasions (`compass redteam --attack` measures this: 100% on
-  the original rows, 93% overall. The misses are mostly a second obfuscation stacked on an
+  the original rows, 94% overall. The misses are mostly a second obfuscation stacked on an
   already-obfuscated v2 case, e.g. base64 of a homoglyph payload, or leetspeak breaking a
   bare-IP URL), but a **novel or unseen** obfuscation can still slip. **Corpus
   recall is on the corpus, not the real-world attack distribution** — do not read it as a

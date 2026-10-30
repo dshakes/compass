@@ -118,7 +118,7 @@ Config is the one part of an agent system that never gets refactored, because it
 
 <div class="tiles">
 <div class="tile"><b>100/100</b><span>guardrail P/R</span></div>
-<div class="tile"><b>100/100</b><span>red-team · 288 cases</span></div>
+<div class="tile"><b>100/100</b><span>red-team · 317 cases</span></div>
 <div class="tile"><b>96.9%</b><span>router accuracy</span></div>
 <div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
 </div>
@@ -465,8 +465,8 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 
 <div class="tiles">
 <div class="tile"><b>100%</b><span>precision / recall</span></div>
-<div class="tile"><b>288</b><span>labeled cases, 11 classes</span></div>
-<div class="tile"><b>93%</b><span>robust under obfuscation (939/1008)</span></div>
+<div class="tile"><b>317</b><span>labeled cases, 11 classes</span></div>
+<div class="tile"><b>94%</b><span>robust under obfuscation (1106/1176)</span></div>
 </div>
 
 ## Per class, not one blended number
@@ -483,7 +483,7 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 | vendor-agent-file · md-exfil | 15 each | 100% | 100% |
 | security-prose (hard negatives only) | 8 | — | — |
 
-Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Four **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **939 of 1008** variants (93%, floor 80%); the evaded ones are mostly leetspeak.
+Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Five **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **939 of 1008** variants (93%, floor 80%); the evaded ones are mostly leetspeak.
 
 **Bring your own guardrail.** \`compass redteam --detector CMD\` runs the same corpus through *any* command (payload on stdin, exit 0 = clean, non-zero = flagged) and prints the same per-class table, so you can compare a guardrail against compass on equal terms.
 
@@ -500,14 +500,14 @@ Run \`compass redteam\` to reproduce the score — and to scan *this* repo's con
 | Suite | Cases | Precision | Recall |
 |---|---|---|---|
 | Guardrail | 61 | 100% | 100% |
-| Red-team (internal) | 288 | 100% | 100% |
+| Red-team (internal) | 317 | 100% | 100% |
 | Red-team (external, public corpus) | 546 | 90% | 8%* |
 | Router | 32 | — | 96.9% acc |
 
 <div class="tiles">
 <div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
 <div class="tile"><b>96.9%</b><span>routing accuracy</span></div>
-<div class="tile"><b>93%</b><span>red-team obfuscation-robust</span></div>
+<div class="tile"><b>94%</b><span>red-team obfuscation-robust</span></div>
 </div>
 
 <p class="cal tip"><span class="h">* honest by design</span> The external corpus (a public set we didn't write) is dominated by general-chatbot attacks out of scope for a coding-agent guardrail; the catches are the coding-agent-relevant families. We publish the low number because a floor you can only hit on your own cases isn't a floor. Reproduce: <code>compass redteam --external</code>.</p>
