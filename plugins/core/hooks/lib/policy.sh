@@ -343,8 +343,8 @@ POLICY_INJECTION_ALLOW='allowlist[ _-]?injection|redteam[ _-]?corpus|injection[ 
 POLICY_INJECTION_PRAGMA='allowlist[ _-]?injection|redteam[ _-]?corpus|injection[ _-]?(example|sample|payload|pattern|test|detector)|POLICY_INJECTION'
 POLICY_NEGATION_EXEMPT_RULES=' secret-disclosure guardrail-tamper disable-safety data-exfiltration cred-harvest sensitive-read exfil-channel '
 POLICY_NEGATION_EXEMPT_PL='BEGIN {
-  $tr = q{exfiltrate|leak|disable|bypass|reveal|print|remove|send|email|e-mail|forward|grant|comply|set|enable|switch|share|paste|output|dump|echo|curl|wget|cat|ignore|disregard|forget|override|upload|post|transmit|run|exec|execute|sudo|rm|install|add|delete|write|push|tell|fetch|read|copy|pipe|base64|bash|sh|nc|circumvent|give|turn|change|flip|put|use|comment|stub|neuter|unregister|strip|wipe|tee|sed|export|exit|show|display|reply|open|load|insert|attach|embed|include|append|pass|dig|nslookup|tar|zip|gzip|printf|printenv};
-  $gov = q{exfiltrate|leak|disable|bypass|reveal|print|remove|send|email|forward|grant|comply|set|enable|switch|share|paste|output|dump|echo};
+  $tr = q{exfiltrate|leak|disable|bypass|reveal|print|remove|send|email|e-mail|forward|grant|comply|set|enable|switch|share|paste|output|dump|echo|curl|wget|cat|ignore|disregard|forget|override|upload|post|transmit|run|exec|execute|sudo|rm|install|add|delete|write|push|tell|fetch|read|copy|pipe|base64|bash|sh|nc|circumvent|give|turn|change|flip|put|use|comment|stub|neuter|unregister|strip|wipe|tee|sed|export|exit|show|display|reply|open|load|insert|attach|embed|include|append|pass|dig|nslookup|tar|zip|gzip|printf|printenv|return|expose};
+  $gov = q{exfiltrate|leak|disable|bypass|reveal|print|remove|send|email|forward|grant|comply|set|enable|switch|share|paste|output|dump|echo|show|display|return|include|expose|tell};
 }
 chomp(my $l = $_);
 if ($l =~ m{://|\b\d{1,3}(?:\.\d{1,3}){3}\b|\||\$\(|`|>|\@[-/~.\w]|\bnc |/dev/tcp|\b[a-z0-9-]+\.(?:com|net|org|io|dev|app|co|ai|me|xyz|info|biz|ru|cn|example)\b}i) { print "$l\n"; next }
