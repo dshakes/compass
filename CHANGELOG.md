@@ -14,6 +14,9 @@ All notable changes to this project are documented here. Format loosely follows
   10% -> 53% at 98%. Corpus 396 cases across 12 classes; one known gap (Spanish override) promoted.
 - **`compass redteam --external --split=test`** scores the external dataset's held-out split (116 rows,
   pinned sha256), so the generalization number is reproducible. `--external` now forwards its arguments.
+- **Head-to-head** (docs/17): compass vs an open-source ML prompt-injection classifier on identical rows.
+  Held out: classifier 37% recall, compass 20%, together 43%, all at 100% precision; on coding-agent
+  attacks the classifier misses 31% and raises 48 false alarms on benign coding text.
 
 ## [2.3.0] - 2026-10-30
 

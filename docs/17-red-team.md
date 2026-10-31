@@ -318,6 +318,33 @@ to the phrasings they were written for, not to the idea behind them.
 
 The command never runs in CI — it requires a network download and is report-only.
 
+### Head-to-head with an ML classifier
+
+The same rows, scored by compass and by a widely used open-source ML prompt-injection classifier
+(a fine-tuned DeBERTa-v3 model, Apache-2.0, run locally on CPU). "Either" flags a row when
+compass or the classifier does. Measured 2026-10-30:
+
+| Dataset | ML classifier P / R | compass P / R | either P / R |
+|---|---|---|---|
+| compass corpus (379 file rows) | 76% / 69% | 100% / 100% | 82% / 100% |
+| external train (546) | 96% / 43% | 98% / 53% | 96% / 67% |
+| **external held-out test (116)** | **100% / 37%** | **100% / 20%** | **100% / 43%** |
+
+What it says:
+
+- **On attacks nobody tuned for, the classifier generalizes better** (37% vs 20% recall on the
+  held-out split). A model reads intent; rules read phrasings.
+- **On coding-agent attacks the classifier is not enough.** On compass's corpus it misses 31% of
+  attacks (MCP poisoning, credential harvesting, unicode smuggling, encoded payloads) and raises
+  48 false alarms on benign coding text. Compass wrote that corpus and tunes against it, so read
+  its own 100% as "covers what it claims to", not as a fair contest.
+- **Together beats either alone.** That is the intended deployment: compass's deterministic rules
+  on every tool call (fast, offline, coding-specific), with a model-grade backend for paraphrase
+  (`COMPASS_GUARDRAIL_BACKEND`, below).
+
+To reproduce with any classifier, wrap it per **Benchmark any guardrail** above
+(`compass redteam --detector`) for the corpus, and score the external TSVs the same way.
+
 ---
 
 ## Feature flags (control what runs)
