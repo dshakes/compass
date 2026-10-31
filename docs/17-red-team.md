@@ -99,7 +99,7 @@ per-class:
   legacy              108   69    0   39    0   100%   100%
   mcp-poisoning        24   15    0    9    0   100%   100%
   …
-redteam corpus: 396 cases — TP=… FP=0 TN=… FN=0
+redteam corpus: 402 cases — TP=… FP=0 TN=… FN=0
 precision=100% (floor 100%)  recall=100% (floor 90%)
 known gaps (reported, not gating): 4 (0 now caught)
 ```
@@ -238,7 +238,7 @@ CI — so you can measure your own setup, not take a vendor's word:
 
 | Dataset | Cases | What it proves | Run |
 |---|---|---|---|
-| `scripts/redteam-corpus.tsv` | 396 scored (12 classes) + 4 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
+| `scripts/redteam-corpus.tsv` | 402 scored (12 classes) + 4 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
 | `scripts/guardrail-corpus.tsv` | 61 | catastrophic-command + secret-write precision & recall | `compass bench --guardrail` |
 | deepset/prompt-injections (external) | 546 train + 116 held-out test rows | external precision & recall on attacks compass did not author; test is never tuned against | `compass redteam --external [--split=test]` |
 
@@ -342,8 +342,18 @@ What it says:
   on every tool call (fast, offline, coding-specific), with a model-grade backend for paraphrase
   (`COMPASS_GUARDRAIL_BACKEND`, below).
 
-To reproduce with any classifier, wrap it per **Benchmark any guardrail** above
-(`compass redteam --detector`) for the corpus, and score the external TSVs the same way.
+**A naive baseline, for calibration.** A one-line keyword grep (`ignore|forget|vergiss`) scores
+**26%** recall at 100% precision on the held-out split, more than compass's 20%, because that set
+is mostly chatbot jailbreaks that open with those words. On compass's coding-agent corpus the same
+grep scores 12% recall at 79% precision. Each set rewards a different detector, which is why both
+numbers are published.
+
+To reproduce with any detector (payload on stdin, exit 0 = clean):
+
+```bash
+compass redteam --detector 'my-guard --stdin'                        # compass corpus
+compass redteam --external --split=test --detector 'my-guard --stdin'  # held-out external split
+```
 
 ---
 

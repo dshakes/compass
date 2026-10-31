@@ -46,6 +46,13 @@ Optional managed-guardrail escalation (the hooks use these at runtime):
 EOF
 }
 TARGET="$ROOT"   # which repo's context --scan inspects (default: the compass install)
+# --external is its own tool: hand it every other arg, in any order (--json, --split=…).
+for a in "$@"; do
+  if [ "$a" = --external ]; then
+    ext=(); for b in "$@"; do [ "$b" = --external ] || ext+=("$b"); done
+    exec "$(dirname "${BASH_SOURCE[0]}")/compass-redteam-external.sh" ${ext[@]+"${ext[@]}"}
+  fi
+done
 while [ $# -gt 0 ]; do a="$1"; case "$a" in
   --json) JSON=1 ;;
   --eval) MODE=eval ;;
@@ -53,7 +60,6 @@ while [ $# -gt 0 ]; do a="$1"; case "$a" in
   --attack) MODE=attack ;;
   --detector) [ $# -ge 2 ] && [ -n "$2" ] || { echo "compass redteam: --detector needs a command" >&2; exit 2; }
               export COMPASS_REDTEAM_DETECTOR="$2"; MODE=eval; shift ;;
-  --external) shift; exec "$(dirname "${BASH_SOURCE[0]}")/compass-redteam-external.sh" "$@" ;;
   -h|--help) usage; exit 0 ;;
   --*) echo "compass redteam: unknown arg: $a" >&2; usage; exit 2 ;;
   *) TARGET="$a" ;;   # positional: a directory to scan (for CI / fleet sweeps)
