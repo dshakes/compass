@@ -38,16 +38,7 @@ mal="$(malware_intent_findings "$prompt")"
 
 detail="$(printf '%s\n%s' "$inj" "$mal" | grep -v '^$' | tr '\n' ';')"
 compass_log_metric injection "prompt: ${detail}"
-# Under enforce, block only on findings that are hostile even when the user typed them;
-# prompt-advisory families (persona, fresh start) still warn below.
-blocking="$mal"
-while IFS= read -r one; do
-  [ -n "$one" ] || continue
-  case "$POLICY_PROMPT_ADVISORY_RULES" in *" ${one%%:*} "*) ;; *) blocking="$blocking$one" ;; esac
-done <<EOF
-$inj
-EOF
-if [ "$(compass_policy redteam_enforce)" = 1 ] && [ -n "$blocking" ]; then
+if [ "$(compass_policy redteam_enforce)" = 1 ]; then
   compass_log_audit deny UserPromptSubmit prompt-injection "$detail"
   printf 'compass: prompt blocked (COMPASS_REDTEAM_ENFORCE) — matched: %s\n' "$detail" >&2
   exit 2

@@ -318,11 +318,6 @@ to the phrasings they were written for, not to the idea behind them.
 
 The command never runs in CI — it requires a network download and is report-only.
 
-**In your own prompt these families warn, never block.** Context wipes, task switches, persona
-takeovers and context dismissal are attacks when they arrive in a fetched page or tool output,
-but a normal request when you type them ("forget that, start over"). Under
-`COMPASS_REDTEAM_ENFORCE=1` the prompt hook blocks only on the other families.
-
 ### Head-to-head with an ML classifier
 
 The same rows, scored by compass and by a widely used open-source ML prompt-injection classifier

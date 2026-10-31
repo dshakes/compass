@@ -17,8 +17,6 @@ All notable changes to this project are documented here. Format loosely follows
 - **Head-to-head** (docs/17): compass vs an open-source ML prompt-injection classifier on identical rows.
   Held out: classifier 36% recall, compass 21%, together 43%, all at 100% precision; on coding-agent
   attacks the classifier misses 31% and raises 54 false alarms on benign coding text.
-- **Prompt-advisory families**: context wipes, task switches, persona takeovers and context dismissal
-  warn but never block in the user's own prompt (`COMPASS_REDTEAM_ENFORCE=1` blocks only the rest).
 - **`--external --detector CMD`** benchmarks any guardrail on the external splits; `--external` accepts its
   flags in any order; the held-out split's recall floor is 15% (measured 21%) so the run passes honestly.
 
