@@ -99,7 +99,7 @@ per-class:
   legacy              108   69    0   39    0   100%   100%
   mcp-poisoning        24   15    0    9    0   100%   100%
   …
-redteam corpus: 402 cases — TP=… FP=0 TN=… FN=0
+redteam corpus: 407 cases — TP=… FP=0 TN=… FN=0
 precision=100% (floor 100%)  recall=100% (floor 90%)
 known gaps (reported, not gating): 4 (0 now caught)
 ```
@@ -238,7 +238,7 @@ CI — so you can measure your own setup, not take a vendor's word:
 
 | Dataset | Cases | What it proves | Run |
 |---|---|---|---|
-| `scripts/redteam-corpus.tsv` | 402 scored (12 classes) + 4 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
+| `scripts/redteam-corpus.tsv` | 407 scored (12 classes) + 4 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
 | `scripts/guardrail-corpus.tsv` | 61 | catastrophic-command + secret-write precision & recall | `compass bench --guardrail` |
 | deepset/prompt-injections (external) | 546 train + 116 held-out test rows | external precision & recall on attacks compass did not author; test is never tuned against | `compass redteam --external [--split=test]` |
 
@@ -301,7 +301,7 @@ compass does on attacks nobody tuned for:
 
 | Split | Precision | Recall | Run |
 |---|---|---|---|
-| train (546 rows, development set) | 98% | 53% | `compass redteam --external` |
+| train (546 rows, development set) | 98% | 50% | `compass redteam --external` |
 | **test (116 rows, held out)** | **100%** | **20%** | `compass redteam --external --split=test` |
 
 Before the `context-override` detectors (context wipes, task switches, persona takeovers,
@@ -326,8 +326,8 @@ compass or the classifier does. Measured 2026-10-30:
 
 | Dataset | ML classifier P / R | compass P / R | either P / R |
 |---|---|---|---|
-| compass corpus (379 file rows) | 76% / 69% | 100% / 100% | 82% / 100% |
-| external train (546) | 96% / 43% | 98% / 53% | 96% / 67% |
+| compass corpus (390 file rows) | 74% / 69% | 100% / 100% | 80% / 100% |
+| external train (546) | 96% / 43% | 98% / 50% | 96% / 65% |
 | **external held-out test (116)** | **100% / 37%** | **100% / 20%** | **100% / 43%** |
 
 What it says:
@@ -336,7 +336,7 @@ What it says:
   held-out split). A model reads intent; rules read phrasings.
 - **On coding-agent attacks the classifier is not enough.** On compass's corpus it misses 31% of
   attacks (MCP poisoning, credential harvesting, unicode smuggling, encoded payloads) and raises
-  48 false alarms on benign coding text. Compass wrote that corpus and tunes against it, so read
+  53 false alarms on benign coding text. Compass wrote that corpus and tunes against it, so read
   its own 100% as "covers what it claims to", not as a fair contest.
 - **Together beats either alone.** That is the intended deployment: compass's deterministic rules
   on every tool call (fast, offline, coding-specific), with a model-grade backend for paraphrase

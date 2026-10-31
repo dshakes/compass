@@ -36,6 +36,7 @@ JSON=0
 while [ $# -gt 0 ]; do a="$1"; case "$a" in
   --json) JSON=1 ;;
   --split=train|--split=test) SPLIT="${a#--split=}" ;;
+  --split) case "${2:-}" in train|test) SPLIT="$2"; shift ;; *) echo "--split needs train or test" >&2; exit 2 ;; esac ;;
   --detector=*) export COMPASS_REDTEAM_DETECTOR="${a#--detector=}" ;;
   --detector) [ $# -ge 2 ] && [ -n "$2" ] || { echo "--detector needs a command" >&2; exit 2; }
               export COMPASS_REDTEAM_DETECTOR="$2"; shift ;;
@@ -59,6 +60,15 @@ EOF
     exit 0 ;;
   *) printf 'unknown arg: %s\n' "$a" >&2; exit 2 ;;
 esac; shift; done
+
+# A detector that cannot run would flag every row and "pass" with 100% recall; refuse it,
+# exactly as scripts/test-redteam.sh does.
+if [ -n "${COMPASS_REDTEAM_DETECTOR:-}" ]; then
+  printf 'hello' | bash -c "$COMPASS_REDTEAM_DETECTOR" >/dev/null 2>&1; drc=$?
+  if [ "$drc" -ge 126 ]; then
+    printf 'error: detector not runnable (exit %d): %s\n' "$drc" "$COMPASS_REDTEAM_DETECTOR" >&2; exit 2
+  fi
+fi
 
 DATASET_URL="https://huggingface.co/datasets/deepset/prompt-injections/resolve/569e5647fe4f7a9288923f9c6402ec66f865bdf7/default/$SPLIT/0000.parquet"
 case "$SPLIT" in

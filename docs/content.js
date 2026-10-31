@@ -118,7 +118,7 @@ Config is the one part of an agent system that never gets refactored, because it
 
 <div class="tiles">
 <div class="tile"><b>100/100</b><span>guardrail P/R</span></div>
-<div class="tile"><b>100/100</b><span>red-team · 402 cases</span></div>
+<div class="tile"><b>100/100</b><span>red-team · 407 cases</span></div>
 <div class="tile"><b>96.9%</b><span>router accuracy</span></div>
 <div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
 </div>
@@ -465,7 +465,7 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 
 <div class="tiles">
 <div class="tile"><b>100%</b><span>precision / recall</span></div>
-<div class="tile"><b>402</b><span>labeled cases, 12 classes</span></div>
+<div class="tile"><b>407</b><span>labeled cases, 12 classes</span></div>
 <div class="tile"><b>95%</b><span>robust under obfuscation (1442/1512)</span></div>
 </div>
 
@@ -500,7 +500,7 @@ Run \`compass redteam\` to reproduce the score — and to scan *this* repo's con
 | Suite | Cases | Precision | Recall |
 |---|---|---|---|
 | Guardrail | 61 | 100% | 100% |
-| Red-team (internal) | 402 | 100% | 100% |
+| Red-team (internal) | 407 | 100% | 100% |
 | Red-team (external, held-out public split) | 116 | 100% | 20% |
 | Router | 32 | — | 96.9% acc |
 
