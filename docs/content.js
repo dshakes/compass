@@ -481,6 +481,7 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 | supply-chain | 21 | 100% | 100% |
 | guardrail-tamper | 30 | 100% | 100% |
 | vendor-agent-file · md-exfil | 15 each | 100% | 100% |
+| context-override | 40 | 100% | 100% |
 | security-prose (hard negatives only) | 8 | — | — |
 
 Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Four **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **1440 of 1512** variants (95%, floor 80%); the evaded ones are mostly leetspeak.
