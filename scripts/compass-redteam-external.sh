@@ -37,7 +37,8 @@ while [ $# -gt 0 ]; do a="$1"; case "$a" in
   --json) JSON=1 ;;
   --split=train|--split=test) SPLIT="${a#--split=}" ;;
   --split) case "${2:-}" in train|test) SPLIT="$2"; shift ;; *) echo "--split needs train or test" >&2; exit 2 ;; esac ;;
-  --detector=*) export COMPASS_REDTEAM_DETECTOR="${a#--detector=}" ;;
+  --detector=*) [ -n "${a#--detector=}" ] || { echo "--detector needs a command" >&2; exit 2; }
+                export COMPASS_REDTEAM_DETECTOR="${a#--detector=}" ;;
   --detector) [ $# -ge 2 ] && [ -n "$2" ] || { echo "--detector needs a command" >&2; exit 2; }
               export COMPASS_REDTEAM_DETECTOR="$2"; shift ;;
   -h|--help)

@@ -96,6 +96,9 @@ printf '%s\n' "$td_out" | grep -q 'TP=2  FP=2  TN=0  FN=0' \
 COMPASS_REDTEAM_EXTERNAL_FILE="$FIXTURE" bash "$SCORER" --detector=no-such-detector-xyz >/dev/null 2>&1
 [ $? -eq 2 ] && pass_check 0 "unrunnable --detector exits 2 (no vacuous pass)" || fail "unrunnable --detector should exit 2"
 
+COMPASS_REDTEAM_EXTERNAL_FILE="$FIXTURE" bash "$SCORER" --detector= >/dev/null 2>&1
+[ $? -eq 2 ] && pass_check 0 "empty --detector= exits 2 (never silently scores compass)" || fail "empty --detector= should exit 2"
+
 # ── test: --split selects the dataset and is reported in JSON ─────────────────
 tj="$(COMPASS_REDTEAM_EXTERNAL_FILE="$FIXTURE" bash "$SCORER" --split test --json 2>/dev/null | tail -1)"
 printf '%s' "$tj" | grep -q '"split":"test"' && printf '%s' "$tj" | grep -q '"recall_floor":15' \
