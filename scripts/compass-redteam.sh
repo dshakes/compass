@@ -53,7 +53,7 @@ while [ $# -gt 0 ]; do a="$1"; case "$a" in
   --attack) MODE=attack ;;
   --detector) [ $# -ge 2 ] && [ -n "$2" ] || { echo "compass redteam: --detector needs a command" >&2; exit 2; }
               export COMPASS_REDTEAM_DETECTOR="$2"; MODE=eval; shift ;;
-  --external) exec "$(dirname "${BASH_SOURCE[0]}")/compass-redteam-external.sh" ;;
+  --external) shift; exec "$(dirname "${BASH_SOURCE[0]}")/compass-redteam-external.sh" "$@" ;;
   -h|--help) usage; exit 0 ;;
   --*) echo "compass redteam: unknown arg: $a" >&2; usage; exit 2 ;;
   *) TARGET="$a" ;;   # positional: a directory to scan (for CI / fleet sweeps)

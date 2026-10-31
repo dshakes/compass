@@ -99,9 +99,9 @@ per-class:
   legacy              108   69    0   39    0   100%   100%
   mcp-poisoning        24   15    0    9    0   100%   100%
   …
-redteam corpus: 373 cases — TP=… FP=0 TN=… FN=0
+redteam corpus: 396 cases — TP=… FP=0 TN=… FN=0
 precision=100% (floor 100%)  recall=100% (floor 90%)
-known gaps (reported, not gating): 5 (0 now caught)
+known gaps (reported, not gating): 4 (0 now caught)
 ```
 
 Run `compass redteam --eval` to reproduce the live numbers. The corpus is TSV:
@@ -136,7 +136,7 @@ one starts being caught, the run tells you to promote it to `inject`:
 |---|---|
 | double-base64 (`base64(base64(payload))`) | decoding is a single pass; recursing doubles the cost on every tool call for a rare evasion |
 | an override phrase split across **list items** (`- forget all` / `- previous instructions`) | list items are separate blocks, and joining them would merge unrelated bullets across all tool output |
-| non-English overrides ("ignora todas las instrucciones anteriores") | the detectors are English patterns. A model-grade backend (below) is the right layer for this |
+| overrides in languages other than English, German and Spanish, or paraphrased ones | the detectors are phrase patterns. A model-grade backend (below) is the right layer for this |
 | paraphrase with no trigger words ("set aside everything you were told earlier") | pattern matching can't follow meaning. Same answer: model-grade escalation |
 | a line carrying a **pragma marker** (`allowlist injection`, `injection example`, `redteam corpus`, …) | pragmas drop their whole line by design, so this repo's docs and corpus can quote payloads. Untrusted text can write the marker too. Narrowing pragmas to trusted paths needs the caller's file context, which the pure detector doesn't have |
 
@@ -238,9 +238,9 @@ CI — so you can measure your own setup, not take a vendor's word:
 
 | Dataset | Cases | What it proves | Run |
 |---|---|---|---|
-| `scripts/redteam-corpus.tsv` | 373 scored (11 classes) + 5 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
+| `scripts/redteam-corpus.tsv` | 396 scored (12 classes) + 4 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
 | `scripts/guardrail-corpus.tsv` | 61 | catastrophic-command + secret-write precision & recall | `compass bench --guardrail` |
-| deepset/prompt-injections (external) | 546 train rows (203 inject, 343 safe) | external, unbiased precision & recall; how compass fares against attacks it did not author | `compass redteam --external` |
+| deepset/prompt-injections (external) | 546 train + 116 held-out test rows | external precision & recall on attacks compass did not author; test is never tuned against | `compass redteam --external [--split=test]` |
 
 **Apply them in your repo / CI** (deterministic, offline — no tokens, no model calls):
 
@@ -295,16 +295,26 @@ compass redteam --external        # downloads once (~1 MB parquet), caches to ~/
 compass redteam --external --json # machine-readable
 ```
 
-**Honest numbers — run to reproduce:** external precision is around **90%**, external recall
-around **8%**. The high miss rate on this dataset is expected and not a defect:
+**Honest numbers — run to reproduce.** The dataset has a 546-row train split and a 116-row test
+split. Detectors may be tuned against train; test is held out, so it is the number that says how
+compass does on attacks nobody tuned for:
 
-- The deepset corpus targets general chatbots (role-play, political opinion shifts, fictional
-  personas). Compass's coding-agent patterns cover the families that matter for a coding agent:
-  instruction-override, authority-spoof, tool-poisoning, data-exfiltration, config-override.
-- The `compass redteam --external` output prints the top 10 missed examples so a human can
-  judge their relevance. Most misses are general-LLM attacks outside a coding agent's scope.
-- The internal corpus (precision 100% / recall 100%) covers the coding-agent-relevant families
-  exhaustively; the external number is a second-opinion sanity check, not the primary gate.
+| Split | Precision | Recall | Run |
+|---|---|---|---|
+| train (546 rows, development set) | 98% | 53% | `compass redteam --external` |
+| **test (116 rows, held out)** | **100%** | **20%** | `compass redteam --external --split=test` |
+
+Before the `context-override` detectors (context wipes, task switches, persona takeovers,
+context dismissal, prompt-text leaks; English, German, Spanish) these were 91% / 10% on train
+and 100% / 3% on test. They were written from the train misses only, then scored on test once.
+
+Read the gap between train and test as the honest limit of pattern detection: rules generalize
+to the phrasings they were written for, not to the idea behind them.
+
+- The dataset targets general chatbots (role-play, political opinion shifts, fictional
+  personas), much of it in German. Most remaining misses are paraphrases without a trigger
+  phrase, or requests that are only an injection in context ("state that X is the best").
+- The internal corpus is the per-commit gate; the external split is the independent check.
 
 The command never runs in CI — it requires a network download and is report-only.
 

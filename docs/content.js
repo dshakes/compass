@@ -118,7 +118,7 @@ Config is the one part of an agent system that never gets refactored, because it
 
 <div class="tiles">
 <div class="tile"><b>100/100</b><span>guardrail P/R</span></div>
-<div class="tile"><b>100/100</b><span>red-team · 373 cases</span></div>
+<div class="tile"><b>100/100</b><span>red-team · 396 cases</span></div>
 <div class="tile"><b>96.9%</b><span>router accuracy</span></div>
 <div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
 </div>
@@ -256,8 +256,8 @@ compass doctor      # expect "0 error"
   <a href="#09-sdlc">
     <rect class="card" x="290" y="594" width="320" height="66" rx="14" fill="rgba(46,230,207,.10)" stroke="#2ee6cf" stroke-width="1.8"/>
     <text x="330" y="626" font-size="24">🧑‍💻</text>
-    <text x="373" y="622" font-size="15" font-weight="700" class="hh">Human gate</text>
-    <text x="373" y="642" class="m dim" font-size="10.5">you merge · deploy · publish — always</text>
+    <text x="396" y="622" font-size="15" font-weight="700" class="hh">Human gate</text>
+    <text x="396" y="642" class="m dim" font-size="10.5">you merge · deploy · publish — always</text>
   </a>
   <g fill="url(#sa-pulse)">
     <circle r="5"><animateMotion dur="3.2s" repeatCount="indefinite" path="M450,120 C450,150 220,150 220,192"/></circle>
@@ -465,8 +465,8 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 
 <div class="tiles">
 <div class="tile"><b>100%</b><span>precision / recall</span></div>
-<div class="tile"><b>373</b><span>labeled cases, 11 classes</span></div>
-<div class="tile"><b>95%</b><span>robust under obfuscation (1330/1400)</span></div>
+<div class="tile"><b>396</b><span>labeled cases, 12 classes</span></div>
+<div class="tile"><b>95%</b><span>robust under obfuscation (1428/1498)</span></div>
 </div>
 
 ## Per class, not one blended number
@@ -483,7 +483,7 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 | vendor-agent-file · md-exfil | 15 each | 100% | 100% |
 | security-prose (hard negatives only) | 8 | — | — |
 
-Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Five **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **1330 of 1400** variants (95%, floor 80%); the evaded ones are mostly leetspeak.
+Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Four **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **1428 of 1498** variants (95%, floor 80%); the evaded ones are mostly leetspeak.
 
 **Bring your own guardrail.** \`compass redteam --detector CMD\` runs the same corpus through *any* command (payload on stdin, exit 0 = clean, non-zero = flagged) and prints the same per-class table, so you can compare a guardrail against compass on equal terms.
 
@@ -500,7 +500,7 @@ Run \`compass redteam\` to reproduce the score — and to scan *this* repo's con
 | Suite | Cases | Precision | Recall |
 |---|---|---|---|
 | Guardrail | 61 | 100% | 100% |
-| Red-team (internal) | 373 | 100% | 100% |
+| Red-team (internal) | 396 | 100% | 100% |
 | Red-team (external, public corpus) | 546 | 90% | 8%* |
 | Router | 32 | — | 96.9% acc |
 

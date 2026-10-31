@@ -73,12 +73,12 @@ compass bench     # → guardrail 100% precision/recall (61-case bench corpus; a
 # then ask the agent to `rm -rf /` or write a .env → denied; `rm -rf ./build` → allowed
 ```
 
-**🧪 Red-team resistance, measured.** Prompt-injection (direct/indirect/paste), agent-config poisoning, local safety-override, malware & insecure-code — scored against a labeled corpus that gates CI, obfuscation-resistant (`--attack`), with optional escalation to a managed guardrails backend. *A poisoned repo or web page can't quietly turn your agent against you — and you can measure how well that holds.* 373 cases across 11 attack classes, scored **per class** (not one blended number), with hard negatives and 5 documented known gaps.
+**🧪 Red-team resistance, measured.** Prompt-injection (direct/indirect/paste), agent-config poisoning, local safety-override, malware & insecure-code — scored against a labeled corpus that gates CI, obfuscation-resistant (`--attack`), with optional escalation to a managed guardrails backend. *A poisoned repo or web page can't quietly turn your agent against you — and you can measure how well that holds.* 396 cases across 12 attack classes, scored **per class** (not one blended number), with hard negatives and 4 documented known gaps. On a public held-out set nobody tuned for, it catches **20%** of attacks with **100%** precision; pattern rules generalize to phrasings, not ideas, so pair them with a model-grade backend for paraphrase.
 
 ```bash
-compass redteam            # → injection corpus 100% P/R (373 cases) + 95% obfuscation-robust (1330/1400), then scans THIS repo's config/MCP/settings
+compass redteam            # → injection corpus 100% P/R (396 cases) + 95% obfuscation-robust (1428/1498), then scans THIS repo's config/MCP/settings
 compass redteam --detector ./my-guardrail.sh   # → benchmark ANY guardrail on the same corpus (stdin payload, exit 0 = clean), same per-class table
-compass redteam --external # → score the detectors against a public corpus we DIDN'T write (honest: 90% precision, and we tell you why recall is what it is)
+compass redteam --external --split=test  # → a public corpus we DIDN'T write, held out from tuning: 100% precision, 20% recall
 ```
 <sub>Most tools show you 100% on their own test set. We show that too — <b>and</b> the number against someone else's corpus, because a floor you can only hit on your own cases isn't a floor.</sub>
 
@@ -255,7 +255,7 @@ Everything below is **on after one install** or a single opt-in — the autonomo
 | 🛰️ | **The fleet** | the loop, scheduled across *all* your repos through a test gate; approve from your phone | [14-fleet](docs/14-fleet.md) |
 | 👥 | **The crew + workflows** | cost-tiered expert subagents · slash-commands · dynamic workflows that fact-check each other | [agents roster](docs/agents-roster.md) · [12](docs/12-every-agent.md) · [13](docs/13-workflows.md) |
 | 🛡 | **Guardrails & scanning** | a hook layer that blocks disasters, catches secrets (write-hook + `compass scan`), auto-formats, keeps a JSONL audit log | [16-hardening](docs/16-hardening-and-frontier.md) |
-| 🧪 | **Red-team hardening** | 373-case, 11-class corpus with per-class P/R; `--detector` benchmarks any guardrail; defends vs prompt-injection, config poisoning, safety-override, malware & insecure code | [17-red-team](docs/17-red-team.md) |
+| 🧪 | **Red-team hardening** | 396-case, 11-class corpus with per-class P/R; `--detector` benchmarks any guardrail; defends vs prompt-injection, config poisoning, safety-override, malware & insecure code | [17-red-team](docs/17-red-team.md) |
 | 🧭 | **Cost-tier router** | a standalone, reusable module — keyword heuristic → optional classifier → judge cascade; eval-gated | [router/](router/) |
 | 🎚 | **Profiles & one policy** | `compass profile strict\|standard\|solo` · tighten-only `.compass/policy.conf` · fail-closed hooks · `compass scan --config` audits your own agent config | [30-advanced](docs/30-advanced-config.md) |
 | 🔏 | **Verified install** | one-line install that verifies the attestation first · install record · `compass repair` · record-driven uninstall · `--only budget` | [31-distribution](docs/31-distribution.md) |

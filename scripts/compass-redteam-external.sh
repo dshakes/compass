@@ -29,23 +29,20 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # ── pinned dataset ────────────────────────────────────────────────────────────
 # Parquet file at an immutable HuggingFace LFS commit (refs/convert/parquet branch).
 # Change these two constants together if the dataset is updated.
-DATASET_URL="https://huggingface.co/datasets/deepset/prompt-injections/resolve/569e5647fe4f7a9288923f9c6402ec66f865bdf7/default/train/0000.parquet"
-DATASET_SHA256="2e10bc7ab30f542c97e4e83e2a5683000b5057d25ec10908784c631d44124c04"
-DATASET_FILE="deepset-prompt-injections-train.parquet"
-
-CACHE_DIR="${COMPASS_HOME:-$HOME/.compass}/cache"
-CACHED_PARQUET="$CACHE_DIR/$DATASET_FILE"
-CACHED_TSV="${CACHED_PARQUET%.parquet}.tsv"
-
+# The train split (546 rows) is the development set detectors may be tuned against; the test
+# split (116 rows) is held out, so its score is the generalization number.
+SPLIT=train
 JSON=0
 for a in "$@"; do case "$a" in
   --json) JSON=1 ;;
+  --split=train|--split=test) SPLIT="${a#--split=}" ;;
   -h|--help)
     cat <<'EOF'
 compass-redteam-external.sh — score injection detectors against external corpus
 
 Options:
-  --json   machine-readable summary
+  --json                  machine-readable summary
+  --split=train|test      train (546 rows, default) or the held-out test split (116 rows)
 
 Env:
   COMPASS_REDTEAM_EXTERNAL_FILE=path  use this pre-converted TSV, skip download
@@ -58,6 +55,17 @@ EOF
     exit 0 ;;
   *) printf 'unknown arg: %s\n' "$a" >&2; exit 2 ;;
 esac; done
+
+DATASET_URL="https://huggingface.co/datasets/deepset/prompt-injections/resolve/569e5647fe4f7a9288923f9c6402ec66f865bdf7/default/$SPLIT/0000.parquet"
+case "$SPLIT" in
+  train) DATASET_SHA256="2e10bc7ab30f542c97e4e83e2a5683000b5057d25ec10908784c631d44124c04" ;;
+  test)  DATASET_SHA256="39ac797cabc157eeed58435a08593b2952bb6cb16fc394a2d383f447cc7b246e" ;;
+esac
+DATASET_FILE="deepset-prompt-injections-$SPLIT.parquet"
+
+CACHE_DIR="${COMPASS_HOME:-$HOME/.compass}/cache"
+CACHED_PARQUET="$CACHE_DIR/$DATASET_FILE"
+CACHED_TSV="${CACHED_PARQUET%.parquet}.tsv"
 
 # Floors are intentionally lower than the internal corpus (100/90) because the
 # external set includes many general-chatbot injections our coding-agent patterns
@@ -379,7 +387,7 @@ if [ "$JSON" = 1 ]; then
   printf '{"dataset":"deepset/prompt-injections","total":%d,"tp":%d,"fp":%d,"tn":%d,"fn":%d,"precision":%d,"recall":%d,"accuracy":%d,"prec_floor":%d,"recall_floor":%d,"pass":%s}\n' \
     "$total" "$tp" "$fp" "$tn" "$fn" "$prec" "$rec" "$acc" "$PREC_FLOOR" "$RECALL_FLOOR" "$pass"
 else
-  printf '\nexternal corpus: deepset/prompt-injections  (Apache 2.0, download-only)\n'
+  printf '\nexternal corpus: deepset/prompt-injections, %s split  (Apache 2.0, download-only)\n' "$SPLIT"
   printf 'rows: %d  inject=%d  safe=%d\n' "$total" "$((tp + fn))" "$((tn + fp))"
   printf 'TP=%d  FP=%d  TN=%d  FN=%d\n' "$tp" "$fp" "$tn" "$fn"
   printf 'precision=%d%%  recall=%d%%  accuracy=%d%%\n' "$prec" "$rec" "$acc"
