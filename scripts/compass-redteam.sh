@@ -32,6 +32,7 @@ usage: compass redteam [--eval | --scan | --attack] [--json]
               catch (robustness %). Live-agent attacks need an external harness.
   --external  score the detectors against a pinned PUBLIC corpus we didn't write
               (downloads once, sha256-verified; report-only — never gates CI)
+              --split=test scores the held-out split; --detector CMD benchmarks another guardrail
   --detector CMD
               benchmark ANY guardrail on the corpus instead of compass's detectors:
               CMD reads the payload on stdin, exits 0 = clean, non-zero = flagged.
