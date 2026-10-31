@@ -32,6 +32,7 @@ usage: compass redteam [--eval | --scan | --attack] [--json]
               catch (robustness %). Live-agent attacks need an external harness.
   --external  score the detectors against a pinned PUBLIC corpus we didn't write
               (downloads once, sha256-verified; report-only — never gates CI)
+              --split=test scores the held-out split; --detector CMD benchmarks another guardrail
   --detector CMD
               benchmark ANY guardrail on the corpus instead of compass's detectors:
               CMD reads the payload on stdin, exits 0 = clean, non-zero = flagged.
@@ -46,14 +47,22 @@ Optional managed-guardrail escalation (the hooks use these at runtime):
 EOF
 }
 TARGET="$ROOT"   # which repo's context --scan inspects (default: the compass install)
+# --external is its own tool: hand it every other arg, in any order (--json, --split=…).
+for a in "$@"; do
+  if [ "$a" = --external ]; then
+    ext=(); for b in "$@"; do [ "$b" = --external ] || ext+=("$b"); done
+    exec "$(dirname "${BASH_SOURCE[0]}")/compass-redteam-external.sh" ${ext[@]+"${ext[@]}"}
+  fi
+done
 while [ $# -gt 0 ]; do a="$1"; case "$a" in
   --json) JSON=1 ;;
   --eval) MODE=eval ;;
   --scan) MODE=scan ;;
   --attack) MODE=attack ;;
+  --detector=*) [ -n "${a#--detector=}" ] || { echo "compass redteam: --detector needs a command" >&2; exit 2; }
+                export COMPASS_REDTEAM_DETECTOR="${a#--detector=}"; MODE=eval ;;
   --detector) [ $# -ge 2 ] && [ -n "$2" ] || { echo "compass redteam: --detector needs a command" >&2; exit 2; }
               export COMPASS_REDTEAM_DETECTOR="$2"; MODE=eval; shift ;;
-  --external) exec "$(dirname "${BASH_SOURCE[0]}")/compass-redteam-external.sh" ;;
   -h|--help) usage; exit 0 ;;
   --*) echo "compass redteam: unknown arg: $a" >&2; usage; exit 2 ;;
   *) TARGET="$a" ;;   # positional: a directory to scan (for CI / fleet sweeps)

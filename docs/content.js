@@ -118,7 +118,7 @@ Config is the one part of an agent system that never gets refactored, because it
 
 <div class="tiles">
 <div class="tile"><b>100/100</b><span>guardrail P/R</span></div>
-<div class="tile"><b>100/100</b><span>red-team · 373 cases</span></div>
+<div class="tile"><b>100/100</b><span>red-team · 413 cases</span></div>
 <div class="tile"><b>96.9%</b><span>router accuracy</span></div>
 <div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
 </div>
@@ -256,8 +256,8 @@ compass doctor      # expect "0 error"
   <a href="#09-sdlc">
     <rect class="card" x="290" y="594" width="320" height="66" rx="14" fill="rgba(46,230,207,.10)" stroke="#2ee6cf" stroke-width="1.8"/>
     <text x="330" y="626" font-size="24">🧑‍💻</text>
-    <text x="373" y="622" font-size="15" font-weight="700" class="hh">Human gate</text>
-    <text x="373" y="642" class="m dim" font-size="10.5">you merge · deploy · publish — always</text>
+    <text x="368" y="622" font-size="15" font-weight="700" class="hh">Human gate</text>
+    <text x="368" y="642" class="m dim" font-size="10.5">you merge · deploy · publish — always</text>
   </a>
   <g fill="url(#sa-pulse)">
     <circle r="5"><animateMotion dur="3.2s" repeatCount="indefinite" path="M450,120 C450,150 220,150 220,192"/></circle>
@@ -465,8 +465,8 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 
 <div class="tiles">
 <div class="tile"><b>100%</b><span>precision / recall</span></div>
-<div class="tile"><b>373</b><span>labeled cases, 11 classes</span></div>
-<div class="tile"><b>95%</b><span>robust under obfuscation (1330/1400)</span></div>
+<div class="tile"><b>413</b><span>labeled cases, 12 classes</span></div>
+<div class="tile"><b>95%</b><span>robust under obfuscation (1440/1512)</span></div>
 </div>
 
 ## Per class, not one blended number
@@ -481,9 +481,10 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 | supply-chain | 21 | 100% | 100% |
 | guardrail-tamper | 30 | 100% | 100% |
 | vendor-agent-file · md-exfil | 15 each | 100% | 100% |
+| context-override | 40 | 100% | 100% |
 | security-prose (hard negatives only) | 8 | — | — |
 
-Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Five **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **1330 of 1400** variants (95%, floor 80%); the evaded ones are mostly leetspeak.
+Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Four **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **1440 of 1512** variants (95%, floor 80%); the evaded ones are mostly leetspeak.
 
 **Bring your own guardrail.** \`compass redteam --detector CMD\` runs the same corpus through *any* command (payload on stdin, exit 0 = clean, non-zero = flagged) and prints the same per-class table, so you can compare a guardrail against compass on equal terms.
 
@@ -500,8 +501,8 @@ Run \`compass redteam\` to reproduce the score — and to scan *this* repo's con
 | Suite | Cases | Precision | Recall |
 |---|---|---|---|
 | Guardrail | 61 | 100% | 100% |
-| Red-team (internal) | 373 | 100% | 100% |
-| Red-team (external, public corpus) | 546 | 90% | 8%* |
+| Red-team (internal) | 413 | 100% | 100% |
+| Red-team (external, held-out public split) | 116 | 100% | 21% |
 | Router | 32 | — | 96.9% acc |
 
 <div class="tiles">
@@ -510,7 +511,7 @@ Run \`compass redteam\` to reproduce the score — and to scan *this* repo's con
 <div class="tile"><b>95%</b><span>red-team obfuscation-robust</span></div>
 </div>
 
-<p class="cal tip"><span class="h">* honest by design</span> The external corpus (a public set we didn't write) is dominated by general-chatbot attacks out of scope for a coding-agent guardrail; the catches are the coding-agent-relevant families. We publish the low number because a floor you can only hit on your own cases isn't a floor. Reproduce: <code>compass redteam --external</code>.</p>
+<p class="cal tip"><span class="h">honest by design</span> The external row is a public set we didn't write, and its held-out split was never tuned against. Rules catch the phrasings they were written for, not the idea behind them; an open-source ML classifier scores 36% on the same split, and the two together 43%. We publish the low number because a floor you can only hit on your own cases isn't a floor. Reproduce: <code>compass redteam --external --split=test</code>.</p>
 
 ## Why floors, not just numbers
 

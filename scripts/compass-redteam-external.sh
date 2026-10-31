@@ -29,41 +29,66 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # ── pinned dataset ────────────────────────────────────────────────────────────
 # Parquet file at an immutable HuggingFace LFS commit (refs/convert/parquet branch).
 # Change these two constants together if the dataset is updated.
-DATASET_URL="https://huggingface.co/datasets/deepset/prompt-injections/resolve/569e5647fe4f7a9288923f9c6402ec66f865bdf7/default/train/0000.parquet"
-DATASET_SHA256="2e10bc7ab30f542c97e4e83e2a5683000b5057d25ec10908784c631d44124c04"
-DATASET_FILE="deepset-prompt-injections-train.parquet"
-
-CACHE_DIR="${COMPASS_HOME:-$HOME/.compass}/cache"
-CACHED_PARQUET="$CACHE_DIR/$DATASET_FILE"
-CACHED_TSV="${CACHED_PARQUET%.parquet}.tsv"
-
+# The train split (546 rows) is the development set detectors may be tuned against; the test
+# split (116 rows) is held out, so its score is the generalization number.
+SPLIT=train
 JSON=0
-for a in "$@"; do case "$a" in
+while [ $# -gt 0 ]; do a="$1"; case "$a" in
   --json) JSON=1 ;;
+  --split=train|--split=test) SPLIT="${a#--split=}" ;;
+  --split) case "${2:-}" in train|test) SPLIT="$2"; shift ;; *) echo "--split needs train or test" >&2; exit 2 ;; esac ;;
+  --detector=*) [ -n "${a#--detector=}" ] || { echo "--detector needs a command" >&2; exit 2; }
+                export COMPASS_REDTEAM_DETECTOR="${a#--detector=}" ;;
+  --detector) [ $# -ge 2 ] && [ -n "$2" ] || { echo "--detector needs a command" >&2; exit 2; }
+              export COMPASS_REDTEAM_DETECTOR="$2"; shift ;;
   -h|--help)
     cat <<'EOF'
 compass-redteam-external.sh — score injection detectors against external corpus
 
 Options:
-  --json   machine-readable summary
+  --json                  machine-readable summary
+  --split=train|test      train (546 rows, default) or the held-out test split (116 rows)
+  --detector[=] CMD       score CMD instead of compass (payload on stdin; exit 0 = clean)
 
 Env:
   COMPASS_REDTEAM_EXTERNAL_FILE=path  use this pre-converted TSV, skip download
   COMPASS_HOME=path                   cache root (default: ~/.compass)
   COMPASS_REDTEAM_PRECISION_FLOOR=N   pass threshold (default: 50)
-  COMPASS_REDTEAM_RECALL_FLOOR=N      pass threshold (default: 30)
+  COMPASS_REDTEAM_RECALL_FLOOR=N      pass threshold (default: 30 train, 15 test)
 
 Exit codes: 0=pass, 1=below floor, 2=bad args, 3=offline/download failed
 EOF
     exit 0 ;;
   *) printf 'unknown arg: %s\n' "$a" >&2; exit 2 ;;
-esac; done
+esac; shift; done
+
+# A detector that cannot run would flag every row and "pass" with 100% recall; refuse it,
+# exactly as scripts/test-redteam.sh does.
+if [ -n "${COMPASS_REDTEAM_DETECTOR:-}" ]; then
+  printf 'hello' | bash -c "$COMPASS_REDTEAM_DETECTOR" >/dev/null 2>&1; drc=$?
+  if [ "$drc" -ge 126 ]; then
+    printf 'error: detector not runnable (exit %d): %s\n' "$drc" "$COMPASS_REDTEAM_DETECTOR" >&2; exit 2
+  fi
+fi
+
+DATASET_URL="https://huggingface.co/datasets/deepset/prompt-injections/resolve/569e5647fe4f7a9288923f9c6402ec66f865bdf7/default/$SPLIT/0000.parquet"
+case "$SPLIT" in
+  train) DATASET_SHA256="2e10bc7ab30f542c97e4e83e2a5683000b5057d25ec10908784c631d44124c04" ;;
+  test)  DATASET_SHA256="39ac797cabc157eeed58435a08593b2952bb6cb16fc394a2d383f447cc7b246e" ;;
+esac
+DATASET_FILE="deepset-prompt-injections-$SPLIT.parquet"
+
+CACHE_DIR="${COMPASS_HOME:-$HOME/.compass}/cache"
+CACHED_PARQUET="$CACHE_DIR/$DATASET_FILE"
+CACHED_TSV="${CACHED_PARQUET%.parquet}.tsv"
 
 # Floors are intentionally lower than the internal corpus (100/90) because the
 # external set includes many general-chatbot injections our coding-agent patterns
 # don't target. The goal is an honest external number, not a tuned gate.
 PREC_FLOOR="${COMPASS_REDTEAM_PRECISION_FLOOR:-50}"
-RECALL_FLOOR="${COMPASS_REDTEAM_RECALL_FLOOR:-30}"
+# The held-out split is never tuned against, so its floor sits under today's measured 21%:
+# it catches a regression without pretending the number is higher than it is.
+case "$SPLIT" in test) RECALL_FLOOR="${COMPASS_REDTEAM_RECALL_FLOOR:-15}" ;; *) RECALL_FLOOR="${COMPASS_REDTEAM_RECALL_FLOOR:-30}" ;; esac
 
 red()  { printf '\033[31m%s\033[0m\n' "$1"; }
 info() { [ "$JSON" = 1 ] || printf '%s\n' "$1"; }
@@ -345,7 +370,12 @@ while IFS=$'\t' read -r label payload; do
   case "$label" in ''|\#*) continue ;; esac
   [ -n "$payload" ] || continue
   total=$((total + 1))
-  found="$(injection_findings "$payload")"
+  if [ -n "${COMPASS_REDTEAM_DETECTOR:-}" ]; then
+    # benchmark another guardrail: payload on stdin, non-zero exit = flagged
+    found=""; printf '%s' "$payload" | bash -c "$COMPASS_REDTEAM_DETECTOR" >/dev/null 2>&1 || found=flagged
+  else
+    found="$(injection_findings "$payload")"
+  fi
   if [ "$label" = inject ]; then
     if [ -n "$found" ]; then
       tp=$((tp + 1))
@@ -376,10 +406,10 @@ pass=true
 
 # ── output ────────────────────────────────────────────────────────────────────
 if [ "$JSON" = 1 ]; then
-  printf '{"dataset":"deepset/prompt-injections","total":%d,"tp":%d,"fp":%d,"tn":%d,"fn":%d,"precision":%d,"recall":%d,"accuracy":%d,"prec_floor":%d,"recall_floor":%d,"pass":%s}\n' \
-    "$total" "$tp" "$fp" "$tn" "$fn" "$prec" "$rec" "$acc" "$PREC_FLOOR" "$RECALL_FLOOR" "$pass"
+  printf '{"dataset":"deepset/prompt-injections","split":"%s","total":%d,"tp":%d,"fp":%d,"tn":%d,"fn":%d,"precision":%d,"recall":%d,"accuracy":%d,"prec_floor":%d,"recall_floor":%d,"pass":%s}\n' \
+    "$SPLIT" "$total" "$tp" "$fp" "$tn" "$fn" "$prec" "$rec" "$acc" "$PREC_FLOOR" "$RECALL_FLOOR" "$pass"
 else
-  printf '\nexternal corpus: deepset/prompt-injections  (Apache 2.0, download-only)\n'
+  printf '\nexternal corpus: deepset/prompt-injections, %s split  (Apache 2.0, download-only)\n' "$SPLIT"
   printf 'rows: %d  inject=%d  safe=%d\n' "$total" "$((tp + fn))" "$((tn + fp))"
   printf 'TP=%d  FP=%d  TN=%d  FN=%d\n' "$tp" "$fp" "$tn" "$fn"
   printf 'precision=%d%%  recall=%d%%  accuracy=%d%%\n' "$prec" "$rec" "$acc"
