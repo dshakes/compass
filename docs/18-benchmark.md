@@ -39,7 +39,7 @@ that some novel phrasings will slip — they should be contributed back as new c
 ### 2. Red-team corpus — `scripts/redteam-corpus.tsv`
 
 Tests the `injection_findings` detector (prompt-injection, context-poisoning,
-safety-override, malware-intent, insecure-code patterns). **407 labeled cases**
+safety-override, malware-intent, insecure-code patterns). **412 labeled cases**
 (file-based rows across 12 attack classes + programmatic assertions covering invisible unicode, encoding evasions,
 config-override, malware-intent, and insecure-code families).
 
@@ -102,8 +102,8 @@ compass redteam --json
 | Corpus | Cases | Precision | Recall | Notes |
 |---|---|---|---|---|
 | Guardrail | 61 | 100% | 100% | floor: 100% P / 95% R |
-| Red-team | 407 | 100% | 100% | floor: 100% P / 90% R |
-| Red-team adversarial | 1512 transforms | — | — | 95% caught (1442/1512); floor 80% |
+| Red-team | 412 | 100% | 100% | floor: 100% P / 90% R |
+| Red-team adversarial | 1512 transforms | — | — | 95% caught (1440/1512); floor 80% |
 | Router | 62 (32 base · 15 holdout · 15 adversarial) | — | — | gated accuracy 97.9% (base + holdout); floor 90% |
 
 Run with `--json` to get machine-readable results for your own tooling or dashboards.
@@ -269,8 +269,8 @@ leetspeak and homoglyph lookalikes before matching — so the five standard
 transforms score 100% on the corpus. A sixth, novel transform can still slip.
 
 **Corpus recall is on the corpus, not the real-world attack distribution.** 100%
-recall on 407 cases does not mean 100% real-world catch rate — as the external
-corpus (`compass redteam --external --split=test`: 20% recall on a held-out public set) makes plain.
+recall on 412 cases does not mean 100% real-world catch rate — as the external
+corpus (`compass redteam --external --split=test`: 21% recall on a held-out public set) makes plain.
 The internal corpus is the fast, always-on floor; the external run and periodic
 deep sweeps against a running agent endpoint provide complementary, honest coverage.
 

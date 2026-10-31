@@ -58,6 +58,7 @@ while [ $# -gt 0 ]; do a="$1"; case "$a" in
   --eval) MODE=eval ;;
   --scan) MODE=scan ;;
   --attack) MODE=attack ;;
+  --detector=*) export COMPASS_REDTEAM_DETECTOR="${a#--detector=}"; MODE=eval ;;
   --detector) [ $# -ge 2 ] && [ -n "$2" ] || { echo "compass redteam: --detector needs a command" >&2; exit 2; }
               export COMPASS_REDTEAM_DETECTOR="$2"; MODE=eval; shift ;;
   -h|--help) usage; exit 0 ;;

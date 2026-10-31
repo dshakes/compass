@@ -10,15 +10,17 @@ All notable changes to this project are documented here. Format loosely follows
 - **`context-override` detectors**: context wipes ("forget everything before that"), task switches
   ("concentrate on your new task"), persona takeovers, context dismissal ("answer by your own
   knowledge, not the articles") and prompt-text leaks, in English, German and Spanish. Written from
-  the external train split only. External held-out recall 3% -> 20% at 100% precision; train
-  10% -> 50% at 98%. Corpus 407 cases across 12 classes; one known gap (Spanish override) promoted.
+  the external train split only. External held-out recall 3% -> 21% at 100% precision; train
+  10% -> 50% at 98%. Corpus 412 cases across 12 classes; one known gap (Spanish override) promoted.
 - **`compass redteam --external --split=test`** scores the external dataset's held-out split (116 rows,
   pinned sha256), so the generalization number is reproducible. `--external` now forwards its arguments.
 - **Head-to-head** (docs/17): compass vs an open-source ML prompt-injection classifier on identical rows.
-  Held out: classifier 37% recall, compass 20%, together 43%, all at 100% precision; on coding-agent
-  attacks the classifier misses 31% and raises 53 false alarms on benign coding text.
+  Held out: classifier 36% recall, compass 21%, together 43%, all at 100% precision; on coding-agent
+  attacks the classifier misses 31% and raises 54 false alarms on benign coding text.
+- **Prompt-advisory families**: context wipes, task switches, persona takeovers and context dismissal
+  warn but never block in the user's own prompt (`COMPASS_REDTEAM_ENFORCE=1` blocks only the rest).
 - **`--external --detector CMD`** benchmarks any guardrail on the external splits; `--external` accepts its
-  flags in any order; the held-out split's recall floor is 15% (measured 20%) so the run passes honestly.
+  flags in any order; the held-out split's recall floor is 15% (measured 21%) so the run passes honestly.
 
 ## [2.3.0] - 2026-10-30
 

@@ -87,5 +87,22 @@ else
 fi
 
 echo
+# ── test: --detector scores another guardrail; an unrunnable one is refused ───
+# 'false' flags every row: TP=2 FP=2 TN=0 FN=0 -> recall 100%, precision 50%.
+td_out="$(COMPASS_REDTEAM_EXTERNAL_FILE="$FIXTURE" bash "$SCORER" --detector false 2>/dev/null)"
+printf '%s\n' "$td_out" | grep -q 'TP=2  FP=2  TN=0  FN=0' \
+  && pass_check 0 "--detector scores the given command (flag-everything: TP=2 FP=2)" \
+  || fail "--detector should score the command; got: $(printf '%s' "$td_out" | grep TP=)"
+COMPASS_REDTEAM_EXTERNAL_FILE="$FIXTURE" bash "$SCORER" --detector=no-such-detector-xyz >/dev/null 2>&1
+[ $? -eq 2 ] && pass_check 0 "unrunnable --detector exits 2 (no vacuous pass)" || fail "unrunnable --detector should exit 2"
+
+# ── test: --split selects the dataset and is reported in JSON ─────────────────
+tj="$(COMPASS_REDTEAM_EXTERNAL_FILE="$FIXTURE" bash "$SCORER" --split test --json 2>/dev/null | tail -1)"
+printf '%s' "$tj" | grep -q '"split":"test"' && printf '%s' "$tj" | grep -q '"recall_floor":15' \
+  && pass_check 0 "--split test is reported in JSON with the held-out floor (15)" \
+  || fail "--split test JSON wrong: $tj"
+bash "$SCORER" --split bogus >/dev/null 2>&1
+[ $? -eq 2 ] && pass_check 0 "--split with a bad value exits 2" || fail "--split bogus should exit 2"
+
 [ "$ok" -eq 0 ] && printf '\033[32mall external redteam tests passed\033[0m\n' || printf '\033[31msome tests failed\033[0m\n'
 exit "$ok"

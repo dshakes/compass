@@ -99,7 +99,7 @@ per-class:
   legacy              108   69    0   39    0   100%   100%
   mcp-poisoning        24   15    0    9    0   100%   100%
   …
-redteam corpus: 407 cases — TP=… FP=0 TN=… FN=0
+redteam corpus: 412 cases — TP=… FP=0 TN=… FN=0
 precision=100% (floor 100%)  recall=100% (floor 90%)
 known gaps (reported, not gating): 4 (0 now caught)
 ```
@@ -238,7 +238,7 @@ CI — so you can measure your own setup, not take a vendor's word:
 
 | Dataset | Cases | What it proves | Run |
 |---|---|---|---|
-| `scripts/redteam-corpus.tsv` | 407 scored (12 classes) + 4 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
+| `scripts/redteam-corpus.tsv` | 412 scored (12 classes) + 4 known gaps | injection precision & recall, per attack class (plus override / malware / insecure-code assertions) | `compass redteam --eval` |
 | `scripts/guardrail-corpus.tsv` | 61 | catastrophic-command + secret-write precision & recall | `compass bench --guardrail` |
 | deepset/prompt-injections (external) | 546 train + 116 held-out test rows | external precision & recall on attacks compass did not author; test is never tuned against | `compass redteam --external [--split=test]` |
 
@@ -302,11 +302,11 @@ compass does on attacks nobody tuned for:
 | Split | Precision | Recall | Run |
 |---|---|---|---|
 | train (546 rows, development set) | 98% | 50% | `compass redteam --external` |
-| **test (116 rows, held out)** | **100%** | **20%** | `compass redteam --external --split=test` |
+| **test (116 rows, held out)** | **100%** | **21%** (13/60) | `compass redteam --external --split=test` |
 
 Before the `context-override` detectors (context wipes, task switches, persona takeovers,
 context dismissal, prompt-text leaks; English, German, Spanish) these were 91% / 10% on train
-and 100% / 3% on test. They were written from the train misses only, then scored on test once.
+and 100% / 3% on test. Two later fixes from review (false positives, not test rows) moved test to 21%. They were written from the train misses only, then scored on test once.
 
 Read the gap between train and test as the honest limit of pattern detection: rules generalize
 to the phrasings they were written for, not to the idea behind them.
@@ -318,6 +318,11 @@ to the phrasings they were written for, not to the idea behind them.
 
 The command never runs in CI — it requires a network download and is report-only.
 
+**In your own prompt these families warn, never block.** Context wipes, task switches, persona
+takeovers and context dismissal are attacks when they arrive in a fetched page or tool output,
+but a normal request when you type them ("forget that, start over"). Under
+`COMPASS_REDTEAM_ENFORCE=1` the prompt hook blocks only on the other families.
+
 ### Head-to-head with an ML classifier
 
 The same rows, scored by compass and by a widely used open-source ML prompt-injection classifier
@@ -326,24 +331,24 @@ compass or the classifier does. Measured 2026-10-30:
 
 | Dataset | ML classifier P / R | compass P / R | either P / R |
 |---|---|---|---|
-| compass corpus (390 file rows) | 74% / 69% | 100% / 100% | 80% / 100% |
-| external train (546) | 96% / 43% | 98% / 50% | 96% / 65% |
-| **external held-out test (116)** | **100% / 37%** | **100% / 20%** | **100% / 43%** |
+| compass corpus (395 file rows) | 73% / 69% (150/216) | 100% / 100% (216/216) | 80% / 100% |
+| external train (546) | 95% / 42% (87/203) | 98% / 50% (102/203) | 95% / 65% |
+| **external held-out test (116)** | **100% / 36%** (22/60) | **100% / 21%** (13/60) | **100% / 43%** |
 
 What it says:
 
-- **On attacks nobody tuned for, the classifier generalizes better** (37% vs 20% recall on the
+- **On attacks nobody tuned for, the classifier generalizes better** (36% vs 21% recall on the
   held-out split). A model reads intent; rules read phrasings.
 - **On coding-agent attacks the classifier is not enough.** On compass's corpus it misses 31% of
   attacks (MCP poisoning, credential harvesting, unicode smuggling, encoded payloads) and raises
-  53 false alarms on benign coding text. Compass wrote that corpus and tunes against it, so read
+  54 false alarms on benign coding text. Compass wrote that corpus and tunes against it, so read
   its own 100% as "covers what it claims to", not as a fair contest.
 - **Together beats either alone.** That is the intended deployment: compass's deterministic rules
   on every tool call (fast, offline, coding-specific), with a model-grade backend for paraphrase
   (`COMPASS_GUARDRAIL_BACKEND`, below).
 
 **A naive baseline, for calibration.** A one-line keyword grep (`ignore|forget|vergiss`) scores
-**26%** recall at 100% precision on the held-out split, more than compass's 20%, because that set
+**26%** recall at 100% precision on the held-out split, more than compass's 21%, because that set
 is mostly chatbot jailbreaks that open with those words. On compass's coding-agent corpus the same
 grep scores 12% recall at 79% precision. Each set rewards a different detector, which is why both
 numbers are published.

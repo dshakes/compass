@@ -118,7 +118,7 @@ Config is the one part of an agent system that never gets refactored, because it
 
 <div class="tiles">
 <div class="tile"><b>100/100</b><span>guardrail P/R</span></div>
-<div class="tile"><b>100/100</b><span>red-team · 407 cases</span></div>
+<div class="tile"><b>100/100</b><span>red-team · 412 cases</span></div>
 <div class="tile"><b>96.9%</b><span>router accuracy</span></div>
 <div class="tile"><b>~62%</b><span>cheaper than all-Opus</span></div>
 </div>
@@ -465,8 +465,8 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 
 <div class="tiles">
 <div class="tile"><b>100%</b><span>precision / recall</span></div>
-<div class="tile"><b>407</b><span>labeled cases, 12 classes</span></div>
-<div class="tile"><b>95%</b><span>robust under obfuscation (1442/1512)</span></div>
+<div class="tile"><b>412</b><span>labeled cases, 12 classes</span></div>
+<div class="tile"><b>95%</b><span>robust under obfuscation (1440/1512)</span></div>
 </div>
 
 ## Per class, not one blended number
@@ -483,7 +483,7 @@ Every untrusted source is **decoded & normalized** so hidden instructions surfac
 | vendor-agent-file · md-exfil | 15 each | 100% | 100% |
 | security-prose (hard negatives only) | 8 | — | — |
 
-Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Four **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **1442 of 1512** variants (95%, floor 80%); the evaded ones are mostly leetspeak.
+Every class carries hard negatives (benign text that *looks* hostile), so precision is a real number. Four **known gaps** are listed in the reference and reported, not gating. Obfuscation fuzzing (\`--attack\`) catches **1440 of 1512** variants (95%, floor 80%); the evaded ones are mostly leetspeak.
 
 **Bring your own guardrail.** \`compass redteam --detector CMD\` runs the same corpus through *any* command (payload on stdin, exit 0 = clean, non-zero = flagged) and prints the same per-class table, so you can compare a guardrail against compass on equal terms.
 
@@ -500,8 +500,8 @@ Run \`compass redteam\` to reproduce the score — and to scan *this* repo's con
 | Suite | Cases | Precision | Recall |
 |---|---|---|---|
 | Guardrail | 61 | 100% | 100% |
-| Red-team (internal) | 407 | 100% | 100% |
-| Red-team (external, held-out public split) | 116 | 100% | 20% |
+| Red-team (internal) | 412 | 100% | 100% |
+| Red-team (external, held-out public split) | 116 | 100% | 21% |
 | Router | 32 | — | 96.9% acc |
 
 <div class="tiles">
@@ -510,7 +510,7 @@ Run \`compass redteam\` to reproduce the score — and to scan *this* repo's con
 <div class="tile"><b>95%</b><span>red-team obfuscation-robust</span></div>
 </div>
 
-<p class="cal tip"><span class="h">honest by design</span> The external row is a public set we didn't write, and its held-out split was never tuned against. Rules catch the phrasings they were written for, not the idea behind them; an open-source ML classifier scores 37% on the same split, and the two together 43%. We publish the low number because a floor you can only hit on your own cases isn't a floor. Reproduce: <code>compass redteam --external --split=test</code>.</p>
+<p class="cal tip"><span class="h">honest by design</span> The external row is a public set we didn't write, and its held-out split was never tuned against. Rules catch the phrasings they were written for, not the idea behind them; an open-source ML classifier scores 36% on the same split, and the two together 43%. We publish the low number because a floor you can only hit on your own cases isn't a floor. Reproduce: <code>compass redteam --external --split=test</code>.</p>
 
 ## Why floors, not just numbers
 
