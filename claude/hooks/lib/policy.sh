@@ -348,6 +348,7 @@ POLICY_INJECTION_PRAGMA='allowlist[ _-]?injection|redteam[ _-]?corpus|injection[
 # Families that are prompt-injection when they arrive in UNTRUSTED content (a fetched page,
 # tool output, a vendored CLAUDE.md) but legitimate in the user's own prompt: the user may
 # ask for a persona or a fresh start. scan-prompt.sh warns on these, never blocks.
+# shellcheck disable=SC2034  # read by scan-prompt.sh, which sources this file
 POLICY_PROMPT_ADVISORY_RULES=' context-wipe task-switch persona-takeover context-dismissal '
 POLICY_NEGATION_EXEMPT_RULES=' secret-disclosure guardrail-tamper disable-safety data-exfiltration cred-harvest sensitive-read exfil-channel '
 POLICY_NEGATION_EXEMPT_PL='BEGIN {
