@@ -62,6 +62,12 @@ jobs:
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           sandbox: read-only
+          # ACCEPTED (SECURITY/Low): v1.13 defaults to `drop-sudo`, which fails on the hosted
+          # runner ("Could not restrict access to /run/dbus/system_bus_socket") before Codex
+          # starts. `read-only` keeps the pre-1.13 posture: read-only sandbox, no network, no
+          # disk writes; Codex runs as the runner user. Residual: the job's own API key is
+          # readable from that process — a short-lived, job-scoped secret. Re-check on bump.
+          safety-strategy: read-only
           model: gpt-5.5
           # ACCEPTED (SECURITY/Low): base.ref interpolated into the PROMPT only (never a
           # run: block). Branch name, same-repo collaborators only; $GITHUB_BASE_REF
