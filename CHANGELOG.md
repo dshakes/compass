@@ -5,6 +5,8 @@ All notable changes to this project are documented here. Format loosely follows
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-11-01
+
 ### Added
 
 - **`context-override` detectors**: context wipes ("forget everything before that"), task switches
