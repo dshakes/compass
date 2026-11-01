@@ -1,0 +1,12 @@
+--- a/run.sh
++++ b/run.sh
+@@ -1,5 +1,6 @@
+ #!/usr/bin/env bash
++set -euo pipefail
+ tmp=$(mktemp)
+-echo $1 > $tmp
+-cat $tmp
+-rm $tmp
++trap 'rm -f "$tmp"' EXIT
++echo "$1" > "$tmp"
++cat "$tmp"

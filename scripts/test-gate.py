@@ -390,5 +390,70 @@ class TestGate(unittest.TestCase):
         )
 
 
+class TestPricing(unittest.TestCase):
+    """compass-gate.py prices Anthropic models from the same table budget-gate.sh reads."""
+
+    HOOK = os.path.join(SCRIPTS_DIR, "..", "claude", "hooks", "budget-gate.sh")
+    TABLE = os.path.join(SCRIPTS_DIR, "..", "claude", "hooks", "lib", "pricing.json")
+    MODELS = [
+        "claude-opus-5-5", "claude-opus-5", "claude-opus-4-1", "claude-sonnet-5-5",
+        "claude-sonnet-5", "claude-sonnet-4", "claude-haiku-5-5", "claude-haiku-4-5",
+        "claude-fable-5-1", "claude-fable-5", "claude-mythos-5-1", "claude-foo",
+    ]
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("compass_gate", GATE_SCRIPT)
+        assert spec and spec.loader
+        cls.gate = importlib.util.module_from_spec(spec)
+        sys.modules["compass_gate"] = cls.gate
+        spec.loader.exec_module(cls.gate)
+        with open(cls.TABLE, encoding="utf-8") as fh:
+            cls.table = json.load(fh)
+
+    def cost(self, model: str) -> tuple[float, float]:
+        g = self.gate
+        return (
+            g._tokens_to_usd(model, 1_000_000, 0),
+            g._tokens_to_usd(model, 0, 1_000_000),
+        )
+
+    def test_current_models(self) -> None:
+        for model, want in {
+            "claude-opus-5-5": (4, 20),
+            "claude-sonnet-5-5": (2, 10),
+            "claude-haiku-5-5": (0.5, 2.5),
+            "claude-fable-5-1": (10, 50),
+            "claude-foo": (15, 75),
+        }.items():
+            self.assertEqual(self.cost(model), want, model)
+
+    def test_matches_budget_gate(self) -> None:
+        """For every model, the hook's price (probed via its cap) equals the gate's."""
+        import re
+
+        with tempfile.TemporaryDirectory() as home:
+            for model in self.MODELS:
+                row = next(r for r in self.table if re.search(r[0], model))
+                self.assertEqual(self.cost(model), (row[1], row[2]), model)
+                for idx, field in ((1, "input_tokens"), (2, "output_tokens")):
+                    tp = os.path.join(home, "t.jsonl")
+                    with open(tp, "w") as fh:
+                        fh.write(json.dumps({"type": "assistant", "message": {
+                            "model": model, "usage": {field: 1_000_000}}}) + "\n")
+                    payload = json.dumps({"session_id": "s", "tool_name": "Bash",
+                                          "tool_input": {}, "transcript_path": tp})
+                    for cap, rc in ((row[idx] - 0.001, 2), (row[idx] + 0.001, 0)):
+                        r = subprocess.run(
+                            ["bash", self.HOOK], input=payload, text=True,
+                            capture_output=True,
+                            env={**os.environ, "COMPASS_HOME": home,
+                                 "COMPASS_MAX_USD": f"{cap:.4f}"},
+                        )
+                        self.assertEqual(r.returncode, rc, f"{model} {field} cap={cap}")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

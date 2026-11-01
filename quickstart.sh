@@ -53,11 +53,15 @@ fi
 
 # 4 · Validate.
 step "Validate"
-./scripts/doctor.sh || true
+doc_rc=0; ./scripts/doctor.sh || doc_rc=$?
+if [ "$doc_rc" -ne 0 ]; then
+  printf '\n  \033[31m✗\033[0m setup finished but validation reported errors — fix the lines above, then re-run: compass doctor\n'
+  exit "$doc_rc"
+fi
 
 # 5 · The on-ramp.
 step "You're set — next 60 seconds"
-ok 'Open Claude Code in any repo: guardrails, 9 subagents, commands + status line are live.'
+ok "Open Claude Code in any repo: guardrails, $(ls claude/agents/*.md | wc -l | tr -d ' ') subagents, commands + status line are live."
 ok 'In a new repo, get productive fast:   compass onboard .'
 ok 'See what compass saved you:           compass impact'
 ok 'Review a branch with the crew:        /review     (or the parallel /compass-review *)'

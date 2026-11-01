@@ -59,6 +59,18 @@ out="$(run --home "$TMP/clean/home" --project "$TMP/clean/project" 2>&1)"; rc=$?
 [ "$rc" = 0 ] && ok "exits 0" || no "exit $rc, want 0: $out"
 case "$out" in *clean*) ok "reports clean" ;; *) no "not clean: $out" ;; esac
 
+echo "sarif:"
+sarif_check() { # file expect-error(1|0)
+  python3 -c 'import json,sys
+d=json.load(open(sys.argv[1])); r=d["runs"][0]["results"]; want=sys.argv[2]=="1"
+assert d["version"]=="2.1.0" and d["runs"][0]["tool"]["driver"]["name"]=="compass"
+assert (any(x["level"]=="error" and x["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] for x in r)) if want else not r' "$1" "$2"
+}
+run --sarif --home "$TMP/risky/home" --project "$TMP/risky/project" >"$TMP/r.sarif" 2>/dev/null
+sarif_check "$TMP/r.sarif" 1 && ok "--sarif risky: valid 2.1.0, error-level results with locations" || no "--sarif risky malformed"
+run --sarif --home "$TMP/clean/home" --project "$TMP/clean/project" >"$TMP/c.sarif" 2>/dev/null
+sarif_check "$TMP/c.sarif" 0 && ok "--sarif clean: zero results" || no "--sarif clean not empty"
+
 echo "usage:"
 run --bogus >/dev/null 2>&1; [ "$?" = 2 ] && ok "unknown flag exits 2" || no "unknown flag exit code"
 

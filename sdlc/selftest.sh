@@ -351,6 +351,50 @@ file_has "autoapprove fail-closed globs match mirror"  "workflows/sdlc-autoappro
 file_has "autoapprove author check matches mirror"     "workflows/sdlc-autoapprove.yml" ',$TRUSTED_AUTHORS,'
 file_has "autoapprove never approves or merges"        "workflows/sdlc-autoapprove.yml" 'NEVER `gh pr review --approve`; NEVER merge'
 
+# ── 12 · SDLC_PARALLEL — real orchestrate.sh run against shimmed claude/codex/gh ──
+# Hermetic: throwaway git repo, fake CLIs first on PATH, COMPASS_HOME in the temp dir.
+# The claude shim answers every step with a fixed verdict + per-step cost; the gh shim
+# records its argv so a draft PR (QA red) is observable without any network.
+PT="$(mktemp -d)"; trap 'rm -rf "$PT"' EXIT
+mkdir "$PT/bin"
+cat >"$PT/bin/claude" <<'SHIM'
+#!/usr/bin/env bash
+printf '{"result":"looks fine\\nSDLC-VERDICT: %s","total_cost_usd":%s}' "${FAKE_VERDICT:-CLEAN}" "${FAKE_COST:-0.1}"
+SHIM
+cat >"$PT/bin/codex" <<'SHIM'
+#!/usr/bin/env bash
+while [ $# -gt 0 ]; do [ "$1" = -o ] && echo "audit ok" >"$2"; shift; done
+SHIM
+cat >"$PT/bin/gh" <<'SHIM'
+#!/usr/bin/env bash
+echo "gh $*" >>"$FAKE_LOG"
+SHIM
+chmod +x "$PT/bin/"*
+# par_run <name> <qa: pass|fail> <env…> → repo in $PT/<name>; sets PR_RC, PR_RUN (the run dir)
+par_run() {
+  local name="$1" qa="$2"; shift 2
+  local d="$PT/$name"; mkdir "$d"
+  ( cd "$d" && git init -q -b main && git config user.email t@t && git config user.name t \
+    && printf 'test:\n\t@test "%s" = pass\n' "$qa" >Makefile && git add -A && git commit -qm init )
+  ( cd "$d" && env PATH="$PT/bin:$PATH" COMPASS_HOME="$d/.home" FAKE_LOG="$d/gh.log" "$@" \
+      bash "$SDLC_DIR/orchestrate.sh" "selftest task" >"$d/out.log" 2>&1 )
+  PR_RC=$?; PR_RUN="$(ls -d "$d"/.sdlc/run-* 2>/dev/null | head -1)"
+}
+echo "SDLC_PARALLEL (real orchestrate.sh, shimmed CLIs):"
+par_run seq pass SDLC_PARALLEL=0 SDLC_BUDGET=50;   seq_rc=$PR_RC; seq_v="$(grep -h '^SDLC-VERDICT' "$PR_RUN/review.md")"
+par_run par pass SDLC_PARALLEL=1 SDLC_BUDGET=50;   par_rc=$PR_RC; par_v="$(grep -h '^SDLC-VERDICT' "$PR_RUN/review.md")"
+eq "parallel run completes (exit 0)"                 "$par_rc" "0"
+eq "parallel runs security + audit + qa"             "$(ls "$PR_RUN/security.md" "$PR_RUN/audit.md" "$PR_RUN/qa.rc" 2>/dev/null | wc -l | tr -d ' ')" "3"
+eq "parallel verdict == sequential verdict"          "$par_v" "$seq_v"
+eq "parallel exit == sequential exit"                "$par_rc" "$seq_rc"
+eq "parallel QA pass opens a non-draft PR"           "$(grep -c -- '--draft' "$PT/par/gh.log")" "0"
+par_run parfail fail SDLC_PARALLEL=1 SDLC_BUDGET=50
+eq "parallel QA failure recorded in qa.rc"           "$(cat "$PR_RUN/qa.rc")" "2"
+eq "parallel QA failure still gates the PR (draft)"  "$(grep -c -- '--draft' "$PT/parfail/gh.log")" "1"
+par_run parcap pass SDLC_PARALLEL=1 SDLC_BUDGET=3 FAKE_COST=1
+eq "parallel run halts (exit 3) at the budget ceiling" "$PR_RC" "3"
+eq "halted parallel run opens no PR"                 "$(cat "$PT/parcap/gh.log" 2>/dev/null | wc -l | tr -d ' ')" "0"
+
 echo
 printf 'selftest: %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

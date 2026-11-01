@@ -59,6 +59,16 @@ printf '%s\n' "$out" | grep -qi 'exec-payload\|hook-eval-download' \
   && ok "class e: executable payload detected" \
   || no "class e: exec-payload or hook-eval-download finding not found"
 
+sarif_check() { # file expect-results(1|0)
+  python3 -c 'import json,sys
+d=json.load(open(sys.argv[1])); r=d["runs"][0]["results"]
+assert d["version"]=="2.1.0" and d["runs"][0]["tool"]["driver"]["name"]=="compass"
+assert (any(x["level"]=="error" for x in r)) if sys.argv[2]=="1" else not r' "$1" "$2"
+}
+SARIF_TMP="$(mktemp)"; trap 'rm -f "$SARIF_TMP"' EXIT
+bash "$SCANNER" --sarif "$MAL" >"$SARIF_TMP" 2>/dev/null; src=$?
+{ [ "$src" -eq 1 ] && sarif_check "$SARIF_TMP" 1; } && ok "--sarif malicious: valid 2.1.0, error results, exit 1" || no "--sarif malicious malformed (exit $src)"
+
 echo
 echo "clean-plugin — expect exit 0:"
 
@@ -67,6 +77,8 @@ run_scanner "$CLEAN"
   no "expected exit 0, got $rc — output:"
   printf '%s\n' "$out" | sed 's/^/    /'
 }
+bash "$SCANNER" --sarif "$CLEAN" >"$SARIF_TMP" 2>/dev/null; src=$?
+{ [ "$src" -eq 0 ] && sarif_check "$SARIF_TMP" 0; } && ok "--sarif clean: zero results, exit 0" || no "--sarif clean not empty (exit $src)"
 
 echo
 echo "--json output — expect valid JSON:"

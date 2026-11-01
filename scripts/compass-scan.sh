@@ -31,7 +31,7 @@ usage: compass scan [--staged|--diff|--all] [PATH...]
   --diff     scan unstaged working-tree changes
   --all      scan every tracked file in the repo
   --injection  also scan for prompt-injection / context-poisoning patterns
-  --config [--json] [--home D] [--project D]
+  --config [--json|--sarif] [--home D] [--project D]
              audit your OWN harness config (Claude/Codex/Gemini settings, .mcp.json):
              permission bypass, wildcard Bash, unsafe/missing hooks, unpinned MCP,
              plaintext env secrets (names only). Exits 1 on HIGH.

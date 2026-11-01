@@ -80,9 +80,9 @@
       "description": "Cross-repo agent memory (record/search durable, non-secret learnings). Local SQLite, stdio. Trust tiers default to deny. See docs/adr/0001-cross-repo-memory.md.",
       "type": "stdio",
       "command": "python3",
-      "args": ["${COMPASS_HOME}/mcp/compass-memory/server.py"],
+      "args": ["${COMPASS_REPO_ROOT}/mcp/compass-memory/server.py"],
       "env": { "COMPASS_MEMORY_TRUST": "${COMPASS_MEMORY_TRUST}" },
-      "setup": "pip install 'mcp[cli]'; export COMPASS_MEMORY_TRUST='myrepo:read-write'; then register at project scope.",
+      "setup": "pip install 'mcp[cli]'; export COMPASS_REPO_ROOT=<path to your compass checkout> COMPASS_MEMORY_TRUST='myrepo:read-write'; then register at project scope.",
       "note": "Opt-in, LOCAL v1 only (ADR 0001 Accepted for local; networked/team version is a separate gated decision). Secret-scrubbing is best-effort — never paste credentials. v1 reviewed by security-auditor: safe as local/stdio."
     }
   }

@@ -1,0 +1,11 @@
+--- a/README.md
++++ b/README.md
+@@ -5,3 +5,8 @@
+ ## Install
+ 
+     pip install demo
++
++## Uninstall
++
++    pip uninstall demo
++    rm -rf ~/.config/demo   # removes local settings; set DEMO_PASSWORD in your shell, never in a file

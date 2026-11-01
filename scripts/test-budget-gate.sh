@@ -176,6 +176,27 @@ export COMPASS_MAX_USD=0.008
 set_spent 0.005; block_t "transcript \$0.0105 > breadcrumb \$0.005; max \$0.0105 >= \$0.008 → block"
 unset COMPASS_MAX_USD; clear_spent
 
+echo "shared pricing file is the source of truth (lib/pricing.json):"
+# Copy the hooks dir, price every model absurdly high, and a tiny transcript must trip the cap.
+HC="$HOME_TMP/hooks-copy"; cp -R "$ROOT/claude/hooks" "$HC"
+echo '[["",1000000,1000000,1000000,1000000]]' > "$HC/lib/pricing.json"
+export COMPASS_MAX_USD=1; clear_spent
+out_p="$(input "$SID" "$TFILE0" | bash "$HC/budget-gate.sh" 2>/dev/null)"; rc_p=$?
+{ [ "$rc_p" = 2 ] && printf '%s' "$out_p" | grep -q '"permissionDecision":"deny"'; } \
+  && ok "BLOCK  edited pricing.json changes the hook's verdict ($rc_p)" \
+  || no "pricing.json not read by hook ($rc_p)"
+echo 'not json' > "$HC/lib/pricing.json"; export COMPASS_MAX_USD=0.05
+out_p="$(input "$SID" "$TFILE0.claude-opus-4-1-20250805" | bash "$HC/budget-gate.sh" 2>/dev/null)"; rc_p=$?
+[ "$rc_p" = 2 ] && ok "BLOCK  malformed pricing.json → inline fallback table still prices" \
+  || no "malformed pricing.json should fall back ($rc_p)"
+# Absent file: jq -e on EMPTY stdin exits 0 on jq 1.7+, so without an explicit guard the hook
+# would carry an empty table and silently stop pricing — the cap would never trip.
+rm -f "$HC/lib/pricing.json"
+out_p="$(input "$SID" "$TFILE0.claude-opus-4-1-20250805" | bash "$HC/budget-gate.sh" 2>/dev/null)"; rc_p=$?
+[ "$rc_p" = 2 ] && ok "BLOCK  absent pricing.json → inline fallback table still prices" \
+  || no "absent pricing.json should fall back, not bypass the cap ($rc_p)"
+unset COMPASS_MAX_USD
+
 echo
 printf 'budget-gate tests: %d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

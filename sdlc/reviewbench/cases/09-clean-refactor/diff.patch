@@ -1,0 +1,26 @@
+--- a/cart.py
++++ b/cart.py
+@@ -1,16 +1,11 @@
++def _subtotal(items, member):
++    t = sum(p * q for p, q in items)
++    return t * 0.9 if member else t
++
++
+ def total(items, member):
+-    t = 0
+-    for p, q in items:
+-        t += p * q
+-    if member:
+-        t = t * 0.9
+-    return round(t, 2)
++    return round(_subtotal(items, member), 2)
+ 
+ 
+ def preview(items, member):
+-    t = 0
+-    for p, q in items:
+-        t += p * q
+-    if member:
+-        t = t * 0.9
+-    return round(t, 2)
++    return round(_subtotal(items, member), 2)

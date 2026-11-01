@@ -88,11 +88,12 @@ done > "$CNT"
 rg="$(grep -vc '^#\|^[[:space:]]*$' scripts/guardrail-corpus.tsv)"
 rr="$(grep -vc '^#\|^[[:space:]]*$' router/evalset.tsv)"
 rb="$(bash scripts/test-protect-paths.sh 2>&1 | sed -n 's/^guardrail corpus: \([0-9][0-9]*\) passed.*/\1/p')"
+rw="$(find sdlc/reviewbench/cases -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"   # review benchmark
 for f in README.md docs/*.md docs/*.html docs/content.js; do
   [ "$f" = docs/28-ablation.md ] && continue
   grep -ohE '[0-9]+(-case|( labeled)? cases|</b><span>labeled cases)' "$f" | grep -oE '^[0-9]+' |
   while read -r got; do
-    case " $rt $rf $rv $rr $rg $rb " in *" $got "*) ;; *) echo "$f quotes $got cases, no live corpus has that size ($rt/$rv/$rr/$rg/$rb)" ;; esac
+    case " $rt $rf $rv $rr $rg $rb $rw " in *" $got "*) ;; *) echo "$f quotes $got cases, no live corpus has that size ($rt/$rv/$rr/$rg/$rb/$rw)" ;; esac
   done
 done >> "$CNT"
 # Obfuscation-fuzz denominator: --attack mutates every inject row through 7 transforms

@@ -31,6 +31,8 @@
   <g><rect x="558" y="86" width="184" height="34" rx="9" fill="rgba(58,208,127,.10)" stroke="#3ad07f" stroke-width="1.3"/><text x="650" y="108" text-anchor="middle" class="m" font-size="11.5" fill="#3ad07f">warn + audit · default</text></g>
   <g><rect x="558" y="270" width="184" height="34" rx="9" fill="rgba(255,107,107,.10)" stroke="#ff6b6b" stroke-width="1.3"/><text x="650" y="292" text-anchor="middle" class="m" font-size="11.5" fill="#ff6b6b">block · enforce</text></g>
 
+  <g><rect x="330" y="86" width="190" height="34" rx="9" fill="rgba(91,157,255,.08)" stroke="#5b9dff" stroke-width="1.3" stroke-dasharray="4 3"/><text x="425" y="108" text-anchor="middle" class="m" font-size="11.5" fill="#5b9dff">scanners · SARIF out</text></g>
+
   <!-- gate glow -->
   <circle cx="830" cy="205" r="52" fill="url(#gateGlow)"/>
 

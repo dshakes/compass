@@ -207,8 +207,7 @@ accuracy, because the "which tier" classifier is only modestly better than naive
 
 `bench.sh` is the **deterministic** layer: quality is modeled by the labeled minimum-adequate
 tier. The **real** layer — run each tier on each task, judge the outputs, derive the true
-quality-vs-cost curve — needs tokens and is non-deterministic. To add it, write a `bench-live.sh`
-that emits the same `split<TAB>expected<TAB>got` TSV from real model runs/judgments; the same
+quality-vs-cost curve — needs tokens and is non-deterministic. That layer is `bench-live.sh`, which emits the same `split<TAB>expected<TAB>got` TSV from real model runs/judgments; the same
 cost math applies and the same floors gate it (just off the CI path).
 
 ## Knobs (v1.1)

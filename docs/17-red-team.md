@@ -85,7 +85,9 @@ side effects, no network — so the *same* code runs on the live hooks AND in th
 |---|---|---|
 | `scan-untrusted-context.sh` | SessionStart | scans the project's `CLAUDE.md`/`AGENTS.md` (incl. nested) + `.claude/settings.json`; warns if poisoned |
 | `scan-prompt.sh` | UserPromptSubmit | scans the submitted/pasted prompt; warns (or blocks, see flags) |
-| `scan-tool-output.sh` | PostToolUse (WebFetch/WebSearch/Bash) | scans returned content for indirect injection; warns it's data |
+| `scan-tool-output.sh` | PostToolUse (`WebFetch\|WebSearch\|Bash\|mcp__.*`) | scans returned content, including MCP tool results, for indirect injection; warns it's data. Behaviour-tested by `scripts/test-scan-tool-output.sh`, CI-gated |
+
+The config and plugin scanners also emit SARIF 2.1.0 (`compass scan --config --sarif`, `compass audit-plugin --sarif`) for GitHub code scanning; see [33-sarif](33-sarif.md). What a security review asks of this layer is answered in [32-procurement](32-procurement.md).
 
 Hooks **warn by default** (inject a note telling the model to treat flagged content as
 data) and **log** to the audit trail (`compass audit-log`). They never silently censor.
@@ -302,11 +304,13 @@ compass does on attacks nobody tuned for:
 | Split | Precision | Recall | Run |
 |---|---|---|---|
 | train (546 rows, development set) | 98% | 50% | `compass redteam --external` |
-| **test (116 rows, held out)** | **100%** | **21%** (13/60) | `compass redteam --external --split=test` |
+| **test (116 rows, held out)** | **100%** (13 flagged, 95% CI 77–100%) | **21%** (13/60, 95% CI 13–34%) | `compass redteam --external --split=test` |
 
 Before the `context-override` detectors (context wipes, task switches, persona takeovers,
 context dismissal, prompt-text leaks; English, German, Spanish) these were 91% / 10% on train
 and 100% / 3% on test. Two later fixes from review (false positives, not test rows) moved test to 21%. They were written from the train misses only, then scored on test once.
+
+The command prints n, TP/FP/FN and 95% Wilson intervals. With 60 attacks the recall interval is wide (13–34%): the point estimate is 21%, and a different 60 attacks could land anywhere in that range.
 
 Read the gap between train and test as the honest limit of pattern detection: rules generalize
 to the phrasings they were written for, not to the idea behind them.
@@ -347,6 +351,49 @@ What it says:
 is mostly chatbot jailbreaks that open with those words. On compass's coding-agent corpus the same
 grep scores 12% recall at 79% precision. Each set rewards a different detector, which is why both
 numbers are published.
+
+**Calibrated classifier tier (2026-11-01).** The classifier ships as
+`scripts/detectors/ml-injection.py`, a `--detector` wrapper around
+[`protectai/deberta-v3-base-prompt-injection-v2`](https://huggingface.co/protectai/deberta-v3-base-prompt-injection-v2)
+(DeBERTa-v3-base, about 184M parameters, 704 MB of weights, Apache-2.0 — confirmed against the
+Hugging Face model API on 2026-11-01). Long inputs are split into
+overlapping 512-token chunks and scored by the maximum chunk probability. The threshold is not the
+model's default: it is the one that maximizes train recall at 1% false-positive rate or lower, chosen
+on `--split=train` only and then applied once to `--split=test`.
+
+| Train curve (203 attacks, 343 benign) | Recall | Actual FPR | Threshold |
+|---|---|---|---|
+| 0% FPR budget | 35.0% | 0.00% | 0.992876 |
+| **1% FPR budget (chosen)** | **41.9%** | 0.87% (3/343) | **0.858741** |
+| 5% FPR budget | 69.5% | 4.96% | 0.000031 |
+| 10% FPR budget | 76.4% | 9.33% | 0.000005 |
+
+| Held-out test at the fixed threshold 0.858741 | Precision (95% CI) | Recall (95% CI) |
+|---|---|---|
+| classifier | 100% (84-100%) | **35%** (24-48%), 21/60, 0/56 false alarms |
+| compass rules | 100% (77-100%) | 21% (13-34%), 13/60 |
+| compass OR classifier | 100% (86-100%) | 41% (30-55%), 25/60 |
+
+The calibration did not improve on the earlier one-off run: 35% (21/60) against 36% (22/60), and
+"either" 41% against 43%. Those differences are one row and two rows, well inside the interval. The
+threshold was chosen on train and the test split was scored once at it. The 5% and 10% budgets sit at
+probabilities near zero because the model scores most German attacks very low yet still ranks them
+above benign text; those operating points are not usable as a hard gate on unseen data, and the 1%
+threshold is the one to deploy. Latency on an Apple M4 Max, CPU only, 12 threads: **78 ms median**
+(p90 139 ms) per payload over 50 train rows once the model is loaded, plus about 8 s to start a
+fresh process, so per-call `--detector` use is for benchmarking; a long-lived process is needed
+for a live hook.
+
+```bash
+uv venv && uv pip install torch transformers sentencepiece protobuf
+S=scripts/detectors/ml-injection.py
+compass redteam --external --split=train --curve "python $S --score" --curve-out train-curve.tsv
+compass redteam --external --split=test  --curve "python $S --score" --at-threshold 0.858741
+compass redteam --external --split=test  --detector "python $S"   # same classifier, one process per row
+```
+
+The detector exits 2 with an install hint when the dependencies are missing, and `--detector` refuses
+a command that exits 2 so an unavailable model cannot pass as "flags everything".
 
 To reproduce with any detector (payload on stdin, exit 0 = clean):
 
@@ -413,7 +460,7 @@ Honest: several items are partial or roadmap only — marked accordingly.
 | ASI03 | Agent Identity & Privilege Abuse | no agent-identity attestation today | **Roadmap** — SPIFFE-style identity for SDLC roles planned |
 | ASI04 | Agentic Supply Chain Compromise | MCP servers version-pinned; `check-mcp.sh` enforces pins + manifest integrity; SLSA build-provenance on every release; `compass verify` for download validation | **Strong** |
 | ASI05 | Unexpected Code Execution | `protect-paths` blocks `curl\|sh` + fork-bomb + raw disk writes; `compass sandbox` confines untrusted code (bwrap/firejail/sandbox-exec, no network) | **Partial** — covers known footguns; novel code paths pass |
-| ASI06 | Memory/Context Poisoning | `scan-untrusted-context.sh` (SessionStart) scans `CLAUDE.md`/`AGENTS.md`/settings; `injection_findings` decodes base64/zero-width/homoglyph before matching | **Strong** |
+| ASI06 | Memory/Context Poisoning | `scan-untrusted-context.sh` (SessionStart) scans `CLAUDE.md`/`AGENTS.md`/settings; `scan-tool-output.sh` (PostToolUse) scans web, shell and MCP tool results; `injection_findings` decodes base64/zero-width/homoglyph before matching | **Strong** |
 | ASI07 | Insecure Inter-Agent Communication | no inter-agent message scanning today | **Roadmap** — multi-agent fan-out policy planned |
 | ASI08 | Cascading Failures | budget caps + round caps in `orchestrate.sh`; fork-bomb guard; `SDLC_CONVERGE` convergence gate | **Partial** — local loop only; no cross-agent blast-radius limit |
 | ASI09 | Human-Agent Trust Exploitation | human merge/deploy gate is permanent; `settings_override_reason` blocks project configs that try to disarm it; no approval carries over silently | **Strong** |
@@ -431,7 +478,7 @@ Honest: several items are partial or roadmap only — marked accordingly.
 | LLM02 | Sensitive-info disclosure | **Partial** — secret scan/write-hook + exfil patterns; not DLP |
 | LLM03 | Supply chain | **Strong** — SLSA provenance, version-pinned MCP, actions/MCP audits |
 | LLM04 | Data/model poisoning | **Weak** — context-file poisoning only; no training-data scope |
-| LLM05 | Improper output handling | **Partial** — indirect-injection output scan (PostToolUse) |
+| LLM05 | Improper output handling | **Partial** — indirect-injection output scan (PostToolUse, incl. MCP results) |
 | LLM06 | Excessive agency | **Strong** — permission prompts, settings-override block, human gate |
 | LLM07 | System-prompt leakage | **Partial** — leakage-attempt detector |
 | LLM08 | Vector/embedding weakness | **Not covered** (no RAG layer) |

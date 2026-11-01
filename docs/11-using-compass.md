@@ -135,6 +135,8 @@ budget, `--today` for the per-day loop cap), `digest` (comprehension guard — s
 changes you didn't hand-write and explain them), `schedule` (local cron routines), `route`
 (model tier). Run `compass help` for the list.
 
+Security evidence: `compass scan --config --sarif` and `compass audit-plugin --sarif` emit SARIF for GitHub code scanning ([33](33-sarif.md)); [32](32-procurement.md) answers a security review; web, shell and MCP tool results are scanned as untrusted; `compass redteam --external --split=test` prints the held-out score with its 95% interval (recall 21%, n=60, CI 13–34%).
+
 > **Running loops while you sleep?** See [the five moves of a loop](20-loops.md): wire
 > `morning-triage` for discovery, keep the acting evaluator gating each change, set
 > `COMPASS_MAX_USD_DAY` before the first unattended run, and make `compass digest` a daily habit

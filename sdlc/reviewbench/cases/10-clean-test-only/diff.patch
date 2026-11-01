@@ -1,0 +1,20 @@
+--- a/clamp_test.go
++++ b/clamp_test.go
+@@ -3,7 +3,15 @@
+ import "testing"
+ 
+ func TestClamp(t *testing.T) {
+-	if got := Clamp(5, 0, 3); got != 3 {
+-		t.Fatalf("got %d", got)
++	cases := []struct{ v, lo, hi, want int }{
++		{5, 0, 3, 3},
++		{-1, 0, 3, 0},
++		{2, 0, 3, 2},
++		{0, 0, 0, 0},
++	}
++	for _, c := range cases {
++		if got := Clamp(c.v, c.lo, c.hi); got != c.want {
++			t.Fatalf("Clamp(%d,%d,%d)=%d want %d", c.v, c.lo, c.hi, got, c.want)
++		}
+ 	}
+ }

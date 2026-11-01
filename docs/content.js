@@ -502,7 +502,7 @@ Run \`compass redteam\` to reproduce the score — and to scan *this* repo's con
 |---|---|---|---|
 | Guardrail | 61 | 100% | 100% |
 | Red-team (internal) | 413 | 100% | 100% |
-| Red-team (external, held-out public split) | 116 | 100% | 21% |
+| Red-team (external, held-out public split) | 116 | 100% (CI 77–100%) | 21% (n=60, CI 13–34%) |
 | Router | 32 | — | 96.9% acc |
 
 <div class="tiles">
@@ -511,7 +511,7 @@ Run \`compass redteam\` to reproduce the score — and to scan *this* repo's con
 <div class="tile"><b>95%</b><span>red-team obfuscation-robust</span></div>
 </div>
 
-<p class="cal tip"><span class="h">honest by design</span> The external row is a public set we didn't write, and its held-out split was never tuned against. Rules catch the phrasings they were written for, not the idea behind them; an open-source ML classifier scores 36% on the same split, and the two together 43%. We publish the low number because a floor you can only hit on your own cases isn't a floor. Reproduce: <code>compass redteam --external --split=test</code>.</p>
+<p class="cal tip"><span class="h">honest by design</span> The external row is a public set we didn't write, and its held-out split was never tuned against. Rules catch the phrasings they were written for, not the idea behind them; a calibrated open-source ML classifier (threshold chosen on the train split at ≤1% false-positive rate) scores 35% on the same split, and rules-or-classifier 41% (CI 30–55%) — see the head-to-head in docs/17. We publish the low number because a floor you can only hit on your own cases isn't a floor. The 95% Wilson intervals are printed with the score. Reproduce: <code>compass redteam --external --split=test</code>.</p>
 
 ## Why floors, not just numbers
 
@@ -773,5 +773,49 @@ It runs the same check as \`compass verify\` (\`gh attestation verify\` pinned t
 
 Claude Code's \`--max-budget-usd\` covers print mode only. For an interactive hard cap, \`./install.sh --only budget\` links just the budget gate (nothing in \`~/.claude\` is edited), then you add one PreToolUse hook and set \`COMPASS_MAX_USD\`. It is a cost guardrail, not a security boundary.
 
-Marketplace listing is a manual, human-published step; see the reference below.`
+Marketplace listing is a manual, human-published step; see the reference below.`,
+
+"32-procurement": `# Procurement evidence
+
+<p class="lede">A security review asks the same five questions of every coding agent. Each one here is answered with a local artifact you generate and attach, and the page says up front what a local-first layer cannot claim.</p>
+
+## The five questions
+
+| They ask | The artifact |
+|---|---|
+| Which actions can the agent take, and who decides? | Eval-gated allow/deny policy; \`compass profile strict\` fails closed; a repo can only tighten it. \`compass profile\` |
+| Is every gated action logged? | Append-only JSONL: \`ts, decision, tool, repo, rule, detail\`. \`compass audit-log --json\` |
+| Where are credentials? | compass stores none; secret writes are blocked and config secrets flagged by key name. \`compass scan --config\` |
+| What leaves the machine? | Only the model calls your harness already makes, plus an optional guardrail backend (off by default). |
+| What is the blast radius, and is there a human gate? | Destructive commands denied pre-execution, a hard dollar cap, and you always merge. \`compass bench\` |
+
+## SIEM export
+
+\`\`\`bash
+compass audit-log --json -n 10000 > compass-audit-$(date +%F).jsonl
+tail -F ~/.compass/audit.jsonl   # any collector that tails a file works
+\`\`\`
+
+<p class="cal warn"><span class="h">Cannot claim</span> IdP-backed identity (OS user and git author only), central retention, a log of every allowed call (the trail records gated and blocked actions), or regulatory compliance. compass produces evidence a deployer can use; it is not a certification.</p>
+
+The per-risk OWASP Agentic mapping, with an honest Strong / Partial / Roadmap column, is in [Red-team](#17-red-team). Output formats: [SARIF](#33-sarif).`,
+
+"33-sarif": `# SARIF output
+
+<p class="lede">The config and plugin scanners emit SARIF 2.1.0 on stdout, so findings land in GitHub code scanning instead of living only in terminal text. The exit code is still the gate; the SARIF is the report.</p>
+
+\`\`\`bash
+compass scan --config --sarif > compass-config.sarif
+compass audit-plugin --sarif ./their-marketplace > compass.sarif
+\`\`\`
+
+## What is in it
+
+<div class="steps">
+<div class="stp"><b>Rules</b>One rule per distinct finding class (\`mcp-unpinned\`, \`hook-remote-exec\`, ...).</div>
+<div class="stp"><b>Severity</b>HIGH maps to \`error\`, MED to \`warning\`, LOW and INFO to \`note\`.</div>
+<div class="stp"><b>Safety</b>Secret values are never emitted, only the key name. Baseline-accepted \`audit-plugin\` findings are omitted.</div>
+</div>
+
+Upload with the code-scanning upload action (needs \`security-events: write\`). Compose, don't compete: the harness's native security review covers the code you wrote; the compass scanners cover the harness around it (settings, hooks, MCP servers, third-party plugins), and both land in the same tab. See [Red-team](#17-red-team).`
 };

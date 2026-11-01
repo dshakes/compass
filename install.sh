@@ -143,7 +143,7 @@ install_cli() {
         if grep -q 'compass CLI on PATH' "$rc" 2>/dev/null; then rec rcline "$rc" -; say "PATH line already in ${rc#$HOME/}"
         else printf '\n# compass CLI on PATH (added by compass install)\nexport PATH="$HOME/.local/bin:$PATH"\n' >>"$rc"
           rec rcline "$rc" -
-          say "added ~/.local/bin to PATH in ${rc#$HOME/} — run: source ${rc#$HOME/}"; fi
+          say "added ~/.local/bin to PATH in ${rc#$HOME/} — run: source ~/${rc#$HOME/}"; fi
       else say "add ~/.local/bin to your PATH, then: compass impact"; fi ;;
   esac
 }

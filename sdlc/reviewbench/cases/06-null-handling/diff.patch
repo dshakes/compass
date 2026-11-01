@@ -1,0 +1,9 @@
+--- a/greet.js
++++ b/greet.js
+@@ -1,5 +1,5 @@
+ function displayName(user) {
+-  const name = user.profile?.name ?? "anonymous";
++  const name = user.profile.name;
+   return name.trim();
+ }
+ 

@@ -64,40 +64,40 @@ fi
 # Headless runs (claude -p, CI) never render the statusline so the breadcrumb is never written;
 # the transcript is the ground truth. PreToolUse payloads always include transcript_path.
 # Single pass, jq-first with python3 fallback; neither available → skip (fail-open, no change).
-# ponytail: pricing table is a local copy — no shared table in the repo yet.
+# Pricing: lib/pricing.json (ordered [regex,in,out,cache-write,cache-read] rows, first match wins;
+# also read by scripts/compass-gate.py). The inline PRICES_FALLBACK below is used only if that
+# file is missing or malformed — keep the two in sync.
 # Rates: USD per token (in, out, cache-write-5m, cache-read), platform.claude.com/docs/en/
 # about-claude/pricing, 2026-10. Exact version first; an id that matches no version is priced
 # at its FAMILY'S MAX, and an unknown family at the overall max — a spend cap must over-count,
 # never under-count. Haiku 5.5 uses its >100k-prompt tier (conservative).
+PRICES_FALLBACK='[["opus-5-5",4,20,5,0.2],["opus-(5|4-[5-8])",5,25,6.25,0.5],["opus",15,75,18.75,1.5],["sonnet-5-5",2,10,2.5,0.1],["sonnet-5",2,10,2.5,0.2],["sonnet",3,15,3.75,0.3],["haiku-5-5",0.5,2.5,0.625,0.05],["haiku",1,5,1.25,0.1],["(fable|mythos)-5-1",10,50,12.5,0.25],["fable|mythos",10,50,12.5,1],["",15,75,18.75,1.5]]'
+PRICES="$(cat "$DIR/lib/pricing.json" 2>/dev/null)"
+[ -n "$PRICES" ] || PRICES="$PRICES_FALLBACK"   # absent/empty file: jq -e exits 0 on empty stdin (1.7+), so guard before validating
+if have jq; then
+  printf '%s' "$PRICES" | jq -e 'type=="array" and length>0 and all(.[]; length==5)' >/dev/null 2>&1 || PRICES="$PRICES_FALLBACK"
+else
+  printf '%s' "$PRICES" | python3 -c 'import sys,json;d=json.load(sys.stdin);assert d and all(len(r)==5 for r in d)' >/dev/null 2>&1 || PRICES="$PRICES_FALLBACK"
+fi
 TPATH="$(json_get "$INPUT" '.transcript_path')"
 TUSD=""
 if [ -n "$TPATH" ] && [ -f "$TPATH" ]; then
   if have jq; then
-    TUSD="$(jq -r '
+    TUSD="$(jq -r --argjson P "$PRICES" '
       select(.type == "assistant") | .message |
       ((.model // "") | ascii_downcase) as $m |
       (.usage.input_tokens // 0) as $in |
       (.usage.output_tokens // 0) as $out |
       (.usage.cache_creation_input_tokens // 0) as $cw |
       (.usage.cache_read_input_tokens // 0) as $cr |
-      (if   ($m|test("opus-5-5")) then [4,20,5,0.2]
-       elif ($m|test("opus-(5|4-[5-8])")) then [5,25,6.25,0.5]
-       elif ($m|test("opus")) then [15,75,18.75,1.5]
-       elif ($m|test("sonnet-5-5")) then [2,10,2.5,0.1]
-       elif ($m|test("sonnet-5")) then [2,10,2.5,0.2]
-       elif ($m|test("sonnet")) then [3,15,3.75,0.3]
-       elif ($m|test("haiku-5-5")) then [0.5,2.5,0.625,0.05]
-       elif ($m|test("haiku")) then [1,5,1.25,0.1]
-       elif ($m|test("(fable|mythos)-5-1")) then [10,50,12.5,0.25]
-       elif ($m|test("fable|mythos")) then [10,50,12.5,1]
-       else [15,75,18.75,1.5] end) as $r |
+      ($P | map(select(.[0] as $k | $m|test($k))) | .[0] | .[1:]) as $r |
       ($in*$r[0] + $out*$r[1] + $cw*$r[2] + $cr*$r[3]) / 1000000
     ' "$TPATH" 2>/dev/null | awk '{t+=$1} END{printf "%.6f",t+0}' 2>/dev/null)" || TUSD=""
   elif have python3; then
     TUSD="$(python3 -c '
 import sys,json
 import re
-P=[("opus-5-5",(4,20,5,.2)),("opus-(5|4-[5-8])",(5,25,6.25,.5)),("opus",(15,75,18.75,1.5)),("sonnet-5-5",(2,10,2.5,.1)),("sonnet-5",(2,10,2.5,.2)),("sonnet",(3,15,3.75,.3)),("haiku-5-5",(.5,2.5,.625,.05)),("haiku",(1,5,1.25,.1)),("(fable|mythos)-5-1",(10,50,12.5,.25)),("fable|mythos",(10,50,12.5,1)),("",(15,75,18.75,1.5))]
+P=json.loads(sys.argv[2])
 t=0.0
 try:
  with open(sys.argv[1]) as f:
@@ -107,12 +107,12 @@ try:
    if obj.get("type")!="assistant": continue
    msg=obj.get("message") or {}
    m=(msg.get("model") or "").lower()
-   r=next(v for k,v in P if re.search(k,m))
+   r=next(v[1:] for v in P if re.search(v[0],m))
    u=msg.get("usage") or {}
    t+=((u.get("input_tokens") or 0)*r[0]+(u.get("output_tokens") or 0)*r[1]+(u.get("cache_creation_input_tokens") or 0)*r[2]+(u.get("cache_read_input_tokens") or 0)*r[3])/1e6
 except: pass
 print("%.6f"%t)
-' "$TPATH" 2>/dev/null)" || TUSD=""
+' "$TPATH" "$PRICES" 2>/dev/null)" || TUSD=""
   fi
   case "$TUSD" in ''|*[!0-9.]*) TUSD="" ;; esac
   # prefer the larger: transcript may be more current than the breadcrumb; never under-count

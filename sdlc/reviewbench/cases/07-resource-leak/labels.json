@@ -1,0 +1,11 @@
+{
+  "expect": "flag",
+  "bugs": [
+    {
+      "file": "users.go",
+      "line_start": 6,
+      "line_end": 18,
+      "class": "resource-leak"
+    }
+  ]
+}

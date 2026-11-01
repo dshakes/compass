@@ -118,9 +118,14 @@ else note "node not installed — skipping listener checks"; fi
 
 # Installed symlinks
 echo "Installed state (~/.claude):"
+rec="${COMPASS_HOME:-$HOME/.compass}/install.json"; imode=symlink
+if [ -f "$rec" ]; then
+  imode="$(jq -r '.mode // "symlink"' "$rec" 2>/dev/null || python3 -c 'import json,sys;print(json.load(open(sys.argv[1])).get("mode","symlink"))' "$rec" 2>/dev/null)"
+fi
 for n in settings.json CLAUDE.md statusline.sh agents commands skills workflows hooks output-styles; do
   t="$HOME/.claude/$n"
   if [ -L "$t" ]; then pass "linked: ~/.claude/$n -> $(readlink "$t")"
+  elif [ -e "$t" ] && [ "$imode" = copy ]; then pass "copied: ~/.claude/$n (copy install — check for drift with: compass drift)"
   elif [ -e "$t" ]; then note "exists but not our symlink: ~/.claude/$n"
   else note "not installed: ~/.claude/$n (run make install)"; fi
 done

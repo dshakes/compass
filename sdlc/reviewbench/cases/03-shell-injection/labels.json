@@ -1,0 +1,11 @@
+{
+  "expect": "flag",
+  "bugs": [
+    {
+      "file": "extract.sh",
+      "line_start": 6,
+      "line_end": 6,
+      "class": "unquoted-shell-var"
+    }
+  ]
+}

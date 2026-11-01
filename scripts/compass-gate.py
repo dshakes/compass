@@ -39,26 +39,10 @@ from dataclasses import dataclass, field
 
 # ---------------------------------------------------------------------------
 # Pricing table (USD per 1M tokens): (input, output)
-# Approximate; last updated 2025-07. Unknown models fall back to conservative tier.
+# Approximate. Exact ids below (non-Anthropic); Anthropic models are priced by the shared
+# family-regex table in claude/hooks/lib/pricing.json (same file budget-gate.sh reads).
 # ---------------------------------------------------------------------------
 _PRICING: dict[str, tuple[float, float]] = {
-    # Anthropic
-    "claude-3-haiku-20240307": (0.25, 1.25),
-    "claude-3-5-haiku": (0.80, 4.00),
-    "claude-3-5-haiku-20241022": (0.80, 4.00),
-    "claude-haiku-4-5": (0.80, 4.00),
-    "claude-haiku-4-5-20251001": (0.80, 4.00),
-    "claude-3-sonnet-20240229": (3.00, 15.00),
-    "claude-3-5-sonnet": (3.00, 15.00),
-    "claude-3-5-sonnet-20241022": (3.00, 15.00),
-    "claude-3-7-sonnet": (3.00, 15.00),
-    "claude-3-7-sonnet-20250219": (3.00, 15.00),
-    "claude-sonnet-4": (3.00, 15.00),
-    "claude-sonnet-5": (3.00, 15.00),
-    "claude-3-opus-20240229": (15.00, 75.00),
-    "claude-opus-4": (15.00, 75.00),
-    "claude-opus-4-8": (15.00, 75.00),
-    "claude-fable-5": (15.00, 75.00),
     # OpenAI
     "gpt-4o": (2.50, 10.00),
     "gpt-4o-mini": (0.15, 0.60),
@@ -73,6 +57,21 @@ _PRICING: dict[str, tuple[float, float]] = {
 }
 # ponytail: conservative fallback — over-estimates so cap is never silently exceeded
 _UNKNOWN_PRICE: tuple[float, float] = (15.00, 75.00)
+_PRICING_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "claude", "hooks", "lib", "pricing.json"
+)
+
+
+def _load_families() -> list[tuple[str, float, float]]:
+    """Ordered (regex, input, output) rows from the shared table; [] if unreadable."""
+    try:
+        with open(_PRICING_FILE, encoding="utf-8") as fh:
+            return [(r[0], float(r[1]), float(r[2])) for r in json.load(fh)]
+    except (OSError, ValueError, IndexError, TypeError):
+        return []
+
+
+_FAMILIES = _load_families()
 
 _HOP_BY_HOP = frozenset(
     {
@@ -189,11 +188,16 @@ def _tokens_to_usd(model: str, input_tokens: int, output_tokens: int) -> float:
     # try exact match, then strip -YYYYMMDD date suffix
     price = _PRICING.get(key) or _PRICING.get(re.sub(r"-\d{8}$", "", key))
     if price is None:
+        for pat, inp, out in _FAMILIES:
+            if pat and re.search(pat, key):
+                price = (inp, out)
+                break
+    if price is None:
         logging.warning(
             "compass-gate: unknown model %r — using conservative pricing; update _PRICING if this recurs",
             model,
         )
-        price = _UNKNOWN_PRICE
+        price = next(((i, o) for p, i, o in _FAMILIES if not p), _UNKNOWN_PRICE)
     inp_rate, out_rate = price
     return (input_tokens * inp_rate + output_tokens * out_rate) / 1_000_000
 

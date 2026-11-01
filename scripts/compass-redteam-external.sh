@@ -33,22 +33,43 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # split (116 rows) is held out, so its score is the generalization number.
 SPLIT=train
 JSON=0
+CURVE=""; CURVE_OUT=""; AT_THRESHOLD=""
+# 95% Wilson score interval for k successes in n trials -> "lo hi" in [0,1] (no scipy).
+wilson() {
+  python3 -c 'import sys; from math import sqrt
+k, n = int(sys.argv[1]), int(sys.argv[2]); z = 1.959964
+if n == 0: print("0 1"); sys.exit()
+p = k / n; d = 1 + z * z / n
+c = (p + z * z / (2 * n)) / d; h = z * sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
+print(f"{max(0, c - h):.6f} {min(1, c + h):.6f}")' "$1" "$2"
+}
 while [ $# -gt 0 ]; do a="$1"; case "$a" in
   --json) JSON=1 ;;
+  --wilson) wilson "${2:?K}" "${3:?N}"; exit 0 ;;
   --split=train|--split=test) SPLIT="${a#--split=}" ;;
   --split) case "${2:-}" in train|test) SPLIT="$2"; shift ;; *) echo "--split needs train or test" >&2; exit 2 ;; esac ;;
   --detector=*) [ -n "${a#--detector=}" ] || { echo "--detector needs a command" >&2; exit 2; }
                 export COMPASS_REDTEAM_DETECTOR="${a#--detector=}" ;;
   --detector) [ $# -ge 2 ] && [ -n "$2" ] || { echo "--detector needs a command" >&2; exit 2; }
               export COMPASS_REDTEAM_DETECTOR="$2"; shift ;;
+  --curve=*) CURVE="${a#--curve=}" ;;
+  --curve) CURVE="${2:?--curve needs a score command}"; shift ;;
+  --curve-out) CURVE_OUT="${2:?--curve-out needs a file}"; shift ;;
+  --at-threshold) AT_THRESHOLD="${2:?--at-threshold needs a number}"; shift ;;
   -h|--help)
     cat <<'EOF'
 compass-redteam-external.sh — score injection detectors against external corpus
 
 Options:
   --json                  machine-readable summary
+  --wilson K N            print the 95% Wilson interval for K of N ("lo hi")
   --split=train|test      train (546 rows, default) or the held-out test split (116 rows)
   --detector[=] CMD       score CMD instead of compass (payload on stdin; exit 0 = clean)
+  --curve[=] CMD          recall-vs-FPR sweep: CMD reads one payload per line on stdin and prints
+                          one score per line (e.g. scripts/detectors/ml-injection.py --score)
+  --curve-out FILE        write the full threshold curve as TSV
+  --at-threshold T        with --curve: P/R (+95% CI) of CMD and of "compass OR CMD" at score >= T.
+                          Calibrate T on --split=train, then run once on --split=test.
 
 Env:
   COMPASS_REDTEAM_EXTERNAL_FILE=path  use this pre-converted TSV, skip download
@@ -62,11 +83,16 @@ EOF
   *) printf 'unknown arg: %s\n' "$a" >&2; exit 2 ;;
 esac; shift; done
 
+if { [ -n "$CURVE_OUT" ] || [ -n "$AT_THRESHOLD" ]; } && [ -z "$CURVE" ]; then
+  echo "--curve-out/--at-threshold need --curve" >&2; exit 2
+fi
+if [ -n "$CURVE" ] && [ "$JSON" = 1 ]; then echo "--curve does not support --json" >&2; exit 2; fi
+
 # A detector that cannot run would flag every row and "pass" with 100% recall; refuse it,
-# exactly as scripts/test-redteam.sh does.
+# exactly as scripts/test-redteam.sh does. Exit 2 is the detectors/ "unavailable" code.
 if [ -n "${COMPASS_REDTEAM_DETECTOR:-}" ]; then
   printf 'hello' | bash -c "$COMPASS_REDTEAM_DETECTOR" >/dev/null 2>&1; drc=$?
-  if [ "$drc" -ge 126 ]; then
+  if [ "$drc" -ge 126 ] || [ "$drc" -eq 2 ]; then
     printf 'error: detector not runnable (exit %d): %s\n' "$drc" "$COMPASS_REDTEAM_DETECTOR" >&2; exit 2
   fi
 fi
@@ -364,7 +390,9 @@ tp=0; fp=0; tn=0; fn=0
 total=0
 missed_count=0
 missed_tmp="$(mktemp /tmp/compass-ext-missed.XXXXXX)"
-trap 'rm -f "$missed_tmp"' EXIT
+rows_tmp="$(mktemp /tmp/compass-ext-rows.XXXXXX)"
+scores_tmp="$(mktemp /tmp/compass-ext-scores.XXXXXX)"
+trap 'rm -f "$missed_tmp" "$rows_tmp" "$scores_tmp"' EXIT
 
 while IFS=$'\t' read -r label payload; do
   case "$label" in ''|\#*) continue ;; esac
@@ -376,6 +404,7 @@ while IFS=$'\t' read -r label payload; do
   else
     found="$(injection_findings "$payload")"
   fi
+  [ -z "$CURVE" ] || printf '%s\t%s\t%s\n' "$label" "${found:+1}" "$payload" >> "$rows_tmp"
   if [ "$label" = inject ]; then
     if [ -n "$found" ]; then
       tp=$((tp + 1))
@@ -400,19 +429,32 @@ prec=100; rec=100; acc=100
 [ $((tp + fn)) -gt 0 ] && rec=$((tp * 100 / (tp + fn)))
 [ "$total" -gt 0 ]      && acc=$(((tp + tn) * 100 / total))
 
+# 95% Wilson intervals as whole percents, widened outward (floor lo, ceil hi) so they bracket the point.
+ci_pct() { wilson "$1" "$2" | awk '{ lo = int($1 * 100); hi = int($2 * 100); if (hi < $2 * 100) hi++; print lo, hi }'; }
+n_pos=$((tp + fn)); n_neg=$((tn + fp))
+read -r rec_lo rec_hi <<CI
+$(ci_pct "$tp" "$n_pos")
+CI
+read -r prec_lo prec_hi <<CI
+$(ci_pct "$tp" "$((tp + fp))")
+CI
+
 pass=true
 [ "$prec" -lt "$PREC_FLOOR" ] && pass=false
 [ "$rec"  -lt "$RECALL_FLOOR" ] && pass=false
 
 # ── output ────────────────────────────────────────────────────────────────────
 if [ "$JSON" = 1 ]; then
-  printf '{"dataset":"deepset/prompt-injections","split":"%s","total":%d,"tp":%d,"fp":%d,"tn":%d,"fn":%d,"precision":%d,"recall":%d,"accuracy":%d,"prec_floor":%d,"recall_floor":%d,"pass":%s}\n' \
-    "$SPLIT" "$total" "$tp" "$fp" "$tn" "$fn" "$prec" "$rec" "$acc" "$PREC_FLOOR" "$RECALL_FLOOR" "$pass"
+  printf '{"dataset":"deepset/prompt-injections","split":"%s","total":%d,"tp":%d,"fp":%d,"tn":%d,"fn":%d,"precision":%d,"recall":%d,"accuracy":%d,"prec_floor":%d,"recall_floor":%d,"pass":%s,"n_pos":%d,"n_neg":%d,"recall_ci":[%d,%d],"precision_ci":[%d,%d]}\n' \
+    "$SPLIT" "$total" "$tp" "$fp" "$tn" "$fn" "$prec" "$rec" "$acc" "$PREC_FLOOR" "$RECALL_FLOOR" "$pass" \
+    "$n_pos" "$n_neg" "$rec_lo" "$rec_hi" "$prec_lo" "$prec_hi"
 else
   printf '\nexternal corpus: deepset/prompt-injections, %s split  (Apache 2.0, download-only)\n' "$SPLIT"
   printf 'rows: %d  inject=%d  safe=%d\n' "$total" "$((tp + fn))" "$((tn + fp))"
   printf 'TP=%d  FP=%d  TN=%d  FN=%d\n' "$tp" "$fp" "$tn" "$fn"
   printf 'precision=%d%%  recall=%d%%  accuracy=%d%%\n' "$prec" "$rec" "$acc"
+  printf 'recall=%d%% (n=%d attacks, 95%% CI %d-%d%%)  precision=%d%% (n=%d flagged, 95%% CI %d-%d%%)  [benign n=%d]\n' \
+    "$rec" "$n_pos" "$rec_lo" "$rec_hi" "$prec" "$((tp + fp))" "$prec_lo" "$prec_hi" "$n_neg"
   printf '(floors: prec>=%d%%  recall>=%d%%)\n' "$PREC_FLOOR" "$RECALL_FLOOR"
 
   if [ "$pass" = true ]; then
@@ -432,6 +474,67 @@ else
       printf '  %2d. %s\n' "$i" "$(printf '%s' "$m" | cut -c1-90)"
     done < "$missed_tmp"
     printf '(these may be general chatbot injections not targeted at coding agents)\n'
+  fi
+fi
+
+# ── --curve: recall at FPR budgets for an external scorer (swept once; no model reload) ──
+if [ -n "$CURVE" ]; then
+  if ! cut -f3- "$rows_tmp" | bash -c "$CURVE" > "$scores_tmp" || [ "$(wc -l < "$scores_tmp")" -ne "$total" ]; then
+    printf 'error: --curve command failed or did not print one score per row (%s)\n' "$CURVE" >&2; exit 2
+  fi
+  # columns: label, compass-flag (1/blank), score
+  paste "$rows_tmp" "$scores_tmp" | cut -f1,2,4 > "$rows_tmp.s"; mv "$rows_tmp.s" "$rows_tmp"
+  curve_out="$(python3 - "$rows_tmp" "$CURVE_OUT" "$AT_THRESHOLD" <<'PYEOF'
+import sys
+rows = [(l == "inject", bool(r), float(s)) for l, r, s in (x.rstrip("\n").split("\t") for x in open(sys.argv[1]))]
+pos = sum(r[0] for r in rows); neg = len(rows) - pos
+pts = []  # (threshold, tp, fp), flag = score >= threshold; highest threshold first
+for t in sorted({r[2] for r in rows}, reverse=True):
+    pts.append((t, sum(1 for p, _, s in rows if p and s >= t), sum(1 for p, _, s in rows if not p and s >= t)))
+if sys.argv[2]:
+    with open(sys.argv[2], "w") as f:
+        f.write("threshold\trecall\tfpr\ttp\tfp\n")
+        for t, tp, fp in pts:
+            f.write("%.6f\t%.4f\t%.4f\t%d\t%d\n" % (t, tp / max(pos, 1), fp / max(neg, 1), tp, fp))
+print("\nrecall at FPR budget (n_attacks=%d, n_benign=%d):" % (pos, neg))
+print("  budget  recall  actual-FPR  threshold")
+best = None
+for b in (0.0, 0.01, 0.05, 0.10):
+    ok = [p for p in pts if p[2] <= b * neg + 1e-9] or [(float("inf"), 0, 0)]
+    t, tp, fp = max(ok, key=lambda p: (p[1], p[0]))  # most recall; ties -> highest threshold
+    print("  %5.0f%%  %5.1f%%  %9.2f%%  %s" % (b * 100, 100 * tp / max(pos, 1), 100 * fp / max(neg, 1), "%.6f" % t))
+    if b == 0.01:
+        best = t
+print("calibrated_threshold(max recall at <=1%% FPR)=%.6f" % best)
+if sys.argv[3]:
+    t = float(sys.argv[3])
+    c = [0, 0, 0, 0]; e = [0, 0, 0, 0]  # tp fp tn fn
+    for p, r, s in rows:
+        for acc, flag in ((c, s >= t), (e, s >= t or r)):
+            acc[(0 if flag else 3) if p else (1 if flag else 2)] += 1
+    print("AT %s %s" % (" ".join(map(str, c)), " ".join(map(str, e))))
+PYEOF
+)"
+  printf '%s\n' "$curve_out" | grep -v '^AT '
+  at_line="$(printf '%s\n' "$curve_out" | sed -n 's/^AT //p')"
+  if [ -n "$at_line" ]; then
+    read -r ctp cfp ctn cfn etp efp etn efn <<AT
+$at_line
+AT
+    report_at() { # name tp fp tn fn
+      local n_p=$(($2 + $5)) n_f=$(($2 + $3)) p=100 r=100 rl rh pl ph
+      [ "$n_f" -gt 0 ] && p=$(($2 * 100 / n_f)); [ "$n_p" -gt 0 ] && r=$(($2 * 100 / n_p))
+      read -r rl rh <<CI
+$(ci_pct "$2" "$n_p")
+CI
+      read -r pl ph <<CI
+$(ci_pct "$2" "$n_f")
+CI
+      printf '%s @ threshold %s on %s split: precision=%d%% (95%% CI %d-%d%%)  recall=%d%% (n=%d attacks, 95%% CI %d-%d%%)  FP=%d/%d benign\n' \
+        "$1" "$AT_THRESHOLD" "$SPLIT" "$p" "$pl" "$ph" "$r" "$n_p" "$rl" "$rh" "$3" "$(($3 + $4))"
+    }
+    report_at "classifier    " "$ctp" "$cfp" "$ctn" "$cfn"
+    report_at "compass OR clf" "$etp" "$efp" "$etn" "$efn"
   fi
 fi
 

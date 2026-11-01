@@ -1,0 +1,11 @@
+{
+  "expect": "flag",
+  "bugs": [
+    {
+      "file": "config.js",
+      "line_start": 5,
+      "line_end": 5,
+      "class": "hardcoded-secret"
+    }
+  ]
+}

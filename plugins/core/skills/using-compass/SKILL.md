@@ -26,9 +26,12 @@ compass capability does it better — and safer.
 | Put a repo (or many) on compass in one command | `compass enable <owner/repo|dir> ...` | config + sdlc loop + secrets-from-env + ruleset + auto-merge; `--schedule` adds twice-daily pr-shepherd |
 | Stay ahead of code you didn't write | `compass digest` | sample merged changes & explain them (comprehension guard) |
 | Cap an unattended loop's spend | `COMPASS_MAX_USD_DAY` · `compass spend --today --max-usd N` | per-day circuit breaker |
+| Upload scanner findings to code scanning | `compass scan --config --sarif` · `compass audit-plugin --sarif` | SARIF 2.1.0, docs/33 |
+| Answer a security review / procurement questionnaire | docs/32-procurement.md | five questions, each with a local artifact |
+| Quote the red-team number | `compass redteam --external --split=test` | held-out recall 21% (n=60, CI 13-34%), precision 100% |
 
 The guardrail (catastrophic commands, secret writes) and the **red-team layer**
-(prompt-injection, context poisoning, safety-override) run automatically via hooks — you
+(prompt-injection, context poisoning, safety-override) run automatically via hooks (web, shell and MCP tool results are scanned as untrusted) — you
 don't invoke them, but know they're watching.
 
 ## Before you start (the checklist)

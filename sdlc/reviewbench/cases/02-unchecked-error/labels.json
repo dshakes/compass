@@ -1,0 +1,11 @@
+{
+  "expect": "flag",
+  "bugs": [
+    {
+      "file": "store.go",
+      "line_start": 11,
+      "line_end": 11,
+      "class": "unchecked-error"
+    }
+  ]
+}
