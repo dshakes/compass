@@ -1,0 +1,11 @@
+{
+  "expect": "flag",
+  "bugs": [
+    {
+      "file": "greet.js",
+      "line_start": 2,
+      "line_end": 2,
+      "class": "null-deref"
+    }
+  ]
+}

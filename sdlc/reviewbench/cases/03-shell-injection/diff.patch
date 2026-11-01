@@ -1,0 +1,8 @@
+--- a/extract.sh
++++ b/extract.sh
+@@ -3,3 +3,5 @@
+ archive="$1"
+ dest="$2"
+ mkdir -p "$dest"
++tar -xf $archive -C $dest
++echo "extracted $archive"

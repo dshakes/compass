@@ -19,6 +19,47 @@ All notable changes to this project are documented here. Format loosely follows
   attacks the classifier misses 31% and raises 55 false alarms on benign coding text.
 - **`--external --detector CMD`** benchmarks any guardrail on the external splits; `--external` accepts its
   flags in any order; the held-out split's recall floor is 15% (measured 21%) so the run passes honestly.
+- **MCP tool results are scanned for indirect prompt injection**: the PostToolUse hook matcher is now
+  `WebFetch|WebSearch|Bash|mcp__.*`. Behaviour-tested by `scripts/test-scan-tool-output.sh` (17 cases).
+- **SARIF 2.1.0 output**: `compass scan --config --sarif` and `compass audit-plugin --sarif` upload to GitHub
+  code scanning and compose with the harness's native security review (`docs/33-sarif.md`).
+- **`docs/32-procurement.md`**: the five questions a security review asks, each answered with a local
+  artifact; SIEM export of the JSONL audit trail; what a local-first layer cannot claim.
+- **Statistics on the external score**: `compass redteam --external` prints n, TP/FP/FN and 95% Wilson
+  intervals. Held-out recall 21% (n=60 attacks, CI 13-34%); precision 100% (13 flagged, CI 77-100%).
+- **One shared pricing table** `claude/hooks/lib/pricing.json`, read by both `budget-gate.sh` and `compass gate`.
+- **Calibrated local classifier tier** — `scripts/detectors/ml-injection.py` wraps a CPU-only
+  open-source injection classifier (Apache-2.0) as a `--detector`; `compass redteam --external
+  --curve CMD` sweeps thresholds and prints recall at 0/1/5/10% FPR budgets. Threshold chosen on
+  the train split at ≤1% FPR (0.858741, 2026-11-01); held-out test at that fixed threshold:
+  classifier 35% recall (CI 24–48%) / 100% precision, rules-or-classifier **41%** (CI 30–55%),
+  0 false alarms. 78 ms/payload median once loaded. A detector that exits 2 (unavailable) is now
+  refused instead of counted as flagging everything.
+- **Review precision/recall benchmark** — `compass reviewbench`: 14-case labeled PR corpus
+  (8 seeded defects, 6 hard-negative clean diffs), pluggable reviewer protocol, mock reviewer
+  for CI, Wilson CIs. One real run (sonnet, $1.77 total): P 55.6% [26.7–81.1] · R 62.5% [30.6–86.3] ·
+  F1 58.8%. Intervals are wide by design — it is a floor and a harness, not a leaderboard entry.
+- **Native-guard head-to-head harness** — `compass bench-native`: runs corpus rows as file-read
+  tool output through `claude -p --permission-mode auto` in an isolated directory (no compass
+  hooks), spend-guarded (`--yes-spend`, `COMPASS_MAX_USD`), hermetic test. First 10-row run
+  ($0.04) found the native probe's verdict is not surfaced in `permission_denials` /
+  `safety_stops`, so it reports 0/5 on both attacks and benign — an instrument awaiting a
+  documented signal, not a measurement of the classifier.
+
+### Fixed
+
+- **`compass gate` over-priced every current model** at the $15/$75 fallback; it now reads the shared
+  table (opus-5-5, 1M in + 1M out: $90 -> $24).
+- **Budget ceiling under `SDLC_PARALLEL=1`**: the halt ran in a backgrounded subshell and the run opened a PR
+  anyway. A `.budget-halt` marker now stops the run; 9 new selftest cases.
+- **Missing `pricing.json` on jq >= 1.7 silently disabled the budget cap**; the gate now fails closed.
+- **First run**: `quickstart` exits non-zero when `doctor` fails; `--copy` installs no longer warn "not our
+  symlink"; the docs say the plugin install has no `compass` CLI (clone or Homebrew does).
+
+### Changed
+
+- Three test files that ran nowhere are now CI-gated: `test-gate.py`, `test-redteam-external.sh`,
+  `test-scan-tool-output.sh`.
 
 ## [2.3.0] - 2026-10-30
 

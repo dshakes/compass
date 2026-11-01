@@ -1,0 +1,11 @@
+{
+  "expect": "flag",
+  "bugs": [
+    {
+      "file": "counter.py",
+      "line_start": 3,
+      "line_end": 6,
+      "class": "race"
+    }
+  ]
+}

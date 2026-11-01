@@ -75,7 +75,7 @@ usage: compass <command> [args]
                            Find secrets before they're committed (pre-commit / CI).
                            Built-in detectors gate; uses gitleaks for depth if present.
                            --injection also scans for prompt-injection / context poisoning.
-                           --config [--json] audits YOUR Claude/Codex/Gemini config + .mcp.json
+                           --config [--json|--sarif] audits YOUR Claude/Codex/Gemini config + .mcp.json
                            (bypass modes, wildcard Bash, unsafe hooks, unpinned MCP, env secrets).
   profile [strict|standard|solo] [--get K|--env]
                            Guardrail presets (data files) + the one effective policy. A repo's
@@ -102,10 +102,11 @@ usage: compass <command> [args]
   listen                   Run the command listener: act on /status /approve /hold /build
                            from your phone DM via Telegram (free) or an iMessage/WhatsApp bridge
                            (long-running daemon; needs gh + a configured transport).
-  audit-plugin [--json] [--baseline FILE] DIR
+  audit-plugin [--json|--sarif] [--baseline FILE] DIR
                            Security-scan a third-party plugin/marketplace dir BEFORE
                            installing: injection in agent text + MCP tool descriptions,
                            unpinned servers, fetch-and-execute hooks, settings rewrites.
+                           --sarif emits SARIF 2.1.0 for GitHub code scanning.
   audit-log [--since D] [-n N] [--json]
                            The security trail: every blocked footgun (secret write,
                            dangerous command, scan hit) as a queryable JSONL record.
@@ -137,6 +138,8 @@ case "$cmd" in
   schedule) run schedule "$@" ;;
   route)    run route "$@" ;;
   bench)    run bench "$@" ;;
+  bench-native) exec "$SCRIPTS/bench-native-guard.sh" "$@" ;;
+  reviewbench) run reviewbench "$@" ;;
   repair)   run repair "$@" ;;
   upgrade) run upgrade "$@" ;;
   ablate)   run ablate "$@" ;;

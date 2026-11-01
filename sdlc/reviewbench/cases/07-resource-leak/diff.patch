@@ -1,0 +1,10 @@
+--- a/users.go
++++ b/users.go
+@@ -7,7 +7,6 @@
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	defer rows.Close()
+ 	var ids []int
+ 	for rows.Next() {
+ 		var id int

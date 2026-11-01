@@ -1,0 +1,12 @@
+--- a/stats.py
++++ b/stats.py
+@@ -1,6 +1,8 @@
+ def moving_avg(xs, k):
+     """Average of each window of k consecutive items."""
++    if k <= 0:
++        raise ValueError("k must be positive")
+     out = []
+-    for i in range(len(xs) - k + 1):
++    for i in range(len(xs) - k):
+         out.append(sum(xs[i:i + k]) / k)
+     return out

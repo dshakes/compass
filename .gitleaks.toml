@@ -20,4 +20,5 @@ paths = [
   '''scripts/.*-corpus\.tsv''',
   '''mcp/compass-memory/test_store\.py''',
   '''(^|/)sdlc-classify\.yml$''',
+  '''sdlc/reviewbench/cases/''',   # seeded-defect fixtures (one is a deliberate secret-in-config)
 ]

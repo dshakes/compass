@@ -80,6 +80,18 @@ jobs:
       - name: Hook behavior corpus (format-on-edit · checkpoint-wip · inject-context)
         run: bash scripts/test-hooks.sh
 
+      - name: Tool-output injection scan (WebFetch · Bash · MCP result shapes)
+        run: bash scripts/test-scan-tool-output.sh
+
+      - name: Held-out external red-team score (offline)
+        run: bash scripts/test-redteam-external.sh
+
+      - name: Native-guard bench harness (hermetic, fake claude)
+        run: bash scripts/test-bench-native-guard.sh
+
+      - name: compass gate (python)
+        run: python3 scripts/test-gate.py
+
       - name: Budget ceiling (live spend hard-gate eval — session + daily)
         run: bash scripts/test-budget-gate.sh
 
@@ -157,6 +169,9 @@ jobs:
 
       - name: Task benchmark (structure + pre-fix oracle, no tokens)
         run: bash sdlc/taskbench/validate.sh
+
+      - name: Review benchmark (corpus structure + scorer exactness, no tokens)
+        run: bash sdlc/reviewbench/validate.sh
 
       - name: compass-memory store tests (redaction + trust tiers)
         run: python3 mcp/compass-memory/test_store.py

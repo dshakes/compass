@@ -147,6 +147,7 @@ claude_step(){
     spent="$(awk -F'\t' '{s+=$2} END{printf "%.4f", s+0}' "$COSTS" 2>/dev/null || echo 0)"
     if awk "BEGIN{exit !($spent >= $BUDGET)}"; then
       note "✋ budget ceiling: \$$spent spent ≥ \$$BUDGET total (SDLC_BUDGET) — halting before '$name'"
+      : >"$RUN/.budget-halt"   # an exit here ends only a backgrounded (SDLC_PARALLEL) step; the parent re-checks
       exit 3
     fi
     step_cap="$(awk "BEGIN{r=$BUDGET-$spent; printf \"%.2f\", (r<$STEP_BUDGET)?r:$STEP_BUDGET}")"
@@ -361,6 +362,7 @@ if [ "${SDLC_PARALLEL:-0}" = 1 ]; then
   fi
   # shellcheck disable=SC2086
   wait $pids 2>/dev/null || true
+  [ -e "$RUN/.budget-halt" ] && exit 3
   [ -s "$RUN/audit.console" ]    && sed -n '1,6p' "$RUN/audit.console"    | sed 's/^/    /'
   [ -s "$RUN/security.console" ] && sed -n '1,6p' "$RUN/security.console" | sed 's/^/    /'
 else

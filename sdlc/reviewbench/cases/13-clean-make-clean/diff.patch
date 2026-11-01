@@ -1,0 +1,11 @@
+--- a/Makefile
++++ b/Makefile
+@@ -1,4 +1,7 @@
+-.PHONY: build
++.PHONY: build clean
+ build:
+ 	mkdir -p build
+ 	cc -o build/app main.c
++
++clean:
++	rm -rf ./build

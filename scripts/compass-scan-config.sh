@@ -14,7 +14,8 @@
 #   MED   hook script that is missing (the guardrail silently never runs), unpinned uvx,
 #         approval_policy = "never"
 #   LOW   hook without a timeout
-# Exit: 0 = no HIGH, 1 = HIGH finding(s), 2 = usage error. --json for machines.
+# Exit: 0 = no HIGH, 1 = HIGH finding(s), 2 = usage error. --json for machines, --sarif for
+# GitHub code scanning (SARIF 2.1.0).
 set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=../claude/hooks/lib/common.sh
@@ -22,13 +23,14 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=../claude/hooks/lib/policy.sh
 . "$ROOT/claude/hooks/lib/policy.sh"
 
-H="$HOME"; P=""; JSON=0
+H="$HOME"; P=""; JSON=0; SARIF=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --json) JSON=1 ;;
+    --sarif) SARIF=1 ;;
     --home) H="${2:?--home DIR}"; shift ;;
     --project) P="${2:?--project DIR}"; shift ;;
-    -h|--help) sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'; echo "usage: compass scan --config [--json] [--home DIR] [--project DIR]"; exit 0 ;;
+    -h|--help) sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'; echo "usage: compass scan --config [--json|--sarif] [--home DIR] [--project DIR]"; exit 0 ;;
     *) echo "compass scan --config: unknown arg '$1'" >&2; exit 2 ;;
   esac
   shift
@@ -168,9 +170,10 @@ scan_toml "$H/.codex/config.toml"
 
 FINDINGS="$(printf '%s' "$FINDINGS" | sort -u | awk '{print ($1=="HIGH"?1:$1=="MED"?2:3) "\t" $0}' | sort -s -n -k1,1 | cut -f2-)"
 high="$(printf '%s\n' "$FINDINGS" | grep -c '^HIGH' || true)"
-if [ "$JSON" = 1 ]; then
+if [ "$JSON" = 1 ] || [ "$SARIF" = 1 ]; then
   printf '%s\n' "$FINDINGS" | jq -R -s --argjson high "${high:-0}" \
-    '{high: $high, findings: [split("\n")[] | select(length > 0) | split("\t") | {severity: .[0], file: .[1], rule: .[2], detail: .[3]}]}'
+    '{high: $high, findings: [split("\n")[] | select(length > 0) | split("\t") | {severity: .[0], file: .[1], rule: .[2], detail: .[3]}]}' \
+    | if [ "$SARIF" = 1 ]; then python3 "$ROOT/scripts/compass-sarif.py"; else cat; fi
 else
   printf '\033[1mcompass scan --config\033[0m  (home %s · project %s)\n' "$H" "$P"
   if [ -z "$FINDINGS" ]; then printf '  \033[32mclean\033[0m — no risky harness settings found\n'

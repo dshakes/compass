@@ -2,6 +2,8 @@
 
 ## One-line verified install
 
+The `compass` CLI (doctor, bench, redteam, gate…) comes only from these installs (clone/quickstart, this script, or Homebrew); the Claude Code plugin ships hooks, agents and commands but no CLI.
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dshakes/compass/main/install-remote.sh | bash
 # pin a version / pass install.sh flags:
@@ -69,3 +71,27 @@ Run first: `claude plugin validate plugins/core`, `scripts/sync-plugin.sh --chec
   (`scripts/check-vendor.sh`) before tagging.
 
 Listing is a publish step: do it by hand after the release is signed and verified.
+
+### Checklist status (2026-11-01, main)
+
+`claude plugin validate plugins/core` → passes with **0 warnings** (the 9 unquoted
+`${CLAUDE_PLUGIN_ROOT}` hook commands are now quoted) · `sync-plugin.sh --check` → in sync ·
+`check-vendor.sh` → versions match · `make doctor` → 0 warn / 0 error · `compass verify` →
+provenance verified on the latest release. The only remaining step is the submission itself.
+
+### Listing copy (paste-ready; numbers are reproducible with the commands shown)
+
+**One line.** Guardrails, a hard budget cap, and a self-fixing PR loop for your coding agent —
+every safety claim scored in CI, every release provenance-verified before it runs. You always merge.
+
+**Short.** compass is a local-first config layer for Claude Code, Codex and Gemini. It blocks
+catastrophic commands and secret writes *before they run* (`compass bench` → 100% P/R on a
+labeled corpus that gates CI), hard-stops the session at your dollar cap (`COMPASS_MAX_USD=5`),
+scans prompts, fetched pages and MCP tool results for prompt-injection (held-out: 21% recall /
+100% precision for rules alone, 41% with the optional local classifier — intervals printed), and
+runs a review → security → test → fix loop on every PR until it's green. Install is verified against
+keyless SLSA provenance before anything is extracted; the scanners emit SARIF for code scanning.
+Readable shell, no service, fully reversible.
+
+**Why install from here and not a look-alike.** `compass verify` checks the release attestation;
+`install-remote.sh` refuses to run anything that fails it.

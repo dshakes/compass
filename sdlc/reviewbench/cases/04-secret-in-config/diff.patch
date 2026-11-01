@@ -1,0 +1,12 @@
+--- a/config.js
++++ b/config.js
+@@ -1,7 +1,7 @@
+ module.exports = {
+   db: {
+     host: process.env.DB_HOST,
+-    user: process.env.DB_USER,
+-    password: process.env.DB_PASSWORD,
++    user: "svc_billing",
++    password: "Sup3rS3cret!prod-2026",
+   },
+ };

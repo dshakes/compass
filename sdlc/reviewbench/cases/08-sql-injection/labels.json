@@ -1,0 +1,11 @@
+{
+  "expect": "flag",
+  "bugs": [
+    {
+      "file": "repo.py",
+      "line_start": 5,
+      "line_end": 5,
+      "class": "sql-injection"
+    }
+  ]
+}

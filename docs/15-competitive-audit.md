@@ -404,3 +404,129 @@ Spring `application.properties` in the secret blocklist (+ corpus cases), the 61
 corpus-count clarity, `pr-shepherd` (PR handoff→merge-gate loop), and `SDLC_BUDGET`
 promoted from hint to enforced cumulative ceiling (halt + min(step, remaining) cap,
 selftest-mirrored).
+
+---
+
+## 2026-10 refresh — the field moved under us; here is what it means
+
+Checked 2026-10-31 via the GitHub API (star counts), the harness vendors' own changelogs and
+docs, and the published literature on injection defense and multi-agent review. Categories,
+not names, as before. Every number below was verified on that date unless marked otherwise.
+
+### 1. The category leaders are not guardrail layers
+
+The two largest neighbouring projects — both **skills-and-methodology** frameworks — now sit at
+roughly **310k and 294k stars**, created 12 and 9 months ago respectively. The spec-before-code
+framework is at ~144k; the swarm orchestrator ~80k; the agile-method framework ~55k. compass is
+at 21. The honest read: *safety + provenance is a niche inside a much larger "make the agent
+work better" market.* The one safety-adjacent leader bundles a static scanner (~100 rules) and
+sells a paid private-repo tier — so **having a scanner is table stakes; having a scanner whose
+score is CI-gated and reproducible is the differentiator.** That was already compass's pitch;
+the field confirms it is the right one, and that it is a narrow one.
+
+### 2. The harness is absorbing the permission layer (highest strategic risk)
+
+- **The primary harness's auto-mode permission classifier is now the default** for paid tiers
+  (secondary sources date it mid-August; not confirmed from a primary source). A classifier
+  reviews each tool call for irreversible/destructive/outbound actions, with an API-side probe
+  screening fetched pages, files and tool output for injection. **No false-positive rate is
+  published.** This overlaps compass's guardrail *and* its injection scanner.
+- **Native security review now has three layers** (a one-shot branch review, a marketplace
+  plugin emitting SARIF 2.1.0 with CWE tags, and a managed enterprise tier), plus multi-agent
+  PR review on team tiers. A second harness ships a second-agent auto-review (free since
+  October); the third harness shipped a fail-closed workspace-trust policy in August.
+- **Native budget controls are partial:** a per-invocation dollar flag for print mode, and
+  org-level pooled spend limits. Whether the per-invocation flag hard-stops mid-turn is
+  unverified.
+- **No verified native equivalent** for: an eval-gated, *measured* cost router; a
+  SLSA-verified install path; or a human-gated self-fixing PR loop.
+
+**Implication.** compass should stop competing with the native permission classifier on
+*coverage* and compete on **measurement**: publish the head-to-head (compass guardrail vs. the
+native classifier on the same labeled corpus — Anthropic hasn't published one), emit **SARIF**
+so compass's scanners compose with the native security stack instead of duplicating it, and
+keep the three things nothing native does.
+
+### 3. Review quality now has a public leaderboard — and compass isn't on it
+
+A third-party code-review benchmark (quoted by one of the vendors, July 2026) ranks the leading
+AI-review SaaS at **F1 60.8% / precision 76.2% / recall 50.6%**, with the next four within 3 F1
+points; the best-funded one raised $143M at a $1.5B valuation in August. compass publishes
+guardrail, router and red-team numbers but **no review precision/recall**. The adversarial
+refute step in `compass-review` is exactly the kind of thing that should be scored.
+
+### 4. The held-out injection number is defensible — but needs error bars
+
+The literature's recall for default-threshold classifiers on injections *embedded in realistic
+tool output* is ~21–23% (vs. ~97% on bare injection strings), so compass's **21% held-out recall
+at 100% precision for pattern rules is in the normal range, not an outlier**. Two things the
+literature does that compass didn't: report **set size and a confidence interval** (a "100%
+precision" on a small set has wide error bars), and report recall at a fixed false-positive
+budget. The cheapest credible way to raise held-out recall without a SaaS is a **calibrated
+local small-model classifier tier** (a ~22M-parameter prompt-guard model runs on CPU in ~20 ms;
+the one public calibration study moved its recall from ~1% to ~99% purely by threshold
+tuning, at ~5% FPR). Goal-hijacking is not reliably text-detectable at all — the
+complementary control is behavioural (tool allowlists, egress limits, approval for
+irreversible actions), which compass already has.
+
+### 5. Multi-agent evidence favours what compass already does
+
+The one preprint with a measurable gain (SWE-bench Verified 75.2% vs 71.6%) used a **single
+constrained critic that must label each point AGREE / DISAGREE-with-code-citation /
+DISAGREE-concern** — delivered as a plain skill file. Three separate preprints (May, Sep, Oct
+2026) found **open-ended multi-round debate does not beat a strong single agent at equal cost
+and can destroy correct answers in later rounds.** compass's capped-round, evidence-cited,
+adversarially-refuted review is on the right side of this; no new orchestration pattern is
+warranted. Caveat: SWE-bench gains of a few points are weak evidence (one study found ~30% of
+"solved" patches behaviourally wrong).
+
+### 6. What enterprise procurement actually asks
+
+Five questions recur in security reviews of agent tooling: who can use which tools; a
+structured, SIEM-exportable log of gated actions; credential storage/revocation; what data
+leaves to which providers; blast radius plus a human gate for irreversible actions. Four of
+five are answerable with local artifacts compass already produces. The honest gaps a
+local-first layer cannot close are **IdP-backed identity** and **central retention** — say so
+up front. Standards momentum (OWASP Agentic Top-10 published Dec 2025; a NIST agent-standards
+initiative, voluntary; EU AI Act GPAI fines enforceable since Aug 2026 but *not applicable* to
+a config layer) means "map to the ASI list, don't claim compliance." →
+[32-procurement.md](32-procurement.md).
+
+### 7. Distribution reality
+
+Evidence on what drives stars is thin and mostly vendor marketing. The one observational study
+(138 launch pairs) finds a front-page launch yields **~120 stars in 24h, ~290 in a week** — not
+20k — and that most stars arrive **months later via search and discovery**. The fastest-growing
+projects share: an official-marketplace listing, a cross-harness story, a methodology pitch,
+and a README demo above the fold. compass has the demo and the cross-harness story; it lacks
+the listing and (deliberately) the methodology pitch. The leader's README has to warn users to
+install "only from verified channels" — **compass's SLSA-verified install is a real answer to a
+real problem the field has**, and should be the lead of the listing copy.
+
+### Gap list this cycle → what was done
+
+Code audit on the same date (gates run: trace 41/41, bench, redteam, selftest 107/107,
+taskbench 32/32, doctor clean) found the shipped claims hold, with four real gaps:
+
+| # | Gap | Severity | Status |
+|---|---|---|---|
+| 1 | MCP tool output never reached the indirect-injection scanner (matcher was `WebFetch\|WebSearch\|Bash`); docs claimed MCP coverage; hook had no behavioural test | security drift | matcher widened to `mcp__.*`; `scripts/test-scan-tool-output.sh` added, CI-gated |
+| 2 | Two pricing tables disagreed; `compass gate` priced every current model at the $15/$75 unknown fallback (cap tripped ~4× early on Opus) | cost correctness | one shared table read by both the hook and the gate; cross-consistency test |
+| 3 | `test-gate.py` and `test-redteam-external.sh` (the test behind the public 21% number) ran nowhere | test gap | both wired into CI |
+| 4 | First-run: success banner printed even when doctor failed; `source .zshrc` hint; 9 false doctor warnings on `--copy`; plugin docs point at a CLI plugin users don't have | UX | all four fixed |
+| 5 | Held-out score lacked n and confidence intervals | measurement honesty | `redteam --external` now prints n, TP/FP/FN, 95% Wilson CI |
+| 6 | Scanners emitted no SARIF; can't compose with native security review or code scanning | integration | `--sarif` on `scan --config` and `audit-plugin` → [33-sarif.md](33-sarif.md) |
+| 7 | `SDLC_PARALLEL` had zero selftest coverage | test gap | parallel cases added to `sdlc/selftest.sh` |
+| 8 | Stale docs: trace "in progress", routines "not yet shipped", "9 subagents", README implied a root `AGENTS.md` this repo doesn't have, memory-server path used the ledger dir | drift | fixed (subagent count now derived; README reworded; path uses `COMPASS_REPO_ROOT`) |
+
+**Completed 2026-11-01 (the three "not done" items)** — each shipped with a hermetic CI test
+and one real, capped run:
+
+| Investment | Result | Where |
+|---|---|---|
+| Calibrated local classifier tier | threshold picked on train at ≤1% FPR; held-out: classifier 35% recall / 100% precision, **rules-or-classifier 41%** (CI 30–55%), 0 false alarms; 78 ms/payload | [17 → head-to-head](17-red-team.md) |
+| Review precision/recall benchmark | 14 labeled cases; sonnet: P 55.6% / R 62.5% / F1 58.8% for $1.77 — intervals ±30 pts, so a floor and a harness, not a leaderboard claim | [34](34-review-benchmark.md) |
+| Native-guard head-to-head | harness works ($0.04 / 10 rows); the native probe's verdict is not exposed in any result field, so no number yet — re-run when the field is documented | [35](35-native-head-to-head.md) |
+
+**Still a human step** — the marketplace listing (manifest now validates with zero warnings;
+checklist and copy in [31](31-distribution.md)).

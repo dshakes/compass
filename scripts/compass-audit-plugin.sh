@@ -23,7 +23,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=../claude/hooks/lib/policy.sh
 . "$ROOT/claude/hooks/lib/policy.sh"
 
-JSON=0; TARGET=""; BASELINE_FILE=""
+JSON=0; SARIF=0; TARGET=""; BASELINE_FILE=""
 
 usage() {
   cat <<'EOF'
@@ -40,6 +40,7 @@ options:
   --baseline FILE  suppress findings listed in FILE (path<TAB>rule per line);
                    FILE is operator-supplied — never read from inside the plugin
   --json           machine-readable JSON output
+  --sarif          SARIF 2.1.0 output (GitHub code scanning)
   -h|--help        this message
 
 exits: 0 = clean or only INFO/baselined, 1 = HIGH/MED finding(s), 2 = usage error
@@ -49,6 +50,7 @@ EOF
 while [ $# -gt 0 ]; do
   case "$1" in
     --json)     JSON=1 ;;
+    --sarif)    SARIF=1 ;;
     --baseline) shift; BASELINE_FILE="${1:-}" ;;
     -h|--help)  usage; exit 0 ;;
     -*)         printf 'compass audit-plugin: unknown flag "%s"\n' "$1" >&2; usage >&2; exit 2 ;;
@@ -420,6 +422,11 @@ fi
 actionable=$((count_high + count_med))
 
 # ── Output ─────────────────────────────────────────────────────────────────
+if [ "$SARIF" = 1 ]; then
+  bash "${BASH_SOURCE[0]}" --json ${BASELINE_FILE:+--baseline "$BASELINE_FILE"} "$TARGET" \
+    | python3 "$ROOT/scripts/compass-sarif.py"
+  exit "${PIPESTATUS[0]}"
+fi
 if [ "$JSON" = 1 ]; then
   printf '{"findings":['
   first=1

@@ -4,6 +4,7 @@
 
 This repo is **also a Claude Code plugin marketplace**, so teammates can install
 the machinery with two commands instead of cloning + `make install`.
+The plugin gives you hooks, agents and commands; the `compass` CLI (doctor, bench, redteam, gate…) ships only with the clone/quickstart or Homebrew install.
 
 ```
 compass/                         # ← the marketplace (repo root)

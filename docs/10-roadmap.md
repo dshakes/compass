@@ -37,6 +37,7 @@ human merge/deploy gate is untouched). Per-item status:
 | + | **Task-success benchmark** (seeded-bug oracles) | ✅ shipped (CI validates structure) | `sdlc/taskbench/` |
 | + | **Agent-identity provenance in the loop** (role/model/run per commit) | ✅ shipped (opt-in) | `orchestrate.sh` `SDLC_TRACE=1` |
 | + | **Repo context pack for review** (touched-symbol call sites) | ✅ shipped (opt-in) | `orchestrate.sh` `SDLC_CONTEXT=1` · `scripts/context-pack.sh` |
+| + | **Agent Trace provenance** (signed per-change records) | ✅ shipped | `compass trace` → `scripts/compass-trace.sh` |
 | + | **OpenSSF Scorecard** (supply-chain posture) | ✅ shipped | `.github/workflows/scorecard.yml` |
 | + | **Headless budget cap** (transcript-JSONL cost fallback) | ✅ shipped | `claude/hooks/budget-gate.sh` |
 
@@ -91,7 +92,7 @@ human gate and required checks still apply. Each is a named routine.
 `/goal` for "work until <condition>." Agents **never merge** — they stop at a PR.
 **Tradeoffs.** Real spend on a timer → hard budget caps + `claude agents` visibility are
 mandatory. Start with one (`babysit-prs`) before a fleet.
-**Status:** primitive is stable; routines not yet shipped. 🟢
+**Status:** primitive is stable; routines are shipped (opt-in, `sdlc/routines/`). 🟢
 
 ### 3. Agent-team SDLC 🟡  *(`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` — already enabled in `settings.json`)*
 Today the headless pipeline is **sequential** (`claude -p` → `codex exec`, one after
@@ -274,15 +275,15 @@ commit author field.
 exists — [ADR-0007](adr/0007-agent-identity-attestation.md) (Proposed), with an explicit
 not-building-until trigger. 🔵
 
-### 16. Provenance — signed Agent Trace records 🟡  *(landing now)*
-`compass trace` is being implemented in a parallel branch. It will produce
+### 16. Provenance — signed Agent Trace records ✅
+`compass trace` (`scripts/compass-trace.sh`, wired at `bin/compass`, CI-gated in `ci.yml`) produces
 **Agent Trace** records (the open [Agent Trace spec](https://github.com/cursor/agent-trace))
 for AI-assisted commits: a structured, signable artifact that captures which
 agent, which model, which prompts, and which tool calls produced a given change —
 analogous to SLSA provenance for source, but for the agent turn that wrote it.
 Combined with SLSA build provenance (already on every compass release), this
 closes the chain from "AI wrote this" to "here is the verifiable record."
-**Status:** `compass trace` implementation in progress; spec is stable. 🟡
+**Status:** shipped — `compass trace` is wired into the CLI and CI-gated (41/41 tests). ✅
 
 ---
 

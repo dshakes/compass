@@ -1,0 +1,11 @@
+{
+  "expect": "flag",
+  "bugs": [
+    {
+      "file": "stats.py",
+      "line_start": 6,
+      "line_end": 6,
+      "class": "off-by-one"
+    }
+  ]
+}

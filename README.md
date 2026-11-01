@@ -73,12 +73,12 @@ compass bench     # → guardrail 100% precision/recall (61-case bench corpus; a
 # then ask the agent to `rm -rf /` or write a .env → denied; `rm -rf ./build` → allowed
 ```
 
-**🧪 Red-team resistance, measured.** Prompt-injection (direct/indirect/paste), agent-config poisoning, local safety-override, malware & insecure-code — scored against a labeled corpus that gates CI, obfuscation-resistant (`--attack`), with optional escalation to a managed guardrails backend. *A poisoned repo or web page can't quietly turn your agent against you — and you can measure how well that holds.* 413 cases across 12 attack classes, scored **per class** (not one blended number), with hard negatives and 4 documented known gaps. On a public held-out set nobody tuned for, it catches **21%** of attacks with **100%** precision; pattern rules generalize to phrasings, not ideas, so pair them with a model-grade backend for paraphrase.
+**🧪 Red-team resistance, measured.** Prompt-injection (direct/indirect/paste), agent-config poisoning, local safety-override, malware & insecure-code — scored against a labeled corpus that gates CI, obfuscation-resistant (`--attack`), with optional escalation to a managed guardrails backend. *A poisoned repo or web page can't quietly turn your agent against you — and you can measure how well that holds.* 413 cases across 12 attack classes, scored **per class** (not one blended number), with hard negatives and 4 documented known gaps. MCP tool results are scanned like web pages, as untrusted data. On a public held-out set nobody tuned for, it catches **21%** of attacks (n=60, 95% CI 13–34%) at **100%** precision (13 flagged, CI 77–100%); pattern rules generalize to phrasings, not ideas, so pair them with a model-grade backend for paraphrase.
 
 ```bash
 compass redteam            # → injection corpus 100% P/R (413 cases) + 95% obfuscation-robust (1440/1512), then scans THIS repo's config/MCP/settings
 compass redteam --detector ./my-guardrail.sh   # → benchmark ANY guardrail on the same corpus (stdin payload, exit 0 = clean), same per-class table
-compass redteam --external --split=test  # → a public corpus we DIDN'T write, held out from tuning: 100% precision, 21% recall
+compass redteam --external --split=test  # → a public corpus we DIDN'T write, held out: 100% precision, 21% recall (CI 13–34%)
 ```
 <sub>Most tools show you 100% on their own test set. We show that too — <b>and</b> the number against someone else's corpus, because a floor you can only hit on your own cases isn't a floor.</sub>
 
@@ -98,7 +98,7 @@ compass route "fix a typo"                 # → haiku
 compass bench                              # → routed vs all-Opus: ~62% cheaper (assumptions printed)
 ```
 
-**🎚 One policy, tighten-only.** `compass profile strict|standard|solo` picks a preset; a repo's `.compass/policy.conf` can only make rules **stricter** (lower a cap, turn a scan on) — a project can't grant itself an exception. Under `strict`, security hooks **fail closed**: a guardrail that crashes or times out blocks instead of waving the action through. One resolver serves every harness, so `compass gate` holds Codex and Gemini to the same spend caps.
+**🎚 One policy, tighten-only.** `compass profile strict|standard|solo` picks a preset; a repo's `.compass/policy.conf` can only make rules **stricter** (lower a cap, turn a scan on) — a project can't grant itself an exception. Under `strict`, security hooks **fail closed**: a guardrail that crashes or times out blocks instead of waving the action through. One resolver serves every harness, so `compass gate` holds Codex and Gemini to the same spend caps, priced from the same table as the hook.
 
 ```bash
 compass profile strict      # show/select; REJECTED lists any repo override that tried to loosen
@@ -117,7 +117,7 @@ compass audit-plugin ./their-marketplace   # injection · tool-poisoning · unpi
 ```
 
 <p align="center">
-  <a href="docs/17-red-team.md"><img src="assets/red-team.svg" alt="compass red-team layer: untrusted input (prompt/paste · web/MCP/tool output · CLAUDE.md/AGENTS.md · .claude/settings.json) → decode &amp; normalize (base64/hex/entity/zero-width/ASCII-smuggling/homoglyph/leet) → detectors (injection · authority-spoof · MCP tool-poisoning · context-poisoning · safety-override · data/DNS exfil · malware · insecure-code · prompt-leak), eval-gated 100% P/R → warn+audit / block / optional managed backend → human merge gate." width="900"></a>
+  <a href="docs/17-red-team.md"><img src="assets/red-team.svg" alt="compass red-team layer: untrusted input (prompt/paste · web/MCP/tool output · CLAUDE.md/AGENTS.md · .claude/settings.json) → decode &amp; normalize (base64/hex/entity/zero-width/ASCII-smuggling/homoglyph/leet) → detectors (injection · authority-spoof · MCP tool-poisoning · context-poisoning · safety-override · data/DNS exfil · malware · insecure-code · prompt-leak), eval-gated 100% P/R → warn+audit / block / optional managed backend; config and plugin scanners also emit SARIF → human merge gate." width="900"></a>
 </p>
 
 No service, no telemetry, no `--dangerously-skip-permissions`; `git pull` to update. The work it can't safely own, it hands back — **you keep the merge.**
@@ -228,7 +228,7 @@ compass enable --schedule owner/repo ~/code/another-repo   # config + PR gates +
 | **Claude Code** | `/plugin marketplace add dshakes/compass` → `/plugin install compass@compass` | `make install` |
 | **Codex** | `codex plugin marketplace add dshakes/compass` → `/plugin install` | `make install` (`~/.codex/AGENTS.md` + `config.toml`) |
 | **Gemini CLI** | `gemini extensions install https://github.com/dshakes/compass` | `./install.sh --gemini` (`~/.gemini/GEMINI.md`) |
-| **Cursor · Copilot · OpenCode · Windsurf** | read the repo's `AGENTS.md` ([AGENTS.md](https://agents.md/) standard) | clone + `make install` |
+| **Cursor · Copilot · OpenCode · Windsurf** | read the `AGENTS.md` in your repo — `scripts/new-repo.sh` creates one ([AGENTS.md](https://agents.md/) standard) | clone + `make install` |
 
 `CLAUDE.md` · `AGENTS.md` · `GEMINI.md` are **one file** (symlinks), and the plugin/extension manifests are generated from one source and CI-checked (`scripts/check-vendor.sh`) — a `git pull` updates every agent at once and a manifest can't drift. The manifests are structure-validated in CI; the live `gemini extensions install` / `codex plugin marketplace add` paths are verified manually (those CLIs aren't in the runner).
 
@@ -236,9 +236,11 @@ compass enable --schedule owner/repo ~/code/another-repo   # config + PR gates +
 
 ### ✅ Verify → your first run
 ```bash
-compass doctor      # validate the install — expect "0 error"
+compass doctor      # validate the install — expect "0 error" (quickstart now exits non-zero if it fails)
 compass status      # is compass active here, and what's loaded?
 ```
+The plugin install gives you the hooks, agents and commands, but not the `compass` CLI — `doctor`, `status`, `bench`, `redteam`, `gate` and the rest need the clone/quickstart or Homebrew install.
+
 Then open your agent as usual. Feel it in a minute: ask for a dangerous command (blocked), run `/review` on your diff, or `compass route "<task>"` to see the tier it picks. No tokens, no signup.
 
 ---
@@ -262,6 +264,7 @@ Everything below is **on after one install** or a single opt-in — the autonomo
 | 🧰 | **The compass CLI** | `onboard · impact · drift · scan · profile · redteam · audit-plugin · gate · sandbox · verify · repair · audit-log · spend · dashboard` | [11-using](docs/11-using-compass.md) |
 | 🚦 | **Cross-agent enforcement** | `compass gate` — a localhost proxy that hard-caps spend for Codex/Gemini/any SDK, not just Claude Code | [02-cost](docs/02-cost-and-models.md) |
 | 🔍 | **Plugin-security scanner** | `compass audit-plugin` — vet a third-party plugin/marketplace (injection · tool-poisoning · unpinned MCP · fetch-exec) before you install it | [17-red-team](docs/17-red-team.md) |
+| 📋 | **Procurement evidence** | the five questions a security review asks, each answered with a local artifact: SIEM-exportable audit trail, OWASP Agentic mapping, SARIF from the scanners (`--sarif`), what a local-first layer can't claim | [32-procurement](docs/32-procurement.md) · [33-sarif](docs/33-sarif.md) |
 | 🔌 | **MCP + LSP** | curated, **version-pinned** MCP servers + opt-in language-server intelligence | [04](docs/04-mcp.md) · [06](docs/06-lsp.md) |
 | 🪪 | **Every agent, one source** | Claude Code · Codex · Gemini — plus Cursor/Windsurf/Copilot via the [`AGENTS.md`](https://agents.md/) standard | [12-every-agent](docs/12-every-agent.md) |
 | 💸 | **Live budget ceiling** | a hard cap that halts the session before the next tool call (`COMPASS_MAX_USD`), plus a per-day cap for unattended loops | [02-cost](docs/02-cost-and-models.md) |
@@ -288,6 +291,8 @@ Built to be **trusted before it's run** — and honest about its limits.
 **[In practice → The five moves](docs/20-loops.md)** — each move of a self-running loop, mapped to the primitive that builds it.
 **[Config → Advanced config](docs/30-advanced-config.md)** — profiles, tighten-only repo overrides, fail-closed hooks, one policy for every harness, `compass scan --config`.
 **[Install → Distribution](docs/31-distribution.md)** — verified one-line install, install record, repair, uninstall, budget-only install.
+
+**[Enterprise → Procurement evidence](docs/32-procurement.md)** — what to hand a security review; **[SARIF output](docs/33-sarif.md)** — compose the scanners with GitHub code scanning and native security review. **[Review benchmark](docs/34-review-benchmark.md)** — labeled PR corpus, any reviewer plugs in, precision/recall with intervals; **[Native-guard head-to-head](docs/35-native-head-to-head.md)** — the harness that scores the harness's own classifier on the same corpus.
 **[Fundamentals → The layers](docs/22-the-layers.md)** — prompt/context/harness/loop/graph, dated and evidence-graded, with a rubric for the next one.
 **[Fundamentals → Context](docs/23-context.md)** — the context window as a budget you spend, not a container you fill.
 **[Fundamentals → Harness](docs/24-harness.md)** — everything around the model that isn't the model, and the evidence it moves outcomes more than the model does.
