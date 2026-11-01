@@ -55,6 +55,9 @@ jobs:
           # Review the merge result of an untrusted PR safely.
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
           fetch-depth: 0
+          # No git credential for the codex user to read out of .git/config — the "Post audit"
+          # step authenticates via GH_TOKEN directly, not a persisted git credential.
+          persist-credentials: false
       # Codex runs as a dedicated user with no sudo, so a prompt-injected diff cannot make it
       # read OPENAI_API_KEY out of the runner's process memory. The checkout is owned by the
       # runner user and is not world-readable; the audit only needs to READ it.
