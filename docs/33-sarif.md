@@ -14,7 +14,7 @@ GitHub code scanning (or any SARIF viewer) instead of living only in terminal te
 
 ```yaml
 - run: compass audit-plugin --sarif plugins/core > compass.sarif || true  # exit code gates elsewhere
-- uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+- uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
   with:
     sarif_file: compass.sarif
     category: compass-audit-plugin
