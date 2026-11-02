@@ -55,6 +55,22 @@ jobs:
           # Review the merge result of an untrusted PR safely.
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
           fetch-depth: 0
+          # No git credential for the codex user to read out of .git/config — the "Post audit"
+          # step authenticates via GH_TOKEN directly, not a persisted git credential.
+          persist-credentials: false
+      # Codex runs as a dedicated user with no sudo, so a prompt-injected diff cannot make it
+      # read OPENAI_API_KEY out of the runner's process memory. Mirrors the action's own
+      # examples/unprivileged-user.yml: /home/runner is 750, so the user joins the `runner`
+      # group to traverse into the checkout, which is made group-readable (never writable —
+      # the audit only READS). safe.directory: git refuses a repo owned by another user.
+      - name: Create the unprivileged Codex user
+        if: steps.key.outputs.present == 'true'
+        run: |
+          sudo useradd --create-home --shell /bin/bash codex
+          sudo usermod -a -G runner codex
+          sudo chown -R runner:codex "$GITHUB_WORKSPACE"
+          sudo chmod -R g+rX "$GITHUB_WORKSPACE"
+          sudo git config --system --add safe.directory "$GITHUB_WORKSPACE"
       - name: Codex cross-audit
         if: steps.key.outputs.present == 'true'
         id: codex
@@ -62,6 +78,12 @@ jobs:
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           sandbox: read-only
+          # The action's default `drop-sudo` (v1.13+) aborts on the hosted runner before Codex
+          # starts ("Could not restrict access to /run/dbus/system_bus_socket"). Running as the
+          # `codex` user above gives the same guarantee — the key never reaches Codex's process —
+          # without the sudo-stripping root phase that fails. Re-check on the next action bump.
+          safety-strategy: unprivileged-user
+          codex-user: codex
           model: gpt-5.5
           # ACCEPTED (SECURITY/Low): base.ref interpolated into the PROMPT only (never a
           # run: block). Branch name, same-repo collaborators only; $GITHUB_BASE_REF
