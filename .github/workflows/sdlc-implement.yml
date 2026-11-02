@@ -53,7 +53,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Claude implement
-        uses: anthropics/claude-code-action@be7b93b1907a4abad570368f3c74b6fe3807510b # v1
+        uses: anthropics/claude-code-action@6d5ae526d25ce88daa2200be073e1a373167f064 # v1
         with:
           # Uses your Claude SUBSCRIPTION (no API credits). For a pay-per-use key, replace with:
           #   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
