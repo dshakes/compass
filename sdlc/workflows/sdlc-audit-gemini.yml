@@ -1,13 +1,27 @@
-# Auditor (Gemini) — third cross-model audit. Runs automatically when a PR opens (an
-# independent third opinion alongside the Claude reviewer and Codex auditor) and on
-# demand via the `agent:audit` label. Read-only; posts Gemini's verdict as a PR comment.
-# Needs secret GEMINI_API_KEY — skips cleanly (no failure) when it is absent.
-# Also on `synchronize` (human pushes only — bot pushes skipped, see the `if:` below).
+# Auditor (Gemini) — third cross-model audit. Runs when a PR is ready for review — opened
+# or reopened directly as ready (`ready_for_review` never fires for those), or converted
+# from draft — and on demand via the `agent:audit` label (an independent third opinion
+# alongside the Claude reviewer and Codex auditor). Read-only; posts Gemini's verdict as
+# a PR comment. Needs secret GEMINI_API_KEY — skips cleanly (no failure) when it is
+# absent.
+# COST: no `synchronize` trigger — pushes after the PR is ready are NOT re-audited;
+# re-apply the `agent:audit` label before merge for a fresh pass.
+# NOT a required check (paths-ignore'd workflows never report a status on skipped PRs).
 name: "sdlc · audit (Gemini)"
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, labeled]
+    types: [opened, reopened, ready_for_review, labeled]
+    paths-ignore:
+      - '**/*.md'
+      # Negations re-include the agents' own governing instructions: a PR that touches
+      # ONLY CLAUDE.md/AGENTS.md must still be audited, not merge on zero review.
+      - '!**/CLAUDE.md'
+      - '!**/AGENTS.md'
+      - 'docs/**'
+      - 'site/**'
+      - '**/*.svg'
+      - '**/*.lock'
 
 permissions:
   contents: read
@@ -17,19 +31,12 @@ jobs:
   audit-gemini:
     # 1. dependabot never audits — those runs get Dependabot's (empty) secret store,
     #    so the agent cannot authenticate at all. Capability, not cost.
-    # 2. On `synchronize` only, bot pushes are skipped: the fix loop commits once per
-    #    round and auditing each re-spends credits for no added signal. Scoped to
-    #    synchronize deliberately — a blanket bot exclusion would also stop auditing
-    #    PRs *opened* by Renovate, Copilot and release bots.
-    #    A machine-user PAT (SDLC_BOT_TOKEN) has no [bot] suffix, so logins listed in
-    #    vars.SDLC_TRIGGER_BOTS (comma-separated, no spaces) are skipped too.
+    # 2. Drafts never audit — `opened`, `reopened`, and `labeled` can all fire on a draft.
     # 3. A label triggers an audit only when it is `agent:audit` (label.name is null
-    #    on open events, hence the action check first).
+    #    on ready_for_review events, hence the action check first).
     if: >-
       github.actor != 'dependabot[bot]'
-      && (github.event.action != 'synchronize'
-          || (!endsWith(github.actor, '[bot]')
-              && !contains(format(',{0},', vars.SDLC_TRIGGER_BOTS), format(',{0},', github.actor))))
+      && !github.event.pull_request.draft
       && (github.event.action != 'labeled' || github.event.label.name == 'agent:audit')
     runs-on: ubuntu-latest
     concurrency:
@@ -82,6 +89,10 @@ jobs:
           GEMINI_CLI_TRUST_WORKSPACE: "true"
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          # COST: pinned to Flash-Lite — the CLI default (Pro-class) is ~10–40x the price
+          # per audit, and Gemini 4 Argon doubles on 2026-12-01. Escalate by hand-running
+          # a Pro audit only on large or risky diffs.
+          gemini_model: gemini-3.5-flash-lite
           # The wrapper hardcodes --yolo (auto-approve). Neutralize it by ALLOWLISTING
           # read-only tools only — no shell, no write, no web — so an untrusted diff
           # can't talk the agent into running anything (Codex audit finding on #93).

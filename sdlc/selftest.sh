@@ -46,6 +46,28 @@ eq "ends CLEAN"           "$(printf 'review…\nSDLC-VERDICT: CLEAN\n'          
 eq "no verdict → CLEAN"   "$(printf 'review with no verdict line\n'           | verdict_selfhosted)" "CLEAN"
 eq "last wins (B then C)" "$(printf 'SDLC-VERDICT: BLOCKING\nSDLC-VERDICT: CLEAN\n' | verdict_selfhosted)" "CLEAN"
 
+# ── 2b · Docs-only review skip (mirror of sdlc-review.yml "Skip model review on
+#         docs-only diffs") ── CLAUDE.md/AGENTS.md are carved out of "docs": these
+# govern agent behavior, so a PR touching only those must still get a full review.
+review_skip() { # changed files (multiline) on stdin → skip=true | skip=false
+  local changed; changed="$(cat)"
+  if printf '%s\n' "$changed" | grep -qiE '(^|/)(CLAUDE|AGENTS)\.md$'; then
+    echo "skip=false"
+  elif [ -n "$changed" ] && ! printf '%s\n' "$changed" \
+      | grep -qvE '(\.md$|^docs/|^site/|\.svg$|\.lock$)'; then
+    echo "skip=true"
+  else
+    echo "skip=false"
+  fi
+}
+echo "docs-only review skip:"
+eq "pure docs diff → skip"                   "$(printf 'README.md\ndocs/guide.md\n'        | review_skip)" "skip=true"
+eq "CLAUDE.md-only diff → never skip"        "$(printf 'claude/CLAUDE.md\n'                | review_skip)" "skip=false"
+eq "AGENTS.md-only diff → never skip"        "$(printf 'AGENTS.md\n'                       | review_skip)" "skip=false"
+eq "docs + CLAUDE.md mixed → never skip"     "$(printf 'docs/x.md\nclaude/CLAUDE.md\n'     | review_skip)" "skip=false"
+eq "source diff → never skip"                "$(printf 'src/main.go\n'                     | review_skip)" "skip=false"
+eq "empty diff → never skip (safe default)"  "$(printf ''                                  | review_skip)" "skip=false"
+
 # ── 3 · Hosted verdict parse (mirror of sdlc-review.yml structured_output) ────
 if command -v jq >/dev/null; then
   verdict_hosted() { local v; v="$(printf '%s' "$1" | jq -r '.verdict // "CLEAN"' 2>/dev/null || echo CLEAN)"; [ -n "$v" ] && echo "$v" || echo CLEAN; }
