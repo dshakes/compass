@@ -48,6 +48,8 @@ jobs:
       # COST: docs-only diffs skip the model call, but the job still reports the required
       # `review` status. (A workflow-level paths-ignore would leave docs-only PRs
       # unmergeable — a skipped workflow never reports its check.)
+      # CLAUDE.md/AGENTS.md are carved out of "docs" here: they govern agent behavior,
+      # so a PR touching only those files must still get a full model review.
       - name: Skip model review on docs-only diffs
         id: filter
         env:
@@ -55,7 +57,10 @@ jobs:
         run: |
           set -euo pipefail
           changed="$(git diff --name-only "$BASE"...HEAD)"
-          if [ -n "$changed" ] && ! printf '%s\n' "$changed" \
+          if printf '%s\n' "$changed" | grep -qiE '(^|/)(CLAUDE|AGENTS)\.md$'; then
+            echo "skip=false" >>"$GITHUB_OUTPUT"
+            echo "CLAUDE.md/AGENTS.md changed — governing instructions, never skip review"
+          elif [ -n "$changed" ] && ! printf '%s\n' "$changed" \
               | grep -qvE '(\.md$|^docs/|^site/|\.svg$|\.lock$)'; then
             echo "skip=true" >>"$GITHUB_OUTPUT"
             echo "docs-only diff — passing review through without a model call"

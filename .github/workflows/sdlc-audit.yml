@@ -13,6 +13,10 @@ on:
     types: [opened, reopened, ready_for_review, labeled]
     paths-ignore:
       - '**/*.md'
+      # Negations re-include the agents' own governing instructions: a PR that touches
+      # ONLY CLAUDE.md/AGENTS.md must still be audited, not merge on zero review.
+      - '!**/CLAUDE.md'
+      - '!**/AGENTS.md'
       - 'docs/**'
       - 'site/**'
       - '**/*.svg'
