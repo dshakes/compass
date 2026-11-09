@@ -1,15 +1,17 @@
-# Auditor (Gemini) — third cross-model audit. Runs when a PR is marked ready for review
-# (an independent third opinion alongside the Claude reviewer and Codex auditor) and on
-# demand via the `agent:audit` label. Read-only; posts Gemini's verdict as a PR comment.
-# Needs secret GEMINI_API_KEY — skips cleanly (no failure) when it is absent.
-# COST: no `opened`/`synchronize` triggers — pushes after ready-for-review are NOT
-# re-audited; re-apply the `agent:audit` label before merge for a fresh pass.
+# Auditor (Gemini) — third cross-model audit. Runs when a PR is ready for review — opened
+# or reopened directly as ready (`ready_for_review` never fires for those), or converted
+# from draft — and on demand via the `agent:audit` label (an independent third opinion
+# alongside the Claude reviewer and Codex auditor). Read-only; posts Gemini's verdict as
+# a PR comment. Needs secret GEMINI_API_KEY — skips cleanly (no failure) when it is
+# absent.
+# COST: no `synchronize` trigger — pushes after the PR is ready are NOT re-audited;
+# re-apply the `agent:audit` label before merge for a fresh pass.
 # NOT a required check (paths-ignore'd workflows never report a status on skipped PRs).
 name: "sdlc · audit (Gemini)"
 
 on:
   pull_request:
-    types: [ready_for_review, labeled]
+    types: [opened, reopened, ready_for_review, labeled]
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
@@ -25,7 +27,7 @@ jobs:
   audit-gemini:
     # 1. dependabot never audits — those runs get Dependabot's (empty) secret store,
     #    so the agent cannot authenticate at all. Capability, not cost.
-    # 2. Drafts never audit — the `labeled` event can fire on a draft.
+    # 2. Drafts never audit — `opened`, `reopened`, and `labeled` can all fire on a draft.
     # 3. A label triggers an audit only when it is `agent:audit` (label.name is null
     #    on ready_for_review events, hence the action check first).
     if: >-

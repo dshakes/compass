@@ -1,15 +1,16 @@
-# Auditor (Codex) — independent cross-audit. Runs when a PR is marked ready for review
-# (an independent second opinion to the Claude reviewer) and on demand via the
-# `agent:audit` label. Read-only; posts Codex's verdict as a PR comment. Needs secret
-# OPENAI_API_KEY — skips cleanly (no failure) when it is absent.
-# COST: no `opened`/`synchronize` triggers — pushes after ready-for-review are NOT
-# re-audited; re-apply the `agent:audit` label before merge for a fresh pass.
+# Auditor (Codex) — independent cross-audit. Runs when a PR is ready for review — opened
+# or reopened directly as ready (`ready_for_review` never fires for those), or converted
+# from draft — and on demand via the `agent:audit` label. Read-only; posts Codex's
+# verdict as a PR comment. Needs secret OPENAI_API_KEY — skips cleanly (no failure) when
+# it is absent.
+# COST: no `synchronize` trigger — pushes after the PR is ready are NOT re-audited;
+# re-apply the `agent:audit` label before merge for a fresh pass.
 # NOT a required check (paths-ignore'd workflows never report a status on skipped PRs).
 name: "sdlc · audit (Codex)"
 
 on:
   pull_request:
-    types: [ready_for_review, labeled]
+    types: [opened, reopened, ready_for_review, labeled]
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
@@ -25,7 +26,7 @@ jobs:
   audit:
     # 1. dependabot never audits — those runs get Dependabot's (empty) secret store,
     #    so the agent cannot authenticate at all. Capability, not cost.
-    # 2. Drafts never audit — the `labeled` event can fire on a draft.
+    # 2. Drafts never audit — `opened`, `reopened`, and `labeled` can all fire on a draft.
     # 3. A label triggers an audit only when it is `agent:audit` (label.name is null
     #    on ready_for_review events, hence the action check first).
     if: >-
