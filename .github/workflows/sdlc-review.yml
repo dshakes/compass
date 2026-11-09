@@ -45,6 +45,23 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+      # COST: docs-only diffs skip the model call, but the job still reports the required
+      # `review` status. (A workflow-level paths-ignore would leave docs-only PRs
+      # unmergeable — a skipped workflow never reports its check.)
+      - name: Skip model review on docs-only diffs
+        id: filter
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only "$BASE"...HEAD)"
+          if [ -n "$changed" ] && ! printf '%s\n' "$changed" \
+              | grep -qvE '(\.md$|^docs/|^site/|\.svg$|\.lock$)'; then
+            echo "skip=true" >>"$GITHUB_OUTPUT"
+            echo "docs-only diff — passing review through without a model call"
+          else
+            echo "skip=false" >>"$GITHUB_OUTPUT"
+          fi
       # Org-wide bot identity (optional): if SDLC_APP_ID is set (a GitHub App installed on the
       # org), mint a short-lived, least-privilege token instead of the PAT. Falls back to
       # SDLC_BOT_TOKEN, then the default token. Set the App once per org — no per-repo PAT.
@@ -69,6 +86,7 @@ jobs:
           permission-pull-requests: write
       - name: Claude review
         id: review
+        if: steps.filter.outputs.skip != 'true'
         uses: anthropics/claude-code-action@be7b93b1907a4abad570368f3c74b6fe3807510b # v1
         with:
           # Uses your Claude SUBSCRIPTION (no API credits) via `claude setup-token`.
