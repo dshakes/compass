@@ -22,6 +22,7 @@ compass capability does it better — and safer.
 | Verify a release | `compass verify <vX.Y.Z>` | SLSA provenance |
 | See impact / spend | `compass impact` · `compass spend` · `compass dashboard` | the ledgers |
 | Find a loop's next work (discovery) | **morning-triage** skill | reads CI · issues · commits, judges, hands off |
+| Catch runaway API spend (per-key cost, cache ratio, unknown keys) | **cost-sentinel** skill · `infra/cost-caps/` | Admin API usage report; flags only, exit 1 on flags |
 | Take open PRs end-to-end | **pr-shepherd** skill (`/loop 15m /pr-shepherd`) | diagnoses red checks, fixes mechanical ones, stops at the merge gate |
 | Put a repo (or many) on compass in one command | `compass enable <owner/repo|dir> ...` | config + sdlc loop + secrets-from-env + ruleset + auto-merge; `--schedule` adds twice-daily pr-shepherd |
 | Stay ahead of code you didn't write | `compass digest` | sample merged changes & explain them (comprehension guard) |
